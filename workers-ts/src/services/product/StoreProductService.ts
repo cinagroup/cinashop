@@ -185,7 +185,9 @@ export class StoreProductService {
   async getOutGoodsList(params: OutGoodsListParams): Promise<{ list: Record<string, unknown>[]; count: number }> {
     return withTx(this.container, async tx => {
       await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY`); await themeDeadlines(tx);
-      return new StoreProductService(createContainerFromDb(tx), this.env).getGoodsListInSnapshot(params, 0, params);
+      const result = await new StoreProductService(createContainerFromDb(tx), this.env).getGoodsListInSnapshot(params, 0, params);
+      const { projectOutProductList } = await import('@/services/out/OutProductListProjection');
+      return { ...result, list: await projectOutProductList(tx, result.list, this.env.APP_KEY) };
     });
   }
   private async getGoodsListInSnapshot(params: GoodsListParams, _uid: number, out?: OutGoodsListParams): Promise<{ list: Record<string, unknown>[]; count: number }> {

@@ -130,6 +130,7 @@ export async function categorySetShow(c: C) {
 }
 
 export async function productList(c: C) {
+  privateResponse(c);
   return jsonOk(c, await service(c).productList(c.req.query()));
 }
 

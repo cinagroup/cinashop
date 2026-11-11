@@ -723,3 +723,111 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('authenticated Ou
     });
   },30_000);
 });
+
+// Complete authenticated Out list projection uses the same owned PG16 snapshot.
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Out product list complete projection on owned PG16', () => {
+  let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
+  let owned: Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
+  let network: ReturnType<typeof vi.spyOn>;
+  let app: Hono<{Bindings: Env; Variables: AppVariables}>;
+  let testEnv: Env, token: string;
+  const request = async (db = f.db) => {
+    const service = new OutApiService(createContainerFromDb(db),testEnv);
+    const result = await service.productList({store_name:'完整报价隔离样本'});
+    expect(result.count).toBe(1);
+    return result.list[0] as Record<string,any>;
+  };
+  beforeAll(async () => {
+    network = vi.spyOn(globalThis,'fetch').mockRejectedValue(Error('Out projection tests forbid external I/O'));
+    f = await createPcCheckoutQuoteFixture([],async () => {
+      owned = await sequenceRunnerDatabase();
+      try { const api = await import('drizzle-kit/api'), schema = await import('@/models/schema');
+        await owned.exec((await api.generateMigration(api.generateDrizzleJson({}),api.generateDrizzleJson(schema))).join('\n'));
+        await completePurchaseOriginEvidenceOrm(owned.db); await completePurchaseCancellationEvidenceOrm(owned.db); return owned;
+      } catch (error) { await owned.close(); throw error; }
+    });
+    await f.exec(`INSERT INTO store_product_category(id,cate_name,pid,level,is_show,path) VALUES (9,'根类',0,0,1,''),(10,'子类',9,1,0,'9');
+      INSERT INTO store_product_label(id,label_name,type,relation_id,is_show) VALUES (21,'旧标签',0,0,0),(22,'别的归属',2,44,1);
+      UPDATE store_product SET cate_id='9,10',store_label_id='21,22',label_id='31,32',ensure_id='8',price='13.25',vip_price='7.50',ot_price='18.00',postage='2.50',cost='3.25',give_integral='1.50',sales=5,ficti=12,custom_form='[{"id":"form"}]',specs='[{"name":"参数"}]',slider_image='["/isolated.png"]',delivery_type='1,2',video_open=0,video_link='/legacy-video.mp4' WHERE id=70;
+      INSERT INTO store_product_description(product_id,type,description) VALUES (70,0,'<p>旧版商品描述</p>');
+      UPDATE store_product_attr_value SET price='11.23',cost='4.20',disk_info='virtual-reference' WHERE id=1;
+      INSERT INTO store_product_attr_value(id,product_id,"unique",suk,is_retired,retired_at,type) VALUES (2,70,'retire02','已退役',1,10,0),(3,70,'other003','活动规格',0,0,1);
+      INSERT INTO store_product_virtual(product_id,attr_unique,card_no,card_pwd) VALUES (70,'qared001','fixture-card-number','fixture-card-password')`);
+    await f.db.insert(outInterface).values({id:1,type:1,method:'GET',url:'/product/list'});
+    await f.db.insert(outAccount).values({id:1,appid:'projection-local',appsecret:'fixture-only-projection-secret',rules:'[1]'});
+    testEnv = {...f.env,APP_KEY:'isolated-local-key-not-a-real-credential',TOKEN_BUCKET:{getByName:() => ({consumeRateLimit:async () =>
+      ({allowed:true,auditEvent:false,limit:120,remaining:119,resetAt:Date.now()+60000})})}} as unknown as Env;
+    token = (await createToken(1,'out',md5('fixture-only-projection-secret'),testEnv.APP_KEY)).token;
+    app = new Hono<{Bindings: Env; Variables: AppVariables}>();
+    app.use('*',async(c,next)=>{c.set('container',f.container);await next();});
+    app.onError((error,c)=>c.json({status:400,msg:error.message,data:null}));
+    app.get('/outapi/product/list',outAuthMiddleware('GET','/product/list'),outProductListController);
+  },180_000);
+  afterAll(async () => {try {expect(network).not.toHaveBeenCalled();} finally {network?.mockRestore();await f?.close();}},60_000);
+  it('returns legacy raw product, category, label, description and complete type-0 SKU values through real authorization',async () => {
+    const response=await app.request('/outapi/product/list?store_name=%E5%AE%8C%E6%95%B4%E6%8A%A5%E4%BB%B7%E9%9A%94%E7%A6%BB%E6%A0%B7%E6%9C%AC',
+      {headers:{Authorization:`Bearer ${token}`}},testEnv);
+    const body=await response.json() as {status:number;msg:string;data:{list:Array<Record<string,any>>;count:number}};
+    expect(body.status,body.msg).toBe(200); expect(response.headers.get('Cache-Control')).toBe('private, no-store');
+    expect(body.data.count).toBe(1);const row=body.data.list[0];
+    expect(row).toMatchObject({id:70,price:13.25,vip_price:7.5,ot_price:18,postage:2.5,cost:3.25,give_integral:1.5,
+      sales:5,card_sales:17,cate_id:'9,10',cate_name:'根类,根类/子类',label_id:[31,32],store_label_id:[21,22],
+      ensure_id:[8],store_label:'旧标签',delivery_type:['1','2'],custom_form:[{id:'form'}],specs:[{name:'参数'}],
+      description:'<p>旧版商品描述</p>',video_open:0,video_link:'/legacy-video.mp4'});
+    expect(row.attrValue).toHaveLength(1);
+    expect(row.attrValue[0]).toMatchObject({id:1,product_id:70,unique:'qared001',price:'11.23',cost:'4.20',disk_info:'virtual-reference',is_retired:0});
+    expect(row.retired_attr_value).toMatchObject([{id:2,unique:'retire02',is_retired:1,retired_at:10}]);
+    expect(JSON.stringify(row)).not.toContain('other003');
+    expect(JSON.stringify(row)).not.toContain('fixture-card-number');expect(JSON.stringify(row)).not.toContain('fixture-card-password');
+  },30_000);
+  it('uses only actual App SELECT grants and returns the complete projection through the authenticated route',async () => {
+    if(!owned.withRuntimeRole) throw Error('Native restricted LOGIN required');
+    await owned.withRuntimeRole(async runtime => {
+      const plan=runtimeBusinessPrivilegePlan('app'),quote=(name:string)=>{if(!/^[a-z_][a-z_0-9]*$/.test(name))throw Error('invalid identifier');return `"${name}"`;};
+      const tables=await f.db.execute<{name:string}>(sql`SELECT relname AS name FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r'`);
+      for(const {name} of tables) if(plan.tables[name]?.includes('SELECT')) await f.exec(`GRANT SELECT ON public.${quote(name)} TO ${quote(runtime.role)}`);
+      await f.exec(`REVOKE ALL ON public.store_product_virtual FROM ${quote(runtime.role)}`);
+      const a=new Hono<{Bindings:Env;Variables:AppVariables}>();a.use('*',async(c,next)=>{c.set('container',createContainerFromDb(runtime.db));await next();});
+      a.onError((error,c)=>c.json({status:400,msg:error.message,data:null}));a.get('/outapi/product/list',outAuthMiddleware('GET','/product/list'),outProductListController);
+      const response=await a.request('/outapi/product/list',{headers:{Authorization:`Bearer ${token}`}},testEnv);
+      const body=await response.json() as {status:number;msg:string;data:{list:Array<Record<string,any>>}};
+      expect(body.status,body.msg).toBe(200);expect(body.data.list[0]).toMatchObject({cost:3.25,description:'<p>旧版商品描述</p>'});
+      expect(body.data.list[0].attrValue).toHaveLength(1);expect(body.data.list[0].retired_attr_value).toHaveLength(1);
+      const [rights]=await runtime.db.execute(sql`SELECT current_user=session_user AS direct_login,has_table_privilege(current_user,'public.store_product','UPDATE') AS can_write`);
+      expect(rights).toEqual({direct_login:true,can_write:false});
+      await expect(runtime.db.execute(sql`SELECT card_no,card_pwd FROM public.store_product_virtual`)).rejects.toThrow();
+    });
+  },30_000);
+  it('keeps product, SKU and description on one repeatable-read snapshot during concurrent replacement',async () => {
+    if(!owned.withPeer) throw Error('PG16 peers required');
+    await owned.withPeer(holder=>owned.withPeer!(async reader=>{
+      await holder.exec('BEGIN; LOCK TABLE store_product_description IN ACCESS EXCLUSIVE MODE');
+      const pending=request(reader.db);
+      try {
+        await waitForFinanceBlock(f.db,reader.pid,holder.pid);
+        await holder.exec("UPDATE store_product SET price='99.00' WHERE id=70; UPDATE store_product_attr_value SET price='88.00' WHERE id=1; UPDATE store_product_description SET description='<p>新内容</p>' WHERE product_id=70 AND type=0");
+      } finally {await holder.exec('COMMIT');}
+      const old=await pending;expect(old.price).toBe(13.25);expect(old.attrValue[0].price).toBe('11.23');expect(old.description).toBe('<p>旧版商品描述</p>');
+      const current=await request(reader.db);expect(current.price).toBe(99);expect(current.attrValue[0].price).toBe('88.00');expect(current.description).toBe('<p>新内容</p>');
+    }));
+  },30_000);
+  it('returns null for a missing bound description and empty collections for a product without SKU rows',async () => {
+    await f.exec("INSERT INTO store_product(id,store_name,is_show,is_verify) VALUES (71,'无描述规格隔离商品',1,1)");
+    try {
+      const data=await new OutApiService(f.container,testEnv).productList({store_name:'无描述规格隔离商品'});
+      expect(data.count).toBe(1);expect(data.list[0]).toMatchObject({description:null,attrValue:[],retired_attr_value:[],
+        cate_name:'',store_label:'',slider_image:null,custom_form:[],specs:[]});
+      await f.exec('INSERT INTO store_product_description(product_id,type,description) VALUES (71,0,NULL)');
+      const nullDescription=await new OutApiService(f.container,testEnv).productList({store_name:'无描述规格隔离商品'});
+      expect(nullDescription.list[0]).toMatchObject({description:null});
+    } finally {await f.exec('DELETE FROM store_product_description WHERE product_id=71; DELETE FROM store_product WHERE id=71');}
+  },30_000);
+  it('rejects an oversized complete response before materializing the description rather than returning a partial list',async () => {
+    await f.exec("UPDATE store_product_description SET description=repeat('长',1500000) WHERE product_id=70 AND type=0");
+    const response=await app.request('/outapi/product/list',{headers:{Authorization:`Bearer ${token}`}},testEnv);
+    const body=await response.json() as {status:number;msg:string;data:unknown};
+    expect(body.status).not.toBe(200);expect(body.msg).toContain('容量');expect(body.data).toBeNull();
+    const [row]=await f.db.execute<{size:number}>(sql`SELECT octet_length(description)::int AS size FROM store_product_description WHERE product_id=70 AND type=0`);
+    expect(row.size).toBe(4500000);
+  },30_000);
+});

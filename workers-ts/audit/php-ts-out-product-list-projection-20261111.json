@@ -1,0 +1,274 @@
+{
+  "schema": "php-ts-out-product-list-projection/v1",
+  "baseCommit": "3ef44808acb4e3bfa27b7dc22b4d5b60f79c332a",
+  "sourceHashes": [
+    {
+      "path": "workers-ts/src/services/out/OutProductListProjection.ts",
+      "sha256": "c7ce56bb6a74782fa24b16d40603327645c118e4a21ffbdc81a88e02ba8fa833"
+    },
+    {
+      "path": "workers-ts/src/services/product/StoreProductService.ts",
+      "sha256": "7dc64077b57923f77e13fd654dbf2147b8387efb89417204424f20115b143fec"
+    },
+    {
+      "path": "workers-ts/src/controllers/out/OutApiController.ts",
+      "sha256": "ef0d403d9891fa4821a7c7c61e1213da78faf05b0afb5ee53005c2445df7164e"
+    },
+    {
+      "path": "workers-ts/test/product-purchase-admission-postgres.test.ts",
+      "sha256": "32696c395322d23266272088b9a936e98d96e351d2cba2208921a47c8198c83b"
+    },
+    {
+      "path": "workers-ts/test/out-product-list-projection.test.ts",
+      "sha256": "6d36ad5cb601bc9135413f374fd65eb8dbc034cad3ece7adf0ff3de2f11a9193"
+    }
+  ],
+  "legacyCommit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "legacySources": [
+    {
+      "path": "app/controller/out/Product.php",
+      "gitBlob": "5a55a3a43001325abfd36cee3c6af3e3b45cac66",
+      "sha256": "a52f6c6392594116e66803572a67e6c15d424fa13eac48df6bc9d7a6ef01c24a",
+      "bytes": 8803
+    },
+    {
+      "path": "app/services/product/product/StoreProductServices.php",
+      "gitBlob": "f8163c25f694dd0ff84486d89926ef004ba9e81e",
+      "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+      "bytes": 136399
+    },
+    {
+      "path": "app/dao/product/product/StoreProductDao.php",
+      "gitBlob": "0d2d90499afc77c0ef98f191d6be11d6ecf8b58f",
+      "sha256": "2cdc901c673a11e699a23bd2d4ddcd01abe108d10854ddd3588099ec712ec5e8",
+      "bytes": 24769
+    },
+    {
+      "path": "app/model/product/product/StoreProduct.php",
+      "gitBlob": "d4bf574d3192acc7e9dc7f6e73bb01d8a8bbfcb5",
+      "sha256": "696b6b6601e9ba8ba9fcde26a4ed12bda7f98edaaa81fc72ced3cae5321dc1a9",
+      "bytes": 20315
+    },
+    {
+      "path": "app/model/product/sku/StoreProductAttrValue.php",
+      "gitBlob": "a0c8805728cf65d0db401e525cb93db5be584971",
+      "sha256": "5f314d6aa61ea7cbf86803616cb49e948b441d9c69dd09a6f78e6ed54de2366d",
+      "bytes": 3751
+    },
+    {
+      "path": "app/services/product/category/StoreProductCategoryServices.php",
+      "gitBlob": "80311ea81db80b3f2d09d7d8331caf7c10b67630",
+      "sha256": "77431e2d9eebeb2b85eff500f7bde1ed9359f3da801513f719b6a9080c1ad41e",
+      "bytes": 17102
+    },
+    {
+      "path": "app/dao/product/category/StoreProductCategoryDao.php",
+      "gitBlob": "ff3b3dfe0916d440f7da5ec4eae56cd77f87f73f",
+      "sha256": "996bdc89810d1c70bc612fd2b5c5321b4cd0df143fa36da2470ddfbfbda0a4f0",
+      "bytes": 8080
+    },
+    {
+      "path": "app/model/product/category/StoreProductCategory.php",
+      "gitBlob": "1f10e4e21d3cef273206683bef0204ffe8b06ae3",
+      "sha256": "237edefa1695e83664199b9f28101c0f08cd257ed45432024c335f1c180b62b5",
+      "bytes": 4397
+    },
+    {
+      "path": "vendor/topthink/think-orm/src/model/relation/OneToOne.php",
+      "gitBlob": "c45489ed1be8c48eb4c825f1a7a0b26aaa206d0a",
+      "sha256": "6315f175ebad444be383524e485b2b2ff2ce5277a61d144cad898c03dec98f77",
+      "bytes": 10293
+    },
+    {
+      "path": "vendor/topthink/think-orm/src/model/concern/Conversion.php",
+      "gitBlob": "c972769eace6d1dd53ccd6ed2ac55292b5e8e90e",
+      "sha256": "2e82f52dcdb805647780bc1350be2a5b962c50e4055691d273cc31afe0298c84",
+      "bytes": 10725
+    }
+  ],
+  "validation": {
+    "profiles": [
+      {
+        "profile": "unit",
+        "exit": 0,
+        "seconds": 29.68,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "unit-types-shard-1",
+        "exit": 0,
+        "seconds": 162.81,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "unit-types-shard-2",
+        "exit": 0,
+        "seconds": 166.86,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "runtime-types",
+        "exit": 0,
+        "seconds": 103.9,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-out",
+        "exit": 0,
+        "seconds": 160.12,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-category",
+        "exit": 0,
+        "seconds": 46.68,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-public-promotions",
+        "exit": 0,
+        "seconds": 19.06,
+        "budgetSeconds": 600
+      }
+    ],
+    "unitPassed": 113,
+    "unitSkipped": 0,
+    "nativePassed": {
+      "native-out": 44,
+      "native-category": 8,
+      "native-public-promotions": 3
+    },
+    "nativeSkipped": 0,
+    "remainingOwnedFixtures": 0,
+    "typeShards": {
+      "originalRoots": 4337,
+      "commonRoots": 1898,
+      "testRoots": 2439,
+      "shardTestCounts": [
+        1220,
+        1219
+      ],
+      "unionExactlyMatchesOriginal": true
+    },
+    "typeShardConfigs": [
+      {
+        "file": "tsconfig.out-list-shard-1.generated.json",
+        "sha256": "0ed3c3bd735e3ea0c7b027a08ce4d0a5c6b51a7bbd6ac72749fa5d1f11f2d81b"
+      },
+      {
+        "file": "tsconfig.out-list-shard-2.generated.json",
+        "sha256": "b272625427d34c3b3f72f562a15991c4232b881a7b4e33fe1cbf20b880f9c740"
+      }
+    ],
+    "optionsMatchBase": true,
+    "initialFullTypeRuns": "two attempts exhausted the unchanged 8192 MiB V8 heap",
+    "initialShardConfig": "location prevented type dependency resolution; moved to project directory",
+    "initialShardTypeErrors": "fixed dynamic row type before final validation",
+    "logHashes": [
+      {
+        "file": "before-null-fix-native-category.log",
+        "sha256": "c414297d0e880f761ff0196fa2f4b002ee19a8e30b75ddfab6f35d0531884c07"
+      },
+      {
+        "file": "before-null-fix-native-out.log",
+        "sha256": "7e8df1f52e80925dc68d9c8404aaa82eeb3acf4bda78ccf1c224c88004eb2186"
+      },
+      {
+        "file": "before-null-fix-native-public-promotions.log",
+        "sha256": "936145da490d7dac13d6136ad0b89fd30faea8c74d6878175cc845660312dae4"
+      },
+      {
+        "file": "before-null-fix-runtime-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "before-null-fix-unit-types-shard-1.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "before-null-fix-unit-types-shard-2.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "before-null-fix-unit.log",
+        "sha256": "28410da09faf27112d91e0b7a9c533795c1cdaa5510c9799dd7c13a9025def98"
+      },
+      {
+        "file": "initial-unit-types.log",
+        "sha256": "715d9e444bba200912903cf5066d160908f3b3aa858aac5ba2229ccf880f41df"
+      },
+      {
+        "file": "initial-unit.log",
+        "sha256": "28410da09faf27112d91e0b7a9c533795c1cdaa5510c9799dd7c13a9025def98"
+      },
+      {
+        "file": "native-category.log",
+        "sha256": "dd0e26d4acb93842c6824d1ddaee1addffa360e116be22c630bae44ee571b20f"
+      },
+      {
+        "file": "native-out.log",
+        "sha256": "f6c3221e4e88558eaf8a39ac8fce9abca7da814dae62bb1f8a157b365ec1c3d3"
+      },
+      {
+        "file": "native-public-promotions.log",
+        "sha256": "dbebcacc950c6bcfcac46fbbc3f04ec6326db0f2c0b2dc1b3d1a0066fdd0a629"
+      },
+      {
+        "file": "runtime-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "second-unit-types.log",
+        "sha256": "c0f996c486ee18725d7df5999109fa9007239d1e2442656140d0cd1f7d4ca7eb"
+      },
+      {
+        "file": "second-unit.log",
+        "sha256": "28410da09faf27112d91e0b7a9c533795c1cdaa5510c9799dd7c13a9025def98"
+      },
+      {
+        "file": "shard-location-initial-unit-types-shard-1.log",
+        "sha256": "babcdaafee4381d4f2ef03078d085ec7c09ce6c422b94fbe464e955eddeb949d"
+      },
+      {
+        "file": "shard-location-initial-unit.log",
+        "sha256": "28410da09faf27112d91e0b7a9c533795c1cdaa5510c9799dd7c13a9025def98"
+      },
+      {
+        "file": "shard-type-errors-unit-types-shard-1.log",
+        "sha256": "8ddd03ca29585287b8cf3fe1883816714a71e1be14c334199b8dafcb7e3adf62"
+      },
+      {
+        "file": "shard-type-errors-unit.log",
+        "sha256": "28410da09faf27112d91e0b7a9c533795c1cdaa5510c9799dd7c13a9025def98"
+      },
+      {
+        "file": "unit-types-shard-1.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "unit-types-shard-2.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "unit-types.log",
+        "sha256": "c0f996c486ee18725d7df5999109fa9007239d1e2442656140d0cd1f7d4ca7eb"
+      },
+      {
+        "file": "unit.log",
+        "sha256": "28410da09faf27112d91e0b7a9c533795c1cdaa5510c9799dd7c13a9025def98"
+      }
+    ]
+  },
+  "originalPurchaseTestPrefixUnchanged": true,
+  "previousCi": {
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/43082938207",
+    "status": "queued"
+  },
+  "limitations": [
+    "existing attachment authorization and signed image policy remains distinct from raw PHP paths",
+    "retired SKU identities separated from current type-0 SKUs",
+    "no PHP upload, deployment or real external provider"
+  ],
+  "wholeMigrationComplete": false,
+  "generatedAt": "2026-11-11T19:55:07.267942+00:00"
+}
