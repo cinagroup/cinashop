@@ -13,6 +13,7 @@ import { outProductBrandSelection } from './OutProductBrandBindings';
 import { outProductEnsureSelection } from './OutProductEnsureBindings';
 import { outProductLabelsSelection } from './OutProductLabelBindings';
 import { outProductParameterSelection } from './OutProductParameterBindings';
+import { readSupplierProductSystemFormSelection } from '@/services/supplier/SupplierProductSystemFormBindings';
 import { outDetailFormInfo, outDetailIds, outDetailJson, outDetailProduct, outDetailSpecs, outDetailTree } from './OutProductDetailProjection';
 
 const LIMIT = 10000;
@@ -91,13 +92,13 @@ export async function readOutProductDetail(container: Container, id: number, app
       if (couponIds.length) scans.push({ table: storeCouponIssue, where: inArray(storeCouponIssue.id, couponIds), columns: [storeCouponIssue.id, storeCouponIssue.title] });
       if (product.systemFormId) scans.push({ table: systemForm, where: eq(systemForm.id, product.systemFormId), columns: [systemForm.id, systemForm.value] });
       await budgetLegacyProductRead(tx, scans, 1024 * 1024 - used - baseBytes);
-      const [recommendations, coupons, forms, brand, ensure, labels, parameters] = await Promise.all([
+      const [recommendations, coupons, forms, brand, ensure, labels, parameters, systemFormSelection] = await Promise.all([
         recommendationIds.length ? tx.select({ id: storeProduct.id, image: storeProduct.image }).from(storeProduct)
           .where(and(inArray(storeProduct.id, recommendationIds), eq(storeProduct.type, 0), eq(storeProduct.relationId, 0), eq(storeProduct.isDel, 0))) : [],
         couponIds.length ? tx.select({ id: storeCouponIssue.id, title: storeCouponIssue.title }).from(storeCouponIssue).where(inArray(storeCouponIssue.id, couponIds)).orderBy(asc(storeCouponIssue.id)) : [],
         product.systemFormId ? tx.select({ value: systemForm.value }).from(systemForm).where(eq(systemForm.id, product.systemFormId)).limit(1) : [],
         outProductBrandSelection(tx, product), outProductEnsureSelection(tx, product), outProductLabelsSelection(tx, product),
-        outProductParameterSelection(tx, product),
+        outProductParameterSelection(tx, product), readSupplierProductSystemFormSelection(tx, product),
       ]);
       const specs = outDetailSpecs(product, attrs, skus, counts), form = outDetailJson(forms[0]?.value ?? null);
       const video = await resolveProductVideoReference(tx, product.videoLink, product, { allowLegacyRelative: true });
@@ -130,7 +131,7 @@ export async function readOutProductDetail(container: Container, id: number, app
       const references = await publicProductPictures(tx, slots, 256);
       slots.forEach((slot, index) => slot.set(references[index]));
       capacity(info, 768 * 1024, '商品详情完整表单超过768 KiB编辑容量');
-      const data = { ...product, ...brand, ...ensure, ...labels, ...parameters,
+      const data = { ...product, ...brand, ...ensure, ...labels, ...parameters, ...systemFormSelection,
         cate_id: relations.filter(row => row.type === 1).map(row => row.relationId),
         description: descriptions[0]?.description ?? '', items: specs.flatItems,
         attrs: skus.map(sku => ({ ...sku, detail: Object.fromEntries(specs.flatItems.map((item, index) => [item.value, sku.suk.split(',')[index] ?? ''])) })),

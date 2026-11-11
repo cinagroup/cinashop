@@ -13,7 +13,7 @@ import { sequenceRunnerDatabase, type SequenceRunnerPeer } from './helpers/kefuS
 import { waitForFinanceBlock } from './helpers/financePeers';
 import { runtimeBusinessPrivilegePlan } from '../src/migrations/runtimeBusinessPrivilegePlan';
 import { storeProduct, storeProductAttrValue, storeProductCategory, storeCart, storeProductRelation,
-  outProductWriteReplay, storeProductStockRecord, storeProductAttr, storeProductAttrResult, storeProductDescription, storeBrand, storeProductEnsure, storeCouponIssue, storeProductCoupon } from '../src/models/schema';
+  outProductWriteReplay, storeProductStockRecord, storeProductAttr, storeProductAttrResult, storeProductDescription, storeBrand, storeProductEnsure, storeCouponIssue, storeProductCoupon, systemForm, systemFormData, storeOrderCartInfo } from '../src/models/schema';
 
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('full-ORM Out product management versus checkout', () => {
   let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
@@ -785,5 +785,138 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('full-ORM Out pro
       expect(result.status).not.toBe(200); expect(result.msg).toContain('优惠券'); expect(await couponState()).toEqual(before);
     }
   });
+
+  const orderFormTemplate = () => [{ id: 'message', name: 'texts', titleConfig: { value: '收件补充信息' }, titleShow: { val: true }, value: '' }];
+  const seedOutForms = async () => {
+    await f.db.insert(systemForm).values([
+      { id: 800, name: '原表单', status: 1, value: JSON.stringify(orderFormTemplate()) },
+      { id: 801, name: '新表单', status: 1, value: JSON.stringify(orderFormTemplate()) },
+      { id: 802, name: '停用', status: 0, value: JSON.stringify(orderFormTemplate()) },
+      { id: 803, name: '损坏', status: 1, value: '{bad-json' },
+    ]);
+    await f.db.update(storeProduct).set({ systemFormId: 800, customForm: '[{"legacy":"原始快照"}]' }).where(eq(storeProduct.id, 70));
+  };
+  const formState = async () => ({ business: await state(), forms: await f.db.select().from(systemForm).orderBy(systemForm.id),
+    answers: await f.db.select().from(systemFormData), lines: await f.db.select().from(storeOrderCartInfo) });
+
+  it('saves and reads independent form snapshot and order template, then replays and clears each separately', async () => {
+    await seedOutForms(); const selected = { ...productBody, custom_form: [{ legacy: '新快照' }], system_form_id: 801 };
+    const saved = await request(app(f.db), '/outapi/product/70', selected); expect(saved.status, saved.msg).toBe(200);
+    const after = await formState(); expect(after.business.products[0]).toMatchObject({ customForm: '[{"legacy":"新快照"}]', systemFormId: 801, stock: 8 });
+    const read = await request(app(f.db), '/outapi/product/70', undefined, 'GET');
+    expect(read.status, read.msg).toBe(200); expect(read.data).toMatchObject({ system_form_id: 801, system_form_selection: { system_form_id: 801, available: true },
+      editor: { stored_custom_form: [{ legacy: '新快照' }] }, productInfo: { custom_form: orderFormTemplate() } });
+    await f.exec("SELECT setval(pg_get_serial_sequence('store_product','id'),70,true); SELECT setval(pg_get_serial_sequence('store_product_attr_value','id'),1,true)");
+    const createBody = { ...productBody, system_form_id: 801, custom_form: [{ legacy: '创建快照' }],
+      attrs: productBody.attrs.map(row => ({ ...row, unique: 'formnew1', bar_code: 'FORM-NEW' })) };
+    const created = await request(app(f.db), '/outapi/product', createBody, 'POST', crypto.randomUUID());
+    expect(created.status, created.msg).toBe(200);
+    const [createdProduct] = await f.db.select().from(storeProduct).where(eq(storeProduct.id, created.data.id));
+    expect(createdProduct).toMatchObject({ systemFormId: 801, customForm: '[{"legacy":"创建快照"}]' });
+    await f.db.update(systemForm).set({ status: 0 }).where(eq(systemForm.id, 801));
+    const changed = await formState(), replay = await request(app(f.db), '/outapi/product/70', selected);
+    expect(replay.status, replay.msg).toBe(200); expect(replay.data.idempotent).toBe(true); expect(await formState()).toEqual(changed);
+    expect((await request(app(f.db), '/outapi/product/70', selected, 'PUT', crypto.randomUUID())).status).not.toBe(200);
+    expect(await formState()).toEqual(changed);
+    const templateClear = await request(app(f.db), '/outapi/product/70', { ...productBody, system_form_id: 0 }, 'PUT', crypto.randomUUID());
+    expect(templateClear.status, templateClear.msg).toBe(200);
+    expect((await formState()).business.products.find(row => row.id === 70)).toMatchObject({ systemFormId: 0, customForm: '[{"legacy":"新快照"}]' });
+    const snapshotClear = await request(app(f.db), '/outapi/product/70', { ...productBody, custom_form: [] }, 'PUT', crypto.randomUUID());
+    expect(snapshotClear.status, snapshotClear.msg).toBe(200);
+    expect((await formState()).business.products.find(row => row.id === 70)).toMatchObject({ systemFormId: 0, customForm: '' });
+  });
+
+  it('retains omitted historical form bytes without a catalog read and cannot reuse an omission receipt for clearing', async () => {
+    await seedOutForms(); const original = (await formState()).business.products[0];
+    await f.exec('ALTER TABLE system_form RENAME TO hidden_out_form_catalog');
+    try {
+      const saved = await request(app(f.db), '/outapi/product/70', productBody); expect(saved.status, saved.msg).toBe(200);
+      const [product] = await f.db.select().from(storeProduct).where(eq(storeProduct.id, 70));
+      expect([product.systemFormId, product.customForm]).toEqual([original.systemFormId, original.customForm]);
+      for (const patch of [{ system_form_id: 0 }, { custom_form: [] }]) {
+        const conflict = await request(app(f.db), '/outapi/product/70', { ...productBody, ...patch }); expect(conflict.status).not.toBe(200);
+      }
+      const [after] = await f.db.select().from(storeProduct).where(eq(storeProduct.id, 70));
+      expect([after.systemFormId, after.customForm]).toEqual([original.systemFormId, original.customForm]);
+    } finally { await f.exec('ALTER TABLE hidden_out_form_catalog RENAME TO system_form'); }
+  });
+
+  it('rejects unavailable, malformed and locked order templates without partial writes', async () => {
+    await seedOutForms(); const before = await formState();
+    for (const id of [802, 803, 999]) {
+      const result = await request(app(f.db), '/outapi/product/70', { ...productBody, system_form_id: id }, 'PUT', crypto.randomUUID());
+      expect(result.status).not.toBe(200); expect(await formState()).toEqual(before);
+    }
+    await peers(async ([holder, writer]) => {
+      await holder.exec('BEGIN; SELECT id FROM system_form WHERE id=801 FOR UPDATE');
+      const result = await request(app(writer.db), '/outapi/product/70', { ...productBody, system_form_id: 801 }, 'PUT', crypto.randomUUID());
+      expect(result.status).not.toBe(200); expect(result.msg).toContain('正在变化'); await holder.exec('COMMIT');
+    });
+    expect(await formState()).toEqual(before);
+  }, 20_000);
+
+  it('rolls back deferred receipt interference with selected and omitted form state', async () => {
+    await seedOutForms(); const before = await formState();
+    await f.exec("CREATE FUNCTION test_out_form_receipt_damage() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN UPDATE store_product SET custom_form='damaged' WHERE id=70; RETURN NEW; END $$; CREATE CONSTRAINT TRIGGER test_out_form_receipt_damage AFTER INSERT ON out_product_write_replay DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION test_out_form_receipt_damage()");
+    for (const patch of [{}, { system_form_id: 801, custom_form: [{ legacy: 'new' }] }]) {
+      const result = await request(app(f.db), '/outapi/product/70', { ...productBody, ...patch }, 'PUT', crypto.randomUUID());
+      expect(result.status).not.toBe(200); expect(result.msg).toContain('表单'); expect(await formState()).toEqual(before);
+    }
+  });
+
+  it('rolls back a deferred receipt mutation of the admitted form definition', async () => {
+    await seedOutForms(); const before = await formState();
+    for (const mutation of ['status=0', 'status=status']) {
+      await f.exec(`CREATE FUNCTION test_out_form_definition_damage() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN UPDATE system_form SET ${mutation} WHERE id=801; RETURN NEW; END $$; CREATE CONSTRAINT TRIGGER test_out_form_definition_damage AFTER INSERT ON out_product_write_replay DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION test_out_form_definition_damage()`);
+      const result = await request(app(f.db), '/outapi/product/70', { ...productBody, system_form_id: 801 }, 'PUT', crypto.randomUUID());
+      expect(result.status).not.toBe(200); expect(await formState()).toEqual(before);
+      await f.exec('DROP TRIGGER test_out_form_definition_damage ON out_product_write_replay; DROP FUNCTION test_out_form_definition_damage()');
+    }
+  });
+
+  it('validates actual customer checkout against the selected template and keeps historical form data separate', async () => {
+    await seedOutForms();
+    const saved = await request(app(f.db), '/outapi/product/70', { ...productBody, system_form_id: 801 }); expect(saved.status, saved.msg).toBe(200);
+    const quote = await confirm(), before = await formState();
+    const bad = await request(app(f.db), `/api/order/create/${quote.orderKey}`, { ...input, quoteToken: quote.quoteToken, customForm: [] }, 'POST', crypto.randomUUID());
+    expect(bad.status).not.toBe(200); expect(await formState()).toEqual(before);
+    const answer = [{ ...orderFormTemplate()[0], titleConfig: { value: '伪造标题' }, value: '真实客户补充信息' }];
+    const good = await request(app(f.db), `/api/order/create/${quote.orderKey}`, { ...input, quoteToken: quote.quoteToken, customForm: answer }, 'POST', crypto.randomUUID());
+    expect(good.status, good.msg).toBe(200);
+    const after = await formState(); expect(after.business.orders).toHaveLength(1); expect(after.answers).toHaveLength(1); expect(after.lines).toHaveLength(1);
+    expect(JSON.parse(after.business.orders[0].customForm!)[0]).toMatchObject({ id: 'message', titleConfig: { value: '收件补充信息' }, value: '真实客户补充信息' });
+    expect(after.business.products[0]).toMatchObject({ systemFormId: 801, customForm: '[{"legacy":"原始快照"}]' });
+  }, 30_000);
+
+  it('uses the existing restricted App role for a selected order template and legacy form snapshot', async () => {
+    await seedOutForms(); if (!owned.withRuntimeRole) throw Error('Native restricted LOGIN required');
+    await owned.withRuntimeRole(async runtime => {
+      const plan = runtimeBusinessPrivilegePlan('app'), quote = (name: string) => {
+        if (!/^[a-z_][a-z_0-9]*$/.test(name)) throw Error('Invalid owned grant identifier'); return `"${name}"`;
+      };
+      const tables = await f.db.execute<{ name: string }>(sql`SELECT relname AS name FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r' ORDER BY relname`);
+      for (const { name } of tables) {
+        const rights = plan.tables[name]; if (!rights) continue;
+        await f.exec(`GRANT ${rights.join(',')} ON public.${quote(name)} TO ${quote(runtime.role)}`);
+        const columns = plan.updateColumns[name];
+        if (columns?.length) await f.exec(`GRANT UPDATE(${columns.map(quote).join(',')}) ON public.${quote(name)} TO ${quote(runtime.role)}`);
+      }
+      const sequences = await f.db.execute<{ table_name: string; sequence_name: string | null }>(sql`SELECT c.relname AS table_name,
+        pg_get_serial_sequence('public.'||quote_ident(c.relname),a.attname) AS sequence_name
+        FROM pg_class c JOIN pg_attribute a ON a.attrelid=c.oid AND a.attnum>0 AND NOT a.attisdropped
+        WHERE c.relnamespace='public'::regnamespace AND c.relkind='r'`);
+      for (const row of sequences) if (row.sequence_name && plan.tables[row.table_name]?.includes('INSERT')) {
+        const parts = row.sequence_name.split('.'); if (parts.length !== 2 || parts[0] !== 'public') throw Error('Unexpected owned sequence');
+        await f.exec(`GRANT USAGE ON SEQUENCE public.${quote(parts[1])} TO ${quote(runtime.role)}`);
+      }
+      const saved = await request(app(runtime.db), '/outapi/product/70', { ...productBody, system_form_id: 801, custom_form: [{ legacy: '写入' }] });
+      expect(saved.status, saved.msg).toBe(200);
+      const [product] = await f.db.select().from(storeProduct).where(eq(storeProduct.id, 70));
+      expect(product).toMatchObject({ systemFormId: 801, customForm: '[{"legacy":"写入"}]' });
+      const [rights] = await runtime.db.execute(sql`SELECT has_column_privilege(current_user,'system_form','id','UPDATE') AS can_lock,
+        has_column_privilege(current_user,'system_form','value','UPDATE') AS can_edit`);
+      expect(rights).toEqual({ can_lock: true, can_edit: false });
+    });
+  }, 30_000);
 
 });

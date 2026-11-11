@@ -32,6 +32,7 @@ import { readOutProductDetail } from './OutProductDetailRead';
 import { outProductLabelInput, lockOutProductLabels, replaceOutProductLabelBindings, assertOutProductLabelBindings } from './OutProductLabelBindings';
 import { outProductParameterInput, lockOutProductParameterTemplate, replaceOutProductParameterBindings, assertOutProductParameterBindings } from './OutProductParameterBindings';
 import { outProductCouponInput, captureOutProductCoupons, replaceOutProductCoupons, assertOutProductCoupons } from './OutProductCouponBindings';
+import { outProductCustomFormInput, outProductSystemFormInput, lockOutProductSystemForm, outProductFormProof, assertOutProductForm } from './OutProductFormBindings';
 
 type UnknownRecord = Record<string, unknown>;
 type ProductWriteOperation = "product_create" | "product_update" | "product_show" | "stock_upload";
@@ -56,6 +57,8 @@ interface OutPhysicalProductInput extends SupplierPhysicalProductInput {
   userLabelIds?: number[];
   parameters?: NonNullable<ReturnType<typeof outProductParameterInput>>;
   couponIds?: number[];
+  customForm?: string;
+  systemFormId?: number;
   deliveryType: string;
   freight: 1 | 2 | 3;
   isShow: 0 | 1;
@@ -158,7 +161,6 @@ function rejectUnmigratedProductFeatures(input: UnknownRecord): void {
     "activity",
     "auto_off_time",
     "auto_on_time",
-    "custom_form",
     "is_presale_product",
     "is_vip_product",
     "presale_day",
@@ -211,12 +213,16 @@ export function normalizeOutPhysicalProductInput(input: UnknownRecord): OutPhysi
   const ensureIds = supplierProductEnsureInput(input);
   const parameters = outProductParameterInput(input);
   const couponIds = outProductCouponInput(input);
+  const customForm = outProductCustomFormInput(input);
+  const systemFormId = outProductSystemFormInput(input);
   return {
     ...base,
     ...(brandIds === undefined ? {} : { brandIds }),
     ...(ensureIds === undefined ? {} : { ensureIds }),
     ...(parameters === undefined ? {} : { parameters }),
     ...(couponIds === undefined ? {} : { couponIds }),
+    ...(customForm === undefined ? {} : { customForm }),
+    ...(systemFormId === undefined ? {} : { systemFormId }),
     ...outProductLabelInput(input),
     sliderImages,
     skus,
@@ -402,7 +408,7 @@ export class OutProductService {
     const input = normalizeOutPhysicalProductInput(rawInput);
     const brandIds = input.brandIds;
     const ensureIds = input.ensureIds;
-    const { storeLabelIds, userLabelIds, parameters, couponIds } = input;
+    const { storeLabelIds, userLabelIds, parameters, couponIds, customForm, systemFormId } = input;
     const operation: ProductWriteOperation = productId > 0 ? "product_update" : "product_create";
     const hash = await outRequestHash({ operation, productId, input });
     return withTx(this.container, async (tx) => {
@@ -483,7 +489,11 @@ export class OutProductService {
         : await inventoryLock(() => lockOutProductLabels(tx, 'user', userLabelIds));
       const admittedParameters = parameters === undefined ? undefined
         : await inventoryLock(() => lockOutProductParameterTemplate(tx, parameters.specs_id));
+      const admittedForm = systemFormId === undefined ? undefined
+        : await inventoryLock(() => lockOutProductSystemForm(tx, systemFormId));
       const productValues = {
+        ...(customForm === undefined ? {} : { customForm }),
+        ...(systemFormId === undefined ? {} : { systemFormId }),
         ...(brandIds === undefined ? {} : { brandId: brandIds.at(-1) ?? 0, brandCom: brandIds.join(',') }),
         ...(ensureIds === undefined ? {} : { ensureId: ensureIds.join(',') }),
         ...(storeLabelIds === undefined ? {} : { storeLabelId: storeLabelIds.join(',') }),
@@ -556,6 +566,7 @@ export class OutProductService {
         savedProductId = rows[0].id;
       }
 
+      const formProof = outProductFormProof(savedProductId, existing, customForm, systemFormId, admittedForm);
       if (!couponFence) {
         couponFence = await inventoryLock(() => captureOutProductCoupons(tx, savedProductId));
         if (couponFence.rows.length) throw new ValidateException("新商品优惠券关联已变化");
@@ -675,6 +686,7 @@ export class OutProductService {
       await tx.execute(sql`SET CONSTRAINTS ALL IMMEDIATE`);
       await inventoryLock(() => assertOutProductRelationFence(tx, relationFence));
       await inventoryLock(() => assertOutProductCoupons(tx, couponProof));
+      await inventoryLock(() => assertOutProductForm(tx, formProof));
       return { id: savedProductId, idempotent: false, stock_preserved: !!existing };
     });
   }

@@ -1,0 +1,292 @@
+{
+  "schema": "php-ts-out-product-forms/v1",
+  "baseCommit": "88516ebe7cda3ffd38ebafdc80d8ea622ce1172e",
+  "preparedAt": "2026-11-11T14:02:06.475873+00:00",
+  "phpSources": [
+    {
+      "file": "app/controller/out/Product.php",
+      "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "gitBlobSha1": "5a55a3a43001325abfd36cee3c6af3e3b45cac66",
+      "sha256": "a52f6c6392594116e66803572a67e6c15d424fa13eac48df6bc9d7a6ef01c24a",
+      "lineRanges": [
+        [
+          237,
+          237
+        ]
+      ]
+    },
+    {
+      "file": "app/services/product/product/StoreProductServices.php",
+      "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "gitBlobSha1": "f8163c25f694dd0ff84486d89926ef004ba9e81e",
+      "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+      "lineRanges": [
+        [
+          402,
+          410
+        ],
+        [
+          807,
+          807
+        ]
+      ]
+    },
+    {
+      "file": "app/services/system/form/SystemFormServices.php",
+      "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "gitBlobSha1": "bd984419d7621e5608caf6a91ee108108f59c088",
+      "sha256": "7592c22bef6da315a09de29faa698fb3796c244e8286bb1bdbf215a30ff065c1",
+      "lineRanges": [
+        [
+          76,
+          100
+        ]
+      ]
+    },
+    {
+      "file": "app/controller/api/v1/order/StoreOrder.php",
+      "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "gitBlobSha1": "4000a037dfced07d9415b910cc6749b9907bb810",
+      "sha256": "3cc0cda63a02d86ca577bcc2ba924cbb54672a01bc49d7fe5d512dc43e87ca70",
+      "lineRanges": [
+        [
+          211,
+          211
+        ]
+      ]
+    },
+    {
+      "file": "app/services/order/StoreOrderCreateServices.php",
+      "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "gitBlobSha1": "69846bfc635e1f859bb62744987fb7dd0d2e7b16",
+      "sha256": "723418afcfc9d0740e1345e88d559717c0756d16c0ddb179645344f8fc2b6c43",
+      "lineRanges": [
+        [
+          229,
+          231
+        ]
+      ]
+    }
+  ],
+  "scope": [
+    "Legacy custom_form snapshot and independent system_form_id TS extension",
+    "Explicit omission/clear, current template admission and row-version/deferred-trigger proof",
+    "Actual local customer checkout and independent restricted App LOGIN"
+  ],
+  "validation": {
+    "unit": {
+      "numTotalTests": 139,
+      "numPassedTests": 139,
+      "numFailedTests": 0,
+      "numPendingTests": 0
+    },
+    "native": {
+      "native-checkout": {
+        "passed": 71,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      },
+      "native-out-labels": {
+        "passed": 69,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      },
+      "native-supplier-forms": {
+        "passed": 41,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      }
+    },
+    "profiles": [
+      {
+        "profile": "unit",
+        "exit": 0,
+        "seconds": 24.822,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "worker-unit-types",
+        "exit": 0,
+        "seconds": 263.862,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "worker-runtime-types",
+        "exit": 0,
+        "seconds": 110.223,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-checkout",
+        "exit": 0,
+        "seconds": 586.116,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-out-labels",
+        "exit": 0,
+        "seconds": 570.328,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-supplier-forms",
+        "exit": 0,
+        "seconds": 73.695,
+        "budgetSeconds": 600
+      }
+    ],
+    "originalCheckoutAssertionsPreserved": true,
+    "originalNativeChildBudgetSeconds": 600
+  },
+  "unchangedInputs": [
+    {
+      "file": ".github/workflows/workers-runtime-linux.yml",
+      "sha256": "94f08a84a76181eb0f0229f0f82d1f731b9c39ebbe09b5ceebb4ae3741d6cac6"
+    },
+    {
+      "file": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "32c5fff9c6dbfaa30720fbd72dd729a3ea7a1e7fc3a02be5515fb541af55a074"
+    },
+    {
+      "file": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+      "sha256": "4044d51930d72620f9d124c375779e37a99fdfb8e8c815cf2cb30420080d4324"
+    },
+    {
+      "file": "workers-ts/src/services/supplier/SupplierProductSystemFormBindings.ts",
+      "sha256": "54975b2fb46b809413a188bf893f85b04e20a8384b804e0df91c3f327d0f792e"
+    }
+  ],
+  "candidateImages": [
+    {
+      "file": "workers-ts/docs/php-ts-out-product-forms-20261111.md",
+      "sha256": "839db0716d89a9ac9842560eb4feeefdddfb88244649f7b31d03344171a8e26a",
+      "bytes": 2273
+    },
+    {
+      "file": "workers-ts/src/services/out/OutProductDetailRead.ts",
+      "sha256": "9074ffdfa47626395ad75b9ef70780361b49915c825a30a566baea6b6c7e338b",
+      "bytes": 13827
+    },
+    {
+      "file": "workers-ts/src/services/out/OutProductFormBindings.ts",
+      "sha256": "fb658e4208f51707715d2efc803a9112d9406af19f5395767931d9c75aba80ce",
+      "bytes": 4772
+    },
+    {
+      "file": "workers-ts/src/services/out/OutProductService.ts",
+      "sha256": "a56e0a2cf75bf7dd6f731fb824619e8bf5579edac94ea0b63a733f1da671114c",
+      "bytes": 38014
+    },
+    {
+      "file": "workers-ts/test/checkout-out-product-concurrency.test.ts",
+      "sha256": "2bf23233337b397301d0294934e105b0a534d33922752ef143e50f1f79a3d454",
+      "bytes": 78145
+    },
+    {
+      "file": "workers-ts/test/out-product-forms.test.ts",
+      "sha256": "b30f80a498a879109546eb5fcf62c31c41beda8326b981eee36f01f63266e2d1",
+      "bytes": 2804
+    }
+  ],
+  "retainedFailures": [
+    {
+      "reason": "Initial unit test creation used an incorrect working-directory-relative path; only four existing files ran, not accepted as new-test evidence."
+    },
+    {
+      "file": "native-create-version.log",
+      "reason": "New creation fixture exposed unordered product rows; assertion now finds product by id, and all seven new cases passed again."
+    }
+  ],
+  "secretScanReview": {
+    "rule": "generic-api-key",
+    "file": "workers-ts/test/checkout-out-product-concurrency.test.ts",
+    "line": 22,
+    "reason": "Unchanged synthetic UUIDv4 used as a local idempotency header; verify against base and retain redacted report."
+  },
+  "runtimeBoundary": "Synthetic Out identity, actual local PostgreSQL/Hono checkout, and separately authenticated restricted App LOGIN. No production role installation, real account authentication, provider payment, or remote service.",
+  "previousCI": {
+    "commit": "88516ebe7cda3ffd38ebafdc80d8ea622ce1172e",
+    "runId": 43028897618,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/43028897618",
+    "workerShards": "fixed legacy PHP checkout failure",
+    "statusAtReview": "completed",
+    "conclusion": "failure",
+    "otherCompletedJobs": "success"
+  },
+  "boundaries": {
+    "noSchemaMigration": true,
+    "noRunnerAdmissionChange": true,
+    "noWorkflowOrBudgetChange": true,
+    "noProductionGrantChange": true,
+    "deploymentPerformed": false,
+    "legacyPhpUploaded": false,
+    "newCommitRemoteCIVerified": false,
+    "wholeMigrationComplete": false
+  },
+  "artifactDirectory": "/tmp/php-ts-out-product-forms-20261111",
+  "artifacts": [
+    {
+      "name": "frozen-source.json",
+      "sha256": "65c15f07dcf1f0930b8c1596160a6ae266d4360d582fe8989b8bffb75e376c06",
+      "bytes": 622
+    },
+    {
+      "name": "validation-progress.json",
+      "sha256": "200bf291b363df58f425bb2cd7e7197ada844bdfd2b2d65387c91cb5793b82df",
+      "bytes": 647
+    },
+    {
+      "name": "unit.json",
+      "sha256": "c1bbd769adaa6629c9b648e6b7a44cb118ead039d479d6dd4fadcabc19241d81",
+      "bytes": 56218
+    },
+    {
+      "name": "unit.log",
+      "sha256": "7c411c7511fe2aa84ac7beb473680f4297d568882d96f780ec010be4ddf92bb7",
+      "bytes": 417
+    },
+    {
+      "name": "worker-unit-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "name": "worker-runtime-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "name": "native-checkout.log",
+      "sha256": "39865b7cf2f2296cc9034516401544092e87cb55114053fd73d412cfffb258ca",
+      "bytes": 1398
+    },
+    {
+      "name": "native-out-labels.log",
+      "sha256": "3ed7b1852a87ae987981cc52e5e620239247fbe82319d1e61806cdcaec7f980d",
+      "bytes": 1393
+    },
+    {
+      "name": "native-supplier-forms.log",
+      "sha256": "adf44b310972aa72a2e70cf0c44e2484b16a3b7f1c1d1ace5a44a0555c9051ea",
+      "bytes": 1401
+    },
+    {
+      "name": "native-targeted-initial.log",
+      "sha256": "bdf396b6d641f572389177baf570c33e8fca4b73b6b20c47bae7ebf66f52530f",
+      "bytes": 1872
+    },
+    {
+      "name": "native-create-version.log",
+      "sha256": "2fb2031ca56b4227dc1dc1db21fe29d22d7498e91d88efb048cec5aa219cefe7",
+      "bytes": 3036
+    },
+    {
+      "name": "native-targeted-final.log",
+      "sha256": "da63c23982faa49601bb46a051377c52d73b712fdd1ecba59c9a9ffc22d5d9c8",
+      "bytes": 1872
+    }
+  ]
+}
