@@ -1,0 +1,294 @@
+{
+  "schema": "php-ts-out-product-schedule/v1",
+  "baseCommit": "4077f77b7fe03794fc28e4c8db319b851a23f01c",
+  "preparedAt": "2026-11-11T14:43:29.581313+00:00",
+  "phpSources": [
+    {
+      "file": "app/controller/out/Product.php",
+      "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "gitBlobSha1": "5a55a3a43001325abfd36cee3c6af3e3b45cac66",
+      "sha256": "a52f6c6392594116e66803572a67e6c15d424fa13eac48df6bc9d7a6ef01c24a",
+      "lineRanges": [
+        [
+          235,
+          236
+        ]
+      ]
+    },
+    {
+      "file": "app/services/product/product/StoreProductServices.php",
+      "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "gitBlobSha1": "f8163c25f694dd0ff84486d89926ef004ba9e81e",
+      "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+      "lineRanges": [
+        [
+          233,
+          249
+        ],
+        [
+          794,
+          798
+        ],
+        [
+          945,
+          950
+        ]
+      ]
+    },
+    {
+      "file": "app/dao/product/product/StoreProductDao.php",
+      "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "gitBlobSha1": "0d2d90499afc77c0ef98f191d6be11d6ecf8b58f",
+      "sha256": "2cdc901c673a11e699a23bd2d4ddcd01abe108d10854ddd3588099ec712ec5e8",
+      "lineRanges": [
+        [
+          468,
+          476
+        ]
+      ]
+    }
+  ],
+  "scope": [
+    "Out schedule input and Shanghai/UTC normalization with independent explicit cancellation",
+    "Versioned intent prevents old ignored-zero receipts from clearing a schedule",
+    "Atomic product/cart/relations and receipt; row-position proof after deferred triggers",
+    "Actual local ProductAutoShelfService consumer and restricted App LOGIN"
+  ],
+  "validation": {
+    "unit": {
+      "numTotalTests": 158,
+      "numPassedTests": 158,
+      "numFailedTests": 0,
+      "numPendingTests": 0
+    },
+    "native": {
+      "native-schedule": {
+        "passed": 10,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      },
+      "native-checkout": {
+        "passed": 71,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      },
+      "native-out-labels": {
+        "passed": 69,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      },
+      "native-supplier-schedule": {
+        "passed": 16,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      }
+    },
+    "profiles": [
+      {
+        "profile": "unit",
+        "exit": 0,
+        "seconds": 33.65,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "worker-unit-types",
+        "exit": 0,
+        "seconds": 271.673,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "worker-runtime-types",
+        "exit": 0,
+        "seconds": 108.373,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-schedule",
+        "exit": 0,
+        "seconds": 70.951,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-checkout",
+        "exit": 0,
+        "seconds": 582.376,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-out-labels",
+        "exit": 0,
+        "seconds": 570.457,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-supplier-schedule",
+        "exit": 0,
+        "seconds": 45.928,
+        "budgetSeconds": 600
+      }
+    ],
+    "originalSchedulerTestsPreserved": true,
+    "originalNativeChildBudgetSeconds": 600
+  },
+  "unchangedInputs": [
+    {
+      "file": ".github/workflows/workers-runtime-linux.yml",
+      "sha256": "94f08a84a76181eb0f0229f0f82d1f731b9c39ebbe09b5ceebb4ae3741d6cac6"
+    },
+    {
+      "file": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "32c5fff9c6dbfaa30720fbd72dd729a3ea7a1e7fc3a02be5515fb541af55a074"
+    },
+    {
+      "file": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+      "sha256": "4044d51930d72620f9d124c375779e37a99fdfb8e8c815cf2cb30420080d4324"
+    },
+    {
+      "file": "workers-ts/src/services/supplier/SupplierProductScheduleInput.ts",
+      "sha256": "bf58bde99010d477c9c78831e4e6a57cd98506f9b0f6d6ea1b57e054d413a6be"
+    },
+    {
+      "file": "workers-ts/src/services/product/ProductAutoShelfService.ts",
+      "sha256": "08af044b20f2e751df416778d2dc2e9d13fdfae25a4063bd66e2b1e064cf746b"
+    }
+  ],
+  "candidateImages": [
+    {
+      "file": "workers-ts/docs/php-ts-out-product-schedule-20261111.md",
+      "sha256": "b3a52482157a3828bfd599bcdf6794e12f52b5006b5deb96f11ac9683b0c765f",
+      "bytes": 2246
+    },
+    {
+      "file": "workers-ts/src/services/out/OutProductDetailRead.ts",
+      "sha256": "9ae1c7db5dd775aa332044765c585aa8d1e308da3fdcd5c666c1ee5c484a9162",
+      "bytes": 13905
+    },
+    {
+      "file": "workers-ts/src/services/out/OutProductScheduleBindings.ts",
+      "sha256": "e75d6710009595c01975f9e5c68163ec9441da0c6a2db489fc5f603652c98c00",
+      "bytes": 2770
+    },
+    {
+      "file": "workers-ts/src/services/out/OutProductService.ts",
+      "sha256": "968ceca9d5768e31cd66cb9704459094ba6acdda61ca627b3b75246f076e672a",
+      "bytes": 39026
+    },
+    {
+      "file": "workers-ts/test/out-product-schedule.test.ts",
+      "sha256": "045df8cb317b308f755959282b1df7cd0ff66c275ddbb2696d145fe944ffee93",
+      "bytes": 2630
+    },
+    {
+      "file": "workers-ts/test/product-auto-shelf-native.test.ts",
+      "sha256": "70d960e3dec439dffbea3a2ceb5e0c83fc00bcc92c409ffab3e4b23fdefb2d10",
+      "bytes": 21296
+    }
+  ],
+  "retainedFailures": [
+    {
+      "file": "unit-initial-failure.json",
+      "reason": "Shared old normalizer rejected legacy string zero and old hashes already included zero without executing a clear; corrected boundary and versioned intent."
+    },
+    {
+      "file": "native-initial.log",
+      "reason": "New test fixture omitted afterEach import, so test discovery failed; corrected and complete suite reran."
+    }
+  ],
+  "runtimeBoundary": "Synthetic Out identity, isolated PostgreSQL and actual ProductAutoShelfService.process. Separately authenticated restricted App LOGIN uses the current privilege plan. No actual production cron, provider, queue delivery or real customer authentication.",
+  "previousCI": {
+    "commit": "4077f77b7fe03794fc28e4c8db319b851a23f01c",
+    "runId": 43034770560,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/43034770560",
+    "workerShards": "fixed legacy PHP checkout failure",
+    "statusAtReview": "completed",
+    "conclusion": "failure",
+    "otherCompletedJobs": "success"
+  },
+  "boundaries": {
+    "noSchemaMigration": true,
+    "noRunnerAdmissionChange": true,
+    "noWorkflowOrBudgetChange": true,
+    "noProductionGrantChange": true,
+    "deploymentPerformed": false,
+    "legacyPhpUploaded": false,
+    "newCommitRemoteCIVerified": false,
+    "wholeMigrationComplete": false
+  },
+  "artifactDirectory": "/tmp/php-ts-out-product-schedule-20261111",
+  "artifacts": [
+    {
+      "name": "frozen-source.json",
+      "sha256": "17beb861645b3ae5840db4c44b3bf8cc87a8fe5ae162e080550af2704ee12f42",
+      "bytes": 622
+    },
+    {
+      "name": "validation-progress.json",
+      "sha256": "b9627ea673ac19f99fd0e5e6e34ea7b0876cde48695fefd0aa0b1a72fd8d5f2e",
+      "bytes": 755
+    },
+    {
+      "name": "unit.json",
+      "sha256": "7ebfc30dcb9277f3a80d91b88c7197384baac82af66fb77363c9814ff58b48d2",
+      "bytes": 68968
+    },
+    {
+      "name": "unit.log",
+      "sha256": "a3d5f9666b298d8cd7bdd1e13942801405dc4ac53ea2f64a1ac2b6eedf50e049",
+      "bytes": 420
+    },
+    {
+      "name": "worker-unit-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "name": "worker-runtime-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "name": "native-schedule.log",
+      "sha256": "55aa7786546dbe550b6f58ac399249038f0a9ccd1c0f9b12e7dfd5473e02273b",
+      "bytes": 1389
+    },
+    {
+      "name": "native-checkout.log",
+      "sha256": "334e5c0b786fe0242068211a61fdf0ecb1b9bd4eea2cab85985d8eec5461a84b",
+      "bytes": 1398
+    },
+    {
+      "name": "native-out-labels.log",
+      "sha256": "5d9e8e21ed3df3146e1ac1d6d6c1554fe067d72dc8e1a2a6ca205e3da8ba628c",
+      "bytes": 1393
+    },
+    {
+      "name": "native-supplier-schedule.log",
+      "sha256": "b750d62510bcd48cfa768f5e632ef23b33386979f678713861f46fdfc5e061ed",
+      "bytes": 1398
+    },
+    {
+      "name": "native-initial.log",
+      "sha256": "a08ced79d173cc126585371f905c3fe65ad0f8a61afef82727bbce2ceb73e1f5",
+      "bytes": 2176
+    },
+    {
+      "name": "native-retry.log",
+      "sha256": "1625ddbbe24ec6fc9573707470b94cb8cc4d24cbbcf8bafe961eb9ea202dab46",
+      "bytes": 1389
+    },
+    {
+      "name": "unit-initial-failure.json",
+      "sha256": "84cb944785bfad3663b59a8efd8faacdf717d4bd4c9fe6446cbe420f0e6c95e3",
+      "bytes": 390
+    },
+    {
+      "name": "unit-initial-fixed.log",
+      "sha256": "e550713f7ff195e8193ba883f4d5b5a08b9f78bd2baa0dcfc179dc00c63c0485",
+      "bytes": 629
+    }
+  ]
+}

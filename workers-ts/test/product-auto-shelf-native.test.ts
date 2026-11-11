@@ -1,7 +1,7 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { eq, sql } from 'drizzle-orm';
 import { getTableConfig } from 'drizzle-orm/pg-core';
-import { storeProduct } from '@/models/schema';
+import { storeProduct, storeProductCategory, storeProductAttrValue, storeProductRelation, outProductWriteReplay, storeProductCoupon, systemForm } from '@/models/schema';
 import { createContainerFromDb, type DbClient } from '@/lib/di';
 import { ProductAutoShelfService } from '@/services/product/ProductAutoShelfService';
 import { runProductAutoShelf } from '@/migrations/runProductAutoShelf';
@@ -9,6 +9,16 @@ import { PRODUCT_AUTO_SHELF_SQL } from '@/migrations/productAutoShelf';
 import { lockProductWrite } from '@/services/product/ProductAssociationService';
 import { lockBargainSourceProductAdmission } from '@/services/activity/BargainSourceProductLifecycle';
 import { stockFixture, seedStocks, stockSnapshot } from './helpers/adminProductStocks';
+import { Hono } from 'hono';
+import type { AppVariables } from '@/env';
+import { productCreate, productInfo, productUpdate } from '@/controllers/out/OutApiController';
+import { normalizeOutPhysicalProductInput } from '@/services/out/OutProductService';
+import { outRequestHash } from '@/services/out/OutIdempotency';
+import { createPcCheckoutQuoteFixture } from './helpers/pcCheckoutQuoteFixture';
+import { sequenceRunnerDatabase, type SequenceRunnerPeer } from './helpers/kefuSequenceRunnerDatabase';
+import { completePurchaseOriginEvidenceOrm } from '@/migrations/runPurchaseOriginEvidence';
+import { completePurchaseCancellationEvidenceOrm } from '@/migrations/runPurchaseCancellationEvidence';
+import { runtimeBusinessPrivilegePlan } from '@/migrations/runtimeBusinessPrivilegePlan';
 import { outcome, waitForFinanceBlock, withFinancePeers } from './helpers/financePeers';
 import type { Env, ProductAutoShelfMessage } from '@/env';
 const on = 'sp_auto_on_due_idx', off = 'sp_auto_off_due_idx';
@@ -81,4 +91,147 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('PG16 explicit sh
       await service.process(work); expect(await stockSnapshot(f.db)).toEqual(after); expect(queue.sendBatch).not.toHaveBeenCalled();
     });
   });
+});
+
+
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Out shelf schedule author and actual consumer on owned PG16', () => {
+  let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
+  let owned: Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
+  let network: ReturnType<typeof vi.spyOn>;
+  const body = { product_type: 0, supplier_id: 0, cate_id: [9], store_name: 'Out scheduled product',
+    slider_image: ['/isolated.png'], delivery_type: [1], freight: 3, temp_id: 10, spec_type: 1, is_show: 1,
+    items: [{ value: '颜色', detail: ['红色'] }, { value: '尺码', detail: ['大号'] }],
+    attrs: [{ suk: '红色,大号', detail: { 颜色: '红色', 尺码: '大号' }, unique: 'qared001', price: '10.00', stock: 999, bar_code: 'OUT-A' }] };
+  const app = (db: DbClient) => {
+    const a = new Hono<{ Bindings: Env; Variables: AppVariables }>();
+    a.use('*', async (c, next) => { c.set('container', createContainerFromDb(db));
+      c.set('outInfo', { id: 7, appid: 'isolated-out-schedule', title: 'isolated', rules: [] }); await next(); });
+    a.onError((e, c) => c.json({ status: 400, msg: e.message, data: null }));
+    a.post('/outapi/product', productCreate); a.put('/outapi/product/:id', productUpdate); a.get('/outapi/product/:id', productInfo);
+    return a;
+  };
+  beforeEach(async () => {
+    network = vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('Out schedule acceptance forbids external I/O'));
+    f = await createPcCheckoutQuoteFixture([], async () => {
+      owned = await sequenceRunnerDatabase();
+      try { const api = await import('drizzle-kit/api'), schema = await import('@/models/schema');
+        await owned.exec((await api.generateMigration(api.generateDrizzleJson({}), api.generateDrizzleJson(schema))).join('\n'));
+        await completePurchaseOriginEvidenceOrm(owned.db); await completePurchaseCancellationEvidenceOrm(owned.db); return owned;
+      } catch (error) { await owned.close(); throw error; }
+    });
+    await f.setConfig(Object.fromEntries(Object.keys(f.config).map(name => [name, '0'])));
+    await f.db.insert(storeProductCategory).values({ id: 9, cateName: 'isolated', isShow: 1 });
+    await f.db.update(storeProduct).set({ cateId: '9', specType: 1 }).where(eq(storeProduct.id, 70));
+    await f.db.update(storeProductAttrValue).set({ barCode: 'OUT-A' }).where(eq(storeProductAttrValue.id, 1));
+    await f.db.insert(storeProductRelation).values({ productId: 70, relationId: 9, type: 1, status: 1 });
+  }, 120_000);
+  afterEach(async () => { try { expect(network).not.toHaveBeenCalled(); } finally { network?.mockRestore(); await f?.close(); } }, 120_000);
+  const request = async (db: DbClient, data?: object, key = crypto.randomUUID(), path = '/outapi/product/70', method = 'PUT') => {
+    const response = await app(db).request(path, { method, headers: { 'content-type': 'application/json', 'Idempotency-Key': key },
+      ...(data ? { body: JSON.stringify(data) } : {}) }, f.env);
+    return response.json() as Promise<{ status: number; msg: string; data: { id: number; idempotent: boolean; stock_preserved: boolean } }>;
+  };
+  const state = async () => ({ ...await f.snapshot(), replays: await f.db.select().from(outProductWriteReplay),
+    relations: await f.db.select().from(storeProductRelation), coupons: await f.db.select().from(storeProductCoupon), forms: await f.db.select().from(systemForm) });
+  const worker = (db = f.db) => { const queue = { sendBatch: vi.fn() } as unknown as Env['ORDER_QUEUE'];
+    return { service: new ProductAutoShelfService(createContainerFromDb(db), { ORDER_QUEUE: queue }), queue }; };
+  const message = (at: number, productId = 70): ProductAutoShelfMessage => ({ action: 'processProductAutoShelf', job: 'product_auto_shelf',
+    scheduledAt: at * 1000, runId: `scheduled:${at * 1000}`, productId });
+  const peers = async (fn: (holder: SequenceRunnerPeer, writer: SequenceRunnerPeer) => Promise<void>) => {
+    if (!owned.withPeer) throw Error('Distinct PG16 peers required'); await owned.withPeer(a => owned.withPeer!(b => fn(a, b)));
+  };
+
+  it('commits a scheduled hide, runs the real on/off consumer, and replays without undoing it', async () => {
+    const now = Math.floor(Date.now() / 1000) - 2, key = crypto.randomUUID();
+    const selected = { ...body, auto_on_time: now - 1, auto_off_time: 0 };
+    const before = await state(), saved = await request(f.db, selected, key); expect(saved.status, saved.msg).toBe(200);
+    let after = await state(); expect(after.products[0]).toMatchObject({ isShow: 0, autoOnTime: now - 1, autoOffTime: 0, stock: 8 });
+    expect(after.carts[0].status).toBe(0); expect(after.relations[0].status).toBe(0);
+    expect(after.skus.map(row => [row.id, row.unique, row.stock, row.sumStock, row.sales])).toEqual(before.skus.map(row => [row.id, row.unique, row.stock, row.sumStock, row.sales]));
+    const read = await request(f.db, undefined, key, '/outapi/product/70', 'GET'); expect(read.status, read.msg).toBe(200);
+    expect(read.data).toMatchObject({ auto_on_time: now - 1, auto_off_time: 0 });
+    const { service, queue } = worker(); expect(await service.process(message(now))).toMatchObject({ isShow: 1, transitions: ['on'] });
+    const postOn = await state(); expect(postOn.carts[0].status).toBe(0); expect(postOn.relations[0].status).toBe(0);
+    const replay = await request(f.db, selected, key); expect(replay.status, replay.msg).toBe(200); expect(replay.data.idempotent).toBe(true); expect(await state()).toEqual(postOn);
+    const off = await request(f.db, { ...body, auto_on_time: 0, auto_off_time: now - 1 }); expect(off.status, off.msg).toBe(200);
+    expect(await service.process(message(now))).toMatchObject({ isShow: 0, transitions: ['off'] });
+    after = await state(); expect(after.products[0]).toMatchObject({ isShow: 0, autoOnTime: 0, autoOffTime: now - 1 });
+    expect(after.carts[0].status).toBe(1); expect(after.relations[0].status).toBe(1); expect(queue.sendBatch).not.toHaveBeenCalled();
+  }, 30_000);
+
+  it('preserves omitted plans, respects the prior manual-show rule, and rejects legacy zero-time receipts', async () => {
+    await f.db.update(storeProduct).set({ autoOnTime: 100, autoOffTime: 200, isShow: 0 }).where(eq(storeProduct.id, 70));
+    const omitted = await request(f.db, { ...body, is_show: 0 }); expect(omitted.status, omitted.msg).toBe(200);
+    expect((await state()).products[0]).toMatchObject({ autoOnTime: 100, autoOffTime: 200, isShow: 0 });
+    const shown = await request(f.db, body); expect(shown.status, shown.msg).toBe(200);
+    expect((await state()).products[0]).toMatchObject({ autoOnTime: 100, autoOffTime: 0, isShow: 1 });
+    await f.db.update(storeProduct).set({ autoOnTime: 100, autoOffTime: 200, isShow: 0 }).where(eq(storeProduct.id, 70));
+    const input = { ...body, is_show: 0, auto_on_time: 0, auto_off_time: 0 }, old = normalizeOutPhysicalProductInput(input);
+    delete old.scheduleIntentVersion;
+    const key = crypto.randomUUID(), hash = await outRequestHash({ operation: 'product_update', productId: 70, input: old });
+    await f.db.insert(outProductWriteReplay).values({ outAccountId: 7, operation: 'product_update', requestKey: key, requestHash: hash, productId: 70 });
+    const before = await state(), conflict = await request(f.db, input, key); expect(conflict.status).not.toBe(200); expect(await state()).toEqual(before);
+    const clear = await request(f.db, input); expect(clear.status, clear.msg).toBe(200);
+    expect((await state()).products[0]).toMatchObject({ autoOnTime: 0, autoOffTime: 0, isShow: 0 });
+  });
+
+  it('creates a scheduled product in the same receipt and projects the live Shanghai wall time', async () => {
+    await f.exec("SELECT setval(pg_get_serial_sequence('store_product','id'),70,true); SELECT setval(pg_get_serial_sequence('store_product_attr_value','id'),1,true)");
+    const key = crypto.randomUUID(), data = { ...body, auto_on_time: '2026-10-17 16:00', auto_off_time: '2026-10-17T09:00:00Z',
+      attrs: body.attrs.map(row => ({ ...row, unique: 'sched001', bar_code: 'SCHEDULE-NEW' })) };
+    const created = await request(f.db, data, key, '/outapi/product', 'POST'); expect(created.status, created.msg).toBe(200);
+    const [row] = await f.db.select().from(storeProduct).where(eq(storeProduct.id, created.data.id));
+    expect(row).toMatchObject({ isShow: 0, autoOnTime: 1792224000, autoOffTime: 1792227600 });
+    const detail = await request(f.db, undefined, key, `/outapi/product/${created.data.id}`, 'GET');
+    expect(detail.status, detail.msg).toBe(200); expect(detail.data).toMatchObject({ auto_on_time: 1792224000, auto_off_time: 1792227600,
+      productInfo: { auto_on_time: '2026-10-17 16:00:00', auto_off_time: '' } });
+    const after = await state(), replay = await request(f.db, data, key, '/outapi/product', 'POST');
+    expect(replay.status, replay.msg).toBe(200); expect(replay.data.idempotent).toBe(true); expect(await state()).toEqual(after);
+  });
+
+  it('rolls back receipt and business data when a deferred trigger changes or rewrites schedule state', async () => {
+    const before = await state();
+    for (const mutation of ['auto_on_time=123', 'auto_on_time=auto_on_time']) {
+      await f.exec(`CREATE FUNCTION test_out_schedule_damage() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN UPDATE store_product SET ${mutation} WHERE id=70; RETURN NEW; END $$; CREATE CONSTRAINT TRIGGER test_out_schedule_damage AFTER INSERT ON out_product_write_replay DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION test_out_schedule_damage()`);
+      for (const patch of [{}, { auto_on_time: 100, auto_off_time: 200 }]) {
+        const result = await request(f.db, { ...body, ...patch }); expect(result.status).not.toBe(200); expect(result.msg).toContain('定时'); expect(await state()).toEqual(before);
+      }
+      await f.exec('DROP TRIGGER test_out_schedule_damage ON out_product_write_replay; DROP FUNCTION test_out_schedule_damage()');
+    }
+  });
+
+  it('refuses a busy parent row rather than racing the real scheduler', async () => {
+    const before = await state();
+    await peers(async (holder, writer) => { await holder.exec('BEGIN; SELECT id FROM store_product WHERE id=70 FOR UPDATE');
+      try { const result = await request(writer.db, { ...body, auto_on_time: 100 }); expect(result.status).not.toBe(200); expect(result.msg).toContain('正在变化'); }
+      finally { await holder.exec('COMMIT'); }
+    });
+    expect(await state()).toEqual(before);
+  }, 20_000);
+
+  it('saves and reads an actual schedule using only existing restricted App privileges', async () => {
+    if (!owned.withRuntimeRole) throw Error('Native restricted LOGIN required');
+    await owned.withRuntimeRole(async runtime => {
+      const plan = runtimeBusinessPrivilegePlan('app'), quote = (name: string) => {
+        if (!/^[a-z_][a-z_0-9]*$/.test(name)) throw Error('Invalid owned grant identifier'); return `"${name}"`;
+      };
+      const tables = await f.db.execute<{ name: string }>(sql`SELECT relname AS name FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r' ORDER BY relname`);
+      for (const { name } of tables) { const rights = plan.tables[name]; if (!rights) continue;
+        await f.exec(`GRANT ${rights.join(',')} ON public.${quote(name)} TO ${quote(runtime.role)}`);
+        const columns = plan.updateColumns[name]; if (columns?.length) await f.exec(`GRANT UPDATE(${columns.map(quote).join(',')}) ON public.${quote(name)} TO ${quote(runtime.role)}`);
+      }
+      const sequences = await f.db.execute<{ table_name: string; sequence_name: string | null }>(sql`SELECT c.relname AS table_name,
+        pg_get_serial_sequence('public.'||quote_ident(c.relname),a.attname) AS sequence_name FROM pg_class c
+        JOIN pg_attribute a ON a.attrelid=c.oid AND a.attnum>0 AND NOT a.attisdropped
+        WHERE c.relnamespace='public'::regnamespace AND c.relkind='r'`);
+      for (const row of sequences) if (row.sequence_name && plan.tables[row.table_name]?.includes('INSERT')) {
+        const parts = row.sequence_name.split('.'); if (parts.length !== 2 || parts[0] !== 'public') throw Error('Unexpected owned sequence');
+        await f.exec(`GRANT USAGE ON SEQUENCE public.${quote(parts[1])} TO ${quote(runtime.role)}`);
+      }
+      const result = await request(runtime.db, { ...body, auto_on_time: 100, auto_off_time: 200 });
+      expect(result.status, result.msg).toBe(200);
+      const read = await request(runtime.db, undefined, crypto.randomUUID(), '/outapi/product/70', 'GET');
+      expect(read.status, read.msg).toBe(200); expect(read.data).toMatchObject({ auto_on_time: 100, auto_off_time: 200 });
+    });
+  }, 30_000);
 });

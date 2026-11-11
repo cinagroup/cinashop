@@ -132,6 +132,7 @@ export async function readOutProductDetail(container: Container, id: number, app
       slots.forEach((slot, index) => slot.set(references[index]));
       capacity(info, 768 * 1024, '商品详情完整表单超过768 KiB编辑容量');
       const data = { ...product, ...brand, ...ensure, ...labels, ...parameters, ...systemFormSelection,
+        auto_on_time: product.autoOnTime, auto_off_time: product.autoOffTime,
         cate_id: relations.filter(row => row.type === 1).map(row => row.relationId),
         description: descriptions[0]?.description ?? '', items: specs.flatItems,
         attrs: skus.map(sku => ({ ...sku, detail: Object.fromEntries(specs.flatItems.map((item, index) => [item.value, sku.suk.split(',')[index] ?? ''])) })),

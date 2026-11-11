@@ -33,6 +33,7 @@ import { outProductLabelInput, lockOutProductLabels, replaceOutProductLabelBindi
 import { outProductParameterInput, lockOutProductParameterTemplate, replaceOutProductParameterBindings, assertOutProductParameterBindings } from './OutProductParameterBindings';
 import { outProductCouponInput, captureOutProductCoupons, replaceOutProductCoupons, assertOutProductCoupons } from './OutProductCouponBindings';
 import { outProductCustomFormInput, outProductSystemFormInput, lockOutProductSystemForm, outProductFormProof, assertOutProductForm } from './OutProductFormBindings';
+import { outProductScheduleInput, outProductScheduleProof, assertOutProductSchedule } from './OutProductScheduleBindings';
 
 type UnknownRecord = Record<string, unknown>;
 type ProductWriteOperation = "product_create" | "product_update" | "product_show" | "stock_upload";
@@ -59,6 +60,9 @@ interface OutPhysicalProductInput extends SupplierPhysicalProductInput {
   couponIds?: number[];
   customForm?: string;
   systemFormId?: number;
+  autoOnTime?: number;
+  autoOffTime?: number;
+  scheduleIntentVersion?: 1;
   deliveryType: string;
   freight: 1 | 2 | 3;
   isShow: 0 | 1;
@@ -159,8 +163,6 @@ function nonEmpty(value: unknown): boolean {
 function rejectUnmigratedProductFeatures(input: UnknownRecord): void {
   const unsupported = [
     "activity",
-    "auto_off_time",
-    "auto_on_time",
     "is_presale_product",
     "is_vip_product",
     "presale_day",
@@ -188,7 +190,13 @@ function deliveryTypes(value: unknown): string {
 
 export function normalizeOutPhysicalProductInput(input: UnknownRecord): OutPhysicalProductInput {
   rejectUnmigratedProductFeatures(input);
-  const base = normalizeSupplierPhysicalProductInput(input, { requireSettlePrice: false });
+  const schedule = outProductScheduleInput(input);
+  // The former shared adapter included explicit empty timestamps in old
+  // receipt hashes even though Out ignored them. Remove them before invoking
+  // the base parser and bind the new author intent to an explicit version.
+  const baseInput = { ...input };
+  delete baseInput.auto_on_time; delete baseInput.auto_off_time;
+  const base = normalizeSupplierPhysicalProductInput(baseInput, { requireSettlePrice: false });
   const freightValue = strictInteger(input.freight, "运费类型", 1, 1, 3) as 1 | 2 | 3;
   let postage = base.postage;
   let tempId = base.tempId;
@@ -215,6 +223,7 @@ export function normalizeOutPhysicalProductInput(input: UnknownRecord): OutPhysi
   const couponIds = outProductCouponInput(input);
   const customForm = outProductCustomFormInput(input);
   const systemFormId = outProductSystemFormInput(input);
+  const requestedIsShow = flag(input.is_show, "商品状态", 0);
   return {
     ...base,
     ...(brandIds === undefined ? {} : { brandIds }),
@@ -223,6 +232,8 @@ export function normalizeOutPhysicalProductInput(input: UnknownRecord): OutPhysi
     ...(couponIds === undefined ? {} : { couponIds }),
     ...(customForm === undefined ? {} : { customForm }),
     ...(systemFormId === undefined ? {} : { systemFormId }),
+    ...schedule,
+    ...(Object.keys(schedule).length ? { scheduleIntentVersion: 1 as const } : {}),
     ...outProductLabelInput(input),
     sliderImages,
     skus,
@@ -231,7 +242,7 @@ export function normalizeOutPhysicalProductInput(input: UnknownRecord): OutPhysi
     tempId,
     deliveryType: deliveryTypes(input.delivery_type),
     freight: freightValue,
-    isShow: flag(input.is_show, "商品状态", 0),
+    isShow: schedule.autoOnTime ? 0 : requestedIsShow,
     sales: strictInteger(input.sales, "销量", 0),
     giveIntegral: decimal(input.give_integral, "赠送积分"),
     recommendImage: safeAsset(input.recommend_image, "推荐图片", 256),
@@ -543,7 +554,8 @@ export class OutProductService {
         isSold: stock > 0 ? 0 : 1,
         soureLink: input.sourceLink,
         code: input.code,
-        autoOffTime: input.isShow ? 0 : (existing?.autoOffTime ?? 0),
+        ...(input.autoOnTime === undefined ? {} : { autoOnTime: input.autoOnTime }),
+        autoOffTime: input.autoOffTime ?? (input.isShow ? 0 : (existing?.autoOffTime ?? 0)),
       } as const;
 
       const relationFence = await inventoryLock(() => captureOutProductRelationFence(tx, existing,
@@ -567,6 +579,7 @@ export class OutProductService {
       }
 
       const formProof = outProductFormProof(savedProductId, existing, customForm, systemFormId, admittedForm);
+      const scheduleProof = await inventoryLock(() => outProductScheduleProof(tx, savedProductId, existing, input));
       if (!couponFence) {
         couponFence = await inventoryLock(() => captureOutProductCoupons(tx, savedProductId));
         if (couponFence.rows.length) throw new ValidateException("新商品优惠券关联已变化");
@@ -687,6 +700,7 @@ export class OutProductService {
       await inventoryLock(() => assertOutProductRelationFence(tx, relationFence));
       await inventoryLock(() => assertOutProductCoupons(tx, couponProof));
       await inventoryLock(() => assertOutProductForm(tx, formProof));
+      await inventoryLock(() => assertOutProductSchedule(tx, scheduleProof));
       return { id: savedProductId, idempotent: false, stock_preserved: !!existing };
     });
   }
