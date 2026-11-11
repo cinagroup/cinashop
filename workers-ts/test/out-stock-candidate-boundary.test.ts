@@ -131,7 +131,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('full-ORM bounded
 
   it.each([
     { name: 'nonphysical product', product: { productType: 1 }, sku: {} },
-    { name: 'another nonphysical product', product: { productType: 3 }, sku: {} },
+    { name: 'unsupported second-card product', product: { productType: 4 }, sku: {} },
+    { name: 'manual product with mismatched SKU type', product: { productType: 3 }, sku: { productType: 0 } },
     { name: 'nonplatform owner', product: { type: 1, relationId: 51 }, sku: {} },
     { name: 'nonzero platform relation', product: { relationId: 51 }, sku: {} },
     { name: 'deleted product', product: { isDel: 1 }, sku: {} },
@@ -153,6 +154,34 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('full-ORM bounded
     expect(after.products.find(row => row.id === 70)).toEqual({ ...before.products.find(row => row.id === 70), stock: 12 });
     expect(after.stocks).toHaveLength(1); expect(after.replays).toHaveLength(1);
   }, 20_000);
+
+  it('updates manual virtual stock but rejects a barcode shared by physical and virtual products', async () => {
+    await seed(['MANUAL', 'CROSS', 'CROSS']);
+    const [base] = await f.db.select().from(storeProduct).where(eq(storeProduct.id, 70));
+    await f.db.insert(storeProduct).values({ ...base, id: 71, spu:'manual71',productType:3,stock:2,deliveryType:'',freight:2,tempId:0,postage:'0.00' });
+    await f.db.update(storeProductAttrValue).set({productId:71,productType:3}).where(inArray(storeProductAttrValue.id,[2,4]));
+    await f.db.update(storeProduct).set({stock:9}).where(eq(storeProduct.id,70));
+    const success = await request([{bar_code:'MANUAL',qty:6}]);
+    expect(success).toMatchObject({status:200,data:{updated:1,idempotent:false}});
+    const after = await state();
+    expect(after.skus.find(row=>row.id===2)).toMatchObject({productId:71,productType:3,stock:6});
+    expect(after.products.find(row=>row.id===71)).toMatchObject({productType:3,stock:7,isSold:0});
+    expect(await request([{bar_code:'MANUAL',qty:6}])).toMatchObject({status:200,data:{updated:1,idempotent:true}});
+    expect(await state()).toEqual(after);
+    const duplicate=await request([{bar_code:'CROSS',qty:8}],'6479a289-0a69-4b63-8f8e-713b4baf1905');
+    expect(duplicate.status).toBe(400);expect(duplicate.msg).toContain('存在重复');expect(await state()).toEqual(after);
+  },20_000);
+
+  it('rolls back manual stock and its receipt when a deferred trigger changes the saved SKU', async () => {
+    await f.db.update(storeProduct).set({productType:3,deliveryType:'',freight:2,tempId:0,postage:'0.00'}).where(eq(storeProduct.id,70));
+    await f.db.update(storeProductAttrValue).set({productType:3}).where(eq(storeProductAttrValue.id,1));
+    await f.exec(`CREATE FUNCTION test_manual_stock_drift() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
+      UPDATE store_product_attr_value SET stock=999 WHERE id=1; RETURN NEW; END $$;
+      CREATE CONSTRAINT TRIGGER test_manual_stock_drift AFTER INSERT ON out_product_write_replay DEFERRABLE INITIALLY DEFERRED
+      FOR EACH ROW EXECUTE FUNCTION test_manual_stock_drift()`);
+    const before=await state(),result=await request([{bar_code:'OUT-A',qty:6}]);
+    expect(result.status).toBe(400);expect(result.msg).toContain('库存');expect(await state()).toEqual(before);
+  },20_000);
 
   it('keeps Unicode, quotes and case-distinct barcodes as exact bound parameters', async () => {
     const codes = ["中文'条码", 'Case', 'case', "x'); DROP TABLE foo;--"];

@@ -1,0 +1,243 @@
+{
+  "schema": "php-ts-out-manual-virtual-product/v1",
+  "baseCommit": "d3d2a60242ec7b69de0b4ce5946084786a41ccdc",
+  "sourceHashes": [
+    {
+      "path": "workers-ts/src/services/out/OutProductBrandBindings.ts",
+      "sha256": "415360e462ed1408d5227796125f339975af5145284631724cb164487eeb544f"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductEnsureBindings.ts",
+      "sha256": "4802dc379264954a3f5ee695da3f54c57a394ec1db635f6342bd01378dad91ea"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductFormBindings.ts",
+      "sha256": "e5a81ec0f3b1448e00f8bd15d94f2b996291d5d5afa3cfbaac06ffa6a3085323"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductLabelBindings.ts",
+      "sha256": "2c0ee59cd8c1211602ed22dc789b205a030ebfb0b0e845c7631928751b899bbf"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductParameterBindings.ts",
+      "sha256": "13b3f76d37d4362e0790dee6954b49de6fa33122ba9d82680bc88e02f1ed9d2b"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductRelationFence.ts",
+      "sha256": "82a93324a1bc4b8bbeb137fd40dec081f817b56449e5eb916da6d4d8e17ea4cc"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductScheduleBindings.ts",
+      "sha256": "ed02540213a0d5f9895759cc4c6962069bded06a3bdfe1d5cad4db69c911b7ad"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductService.ts",
+      "sha256": "a9e4b2e886e184a58e5388877c3f7231c9611812dfc974643a06883939804953"
+    },
+    {
+      "path": "workers-ts/test/out-stock-candidate-boundary.test.ts",
+      "sha256": "050d6391d0be12634a72d0fea8fdba2b39fbff36445a0064aa064bf1b6701b4c"
+    },
+    {
+      "path": "workers-ts/test/product-purchase-admission-postgres.test.ts",
+      "sha256": "05f552debb33235e6fe15a2e35de7ee21840d349673d0db649becefeebd2fcf7"
+    },
+    {
+      "path": "workers-ts/test/out-manual-virtual-product.test.ts",
+      "sha256": "eefa2769b3b644beb61498adce75d37734f06a9fac043ec09f48ce8f601add50"
+    }
+  ],
+  "legacyCommit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "legacySources": [
+    {
+      "path": "app/controller/out/Product.php",
+      "gitBlob": "5a55a3a43001325abfd36cee3c6af3e3b45cac66",
+      "sha256": "a52f6c6392594116e66803572a67e6c15d424fa13eac48df6bc9d7a6ef01c24a",
+      "bytes": 8803
+    },
+    {
+      "path": "app/services/product/product/StoreProductServices.php",
+      "gitBlob": "f8163c25f694dd0ff84486d89926ef004ba9e81e",
+      "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+      "bytes": 136399
+    },
+    {
+      "path": "app/services/product/sku/StoreProductAttrServices.php",
+      "gitBlob": "8a4c405eb7495985b0e6b3b8dddfc1f0c3eb62e4",
+      "sha256": "dae3878db9eb0392b01f52c5db1d8ba1cbf35456a9ddb081150a1955f87b0de9",
+      "bytes": 21089
+    },
+    {
+      "path": "app/services/order/StoreCartServices.php",
+      "gitBlob": "2585c6fc693992a48e44954786c8570d7c72d857",
+      "sha256": "d4c2a3f74175979c23da0d93e9b239cc287b32d0b1e48c6082a785c8c0776d92",
+      "bytes": 57698
+    }
+  ],
+  "validation": {
+    "profiles": [
+      {
+        "profile": "unit",
+        "exit": 0,
+        "seconds": 38.12,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "unit-types-shard-1",
+        "exit": 0,
+        "seconds": 159.56,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "unit-types-shard-2",
+        "exit": 0,
+        "seconds": 162.52,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "runtime-types",
+        "exit": 0,
+        "seconds": 104.84,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-stock",
+        "exit": 0,
+        "seconds": 142.45,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-author",
+        "exit": 0,
+        "seconds": 206.74,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-fulfillment",
+        "exit": 0,
+        "seconds": 73.57,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-checkout",
+        "exit": 0,
+        "seconds": 560.4,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-associations",
+        "exit": 0,
+        "seconds": 539.77,
+        "budgetSeconds": 600
+      }
+    ],
+    "unitPassed": 192,
+    "unitSkipped": 0,
+    "nativePassed": {
+      "native-stock": 16,
+      "native-author": 50,
+      "native-fulfillment": 43,
+      "native-checkout": 71,
+      "native-associations": 69
+    },
+    "nativeSkipped": 0,
+    "remainingOwnedFixtures": 0,
+    "typeShards": {
+      "originalRoots": 4338,
+      "commonRoots": 1898,
+      "testRoots": 2440,
+      "shardTestCounts": [
+        1220,
+        1220
+      ],
+      "unionExactlyMatchesOriginal": true
+    },
+    "typeShardConfigs": [
+      {
+        "file": "tsconfig.out-manual-shard-1.generated.json",
+        "sha256": "a0c7b2201539fe68bac74719e1f07a6ce39c19b8d864a5992efec900996bf24c"
+      },
+      {
+        "file": "tsconfig.out-manual-shard-2.generated.json",
+        "sha256": "f0ed4f7bb94e47f3b925f95652bc5fc4dd390dc571fb661e396a4b9b346fa4ee"
+      }
+    ],
+    "optionsMatchBase": true,
+    "logHashes": [
+      {
+        "file": "native-associations.log",
+        "sha256": "81d2409933d5c7e3afb51848a4e39247d7764400dba38312128ab94c5da84609"
+      },
+      {
+        "file": "native-author.log",
+        "sha256": "0d860933ca64e6f0ba5455226ca58d127c313e2a8b8b8ead30580dbedc50d32f"
+      },
+      {
+        "file": "native-checkout.log",
+        "sha256": "5dd52e4c708ec594dc12963ca9f4180f203b849d4b9541603f616d6a0ff7a666"
+      },
+      {
+        "file": "native-fulfillment.log",
+        "sha256": "dcf40cdc46f4eeec41feb87409b7e443b8bbc2fd1a1f1722b0e2f1b389800a42"
+      },
+      {
+        "file": "native-stock.log",
+        "sha256": "b436804b5cddc43d329a8a38838a46c30dfb8b283cbee0715500aa9ef13cb319"
+      },
+      {
+        "file": "preliminary-author.log",
+        "sha256": "ea59f7f85172909067c753733e7880737ca58cdcb6874e1e4a6c15b7b3cb2836"
+      },
+      {
+        "file": "preliminary-stock.log",
+        "sha256": "b26946e12ffdc06a10f2b3f28a9803b2e0635ce11eb2a72021057429796b6c5e"
+      },
+      {
+        "file": "runtime-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "unit-types-shard-1.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "unit-types-shard-2.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "unit.log",
+        "sha256": "9f2ad828bc8dc58206883b7196fee3bd1a72de210072f195060bc2ad511e11c7"
+      }
+    ]
+  },
+  "testContinuity": {
+    "purchaseOriginalBytesPreserved": true,
+    "stockOriginalRetained": "legacy type-3 exclusion now checks type-3 SKU mismatch plus type-4 exclusion, with new successful type-3 and cross-type ambiguity tests"
+  },
+  "preliminaryCorrections": [
+    "schedule proof was physical-only; bound it to the actual product type",
+    "form and association proofs were physical-only; bound all to the actual product type",
+    "fixture cart sequence initialized; deferred trigger assertion accepts earlier legitimate association fence"
+  ],
+  "previousCi": {
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/43091737445",
+    "status": "pending"
+  },
+  "limitations": [
+    "Out author for product types 1, 2 and 4 remains incomplete",
+    "no deployment, PHP upload or real external provider"
+  ],
+  "wholeMigrationComplete": false,
+  "generatedAt": "2026-11-11T21:03:48.591616+00:00",
+  "fullFileScanReview": {
+    "findings": 1,
+    "reviewedNonSecret": 1,
+    "unresolved": 0,
+    "finding": {
+      "rule": "generic-api-key",
+      "path": "workers-ts/test/out-stock-candidate-boundary.test.ts",
+      "line": 31,
+      "reason": "unchanged synthetic UUID used as the test idempotency request key; identical at the verified base commit"
+    }
+  }
+}

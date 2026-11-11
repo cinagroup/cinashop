@@ -9,6 +9,7 @@ type Product = typeof storeProduct.$inferSelect;
 type PreservedProduct = Partial<Pick<Product, 'brandId' | 'brandCom' | 'ensureId' | 'storeLabelId' | 'labelId' | 'specsId' | 'specs'>>;
 export interface OutProductRelationFence {
   productId: number;
+  productType: 0 | 3;
   ownedTypes: readonly number[];
   rows: Awaited<ReturnType<typeof protectedRows>>;
   preservedProduct: PreservedProduct;
@@ -22,8 +23,8 @@ async function protectedRows(tx: DbClient, productId: number, ownedTypes: readon
 }
 /** ownedTypes comes only from the coordinator's explicit field presence. */
 export async function captureOutProductRelationFence(tx: DbClient, product: Product | undefined,
-  ownedTypes: readonly number[]): Promise<OutProductRelationFence> {
-  return { productId: product?.id ?? 0, ownedTypes: [...ownedTypes],
+  ownedTypes: readonly number[], productType: 0 | 3): Promise<OutProductRelationFence> {
+  return { productId: product?.id ?? 0, productType, ownedTypes: [...ownedTypes],
     rows: product ? await protectedRows(tx, product.id, ownedTypes) : [],
     preservedProduct: product ? {
       ...(ownedTypes.includes(2) ? {} : { brandId: product.brandId, brandCom: product.brandCom }),
@@ -35,11 +36,11 @@ export async function captureOutProductRelationFence(tx: DbClient, product: Prod
   };
 }
 export async function assertOutProductRelationFence(tx: DbClient, fence: OutProductRelationFence) {
-  const [product] = await tx.select({ brandId: storeProduct.brandId, brandCom: storeProduct.brandCom,
+  const [product] = await tx.select({ productType: storeProduct.productType, brandId: storeProduct.brandId, brandCom: storeProduct.brandCom,
     ensureId: storeProduct.ensureId, storeLabelId: storeProduct.storeLabelId, labelId: storeProduct.labelId,
     specsId: storeProduct.specsId, specs: storeProduct.specs })
     .from(storeProduct).where(eq(storeProduct.id, fence.productId)).limit(1);
-  if (!product || Object.entries(fence.preservedProduct).some(([key, value]) => product[key as keyof typeof product] !== value)
+  if (!product || product.productType !== fence.productType || Object.entries(fence.preservedProduct).some(([key, value]) => product[key as keyof typeof product] !== value)
     || !same(await protectedRows(tx, fence.productId, fence.ownedTypes), fence.rows)) {
     throw new ValidateException('平台商品历史关联已变化');
   }

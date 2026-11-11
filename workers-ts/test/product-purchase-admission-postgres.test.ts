@@ -831,3 +831,133 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Out product list
     expect(row.size).toBe(4500000);
   },30_000);
 });
+
+// Out authors and synchronizes ordinary manual virtual products on owned PG16.
+import { productSetShow, productStockUpload } from '@/controllers/out/OutApiController';
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Out manual virtual product actual author and checkout',()=>{
+  let f:Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
+  let owned:Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
+  let network:ReturnType<typeof vi.spyOn>,testEnv:Env,token:string;
+  const input={product_type:3,cate_id:[9],store_name:'手工虚拟测试商品',slider_image:['/isolated.png'],
+    delivery_type:[],freight:3,temp_id:999,postage:'99.00',spec_type:0,is_show:1,
+    brand_id:[31],ensure_id:[91],store_label_id:[101],label_id:[201],specs_id:301,specs:[{name:'版本',value:'数字'}],
+    coupon_ids:[],custom_form:[],system_form_id:0,
+    attrs:[{price:'10.00',stock:5,bar_code:'VIRTUAL-ONE'}]};
+  const app=(db:DbClient)=>{
+    const a=new Hono<{Bindings:Env;Variables:AppVariables}>();
+    a.use('*',async(c,next)=>{c.set('container',createContainerFromDb(db));await next();});
+    a.onError((e,c)=>c.json({status:400,msg:e.message,data:null}));
+    a.post('/outapi/product',outAuthMiddleware('POST','/product'),productCreate);
+    a.put('/outapi/product/stock/upload',outAuthMiddleware('PUT','/product/stock/upload'),productStockUpload);
+    a.put('/outapi/product/set_show/:id/:is_show',outAuthMiddleware('PUT','/product/set_show/{id}/{is_show}'),productSetShow);
+    a.put('/outapi/product/:id',outAuthMiddleware('PUT','/product/{id}'),productUpdate);
+    return a;
+  };
+  const call=async(db:DbClient,path:string,method:string,data:object,key=crypto.randomUUID())=>{
+    const response=await app(db).request(path,{method,headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json','Idempotency-Key':key},body:JSON.stringify(data)},testEnv);
+    return response.json() as Promise<{status:number;msg:string;data:any}>;
+  };
+  const create=async(db=f.db,key=crypto.randomUUID())=>call(db,'/outapi/product','POST',input,key);
+  beforeEach(async()=>{
+    network=vi.spyOn(globalThis,'fetch').mockRejectedValue(Error('Out manual virtual test forbids external I/O'));
+    f=await createPcCheckoutQuoteFixture([],async()=>{
+      owned=await sequenceRunnerDatabase();try{const api=await import('drizzle-kit/api'),schema=await import('@/models/schema');
+        await owned.exec((await api.generateMigration(api.generateDrizzleJson({}),api.generateDrizzleJson(schema))).join('\n'));
+        await completePurchaseOriginEvidenceOrm(owned.db);await completePurchaseCancellationEvidenceOrm(owned.db);return owned;
+      }catch(error){await owned.close();throw error;}
+    });
+    await f.exec(`INSERT INTO store_product_category(id,cate_name,is_show) VALUES (9,'隔离分类',1);
+      INSERT INTO store_brand(id,brand_name,is_show) VALUES (31,'隔离品牌',1);
+      INSERT INTO store_product_ensure(id,name,status) VALUES (91,'隔离保障',1);
+      INSERT INTO category(id,"group",name,is_show) VALUES (300,2,'标签组',1),(301,3,'参数模板',1);
+      INSERT INTO store_product_label(id,label_name,label_cate,status,is_show) VALUES (101,'隔离商品标签',300,1,1);
+      INSERT INTO user_label(id,name,status) VALUES (201,'隔离用户标签',1);
+      INSERT INTO out_interface(id,type,method,url) VALUES (1,1,'POST','/product'),(2,1,'PUT','/product/{id}'),
+        (3,1,'PUT','/product/stock/upload'),(4,1,'PUT','/product/set_show/{id}/{is_show}');
+      INSERT INTO out_account(id,appid,appsecret,rules) VALUES (1,'manual-local','fixture-manual-secret','[1,2,3,4]');
+      SELECT setval(pg_get_serial_sequence('store_product','id'),70,true);
+      SELECT setval(pg_get_serial_sequence('store_product_attr_value','id'),1,true);
+      SELECT setval(pg_get_serial_sequence('store_cart','id'),1,true)`);
+    testEnv={...f.env,APP_KEY:'isolated-local-key-not-a-real-credential',TOKEN_BUCKET:{getByName:()=>({consumeRateLimit:async()=>
+      ({allowed:true,auditEvent:false,limit:120,remaining:119,resetAt:Date.now()+60000})})}} as unknown as Env;
+    token=(await createToken(1,'out',md5('fixture-manual-secret'),testEnv.APP_KEY)).token;
+  },120_000);
+  afterEach(async()=>{try{expect(network).not.toHaveBeenCalled();}finally{network?.mockRestore();await f?.close();}},60_000);
+  it('creates, replays, updates without replacing stock, synchronizes stock and makes a genuine non-logistics checkout',async()=>{
+    const key=crypto.randomUUID(),first=await create(f.db,key);expect(first.status,first.msg).toBe(200);const id=Number(first.data.id);
+    const replay=await create(f.db,key);expect(replay.status,replay.msg).toBe(200);expect(replay.data).toMatchObject({id,idempotent:true});
+    let [product]=await f.db.execute<any>(sql`SELECT id,product_type,delivery_type,freight,temp_id,postage,stock FROM store_product WHERE id=${id}`);
+    let [sku]=await f.db.execute<any>(sql`SELECT id,product_type,"unique",stock,bar_code FROM store_product_attr_value WHERE product_id=${id} AND type=0`);
+    expect(product).toMatchObject({product_type:3,delivery_type:'',freight:2,temp_id:0,postage:'0.00',stock:5});
+    expect(sku).toMatchObject({product_type:3,stock:5,bar_code:'VIRTUAL-ONE'});
+    const relations=await f.db.execute<{type:number;relation_id:number}>(sql`SELECT type,relation_id FROM store_product_relation WHERE product_id=${id} ORDER BY type`);
+    expect(relations).toEqual([{type:1,relation_id:9},{type:2,relation_id:31},{type:3,relation_id:101},
+      {type:4,relation_id:201},{type:5,relation_id:91},{type:6,relation_id:301}]);
+    const edited={...input,store_name:'手工虚拟已编辑',attrs:[{...input.attrs[0],stock:999,unique:sku.unique}]};
+    const updated=await call(f.db,`/outapi/product/${id}`,'PUT',edited);expect(updated.status,updated.msg).toBe(200);expect(updated.data.stock_preserved).toBe(true);
+    for(const show of [0,1]){const result=await call(f.db,`/outapi/product/set_show/${id}/${show}`,'PUT',{});expect(result.status,result.msg).toBe(200);}
+    const synced=await call(f.db,'/outapi/product/stock/upload','PUT',{items:[{bar_code:'VIRTUAL-ONE',qty:7}]});expect(synced.status,synced.msg).toBe(200);
+    [product]=await f.db.execute<any>(sql`SELECT product_type,stock FROM store_product WHERE id=${id}`);
+    [sku]=await f.db.execute<any>(sql`SELECT product_type,"unique",stock FROM store_product_attr_value WHERE product_id=${id} AND type=0`);
+    expect(product).toMatchObject({product_type:3,stock:7});expect(sku).toMatchObject({product_type:3,stock:7});
+    const cart=await new StoreCartService(f.container,f.env).add({uid:11,productId:id,unique:sku.unique,cartNum:2,isNew:1,type:0});
+    const selection={cartIds:[cart.id],type:0,addressId:11,shippingType:1,useIntegral:false};
+    const response=await f.app.request('/api/order/confirm',{method:'POST',headers:{'content-type':'application/json','x-fixture-user':'11'},body:JSON.stringify(selection)},f.env);
+    const confirmed=await response.json() as {status:number;msg:string;data:{orderKey:string;quoteToken:string}};expect(confirmed.status,confirmed.msg).toBe(200);
+    const order=await StoreOrderCreateService.createWithRuntime(f.container,{CONFIG_KV:f.env.CONFIG_KV,requireConfirmation:true,requirePurchaseOrigin:true,
+      nextOrderId:async()=>`manual_virtual_${id}`},{...selection,uid:11,key:confirmed.data.orderKey,quoteToken:confirmed.data.quoteToken,userIp:'127.0.0.1'});
+    const [saved]=await f.db.execute<any>(sql`SELECT product_type,shipping_type,pay_postage,paid,total_num FROM store_order WHERE order_id=${order.orderId}`);
+    expect(saved).toMatchObject({product_type:3,shipping_type:1,pay_postage:'0.00',paid:0,total_num:2});
+    const [finalSku]=await f.db.execute<any>(sql`SELECT stock FROM store_product_attr_value WHERE product_id=${id} AND type=0`);expect(finalSku.stock).toBe(5);
+  },30_000);
+  it('rejects changes of product type, virtual card data, presale and mismatched replay without changing business rows',async()=>{
+    const key=crypto.randomUUID(),created=await create(f.db,key);expect(created.status,created.msg).toBe(200);const id=Number(created.data.id);
+    const [sku]=await f.db.execute<any>(sql`SELECT "unique" FROM store_product_attr_value WHERE product_id=${id} AND type=0`);
+    const before=await f.snapshot();const [receiptBefore]=await f.db.execute<{n:number}>(sql`SELECT count(*)::int AS n FROM out_product_write_replay`);
+    for(const body of [{...input,product_type:0,delivery_type:[1],freight:1}, {...input,is_presale_product:1},
+      {...input,attrs:[{...input.attrs[0],virtual_list:[{card_no:'fake'}]}]}, {...input,attrs:[{...input.attrs[0],disk_info:'unsupported'}]}]){
+      const result=await call(f.db,`/outapi/product/${id}`,'PUT',{...body,attrs:body.attrs.map(row=>({...row,unique:sku.unique}))});expect(result.status).not.toBe(200);
+    }
+    const conflict=await call(f.db,'/outapi/product','POST',{...input,store_name:'不同请求'},key);expect(conflict.status).not.toBe(200);
+    expect(await f.snapshot()).toEqual(before);const [receiptAfter]=await f.db.execute<{n:number}>(sql`SELECT count(*)::int AS n FROM out_product_write_replay`);expect(receiptAfter).toEqual(receiptBefore);
+  },30_000);
+  it('rolls back the complete author transaction when a deferred trigger changes fulfillment type',async()=>{
+    await f.exec(`CREATE FUNCTION test_out_manual_change() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN UPDATE store_product SET product_type=0 WHERE id=NEW.product_id; RETURN NEW; END $$;
+      CREATE CONSTRAINT TRIGGER test_out_manual_change AFTER INSERT ON out_product_write_replay DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION test_out_manual_change()`);
+    const before=await f.snapshot(),result=await create();expect(result.status).not.toBe(200);expect(result.msg).toContain('变化');expect(await f.snapshot()).toEqual(before);
+    const [receipt]=await f.db.execute<{n:number}>(sql`SELECT count(*)::int AS n FROM out_product_write_replay`);expect(receipt.n).toBe(0);
+  },30_000);
+  it('rejects an editor race while a peer holds the actual SKU row, without changing business state',async()=>{
+    const created=await create();expect(created.status,created.msg).toBe(200);const id=Number(created.data.id);
+    const [sku]=await f.db.execute<any>(sql`SELECT id,"unique" FROM store_product_attr_value WHERE product_id=${id} AND type=0`);
+    const before=await f.snapshot();if(!owned.withPeer)throw Error('PG16 peers required');
+    await owned.withPeer(async peer=>{await peer.exec(`BEGIN; SELECT id FROM store_product_attr_value WHERE id=${Number(sku.id)} FOR UPDATE`);
+      try{const result=await call(f.db,`/outapi/product/${id}`,'PUT',{...input,attrs:[{...input.attrs[0],unique:sku.unique}]});expect(result.status).not.toBe(200);expect(result.msg).toContain('变化');}
+      finally{await peer.exec('ROLLBACK');}});
+    expect(await f.snapshot()).toEqual(before);
+  },30_000);
+  it('rejects editing a historical manual product whose SKU has a conflicting fulfillment type',async()=>{
+    const created=await create();expect(created.status,created.msg).toBe(200);const id=Number(created.data.id);
+    const [sku]=await f.db.execute<any>(sql`SELECT id,"unique" FROM store_product_attr_value WHERE product_id=${id} AND type=0`);
+    await f.exec(`UPDATE store_product_attr_value SET product_type=0 WHERE id=${Number(sku.id)}`);const before=await f.snapshot();
+    const result=await call(f.db,`/outapi/product/${id}`,'PUT',{...input,attrs:[{...input.attrs[0],unique:sku.unique}]});
+    expect(result.status).not.toBe(200);expect(result.msg).toContain('不一致');expect(await f.snapshot()).toEqual(before);
+  },30_000);
+  it('uses the existing restricted App LOGIN to create and synchronize a manual virtual product',async()=>{
+    if(!owned.withRuntimeRole)throw Error('Native restricted LOGIN required');
+    await owned.withRuntimeRole(async runtime=>{
+      const plan=runtimeBusinessPrivilegePlan('app'),quote=(name:string)=>{if(!/^[a-z_][a-z_0-9]*$/.test(name))throw Error('Invalid owned identifier');return `"${name}"`;};
+      const tables=await f.db.execute<{name:string}>(sql`SELECT relname AS name FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r' ORDER BY relname`);
+      for(const {name} of tables){const rights=plan.tables[name];if(!rights)continue;await f.exec(`GRANT ${rights.join(',')} ON public.${quote(name)} TO ${quote(runtime.role)}`);
+        const columns=plan.updateColumns[name];if(columns?.length)await f.exec(`GRANT UPDATE(${columns.map(quote).join(',')}) ON public.${quote(name)} TO ${quote(runtime.role)}`);}
+      const seqs=await f.db.execute<{table_name:string;sequence_name:string|null}>(sql`SELECT c.relname AS table_name,pg_get_serial_sequence('public.'||quote_ident(c.relname),a.attname) AS sequence_name FROM pg_class c JOIN pg_attribute a ON a.attrelid=c.oid AND a.attnum>0 AND NOT a.attisdropped WHERE c.relnamespace='public'::regnamespace AND c.relkind='r'`);
+      for(const row of seqs)if(row.sequence_name&&plan.tables[row.table_name]?.includes('INSERT')){const parts=row.sequence_name.split('.');if(parts.length!==2||parts[0]!=='public')throw Error('Unexpected sequence');await f.exec(`GRANT USAGE ON SEQUENCE public.${quote(parts[1])} TO ${quote(runtime.role)}`);}
+      const saved=await create(runtime.db);expect(saved.status,saved.msg).toBe(200);
+      const sync=await call(runtime.db,'/outapi/product/stock/upload','PUT',{items:[{bar_code:'VIRTUAL-ONE',qty:9}]});expect(sync.status,sync.msg).toBe(200);
+      const [row]=await f.db.execute<any>(sql`SELECT product_type,stock,delivery_type,temp_id FROM store_product WHERE id=${Number(saved.data.id)}`);
+      expect(row).toMatchObject({product_type:3,stock:9,delivery_type:'',temp_id:0});
+      const [identity]=await runtime.db.execute(sql`SELECT current_user=session_user AS direct_login,has_table_privilege(current_user,'public.system_config','UPDATE') AS config_write`);
+      expect(identity).toEqual({direct_login:true,config_write:false});
+    });
+  },30_000);
+});

@@ -51,14 +51,15 @@ type Product = typeof storeProduct.$inferSelect;
 type Admitted = Awaited<ReturnType<typeof lockOutProductSystemForm>> | undefined;
 export interface OutProductFormProof {
   productId: number;
+  productType: 0 | 3;
   customForm: string | null;
   systemFormId: number;
   admitted: Admitted;
   selected: boolean;
 }
-export function outProductFormProof(productId: number, existing: Product | undefined, customForm: string | undefined,
+export function outProductFormProof(productId: number, productType: 0 | 3, existing: Product | undefined, customForm: string | undefined,
   systemFormId: number | undefined, admitted: Admitted): OutProductFormProof {
-  return { productId, customForm: customForm === undefined ? existing?.customForm ?? null : customForm,
+  return { productId, productType, customForm: customForm === undefined ? existing?.customForm ?? null : customForm,
     systemFormId: systemFormId === undefined ? existing?.systemFormId ?? 0 : systemFormId,
     admitted, selected: systemFormId !== undefined };
 }
@@ -67,7 +68,7 @@ export function outProductFormProof(productId: number, existing: Product | undef
 export async function assertOutProductForm(tx: DbClient, proof: OutProductFormProof) {
   const [product] = await tx.select({ customForm: storeProduct.customForm, systemFormId: storeProduct.systemFormId })
     .from(storeProduct).where(and(eq(storeProduct.id, proof.productId), eq(storeProduct.type, 0),
-      eq(storeProduct.relationId, 0), eq(storeProduct.productType, 0), eq(storeProduct.isDel, 0))).limit(1);
+      eq(storeProduct.relationId, 0), eq(storeProduct.productType, proof.productType), eq(storeProduct.isDel, 0))).limit(1);
   if (!product || product.customForm !== proof.customForm || product.systemFormId !== proof.systemFormId) {
     throw new ValidateException('平台商品表单数据已变化');
   }

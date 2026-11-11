@@ -6,8 +6,8 @@ import { supplierProductBrandPath, supplierProductBrandPathMatches } from '@/ser
 import { assertOutProductRelationFence, type OutProductRelationFence } from './OutProductRelationFence';
 
 const same = (left: unknown, right: unknown) => JSON.stringify(left) === JSON.stringify(right);
-const scope = (id: number) => and(eq(storeProduct.id, id), eq(storeProduct.type, 0),
-  eq(storeProduct.relationId, 0), eq(storeProduct.productType, 0), eq(storeProduct.isDel, 0));
+const scope = (id: number, productType: 0 | 3) => and(eq(storeProduct.id, id), eq(storeProduct.type, 0),
+  eq(storeProduct.relationId, 0), eq(storeProduct.productType, productType), eq(storeProduct.isDel, 0));
 
 export interface OutProductBrandProof {
   productId: number;
@@ -20,7 +20,7 @@ export interface OutProductBrandProof {
 
 export async function replaceOutProductBrandBindings(tx: DbClient, productId: number,
   ids: readonly number[], fence: OutProductRelationFence) {
-  const [product] = await tx.select().from(storeProduct).where(scope(productId)).limit(1);
+  const [product] = await tx.select().from(storeProduct).where(scope(productId, fence.productType)).limit(1);
   if (!product || product.brandId !== (ids.at(-1) ?? 0) || product.brandCom !== ids.join(','))
     throw new ValidateException('平台商品品牌写入结果已变化');
   const where = and(eq(storeProductRelation.productId, productId), eq(storeProductRelation.type, 2));
@@ -42,7 +42,7 @@ export async function replaceOutProductBrandBindings(tx: DbClient, productId: nu
  * successful receipt triggers must not invalidate the evidence being committed. */
 export async function assertOutProductBrandBindings(tx: DbClient, proof: OutProductBrandProof) {
   await tx.execute(sql`SET CONSTRAINTS ALL IMMEDIATE`);
-  const [read] = await tx.select().from(storeProduct).where(scope(proof.productId)).limit(1);
+  const [read] = await tx.select().from(storeProduct).where(scope(proof.productId, proof.fence.productType)).limit(1);
   const actual = await tx.select().from(storeProductRelation).where(and(
     eq(storeProductRelation.productId, proof.productId), eq(storeProductRelation.type, 2),
   )).orderBy(asc(storeProductRelation.id));

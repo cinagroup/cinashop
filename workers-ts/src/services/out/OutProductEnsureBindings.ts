@@ -9,8 +9,8 @@ type Product = typeof storeProduct.$inferSelect;
 type Ensure = typeof storeProductEnsure.$inferSelect;
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 const platform = (row: Ensure) => row.type === 0 && row.relationId === 0;
-const scope = (id: number) => and(eq(storeProduct.id, id), eq(storeProduct.type, 0),
-  eq(storeProduct.relationId, 0), eq(storeProduct.productType, 0), eq(storeProduct.isDel, 0));
+const scope = (id: number, productType: 0 | 3) => and(eq(storeProduct.id, id), eq(storeProduct.type, 0),
+  eq(storeProduct.relationId, 0), eq(storeProduct.productType, productType), eq(storeProduct.isDel, 0));
 
 export async function outProductEnsureSelection(tx: DbClient, product: Pick<Product, 'id' | 'ensureId'>) {
   const stored = supplierProductEnsureStored(product.ensureId);
@@ -51,7 +51,7 @@ export interface OutProductEnsureProof {
 }
 export async function replaceOutProductEnsureBindings(tx: DbClient, productId: number, ids: readonly number[],
   catalog: Ensure[], fence: OutProductRelationFence): Promise<OutProductEnsureProof> {
-  const [product] = await tx.select().from(storeProduct).where(scope(productId)).limit(1);
+  const [product] = await tx.select().from(storeProduct).where(scope(productId, fence.productType)).limit(1);
   if (!product || product.ensureId !== ids.join(',')) throw new ValidateException('平台商品保障写入结果已变化');
   await tx.delete(storeProductRelation).where(and(eq(storeProductRelation.productId, productId), eq(storeProductRelation.type, 5)));
   const now = Math.floor(Date.now() / 1000);
@@ -67,7 +67,7 @@ export async function replaceOutProductEnsureBindings(tx: DbClient, productId: n
 }
 export async function assertOutProductEnsureBindings(tx: DbClient, proof: OutProductEnsureProof) {
   await tx.execute(sql`SET CONSTRAINTS ALL IMMEDIATE`);
-  const [product] = await tx.select().from(storeProduct).where(scope(proof.productId)).limit(1);
+  const [product] = await tx.select().from(storeProduct).where(scope(proof.productId, proof.fence.productType)).limit(1);
   const relations = await tx.select().from(storeProductRelation).where(and(
     eq(storeProductRelation.productId, proof.productId), eq(storeProductRelation.type, 5),
   )).orderBy(asc(storeProductRelation.id));

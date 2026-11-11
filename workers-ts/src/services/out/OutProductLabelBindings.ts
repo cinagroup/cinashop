@@ -16,8 +16,8 @@ const active = (row: Label, kind: Kind) => platform(row) && row.status === 1
   && (kind === 'user' || 'isShow' in row && row.isShow === 1);
 const validGroup = (row: Group | undefined) => !!row && row.type === 0 && row.relationId === 0
   && row.ownerId === 0 && row.group === 2 && row.isShow === 1;
-const scope = (id: number) => and(eq(storeProduct.id, id), eq(storeProduct.type, 0),
-  eq(storeProduct.relationId, 0), eq(storeProduct.productType, 0), eq(storeProduct.isDel, 0));
+const scope = (id: number, productType: 0 | 3) => and(eq(storeProduct.id, id), eq(storeProduct.type, 0),
+  eq(storeProduct.relationId, 0), eq(storeProduct.productType, productType), eq(storeProduct.isDel, 0));
 
 export function outProductLabelIds(value: unknown, kind: Kind): number[] {
   if (!Array.isArray(value) || value.length > 100) throw new ValidateException('标签须为最多100个编号的数组');
@@ -98,7 +98,7 @@ const scalar = (row: Product, kind: Kind) => kind === 'product' ? row.storeLabel
 export async function replaceOutProductLabelBindings(tx: DbClient, productId: number,
   admission: OutProductLabelAdmission, fence: OutProductRelationFence): Promise<OutProductLabelProof> {
   const { kind, ids } = admission, type = relationType(kind);
-  const [product] = await tx.select().from(storeProduct).where(scope(productId)).limit(1);
+  const [product] = await tx.select().from(storeProduct).where(scope(productId, fence.productType)).limit(1);
   if (!product || scalar(product, kind) !== ids.join(',')) throw new ValidateException('平台商品标签写入结果已变化');
   await tx.delete(storeProductRelation).where(and(eq(storeProductRelation.productId, productId), eq(storeProductRelation.type, type)));
   const now = Math.floor(Date.now() / 1000), relations = ids.length ? await tx.insert(storeProductRelation).values(ids.map(relationId => ({
@@ -114,7 +114,7 @@ export async function replaceOutProductLabelBindings(tx: DbClient, productId: nu
 export async function assertOutProductLabelBindings(tx: DbClient, proof: OutProductLabelProof) {
   await tx.execute(sql`SET CONSTRAINTS ALL IMMEDIATE`);
   const { kind, ids } = proof.admission;
-  const [product] = await tx.select().from(storeProduct).where(scope(proof.productId)).limit(1);
+  const [product] = await tx.select().from(storeProduct).where(scope(proof.productId, proof.fence.productType)).limit(1);
   const relations = await tx.select().from(storeProductRelation).where(and(eq(storeProductRelation.productId, proof.productId),
     eq(storeProductRelation.type, relationType(kind)))).orderBy(asc(storeProductRelation.id)).limit(101);
   const labels = await catalog(tx, kind, ids, false), selectedGroups = await groups(tx, kind, proof.admission.catalog, false);

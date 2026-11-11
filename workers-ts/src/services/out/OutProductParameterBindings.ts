@@ -9,7 +9,7 @@ type Product = typeof storeProduct.$inferSelect;
 type Template = typeof legacyCategory.$inferSelect;
 type Relation = typeof storeProductRelation.$inferSelect;
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
-const scope = (id: number) => and(eq(storeProduct.id, id), eq(storeProduct.type, 0), eq(storeProduct.relationId, 0), eq(storeProduct.productType, 0), eq(storeProduct.isDel, 0));
+const scope = (id: number, productType: 0 | 3) => and(eq(storeProduct.id, id), eq(storeProduct.type, 0), eq(storeProduct.relationId, 0), eq(storeProduct.productType, productType), eq(storeProduct.isDel, 0));
 export const outProductParameterInput = supplierProductParameterInput;
 export const outProductParameterTemplateOwned = (row: Pick<Template, 'type' | 'relationId' | 'group' | 'ownerId'>) =>
   row.type === 0 && row.relationId === 0 && row.group === 3 && row.ownerId === 0;
@@ -35,7 +35,7 @@ interface Proof { productId: number; input: SupplierProductParameterInput; raw: 
 export async function replaceOutProductParameterBindings(tx: DbClient, productId: number, input: SupplierProductParameterInput,
   template: Template | undefined, fence: OutProductRelationFence): Promise<Proof> {
   const raw = input.specs.length ? JSON.stringify(input.specs) : '';
-  const [product] = await tx.select().from(storeProduct).where(scope(productId)).limit(1);
+  const [product] = await tx.select().from(storeProduct).where(scope(productId, fence.productType)).limit(1);
   if (!product || product.specsId !== input.specs_id || product.specs !== raw) throw new ValidateException('平台商品参数写入结果已变化');
   await tx.delete(storeProductRelation).where(and(eq(storeProductRelation.productId, productId), eq(storeProductRelation.type, 6)));
   const now = Math.floor(Date.now() / 1000), relations = input.specs_id > 0 ? await tx.insert(storeProductRelation).values({
@@ -48,7 +48,7 @@ export async function replaceOutProductParameterBindings(tx: DbClient, productId
 }
 export async function assertOutProductParameterBindings(tx: DbClient, proof: Proof) {
   await tx.execute(sql`SET CONSTRAINTS ALL IMMEDIATE`);
-  const [product] = await tx.select().from(storeProduct).where(scope(proof.productId)).limit(1);
+  const [product] = await tx.select().from(storeProduct).where(scope(proof.productId, proof.fence.productType)).limit(1);
   const relations = await tx.select().from(storeProductRelation).where(and(eq(storeProductRelation.productId, proof.productId), eq(storeProductRelation.type, 6))).orderBy(asc(storeProductRelation.id));
   const [template] = proof.input.specs_id > 0 ? await tx.select().from(legacyCategory).where(eq(legacyCategory.id, proof.input.specs_id)).limit(1) : [];
   if (!product || product.specsId !== proof.input.specs_id || product.specs !== proof.raw || !same(template, proof.template)

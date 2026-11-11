@@ -17,6 +17,7 @@ import {
 } from "@/models/schema";
 import {
   normalizeSupplierPhysicalProductInput,
+  normalizeSupplierProductInput,
   type SupplierPhysicalProductInput,
   type SupplierProductSku,
 } from "@/services/supplier/SupplierProductManagementService";
@@ -43,6 +44,7 @@ type ProductWriteOperation = "product_create" | "product_update" | "product_show
 const PLATFORM_TYPE = 0;
 const PLATFORM_RELATION_ID = 0;
 const PHYSICAL_PRODUCT_TYPE = 0;
+const MANUAL_VIRTUAL_PRODUCT_TYPE = 3;
 const PRODUCT_ATTR_TYPE = 0;
 const CATEGORY_RELATION_TYPE = 1;
 const REPLAY_LOCK_NAMESPACE = 744_220_001;
@@ -219,7 +221,7 @@ function deliveryTypes(value: unknown): string {
   return normalized.sort((left, right) => left - right).join(",");
 }
 
-export function normalizeOutPhysicalProductInput(input: UnknownRecord): OutPhysicalProductInput {
+function normalizeOutProductInputInternal(input: UnknownRecord, allowManualVirtual: boolean): OutPhysicalProductInput {
   validateOutProductScope(input);
   const schedule = outProductScheduleInput(input);
   const activity = activityInput(input);
@@ -233,11 +235,24 @@ export function normalizeOutPhysicalProductInput(input: UnknownRecord): OutPhysi
   // the base parser and bind the new author intent to an explicit version.
   const baseInput = { ...input };
   delete baseInput.auto_on_time; delete baseInput.auto_off_time;
-  const base = normalizeSupplierPhysicalProductInput(baseInput, { requireSettlePrice: false });
-  const freightValue = strictInteger(input.freight, "运费类型", 1, 1, 3) as 1 | 2 | 3;
+  const base = allowManualVirtual
+    ? normalizeSupplierProductInput(baseInput, { requireSettlePrice: false })
+    : normalizeSupplierPhysicalProductInput(baseInput, { requireSettlePrice: false });
+  if (base.productType !== PHYSICAL_PRODUCT_TYPE && base.productType !== MANUAL_VIRTUAL_PRODUCT_TYPE)
+    throw new ValidateException('Out API 当前支持实物和手工虚拟商品');
+  if (base.productType === MANUAL_VIRTUAL_PRODUCT_TYPE) {
+    if (presale.isPresaleProduct === 1) throw new ValidateException('手工虚拟商品不能设置预售');
+    const rows = Array.isArray(input.attrs) ? input.attrs : input.attrs && typeof input.attrs === 'object' ? Object.values(input.attrs as UnknownRecord) : [];
+    if (rows.some(row => row && typeof row === 'object' && nonEmpty((row as UnknownRecord).virtual_list)))
+      throw new ValidateException('手工虚拟商品不能配置卡密库存');
+  }
+  const freightValue = base.productType === MANUAL_VIRTUAL_PRODUCT_TYPE ? 2 : strictInteger(input.freight, "运费类型", 1, 1, 3) as 1 | 2 | 3;
   let postage = base.postage;
   let tempId = base.tempId;
-  if (freightValue === 1) {
+  if (base.productType === MANUAL_VIRTUAL_PRODUCT_TYPE) {
+    postage = "0.00";
+    tempId = 0;
+  } else if (freightValue === 1) {
     postage = "0.00";
     tempId = 0;
   } else if (freightValue === 2) {
@@ -281,7 +296,7 @@ export function normalizeOutPhysicalProductInput(input: UnknownRecord): OutPhysi
     videoLink: safeAsset(base.videoLink, "商品视频", 500),
     postage,
     tempId,
-    deliveryType: deliveryTypes(input.delivery_type),
+    deliveryType: base.productType === MANUAL_VIRTUAL_PRODUCT_TYPE ? '' : deliveryTypes(input.delivery_type),
     freight: freightValue,
     isShow: schedule.autoOnTime ? 0 : requestedIsShow,
     sales: strictInteger(input.sales, "销量", 0),
@@ -295,6 +310,15 @@ export function normalizeOutPhysicalProductInput(input: UnknownRecord): OutPhysi
     isNew: flag(input.is_new, "新品状态", 0),
     isGood: flag(input.is_good, "优品状态", 0),
   };
+}
+
+/** Retained for existing callers and their physical-only validation contract. */
+export function normalizeOutPhysicalProductInput(input: UnknownRecord): OutPhysicalProductInput {
+  return normalizeOutProductInputInternal(input, false);
+}
+
+export function normalizeOutProductInput(input: UnknownRecord): OutPhysicalProductInput {
+  return normalizeOutProductInputInternal(input, true);
 }
 
 export function normalizeOutStockUpload(input: UnknownRecord): StockUploadItem[] {
@@ -379,10 +403,11 @@ function skuInsert(
   productId: number,
   fallbackImage: string,
   unique: string,
+  productType: 0 | 3,
 ) {
   return {
     productId,
-    productType: PHYSICAL_PRODUCT_TYPE,
+    productType,
     suk: sku.suk,
     stock: sku.stock,
     sumStock: sku.stock,
@@ -457,7 +482,7 @@ export class OutProductService {
     requestKeyInput: unknown,
   ) {
     const key = normalizeOutProductRequestKey(requestKeyInput);
-    const input = normalizeOutPhysicalProductInput(rawInput);
+    const input = normalizeOutProductInput(rawInput);
     const brandIds = input.brandIds;
     const ensureIds = input.ensureIds;
     const { storeLabelIds, userLabelIds, parameters, couponIds, customForm, systemFormId } = input;
@@ -503,12 +528,14 @@ export class OutProductService {
             .for("update", { noWait: true }))
         )[0];
         if (!existing) throw new NotFoundException("商品不存在或不属于平台");
-        if (existing.productType !== PHYSICAL_PRODUCT_TYPE) {
-          throw new ValidateException("非实物商品尚未迁移，不能通过 Out API 编辑");
-        }
+        if (existing.productType !== PHYSICAL_PRODUCT_TYPE && existing.productType !== MANUAL_VIRTUAL_PRODUCT_TYPE)
+          throw new ValidateException("该商品履约类型尚未迁移，不能通过 Out API 编辑");
+        if (existing.productType !== input.productType) throw new ValidateException('商品创建后不能修改履约类型');
         if (currentSkus.some((sku) => sku.isRetired === 1)) {
           throw new ValidateException("商品存在受控退役SKU，Out API不能修改其SKU拓扑");
         }
+        if (existing.productType === MANUAL_VIRTUAL_PRODUCT_TYPE && currentSkus.some(sku => sku.productType !== MANUAL_VIRTUAL_PRODUCT_TYPE))
+          throw new ValidateException('手工虚拟商品规格履约类型不一致，请先核对');
         const requestedSuks = input.skus.map((sku) => sku.suk).sort();
         const currentSuks = currentSkus.map((sku) => sku.suk).sort();
         if (JSON.stringify(requestedSuks) !== JSON.stringify(currentSuks)) {
@@ -530,6 +557,8 @@ export class OutProductService {
         : input.skus.reduce((sum, sku) => sum + sku.stock, 0);
       if (!Number.isSafeInteger(stock)) throw new ValidateException("商品总库存超出安全范围");
       const presalePlan = outProductPresalePlan(input, existing);
+      if (input.productType === MANUAL_VIRTUAL_PRODUCT_TYPE && presalePlan.isPresaleProduct !== 0)
+        throw new ValidateException('手工虚拟商品不能设置预售');
       await assertOutProductPresaleFuture(tx, presalePlan);
       const minimum = (values: string[]) => values.reduce((left, right) =>
         moneyCents(right) < moneyCents(left) ? right : left
@@ -559,7 +588,7 @@ export class OutProductService {
         ...(storeLabelIds === undefined ? {} : { storeLabelId: storeLabelIds.join(',') }),
         ...(userLabelIds === undefined ? {} : { labelId: userLabelIds.join(',') }),
         ...(parameters === undefined ? {} : { specsId: parameters.specs_id, specs: parameters.specs.length ? JSON.stringify(parameters.specs) : '' }),
-        productType: PHYSICAL_PRODUCT_TYPE,
+        productType: input.productType,
         type: PLATFORM_TYPE,
         relationId: PLATFORM_RELATION_ID,
         image: input.sliderImages[0],
@@ -609,7 +638,7 @@ export class OutProductService {
 
       const relationFence = await inventoryLock(() => captureOutProductRelationFence(tx, existing,
           [1, ...(brandIds === undefined ? [] : [2]), ...(storeLabelIds === undefined ? [] : [3]),
-            ...(userLabelIds === undefined ? [] : [4]), ...(ensureIds === undefined ? [] : [5]), ...(parameters === undefined ? [] : [6])]));
+            ...(userLabelIds === undefined ? [] : [4]), ...(ensureIds === undefined ? [] : [5]), ...(parameters === undefined ? [] : [6])], input.productType as 0 | 3));
       let savedProductId = productId;
       let couponFence = existing ? await inventoryLock(() => captureOutProductCoupons(tx, productId)) : undefined;
       if (existing) {
@@ -627,7 +656,7 @@ export class OutProductService {
         savedProductId = rows[0].id;
       }
 
-      const formProof = outProductFormProof(savedProductId, existing, customForm, systemFormId, admittedForm);
+      const formProof = outProductFormProof(savedProductId, input.productType as 0 | 3, existing, customForm, systemFormId, admittedForm);
       const scheduleProof = await inventoryLock(() => outProductScheduleProof(tx, savedProductId, existing, input));
       await assertOutProductPresale(tx, savedProductId, presalePlan);
       const expectedActivity = input.activity ?? existing?.activity ?? '';
@@ -693,7 +722,7 @@ export class OutProductService {
             if (!collision[0]) unique = candidate;
           }
           used.add(unique);
-          inserts.push(skuInsert(sku, savedProductId, input.sliderImages[0], unique));
+          inserts.push(skuInsert(sku, savedProductId, input.sliderImages[0], unique, input.productType as 0 | 3));
           resultSkus.push({ ...sku, unique });
         }
         await tx.insert(storeProductAttrValue).values(inserts);
@@ -703,7 +732,7 @@ export class OutProductService {
           await tx
             .update(storeProductAttrValue)
             .set({
-              productType: PHYSICAL_PRODUCT_TYPE,
+              productType: input.productType,
               price: sku.price,
               settlePrice: sku.settlePrice,
               image: sku.image || input.sliderImages[0].slice(0, 128),
@@ -735,6 +764,24 @@ export class OutProductService {
         changeTime: now,
         type: PRODUCT_ATTR_TYPE,
       });
+      const assertManualVirtualState = async () => {
+        if (input.productType !== MANUAL_VIRTUAL_PRODUCT_TYPE) return;
+        const [product] = await tx.select({ productType: storeProduct.productType, deliveryType: storeProduct.deliveryType,
+          freight: storeProduct.freight, tempId: storeProduct.tempId, postage: storeProduct.postage, stock: storeProduct.stock })
+          .from(storeProduct).where(eq(storeProduct.id, savedProductId)).limit(1);
+        if (!product || product.productType !== MANUAL_VIRTUAL_PRODUCT_TYPE || product.deliveryType !== '' ||
+          product.freight !== 2 || product.tempId !== 0 || product.postage !== '0.00' || product.stock !== stock)
+          throw new ValidateException('手工虚拟商品履约或库存状态已变化');
+        const persisted = await tx.select({ unique: storeProductAttrValue.unique, suk: storeProductAttrValue.suk,
+          productType: storeProductAttrValue.productType, stock: storeProductAttrValue.stock, isRetired: storeProductAttrValue.isRetired })
+          .from(storeProductAttrValue).where(and(eq(storeProductAttrValue.productId, savedProductId), eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE)));
+        const expected = new Map(resultSkus.map(sku => [sku.unique,sku]));
+        if (persisted.length !== expected.size || persisted.some(row => {
+          const sku = expected.get(row.unique);
+          return !sku || row.suk !== sku.suk || row.productType !== MANUAL_VIRTUAL_PRODUCT_TYPE || row.stock !== sku.stock || row.isRetired !== 0;
+        })) throw new ValidateException('手工虚拟商品规格或库存状态已变化');
+      };
+      await assertManualVirtualState();
       await updateCartStatus(tx, savedProductId, input.isShow);
       if (relationFence) relationFence.productId = savedProductId;
       const brandProof = brandIds === undefined ? undefined
@@ -759,6 +806,7 @@ export class OutProductService {
       if (userLabelProof) await inventoryLock(() => assertOutProductLabelBindings(tx, userLabelProof));
       if (parameterProof) await inventoryLock(() => assertOutProductParameterBindings(tx, parameterProof));
       await tx.execute(sql`SET CONSTRAINTS ALL IMMEDIATE`);
+      await assertManualVirtualState();
       await inventoryLock(() => assertOutProductRelationFence(tx, relationFence));
       await inventoryLock(() => assertOutProductCoupons(tx, couponProof));
       await inventoryLock(() => assertOutProductForm(tx, formProof));
@@ -766,6 +814,7 @@ export class OutProductService {
       await assertOutProductPresale(tx, savedProductId, presalePlan);
       await assertProductSelections();
       await assertOutProductPresaleFuture(tx, presalePlan);
+      await assertManualVirtualState();
       return { id: savedProductId, idempotent: false, stock_preserved: !!existing };
     });
   }
@@ -833,7 +882,7 @@ export class OutProductService {
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${PRODUCT_SAVE_LOCK_NAMESPACE}, 0)`);
       const barCodes = items.map((item) => item.barCode);
       // Two eligible rows prove ambiguity. Apply all eligibility predicates before
-      // ranking, so unrelated/retired/non-physical rows cannot hide a valid match.
+      // ranking, so unrelated, retired or unsupported rows cannot hide a valid match.
       // Rank one filtered set, rather than rescanning unindexed barcodes per input.
       const candidates = await tx.execute<{ id: number; barCode: string }>(sql`
         SELECT matched.id, matched.bar_code AS "barCode"
@@ -848,7 +897,8 @@ export class OutProductService {
             eq(storeProductAttrValue.isRetired, 0),
             eq(storeProduct.type, PLATFORM_TYPE),
             eq(storeProduct.relationId, PLATFORM_RELATION_ID),
-            eq(storeProduct.productType, PHYSICAL_PRODUCT_TYPE),
+            inArray(storeProduct.productType, [PHYSICAL_PRODUCT_TYPE, MANUAL_VIRTUAL_PRODUCT_TYPE]),
+            sql`(${storeProduct.productType} = ${PHYSICAL_PRODUCT_TYPE} OR ${storeProductAttrValue.productType} = ${MANUAL_VIRTUAL_PRODUCT_TYPE})`,
             eq(storeProduct.isDel, 0),
           )}
         ) AS matched
@@ -885,12 +935,14 @@ export class OutProductService {
       const platformProducts = new Map(products.filter((product) =>
         product.type === PLATFORM_TYPE
         && product.relationId === PLATFORM_RELATION_ID
-        && product.productType === PHYSICAL_PRODUCT_TYPE
+        && [PHYSICAL_PRODUCT_TYPE, MANUAL_VIRTUAL_PRODUCT_TYPE].includes(product.productType)
         && product.isDel === 0
       ).map((product) => [product.id, product]));
       const byBarCode = new Map<string, Array<typeof storeProductAttrValue.$inferSelect>>();
       for (const sku of allMatchingSkus) {
-        if (!platformProducts.has(sku.productId)) continue;
+        const product = platformProducts.get(sku.productId);
+        if (!product || sku.type !== PRODUCT_ATTR_TYPE || sku.isRetired !== 0 ||
+          (product.productType === MANUAL_VIRTUAL_PRODUCT_TYPE && sku.productType !== MANUAL_VIRTUAL_PRODUCT_TYPE)) continue;
         byBarCode.set(sku.barCode, [...(byBarCode.get(sku.barCode) ?? []), sku]);
       }
       for (const item of items) {
@@ -901,10 +953,16 @@ export class OutProductService {
 
       const now = Math.floor(Date.now() / 1000);
       const affectedProducts = new Set<number>();
+      const manualSkus: Array<{ id: number; productId: number; unique: string; barCode: string; stock: number; sumStock: number }> = [];
+      const manualRecords: Array<typeof storeProductStockRecord.$inferSelect> = [];
+      const manualTotals = new Map<number, number>();
       let updated = 0;
       for (const item of items) {
         const sku = byBarCode.get(item.barCode)![0];
         affectedProducts.add(sku.productId);
+        const manual = platformProducts.get(sku.productId)?.productType === MANUAL_VIRTUAL_PRODUCT_TYPE;
+        if (manual) manualSkus.push({ id: sku.id, productId: sku.productId, unique: sku.unique, barCode: sku.barCode,
+          stock: item.quantity, sumStock: sku.sumStock + Math.max(0, item.quantity - sku.stock) });
         if (sku.stock === item.quantity) continue;
         const delta = item.quantity - sku.stock;
         await tx
@@ -914,7 +972,7 @@ export class OutProductService {
             sumStock: delta > 0 ? sku.sumStock + delta : sku.sumStock,
           })
           .where(eq(storeProductAttrValue.id, sku.id));
-        await tx.insert(storeProductStockRecord).values({
+        const records = await tx.insert(storeProductStockRecord).values({
           storeId: 0,
           productId: sku.productId,
           unique: sku.unique,
@@ -922,7 +980,13 @@ export class OutProductService {
           number: Math.abs(delta),
           pm: delta > 0 ? 1 : 0,
           addTime: now,
-        });
+        }).returning();
+        if (manual) {
+          if (records.length !== 1 || records[0].productId !== sku.productId || records[0].unique !== sku.unique ||
+            records[0].number !== Math.abs(delta) || records[0].pm !== (delta > 0 ? 1 : 0) || records[0].costPrice !== sku.cost)
+            throw new ValidateException('手工虚拟商品库存记录已变化');
+          manualRecords.push(records[0]);
+        }
         updated += 1;
       }
       for (const affectedProductId of [...affectedProducts].sort((left, right) => left - right)) {
@@ -935,6 +999,7 @@ export class OutProductService {
             eq(storeProductAttrValue.isRetired, 0),
           ));
         const stock = Number(totals[0]?.stock ?? 0);
+        if (platformProducts.get(affectedProductId)?.productType === MANUAL_VIRTUAL_PRODUCT_TYPE) manualTotals.set(affectedProductId, stock);
         await tx
           .update(storeProduct)
           .set({ stock, isSold: stock > 0 ? 0 : 1 })
@@ -946,6 +1011,32 @@ export class OutProductService {
           ));
       }
       await recordReplay(tx, account.id, "stock_upload", key, hash, 0, updated);
+      if (manualSkus.length) {
+        await tx.execute(sql`SET CONSTRAINTS ALL IMMEDIATE`);
+        const rows = await tx.select().from(storeProductAttrValue).where(inArray(storeProductAttrValue.id, manualSkus.map(row => row.id)));
+        if (rows.length !== manualSkus.length || manualSkus.some(expected => {
+          const row = rows.find(value => value.id === expected.id);
+          return !row || row.productId !== expected.productId || row.productType !== MANUAL_VIRTUAL_PRODUCT_TYPE || row.type !== PRODUCT_ATTR_TYPE ||
+            row.isRetired !== 0 || row.unique !== expected.unique || row.barCode !== expected.barCode || row.stock !== expected.stock || row.sumStock !== expected.sumStock;
+        })) throw new ValidateException('手工虚拟商品库存或规格已变化');
+        for (const [id, expected] of manualTotals) {
+          const [product] = await tx.select({ type: storeProduct.type, relationId: storeProduct.relationId, productType: storeProduct.productType,
+            isDel: storeProduct.isDel, stock: storeProduct.stock, isSold: storeProduct.isSold }).from(storeProduct).where(eq(storeProduct.id,id)).limit(1);
+          const [total] = await tx.select({ stock: sql<number>`COALESCE(SUM(${storeProductAttrValue.stock}), 0)::integer` }).from(storeProductAttrValue)
+            .where(and(eq(storeProductAttrValue.productId,id),eq(storeProductAttrValue.type,PRODUCT_ATTR_TYPE),eq(storeProductAttrValue.isRetired,0)));
+          if (!product || product.type !== PLATFORM_TYPE || product.relationId !== PLATFORM_RELATION_ID || product.productType !== MANUAL_VIRTUAL_PRODUCT_TYPE ||
+            product.isDel !== 0 || product.stock !== expected || product.isSold !== (expected > 0 ? 0 : 1) || Number(total?.stock) !== expected)
+            throw new ValidateException('手工虚拟商品总库存已变化');
+        }
+        if (manualRecords.length) {
+          const actual = await tx.select().from(storeProductStockRecord).where(inArray(storeProductStockRecord.id,manualRecords.map(row => row.id))).orderBy(asc(storeProductStockRecord.id));
+          if (JSON.stringify(actual) !== JSON.stringify([...manualRecords].sort((a,b) => a.id-b.id))) throw new ValidateException('手工虚拟商品库存记录已变化');
+        }
+        const [receipt] = await tx.select().from(outProductWriteReplay).where(and(eq(outProductWriteReplay.outAccountId,account.id),
+          eq(outProductWriteReplay.operation,'stock_upload'),eq(outProductWriteReplay.requestKey,key))).limit(1);
+        if (!receipt || receipt.productId !== 0 || receipt.requestHash !== hash || receipt.resultCount !== updated)
+          throw new ValidateException('手工虚拟商品库存回执已变化');
+      }
       return { updated, idempotent: updated === 0 };
     });
   }
