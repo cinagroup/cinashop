@@ -13,7 +13,7 @@ import { sequenceRunnerDatabase, type SequenceRunnerPeer } from './helpers/kefuS
 import { waitForFinanceBlock } from './helpers/financePeers';
 import { runtimeBusinessPrivilegePlan } from '../src/migrations/runtimeBusinessPrivilegePlan';
 import { storeProduct, storeProductAttrValue, storeProductCategory, storeCart, storeProductRelation,
-  outProductWriteReplay, storeProductStockRecord, storeProductAttr, storeProductAttrResult, storeProductDescription, storeBrand, storeProductEnsure } from '../src/models/schema';
+  outProductWriteReplay, storeProductStockRecord, storeProductAttr, storeProductAttrResult, storeProductDescription, storeBrand, storeProductEnsure, storeCouponIssue, storeProductCoupon } from '../src/models/schema';
 
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('full-ORM Out product management versus checkout', () => {
   let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
@@ -670,6 +670,120 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('full-ORM Out pro
     const result = await request(app(f.db), '/outapi/product/70', { ...productBody, brand_id: [30, 31] });
     expect(result.status).not.toBe(200); expect(result.msg).toContain('历史关联已变化');
     expect(await state()).toEqual(before); expect(await unownedBrandRelations()).toEqual(protectedRows);
+  });
+
+  const couponState = async () => ({ business: await state(),
+    coupons: await f.db.select().from(storeProductCoupon).orderBy(storeProductCoupon.id),
+    issues: await f.db.select().from(storeCouponIssue).orderBy(storeCouponIssue.id) });
+  const seedCouponIssues = async () => {
+    await f.db.insert(storeCouponIssue).values([
+      { id: 800, title: '第一发行券', couponTitle: '赠券一', status: 1 },
+      { id: 801, title: '停用发行券', status: 0 },
+      { id: 802, title: '删除发行券', isDel: 1 },
+    ]);
+    await f.db.insert(storeProductCoupon).values({ productId: 70, issueCouponId: 801, title: '原关联' });
+  };
+
+  it('Out coupon replacement preserves stock, reads issuance titles, replays before admission, and clears explicitly', async () => {
+    await seedCouponIssues();
+    const before = await couponState();
+    const selected = { ...productBody, coupon_ids: [801, 800, 800] };
+    const saved = await request(app(f.db), '/outapi/product/70', selected);
+    expect(saved.status, saved.msg).toBe(200); expect(saved.data.stock_preserved).toBe(true);
+    const after = await couponState();
+    expect(after.coupons.map(row => [row.issueCouponId, row.title])).toEqual([[800, '赠券一'], [801, '停用发行券']]);
+    expect(after.business.skus.map(row => [row.id, row.unique, row.stock, row.sumStock, row.sales]))
+      .toEqual(before.business.skus.map(row => [row.id, row.unique, row.stock, row.sumStock, row.sales]));
+    const read = await request(app(f.db), '/outapi/product/70', undefined, 'GET');
+    expect(read.status, read.msg).toBe(200);
+    expect(read.data).toMatchObject({ productInfo: { coupons: [{ id: 800, title: '第一发行券' }, { id: 801, title: '停用发行券' }] } });
+    await f.db.update(storeCouponIssue).set({ isDel: 1 }).where(eq(storeCouponIssue.id, 800));
+    const changed = await couponState();
+    const replay = await request(app(f.db), '/outapi/product/70', selected);
+    expect(replay.status, replay.msg).toBe(200); expect(replay.data.idempotent).toBe(true); expect(await couponState()).toEqual(changed);
+    const fresh = await request(app(f.db), '/outapi/product/70', selected, 'PUT', crypto.randomUUID());
+    expect(fresh.status).not.toBe(200); expect(await couponState()).toEqual(changed);
+    const clear = await request(app(f.db), '/outapi/product/70', { ...productBody, coupon_ids: [] }, 'PUT', crypto.randomUUID());
+    expect(clear.status, clear.msg).toBe(200); expect((await couponState()).coupons).toEqual([]);
+  });
+
+  it('creates an Out product and coupon links in the same idempotent receipt', async () => {
+    await seedCouponIssues();
+    await f.exec("SELECT setval(pg_get_serial_sequence('store_product','id'),70,true); SELECT setval(pg_get_serial_sequence('store_product_attr_value','id'),1,true)");
+    const body = { ...productBody, coupon_ids: [800], attrs: productBody.attrs.map(row => ({ ...row, unique: 'cpnew001', bar_code: 'COUPON-NEW' })) };
+    const saved = await request(app(f.db), '/outapi/product', body, 'POST');
+    expect(saved.status, saved.msg).toBe(200);
+    expect((await f.db.select().from(storeProductCoupon).where(eq(storeProductCoupon.productId, saved.data.id)))
+      .map(row => [row.issueCouponId, row.title])).toEqual([[800, '赠券一']]);
+    const before = await couponState();
+    const replay = await request(app(f.db), '/outapi/product', body, 'POST');
+    expect(replay.status, replay.msg).toBe(200); expect(replay.data).toMatchObject({ id: saved.data.id, idempotent: true });
+    expect(await couponState()).toEqual(before);
+  });
+
+  it('omitted coupons retain exact legacy rows, differ from explicit-clear receipt, and do not consult issuance catalog', async () => {
+    await seedCouponIssues();
+    await f.exec('ALTER TABLE store_coupon_issue RENAME TO hidden_out_coupon_issue');
+    const before = await f.db.select().from(storeProductCoupon);
+    try {
+      const saved = await request(app(f.db), '/outapi/product/70', productBody);
+      expect(saved.status, saved.msg).toBe(200); expect(await f.db.select().from(storeProductCoupon)).toEqual(before);
+      const conflict = await request(app(f.db), '/outapi/product/70', { ...productBody, coupon_ids: [] });
+      expect(conflict.status).not.toBe(200); expect(await f.db.select().from(storeProductCoupon)).toEqual(before);
+    } finally { await f.exec('ALTER TABLE hidden_out_coupon_issue RENAME TO store_coupon_issue'); }
+  });
+
+  it('rejects missing or deleted issues atomically and refuses busy coupon and issue locks without waiting', async () => {
+    await seedCouponIssues(); const before = await couponState();
+    for (const id of [802, 999]) {
+      const result = await request(app(f.db), '/outapi/product/70', { ...productBody, coupon_ids: [id] }, 'PUT', crypto.randomUUID());
+      expect(result.status).not.toBe(200); expect(await couponState()).toEqual(before);
+    }
+    await peers(async ([holder, writer]) => {
+      await holder.exec('BEGIN; SELECT pg_advisory_xact_lock(731626, 70)');
+      const busy = await request(app(writer.db), '/outapi/product/70', { ...productBody, coupon_ids: [800] }, 'PUT', crypto.randomUUID());
+      expect(busy.status).not.toBe(200); expect(busy.msg).toContain('正在变化'); await holder.exec('COMMIT');
+      await holder.exec('BEGIN; SELECT id FROM store_coupon_issue WHERE id=800 FOR UPDATE');
+      const issueBusy = await request(app(writer.db), '/outapi/product/70', { ...productBody, coupon_ids: [800] }, 'PUT', crypto.randomUUID());
+      expect(issueBusy.status).not.toBe(200); expect(issueBusy.msg).toContain('正在变化'); await holder.exec('COMMIT');
+    });
+    expect(await couponState()).toEqual(before);
+  }, 20_000);
+
+  it('saves coupon links under the existing restricted App privilege plan', async () => {
+    await seedCouponIssues(); if (!owned.withRuntimeRole) throw Error('Native restricted LOGIN required');
+    await owned.withRuntimeRole(async runtime => {
+      const plan = runtimeBusinessPrivilegePlan('app'), quote = (name: string) => {
+        if (!/^[a-z_][a-z_0-9]*$/.test(name)) throw Error('Invalid owned grant identifier'); return `"${name}"`;
+      };
+      const tables = await f.db.execute<{ name: string }>(sql`SELECT relname AS name FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r' ORDER BY relname`);
+      for (const { name } of tables) {
+        const rights = plan.tables[name]; if (!rights) continue;
+        await f.exec(`GRANT ${rights.join(',')} ON public.${quote(name)} TO ${quote(runtime.role)}`);
+        const columns = plan.updateColumns[name];
+        if (columns?.length) await f.exec(`GRANT UPDATE(${columns.map(quote).join(',')}) ON public.${quote(name)} TO ${quote(runtime.role)}`);
+      }
+      const sequences = await f.db.execute<{ table_name: string; sequence_name: string | null }>(sql`SELECT c.relname AS table_name,
+        pg_get_serial_sequence('public.'||quote_ident(c.relname),a.attname) AS sequence_name
+        FROM pg_class c JOIN pg_attribute a ON a.attrelid=c.oid AND a.attnum>0 AND NOT a.attisdropped
+        WHERE c.relnamespace='public'::regnamespace AND c.relkind='r'`);
+      for (const row of sequences) if (row.sequence_name && plan.tables[row.table_name]?.includes('INSERT')) {
+        const parts = row.sequence_name.split('.'); if (parts.length !== 2 || parts[0] !== 'public') throw Error('Unexpected owned sequence');
+        await f.exec(`GRANT USAGE ON SEQUENCE public.${quote(parts[1])} TO ${quote(runtime.role)}`);
+      }
+      const saved = await request(app(runtime.db), '/outapi/product/70', { ...productBody, coupon_ids: [800] });
+      expect(saved.status, saved.msg).toBe(200);
+      expect((await f.db.select().from(storeProductCoupon).where(eq(storeProductCoupon.productId, 70))).map(row => row.issueCouponId)).toEqual([800]);
+    });
+  }, 30_000);
+
+  it('rolls back selected and omitted coupon changes caused by deferred receipt triggers', async () => {
+    await seedCouponIssues(); const before = await couponState();
+    await f.exec("CREATE FUNCTION test_out_coupon_receipt_damage() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN UPDATE store_product_coupon SET title='damaged' WHERE product_id=70; RETURN NEW; END $$; CREATE CONSTRAINT TRIGGER test_out_coupon_receipt_damage AFTER INSERT ON out_product_write_replay DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION test_out_coupon_receipt_damage()");
+    for (const value of [productBody, { ...productBody, coupon_ids: [800] }]) {
+      const result = await request(app(f.db), '/outapi/product/70', value, 'PUT', crypto.randomUUID());
+      expect(result.status).not.toBe(200); expect(result.msg).toContain('优惠券'); expect(await couponState()).toEqual(before);
+    }
   });
 
 });

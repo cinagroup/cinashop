@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import type { Env, OrderPaidOutboxMessage } from '../src/env';
 import { createContainerFromDb, type DbClient } from '../src/lib/di';
 import { storeCart, storeCouponIssue, storeCouponIssueUser, storeCouponUser, storeOrder, storeOrderStatus,
-  storeOrderOutbox, storeOrderProductCouponReward, storeProduct, storeProductCoupon,
+  storeOrderOutbox, storeOrderProductCouponReward, storeProduct, storeProductCoupon, storeProductCategory, storeProductAttrValue,
   systemConfig, user, userBill, userMoney } from '../src/models/schema';
 import { runRuntimeBusinessCommissioning, type RuntimeCommissionTarget } from '../src/migrations/runRuntimeBusinessCommissioning';
 import { inspectReviewedOfflineGiftCatalog } from '../src/migrations/reviewedOfflineGiftCatalog';
@@ -13,6 +13,8 @@ import { LoginService } from '../src/services/user/LoginService';
 import { StoreOrderCreateService } from '../src/services/order/StoreOrderCreateService';
 import { applyStoreOrderBalancePayment } from '../src/services/order/StoreOrderPayService';
 import { OrderOutboxService } from '../src/services/order/OrderOutboxService';
+import { OutProductService } from '../src/services/out/OutProductService';
+import { runRoutinePaymentRuntimeInstallation } from '../src/migrations/routinePaymentRuntime';
 import { setTokenBucket } from '../src/utils/cache';
 import { refundRuntimeFixture } from './helpers/refundRuntimeFixture';
 import { withCouponTemplatePeer, type CouponTemplateRuntimePeer } from './helpers/couponTemplateFixture';
@@ -194,6 +196,10 @@ describe.skipIf(!process.env.TEST_FINANCE_POSTGRES_URL)('gift use windows throug
         database: String(identity.database), pricingOwner: f.pricingOwner };
       runtimeNames = names;
       await runRuntimeBusinessCommissioning(f.db, names);
+      // Commission the real immutable payment addon for these exact owned
+      // LOGINs; all local-payment admission and ACL audits remain active.
+      const paymentRuntime = await runRoutinePaymentRuntimeInstallation(f.db, names);
+      expect(paymentRuntime.after.ready).toBe(true);
       for (const [peer, profile] of [[app, 'app'], [admin, 'admin']] as const) {
         expect(await auditRuntimeBusinessPrivileges(peer.db, profile, names)).toMatchObject({ ready: true, failures: [] });
         const [identity] = await peer.exec("SELECT current_user AS role,session_user AS session,current_setting('server_version_num') AS version");
@@ -291,6 +297,30 @@ describe.skipIf(!process.env.TEST_FINANCE_POSTGRES_URL)('gift use windows throug
     expect(rows.owned.map(row => row.receiveSource)).toEqual(Array(ids.length * count).fill(flow === 'registration' ? 'newcomer' : 'order'));
     return rows;
   }
+
+  it('grants an Out-authored issuance through real balance payment and idempotent paid outbox', async () => {
+    await commissioned(async app => {
+      const f = fixture(); await seedIssue();
+      await f.db.insert(storeProductCategory).values({ id: 9, cateName: 'Out coupon test', isShow: 1 });
+      await f.db.update(storeProduct).set({ cateId: '9', specType: 1 }).where(eq(storeProduct.id, 70));
+      await f.db.update(storeProductAttrValue).set({ barCode: 'OUT-GIFT' }).where(eq(storeProductAttrValue.id, 1));
+      const input = { product_type: 0, supplier_id: 0, cate_id: [9], store_name: 'Out gift product',
+        slider_image: ['/isolated.png'], delivery_type: [1], freight: 1, spec_type: 1, is_show: 1,
+        items: [{ value: '颜色', detail: ['红色'] }, { value: '尺码', detail: ['大号'] }],
+        attrs: [{ suk: '红色,大号', detail: { 颜色: '红色', 尺码: '大号' }, unique: 'qared001', price: '10.00', stock: 999, bar_code: 'OUT-GIFT' }],
+        coupon_ids: [firstIssue] };
+      const result = await new OutProductService(createContainerFromDb(f.db)).save({ id: 7 }, 70, input, crypto.randomUUID());
+      expect(result).toMatchObject({ id: 70, idempotent: false, stock_preserved: true });
+      expect((await f.db.select().from(storeProductCoupon).where(eq(storeProductCoupon.productId, 70))).map(row => row.issueCouponId)).toEqual([firstIssue]);
+      const task = await prepare('paid-outbox', app, 95);
+      expect(await task.run()).toBe('completed');
+      const gift = await granted('paid-outbox', [firstIssue]);
+      expect(gift.issues[0].remainCount).toBe(4);
+      expect(gift.rewards[0]).toMatchObject({ productId: 70, issueCouponId: firstIssue });
+      expect(await task.run()).toBe('already-completed');
+      expect(await giftRows([firstIssue])).toEqual(gift);
+    });
+  }, 120000);
 
   // Four independent red witnesses: all use production entries, never call an
   // eligibility function. Missing day0 end and negative day with a future end

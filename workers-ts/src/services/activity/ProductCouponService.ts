@@ -136,7 +136,7 @@ export function calculateCouponDiscountCents(input: {
   return Math.min(faceValueCents, input.eligibleSubtotalCents);
 }
 
-function normalizeCouponIds(value: unknown): number[] {
+export function normalizeCouponIds(value: unknown): number[] {
   const raw = Array.isArray(value)
     ? value
     : typeof value === "string"

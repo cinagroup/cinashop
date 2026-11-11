@@ -1,0 +1,324 @@
+{
+  "schema": "php-ts-out-product-coupons/v1",
+  "baseCommit": "0df9ae3d53b691497a27f390c3c6fc0aeb4b8173",
+  "preparedAt": "2026-11-11T13:21:23.298309+00:00",
+  "phpSources": [
+    {
+      "file": "app/controller/out/Product.php",
+      "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "gitBlobSha1": "5a55a3a43001325abfd36cee3c6af3e3b45cac66",
+      "sha256": "a52f6c6392594116e66803572a67e6c15d424fa13eac48df6bc9d7a6ef01c24a",
+      "lineRanges": [
+        [
+          216,
+          216
+        ]
+      ]
+    },
+    {
+      "file": "app/services/product/product/StoreProductServices.php",
+      "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "gitBlobSha1": "f8163c25f694dd0ff84486d89926ef004ba9e81e",
+      "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+      "lineRanges": [
+        [
+          750,
+          759
+        ]
+      ]
+    },
+    {
+      "file": "app/listener/product/CreateSuccess.php",
+      "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "gitBlobSha1": "1db3d791f0db7ec5da1515e9bd2570ccaa16075f",
+      "sha256": "06402ea2098c72255c99b63e005324651f1ea0ec53c1b742812de746c3c6ff70",
+      "lineRanges": [
+        [
+          53,
+          53
+        ]
+      ]
+    },
+    {
+      "file": "app/services/product/product/StoreProductCouponServices.php",
+      "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "gitBlobSha1": "4a2a2e77f9e40a73c339fc513db2735e1d9cbe73",
+      "sha256": "9d6bd41aabababe1ce9bee6e7bf8d342647442e90f99d516aaa6d8d20e50c972",
+      "lineRanges": [
+        [
+          46,
+          63
+        ],
+        [
+          98,
+          138
+        ]
+      ]
+    }
+  ],
+  "scope": [
+    "Out product issued coupon selection, omission and explicit clear",
+    "transactional replay, parent and advisory coordination, issue locks and late-trigger proofs",
+    "real local balance payment, paid outbox and idempotent grant"
+  ],
+  "validation": {
+    "unit": {
+      "numTotalTests": 130,
+      "numPassedTests": 130,
+      "numFailedTests": 0,
+      "numPendingTests": 0
+    },
+    "native": {
+      "native-checkout": {
+        "passed": 64,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      },
+      "native-out-labels": {
+        "passed": 69,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      },
+      "native-coupon-payment": {
+        "passed": 20,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      }
+    },
+    "profiles": [
+      {
+        "profile": "unit",
+        "exit": 0,
+        "seconds": 24.377,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "worker-unit-types",
+        "exit": 0,
+        "seconds": 258.186,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "worker-runtime-types",
+        "exit": 0,
+        "seconds": 108.952,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-checkout",
+        "exit": 0,
+        "seconds": 523.308,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-out-labels",
+        "exit": 0,
+        "seconds": 563.263,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-coupon-payment",
+        "exit": 0,
+        "seconds": 251.406,
+        "budgetSeconds": 600
+      }
+    ],
+    "originalNativeChildBudgetSeconds": 600
+  },
+  "unchangedInputs": [
+    {
+      "file": ".github/workflows/workers-runtime-linux.yml",
+      "sha256": "94f08a84a76181eb0f0229f0f82d1f731b9c39ebbe09b5ceebb4ae3741d6cac6"
+    },
+    {
+      "file": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "32c5fff9c6dbfaa30720fbd72dd729a3ea7a1e7fc3a02be5515fb541af55a074"
+    },
+    {
+      "file": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+      "sha256": "4044d51930d72620f9d124c375779e37a99fdfb8e8c815cf2cb30420080d4324"
+    },
+    {
+      "file": "workers-ts/src/services/out/OutProductDetailRead.ts",
+      "sha256": "a08625fbd50efaaabea999d4786702e14690e78d168f5029e64c4cda013faaf2"
+    }
+  ],
+  "candidateImages": [
+    {
+      "file": "workers-ts/docs/php-ts-out-product-coupons-20261111.md",
+      "sha256": "52372944d34f0f442a916762c94200e38bf6fd33fe1674c4488337549f337f41",
+      "bytes": 2906
+    },
+    {
+      "file": "workers-ts/src/services/activity/ProductCouponService.ts",
+      "sha256": "aec6e37c95104b8865e4c5ae5629eb0beb4bb6520fd36bb6e21896e9c8577a39",
+      "bytes": 12763
+    },
+    {
+      "file": "workers-ts/src/services/out/OutProductCouponBindings.ts",
+      "sha256": "8b98bb1101d86421ec1b32010bd197e8da7d6d3d7930567b8df3f6044811d350",
+      "bytes": 4015
+    },
+    {
+      "file": "workers-ts/src/services/out/OutProductService.ts",
+      "sha256": "283af08faf2e1cd345d22dae33fcb431aaa7db83ed9102c8d9fff3598e5c21e4",
+      "bytes": 37109
+    },
+    {
+      "file": "workers-ts/test/checkout-out-product-concurrency.test.ts",
+      "sha256": "ee6870641776dd044121770bc3bf2c0730471583050be0c83bdf149ee7594e62",
+      "bytes": 66397
+    },
+    {
+      "file": "workers-ts/test/coupon-gift-use-window-postgres.test.ts",
+      "sha256": "c229a8a71027160cdcb0b0dff99d56d92fc98cf972a202cd4ff163c7753783ef",
+      "bytes": 39907
+    },
+    {
+      "file": "workers-ts/test/out-product-coupons.test.ts",
+      "sha256": "471c38c39d5a0135695c38efd2c519509af55f8f35a14ba68239bb71fef1aab4",
+      "bytes": 1611
+    },
+    {
+      "file": "workers-ts/test/out-product-migration.test.ts",
+      "sha256": "165665f9f24d778e865f58defa9284f4413a2114772cc61e36af1d877c504aae",
+      "bytes": 10080
+    }
+  ],
+  "retainedFailures": [
+    {
+      "file": "create.log",
+      "reason": "Manually seeded SKU id did not advance its serial sequence; fixture corrected."
+    },
+    {
+      "file": "create-and-role-red.log",
+      "reason": "Existing App role cannot row-lock coupon links; coordinator now uses the existing product row and coupon advisory protocol with version proof."
+    },
+    {
+      "file": "payment.log",
+      "reason": "Local payment admission rejected missing routine payment attempt storage."
+    },
+    {
+      "file": "preexisting-payment-baseline.log",
+      "reason": "Original existing payment case reproduced the same missing storage failure."
+    },
+    {
+      "file": "payment-after-fixture.log",
+      "reason": "Partial manual setup failed the exact runtime ACL audit; replaced by the existing formal installer."
+    }
+  ],
+  "runtimeBoundary": "Synthetic Out identity, isolated PG16 and real Hono/service SQL. Independent restricted App LOGIN validated against existing privilege plan. Real local balance payment and paid outbox exercised with formally commissioned isolated LOGINs. No production role install, provider request, external payment or user authentication proof.",
+  "previousCI": {
+    "commit": "0df9ae3d53b691497a27f390c3c6fc0aeb4b8173",
+    "runId": 43021393009,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/43021393009",
+    "conclusion": "failure",
+    "workerShards": "fixed legacy PHP checkout failure",
+    "otherJobs": "success"
+  },
+  "boundaries": {
+    "noSchemaMigration": true,
+    "noRunnerAdmissionChange": true,
+    "noWorkflowOrBudgetChange": true,
+    "noProductionGrantChange": true,
+    "deploymentPerformed": false,
+    "legacyPhpUploaded": false,
+    "newCommitRemoteCIVerified": false,
+    "wholeMigrationComplete": false
+  },
+  "artifactDirectory": "/tmp/php-ts-out-product-coupons-20261111",
+  "artifacts": [
+    {
+      "name": "frozen-source.json",
+      "sha256": "f023b0603545e12a0a295c275e19e0deaecccd88834ac1009eef486e3f8e581f",
+      "bytes": 879
+    },
+    {
+      "name": "validation-progress.json",
+      "sha256": "13cfa0e076dd0902e21a55e1c9d10c1d363ee09aa829e7e60209ff098644033a",
+      "bytes": 648
+    },
+    {
+      "name": "unit.json",
+      "sha256": "70c46ad16fbc47151fee99ef25e4b40e08946983e19bdf796a1113aa170da061",
+      "bytes": 61967
+    },
+    {
+      "name": "unit.log",
+      "sha256": "60ee1c42c35b25123619f077030ffd45ad83d646475175b20a727f34a0f395ee",
+      "bytes": 419
+    },
+    {
+      "name": "worker-unit-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "name": "worker-runtime-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "name": "native-checkout.log",
+      "sha256": "d7357a94df3d4de1f376ce743ca262b39fb82dec5d3b5aa28aa51e22c93dca48",
+      "bytes": 1398
+    },
+    {
+      "name": "native-out-labels.log",
+      "sha256": "adcb2b68db84be7a3b831d539e7616afc96ef01429ec54c1808a6935e60f8058",
+      "bytes": 1393
+    },
+    {
+      "name": "native-coupon-payment.log",
+      "sha256": "f4eb06ff4dd95ae652c7e51c5acd5e4346d44ab27d314efa9e0f2e78acaa5612",
+      "bytes": 1397
+    },
+    {
+      "name": "create.log",
+      "sha256": "df98cd2e9fa59647f1655da3f31bf500d4eb845a0aa1b1375a2e2362a7de7c62",
+      "bytes": 3438
+    },
+    {
+      "name": "create-and-role-red.log",
+      "sha256": "57afe4fd23b3d180bd4506291f32174a12c1c3bd379587e2b9cbf0ba896c2f2c",
+      "bytes": 2959
+    },
+    {
+      "name": "create-and-role.log",
+      "sha256": "540e67062230c9e3b9b1d18f98ec793c0bfe3c58dd8e76eb320e89add441fc43",
+      "bytes": 1551
+    },
+    {
+      "name": "payment.log",
+      "sha256": "6434508f0dc38b6e31bc7837d958d9586ad9fe9ba71b1ff58a34c75a9d142a8e",
+      "bytes": 4810
+    },
+    {
+      "name": "preexisting-payment-baseline.log",
+      "sha256": "9ca1ff761a932f7a7940e0a4ff0ff218c3efcc424617c90aca7be293d75b86b7",
+      "bytes": 4933
+    },
+    {
+      "name": "payment-after-fixture.log",
+      "sha256": "dadb2ef861b17a8d92da1b1accf3da16916cf08b3ad0df530edf9cc2a0183845",
+      "bytes": 5610
+    },
+    {
+      "name": "payment-commissioned.log",
+      "sha256": "719e5ceaa83b5ca1ac0c998e6602a1f13a35e7ecd37023b06b622f72ef5f9e33",
+      "bytes": 1554
+    }
+  ],
+  "fullFileSecretScanReview": {
+    "reportedFindings": 1,
+    "reviewedNonSecrets": 1,
+    "rule": "generic-api-key",
+    "file": "workers-ts/test/checkout-out-product-concurrency.test.ts",
+    "line": 22,
+    "reason": "Unchanged synthetic UUIDv4 used as a local idempotency header in the base commit; not a credential. Redacted raw reports retained.",
+    "parentCommit": "0df9ae3d53b691497a27f390c3c6fc0aeb4b8173"
+  }
+}

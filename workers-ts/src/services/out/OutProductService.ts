@@ -31,6 +31,7 @@ import { captureOutProductRelationFence, assertOutProductRelationFence } from '.
 import { readOutProductDetail } from './OutProductDetailRead';
 import { outProductLabelInput, lockOutProductLabels, replaceOutProductLabelBindings, assertOutProductLabelBindings } from './OutProductLabelBindings';
 import { outProductParameterInput, lockOutProductParameterTemplate, replaceOutProductParameterBindings, assertOutProductParameterBindings } from './OutProductParameterBindings';
+import { outProductCouponInput, captureOutProductCoupons, replaceOutProductCoupons, assertOutProductCoupons } from './OutProductCouponBindings';
 
 type UnknownRecord = Record<string, unknown>;
 type ProductWriteOperation = "product_create" | "product_update" | "product_show" | "stock_upload";
@@ -54,6 +55,7 @@ interface OutPhysicalProductInput extends SupplierPhysicalProductInput {
   storeLabelIds?: number[];
   userLabelIds?: number[];
   parameters?: NonNullable<ReturnType<typeof outProductParameterInput>>;
+  couponIds?: number[];
   deliveryType: string;
   freight: 1 | 2 | 3;
   isShow: 0 | 1;
@@ -156,7 +158,6 @@ function rejectUnmigratedProductFeatures(input: UnknownRecord): void {
     "activity",
     "auto_off_time",
     "auto_on_time",
-    "coupon_ids",
     "custom_form",
     "is_presale_product",
     "is_vip_product",
@@ -209,11 +210,13 @@ export function normalizeOutPhysicalProductInput(input: UnknownRecord): OutPhysi
   const brandIds = supplierProductBrandInput(input);
   const ensureIds = supplierProductEnsureInput(input);
   const parameters = outProductParameterInput(input);
+  const couponIds = outProductCouponInput(input);
   return {
     ...base,
     ...(brandIds === undefined ? {} : { brandIds }),
     ...(ensureIds === undefined ? {} : { ensureIds }),
     ...(parameters === undefined ? {} : { parameters }),
+    ...(couponIds === undefined ? {} : { couponIds }),
     ...outProductLabelInput(input),
     sliderImages,
     skus,
@@ -399,7 +402,7 @@ export class OutProductService {
     const input = normalizeOutPhysicalProductInput(rawInput);
     const brandIds = input.brandIds;
     const ensureIds = input.ensureIds;
-    const { storeLabelIds, userLabelIds, parameters } = input;
+    const { storeLabelIds, userLabelIds, parameters, couponIds } = input;
     const operation: ProductWriteOperation = productId > 0 ? "product_update" : "product_create";
     const hash = await outRequestHash({ operation, productId, input });
     return withTx(this.container, async (tx) => {
@@ -537,6 +540,7 @@ export class OutProductService {
           [1, ...(brandIds === undefined ? [] : [2]), ...(storeLabelIds === undefined ? [] : [3]),
             ...(userLabelIds === undefined ? [] : [4]), ...(ensureIds === undefined ? [] : [5]), ...(parameters === undefined ? [] : [6])]));
       let savedProductId = productId;
+      let couponFence = existing ? await inventoryLock(() => captureOutProductCoupons(tx, productId)) : undefined;
       if (existing) {
         await tx.update(storeProduct).set(productValues).where(eq(storeProduct.id, productId));
       } else {
@@ -552,6 +556,10 @@ export class OutProductService {
         savedProductId = rows[0].id;
       }
 
+      if (!couponFence) {
+        couponFence = await inventoryLock(() => captureOutProductCoupons(tx, savedProductId));
+        if (couponFence.rows.length) throw new ValidateException("新商品优惠券关联已变化");
+      }
       await tx.delete(storeProductRelation).where(and(
         eq(storeProductRelation.productId, savedProductId),
         eq(storeProductRelation.type, CATEGORY_RELATION_TYPE),
@@ -653,6 +661,8 @@ export class OutProductService {
         : await inventoryLock(() => replaceOutProductLabelBindings(tx, savedProductId, admittedUserLabels, relationFence!));
       const parameterProof = parameters === undefined ? undefined
         : await inventoryLock(() => replaceOutProductParameterBindings(tx, savedProductId, parameters, admittedParameters, relationFence));
+      const couponProof = couponIds === undefined ? couponFence
+        : await inventoryLock(() => replaceOutProductCoupons(tx, couponFence, couponIds, now));
       await recordReplay(tx, account.id, operation, key, hash, savedProductId);
       if (brandProof) {
         await inventoryLock(() => assertOutProductBrandBindings(tx, brandProof));
@@ -664,6 +674,7 @@ export class OutProductService {
       if (parameterProof) await inventoryLock(() => assertOutProductParameterBindings(tx, parameterProof));
       await tx.execute(sql`SET CONSTRAINTS ALL IMMEDIATE`);
       await inventoryLock(() => assertOutProductRelationFence(tx, relationFence));
+      await inventoryLock(() => assertOutProductCoupons(tx, couponProof));
       return { id: savedProductId, idempotent: false, stock_preserved: !!existing };
     });
   }

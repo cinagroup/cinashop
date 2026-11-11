@@ -116,8 +116,7 @@ describe("Out API product write migration", () => {
       .toThrow("只允许平台作用域");
     expect(() => normalizeOutPhysicalProductInput({ ...physicalProduct(), product_type: 1 }))
       .toThrow("当前迁移阶段仅支持实物商品");
-    expect(() => normalizeOutPhysicalProductInput({ ...physicalProduct(), coupon_ids: [1] }))
-      .toThrow("不能静默丢弃");
+    expect(normalizeOutPhysicalProductInput({ ...physicalProduct(), coupon_ids: [1] }).couponIds).toEqual([1]);
     expect(() => normalizeOutPhysicalProductInput({
       ...physicalProduct(),
       slider_image: ["javascript:alert(1)"],
