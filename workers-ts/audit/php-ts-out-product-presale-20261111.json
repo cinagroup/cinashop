@@ -1,0 +1,258 @@
+{
+  "schema": "php-ts-out-product-presale/v1",
+  "baseCommit": "54e89ec02a153737492c3107620fb5a6fd1e49f7",
+  "preparedAt": "2026-11-11T16:54:29.589687+00:00",
+  "phpSources": [
+    {
+      "file": "app/controller/out/Product.php",
+      "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "gitBlobSha1": "5a55a3a43001325abfd36cee3c6af3e3b45cac66",
+      "sha256": "a52f6c6392594116e66803572a67e6c15d424fa13eac48df6bc9d7a6ef01c24a",
+      "lineRanges": [
+        [
+          231,
+          234
+        ]
+      ]
+    },
+    {
+      "file": "app/services/product/product/StoreProductServices.php",
+      "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "gitBlobSha1": "f8163c25f694dd0ff84486d89926ef004ba9e81e",
+      "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+      "lineRanges": [
+        [
+          397,
+          397
+        ],
+        [
+          784,
+          794
+        ]
+      ]
+    }
+  ],
+  "scope": [
+    "Out presale switch, Shanghai/UTC time and shipping days with omission versus explicit clear",
+    "Database-clock future validation after replay and after all transactional waits",
+    "Atomic product and receipt with deferred trigger row-position guard",
+    "Actual presale cart, quote, order snapshot and restricted App LOGIN"
+  ],
+  "validation": {
+    "unit": {
+      "numTotalTests": 152,
+      "numPassedTests": 152,
+      "numFailedTests": 0,
+      "numPendingTests": 0
+    },
+    "native": {
+      "native-presale": {
+        "passed": 66,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      },
+      "native-presale-cart": {
+        "passed": 22,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      },
+      "native-checkout": {
+        "passed": 71,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      },
+      "native-out-labels": {
+        "passed": 69,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      }
+    },
+    "profiles": [
+      {
+        "profile": "unit",
+        "exit": 0,
+        "seconds": 30.578,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "worker-unit-types",
+        "exit": 0,
+        "seconds": 254.511,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "worker-runtime-types",
+        "exit": 0,
+        "seconds": 106.721,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-presale",
+        "exit": 0,
+        "seconds": 132.015,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-presale-cart",
+        "exit": 0,
+        "seconds": 21.726,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-checkout",
+        "exit": 0,
+        "seconds": 565.628,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-out-labels",
+        "exit": 0,
+        "seconds": 547.873,
+        "budgetSeconds": 600
+      }
+    ],
+    "originalPresaleTestsPreserved": true,
+    "originalNativeChildBudgetSeconds": 600
+  },
+  "unchangedInputs": [
+    {
+      "file": ".github/workflows/workers-runtime-linux.yml",
+      "sha256": "94f08a84a76181eb0f0229f0f82d1f731b9c39ebbe09b5ceebb4ae3741d6cac6"
+    },
+    {
+      "file": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "32c5fff9c6dbfaa30720fbd72dd729a3ea7a1e7fc3a02be5515fb541af55a074"
+    },
+    {
+      "file": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+      "sha256": "4044d51930d72620f9d124c375779e37a99fdfb8e8c815cf2cb30420080d4324"
+    },
+    {
+      "file": "workers-ts/src/services/activity/PresalePurchaseSnapshot.ts",
+      "sha256": "c651e8055cdfcb284fa928a92ec16f6be2ab227f2df3a48391f05c41f5e964ca"
+    },
+    {
+      "file": "workers-ts/src/services/activity/PresaleCartService.ts",
+      "sha256": "edb60abcf3b4ab8a390cdae8fb02e75217fe7f8795800af198953ebe2b446547"
+    },
+    {
+      "file": "workers-ts/src/services/out/OutProductDetailRead.ts",
+      "sha256": "9ae1c7db5dd775aa332044765c585aa8d1e308da3fdcd5c666c1ee5c484a9162"
+    },
+    {
+      "file": "workers-ts/src/services/out/OutProductDetailProjection.ts",
+      "sha256": "5dda8db83f422ccaa35f8c943d9086e17670328dc034385297daeabfa924138f"
+    }
+  ],
+  "candidateImages": [
+    {
+      "file": "workers-ts/docs/php-ts-out-product-presale-20261111.md",
+      "sha256": "fcf6b609a7e7fda8a2a71e81a4e98486e61a9a154069b79d3242bda378501dc4",
+      "bytes": 1751
+    },
+    {
+      "file": "workers-ts/src/services/out/OutProductPresaleBindings.ts",
+      "sha256": "7c2c7cf5c59e11e7b405ba9bfc90ec823e6003db183b834dec72a951eb10d5ee",
+      "bytes": 5399
+    },
+    {
+      "file": "workers-ts/src/services/out/OutProductService.ts",
+      "sha256": "b257dde484bcf73b769df7ce2525672b2f819b3a184f5a713dfec4fce8c8f051",
+      "bytes": 42877
+    },
+    {
+      "file": "workers-ts/test/out-product-presale.test.ts",
+      "sha256": "7ad855fec50714d990b53c422d697a599d2e7e66cf7b47d5289ec9a2e6a676c9",
+      "bytes": 3223
+    },
+    {
+      "file": "workers-ts/test/presale-checkout-postgres.test.ts",
+      "sha256": "0e2fa3618106948deac139255a9a7b50f94194f840a02de02fa71a942e101fd7",
+      "bytes": 46271
+    }
+  ],
+  "runtimeBoundary": "Synthetic Out identity, isolated PostgreSQL, actual presale cart, quote and order snapshot consumers and separately authenticated restricted App LOGIN. No production identity or provider I/O.",
+  "previousCI": {
+    "commit": "54e89ec02a153737492c3107620fb5a6fd1e49f7",
+    "runId": 43057153553,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/43057153553",
+    "statusAtReview": "completed",
+    "workerShards": "both failed at fixed legacy PHP input checkout; downstream diagnostic steps also failed",
+    "knownRemoteCondition": "GitHub REST lookup of the fixed PHP commit in cinagroup/cinashop-php returned 409 Git Repository is empty on prior run",
+    "observedAt": "2026-11-11T16:37:23.707441+00:00",
+    "conclusion": "failure",
+    "otherJobs": "all completed successfully"
+  },
+  "boundaries": {
+    "noSchemaMigration": true,
+    "noRunnerAdmissionChange": true,
+    "noWorkflowOrBudgetChange": true,
+    "noProductionGrantChange": true,
+    "deploymentPerformed": false,
+    "legacyPhpUploaded": false,
+    "newCommitRemoteCIVerified": false,
+    "wholeMigrationComplete": false
+  },
+  "artifactDirectory": "/tmp/php-ts-out-product-presale-20261111",
+  "artifacts": [
+    {
+      "name": "frozen-source.json",
+      "sha256": "ed14c8207e7bf8f6601809fa00ff37c5d5f14594e891a20e3c55878e217de90b",
+      "bytes": 495
+    },
+    {
+      "name": "validation-progress.json",
+      "sha256": "8d48c97c5dd463182a4f78b1b3b19c9a70fb8c4d31f32df41a21f6aef0db404f",
+      "bytes": 751
+    },
+    {
+      "name": "unit.json",
+      "sha256": "67774f62d56553d6b1c7d2cc5e720b1e31790bf3a7c840b08a5d4fba4e2ace2b",
+      "bytes": 61431
+    },
+    {
+      "name": "unit.log",
+      "sha256": "e3fab29bfa238e13ccf2e3002c6c25aeb8274c6e9c6ac0038f781f271c4f400f",
+      "bytes": 419
+    },
+    {
+      "name": "worker-unit-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "name": "worker-runtime-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "name": "native-presale.log",
+      "sha256": "dd820aeb9f41a2285812000cce9cc6da95dad1e28952b8f3976a3cde7e775f0e",
+      "bytes": 1391
+    },
+    {
+      "name": "native-presale-cart.log",
+      "sha256": "80d1531130b29bb217bb3df89b8641217c2b03f1c2eee7d1252822fd47b26fa1",
+      "bytes": 1384
+    },
+    {
+      "name": "native-checkout.log",
+      "sha256": "28642f4760edb20dfddb2f63bbb9b5effaf61a836b18a2f8c49441dfd1192560",
+      "bytes": 1398
+    },
+    {
+      "name": "native-out-labels.log",
+      "sha256": "4e81d402405d8d993a7eeca851b661f45e8493bb820bdd3b89eb75fef4c128b5",
+      "bytes": 1393
+    },
+    {
+      "name": "native-initial.log",
+      "sha256": "a2c499e9a3008cec7ce0502d256c54b6c1681f612716a1c429d30a28024647d8",
+      "bytes": 1391
+    }
+  ]
+}

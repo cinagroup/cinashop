@@ -34,6 +34,8 @@ import { outProductParameterInput, lockOutProductParameterTemplate, replaceOutPr
 import { outProductCouponInput, captureOutProductCoupons, replaceOutProductCoupons, assertOutProductCoupons } from './OutProductCouponBindings';
 import { outProductCustomFormInput, outProductSystemFormInput, lockOutProductSystemForm, outProductFormProof, assertOutProductForm } from './OutProductFormBindings';
 import { outProductScheduleInput, outProductScheduleProof, assertOutProductSchedule } from './OutProductScheduleBindings';
+import { outProductPresaleInput, outProductPresalePlan, assertOutProductPresale, assertOutProductPresaleFuture,
+  type OutProductPresaleInput } from './OutProductPresaleBindings';
 
 type UnknownRecord = Record<string, unknown>;
 type ProductWriteOperation = "product_create" | "product_update" | "product_show" | "stock_upload";
@@ -51,7 +53,7 @@ interface OutAccountIdentity {
   id: number;
 }
 
-interface OutPhysicalProductInput extends SupplierPhysicalProductInput {
+interface OutPhysicalProductInput extends SupplierPhysicalProductInput, OutProductPresaleInput {
   brandIds?: number[];
   ensureIds?: number[];
   storeLabelIds?: number[];
@@ -164,10 +166,7 @@ function nonEmpty(value: unknown): boolean {
 
 function rejectUnmigratedProductFeatures(input: UnknownRecord): void {
   const unsupported = [
-    "is_presale_product",
     "is_vip_product",
-    "presale_day",
-    "presale_time",
   ].filter((key) => nonEmpty(input[key]));
   if (unsupported.length > 0) {
     throw new ValidateException(`以下商品能力尚未迁移，不能静默丢弃：${unsupported.join(",")}`);
@@ -230,6 +229,7 @@ export function normalizeOutPhysicalProductInput(input: UnknownRecord): OutPhysi
   const schedule = outProductScheduleInput(input);
   const activity = activityInput(input);
   const recommendList = recommendationInput(input);
+  const presale = outProductPresaleInput(input);
   // The former shared adapter included explicit empty timestamps in old
   // receipt hashes even though Out ignored them. Remove them before invoking
   // the base parser and bind the new author intent to an explicit version.
@@ -274,6 +274,7 @@ export function normalizeOutPhysicalProductInput(input: UnknownRecord): OutPhysi
     ...schedule,
     ...(activity === undefined ? {} : { activity }),
     ...(recommendList === undefined ? {} : { recommendList }),
+    ...presale,
     ...(Object.keys(schedule).length ? { scheduleIntentVersion: 1 as const } : {}),
     ...outProductLabelInput(input),
     sliderImages,
@@ -529,6 +530,8 @@ export class OutProductService {
         ? currentSkus.reduce((sum, sku) => sum + sku.stock, 0)
         : input.skus.reduce((sum, sku) => sum + sku.stock, 0);
       if (!Number.isSafeInteger(stock)) throw new ValidateException("商品总库存超出安全范围");
+      const presalePlan = outProductPresalePlan(input, existing);
+      await assertOutProductPresaleFuture(tx, presalePlan);
       const minimum = (values: string[]) => values.reduce((left, right) =>
         moneyCents(right) < moneyCents(left) ? right : left
       );
@@ -544,6 +547,9 @@ export class OutProductService {
       const admittedForm = systemFormId === undefined ? undefined
         : await inventoryLock(() => lockOutProductSystemForm(tx, systemFormId));
       const productValues = {
+        ...(presalePlan.authored ? { isPresaleProduct: presalePlan.isPresaleProduct,
+          presaleStartTime: presalePlan.presaleStartTime, presaleEndTime: presalePlan.presaleEndTime,
+          presaleDay: presalePlan.presaleDay } : {}),
         ...(input.activity === undefined ? {} : { activity: input.activity }),
         ...(input.recommendList === undefined ? {} : { recommendList: input.recommendList }),
         ...(customForm === undefined ? {} : { customForm }),
@@ -623,6 +629,7 @@ export class OutProductService {
 
       const formProof = outProductFormProof(savedProductId, existing, customForm, systemFormId, admittedForm);
       const scheduleProof = await inventoryLock(() => outProductScheduleProof(tx, savedProductId, existing, input));
+      await assertOutProductPresale(tx, savedProductId, presalePlan);
       const expectedActivity = input.activity ?? existing?.activity ?? '';
       const expectedRecommendations = input.recommendList ?? existing?.recommendList ?? '';
       const assertProductSelections = async () => {
@@ -753,7 +760,9 @@ export class OutProductService {
       await inventoryLock(() => assertOutProductCoupons(tx, couponProof));
       await inventoryLock(() => assertOutProductForm(tx, formProof));
       await inventoryLock(() => assertOutProductSchedule(tx, scheduleProof));
+      await assertOutProductPresale(tx, savedProductId, presalePlan);
       await assertProductSelections();
+      await assertOutProductPresaleFuture(tx, presalePlan);
       return { id: savedProductId, idempotent: false, stock_preserved: !!existing };
     });
   }

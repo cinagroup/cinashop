@@ -435,3 +435,162 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('presale quote/cr
     expect(await state()).toEqual(before);
   }, 15_000);
 });
+
+// Real Out authoring into the existing type-6 cart, quote and order consumer.
+import { eq } from 'drizzle-orm';
+import { Hono } from 'hono';
+import type { AppVariables, Env } from '@/env';
+import { storeProductCategory, storeProductRelation, outProductWriteReplay } from '@/models/schema';
+import { productCreate, productInfo, productUpdate } from '@/controllers/out/OutApiController';
+import { normalizeOutPhysicalProductInput } from '@/services/out/OutProductService';
+import { outRequestHash } from '@/services/out/OutIdempotency';
+import { addPresaleCart } from '@/services/activity/PresaleCartService';
+import { createPcCheckoutQuoteFixture } from './helpers/pcCheckoutQuoteFixture';
+import { sequenceRunnerDatabase } from './helpers/kefuSequenceRunnerDatabase';
+import { completePurchaseOriginEvidenceOrm } from '@/migrations/runPurchaseOriginEvidence';
+import { completePurchaseCancellationEvidenceOrm } from '@/migrations/runPurchaseCancellationEvidence';
+import { runtimeBusinessPrivilegePlan } from '@/migrations/runtimeBusinessPrivilegePlan';
+
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Out presale author and actual purchase on owned PG16', () => {
+  let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
+  let owned: Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
+  let network: ReturnType<typeof vi.spyOn>;
+  const body = { product_type: 0, supplier_id: 0, cate_id: [9], store_name: 'Out presale product',
+    slider_image: ['/isolated.png'], delivery_type: [1], freight: 3, temp_id: 10, spec_type: 1, is_show: 1,
+    items: [{ value: '颜色', detail: ['红色'] }, { value: '尺码', detail: ['大号'] }],
+    attrs: [{ suk: '红色,大号', detail: { 颜色: '红色', 尺码: '大号' }, unique: 'qared001', price: '10.00', stock: 999, bar_code: 'OUT-A' }] };
+  const app = (db: DbClient) => {
+    const a = new Hono<{ Bindings: Env; Variables: AppVariables }>();
+    a.use('*', async (c, next) => { c.set('container', createContainerFromDb(db));
+      c.set('outInfo', { id: 7, appid: 'isolated-out-presale', title: 'isolated', rules: [] }); await next(); });
+    a.onError((e, c) => c.json({ status: 400, msg: e.message, data: null }));
+    a.post('/outapi/product', productCreate); a.put('/outapi/product/:id', productUpdate); a.get('/outapi/product/:id', productInfo);
+    return a;
+  };
+  beforeEach(async () => {
+    network = vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('Out presale acceptance forbids external I/O'));
+    f = await createPcCheckoutQuoteFixture([], async () => {
+      owned = await sequenceRunnerDatabase();
+      try { const api = await import('drizzle-kit/api'), schema = await import('@/models/schema');
+        await owned.exec((await api.generateMigration(api.generateDrizzleJson({}), api.generateDrizzleJson(schema))).join('\n'));
+        await completePurchaseOriginEvidenceOrm(owned.db); await completePurchaseCancellationEvidenceOrm(owned.db); return owned;
+      } catch (error) { await owned.close(); throw error; }
+    });
+    await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
+    await f.db.insert(storeProductCategory).values({ id: 9, cateName: 'isolated', isShow: 1 });
+    await f.db.update(storeProduct).set({ cateId: '9', specType: 1 }).where(eq(storeProduct.id, 70));
+    await f.db.update(storeProductAttrValue).set({ barCode: 'OUT-A' }).where(eq(storeProductAttrValue.id, 1));
+    await f.db.insert(storeProductRelation).values({ productId: 70, relationId: 9, type: 1, status: 1 });
+    await f.exec("SELECT setval(pg_get_serial_sequence('store_cart','id'),1,true)");
+  }, 120_000);
+  afterEach(async () => { try { expect(network).not.toHaveBeenCalled(); } finally { network?.mockRestore(); await f?.close(); } }, 120_000);
+  const request = async (db: DbClient, data?: object, key = crypto.randomUUID(), path = '/outapi/product/70', method = 'PUT') => {
+    const response = await app(db).request(path, { method, headers: { 'content-type': 'application/json', 'Idempotency-Key': key },
+      ...(data ? { body: JSON.stringify(data) } : {}) }, f.env);
+    return response.json() as Promise<{ status: number; msg: string; data: any }>;
+  };
+  const state = async () => ({ ...await f.snapshot(), replays: await f.db.select().from(outProductWriteReplay), relations: await f.db.select().from(storeProductRelation),
+    details: await f.db.select().from(storeOrderCartInfo) });
+  const schedule = () => { const start = Math.floor(Date.now() / 1000) + 2; return { start, end: start + 3600 }; };
+  const confirm = async (cartId: number) => {
+    const selection = { cartIds: [cartId], type: 6, addressId: 11, shippingType: 1, useIntegral: false };
+    const response = await f.app.request('/api/order/confirm', { method: 'POST', headers: { 'content-type': 'application/json', 'x-fixture-user': '11' },
+      body: JSON.stringify(selection) }, f.env);
+    const result = await response.json() as { status: number; msg: string; data: { orderKey: string; quoteToken: string } };
+    expect(result.status, result.msg).toBe(200); return { ...result.data, selection };
+  };
+  const create = (receipt: Awaited<ReturnType<typeof confirm>>) => StoreOrderCreateService.createWithRuntime(f.container,
+    { CONFIG_KV: f.env.CONFIG_KV, requireConfirmation: true, requirePurchaseOrigin: true, nextOrderId: async () => 'out_presale_local_001' },
+    { ...receipt.selection, uid: 11, key: receipt.orderKey, quoteToken: receipt.quoteToken, userIp: '127.0.0.1' });
+
+  it('authors future terms, preserves them on omission, then purchases and replays after the window starts', async () => {
+    const { start, end } = schedule(), key = crypto.randomUUID(), data = { ...body, is_presale_product: 1, presale_time: [start, end], presale_day: 7 };
+    const saved = await request(f.db, data, key); expect(saved.status, saved.msg).toBe(200);
+    const [product] = await f.db.select().from(storeProduct).where(eq(storeProduct.id, 70));
+    expect(product).toMatchObject({ isPresaleProduct: 1, presaleStartTime: start, presaleEndTime: end, presaleDay: 7 });
+    const detail = await request(f.db, undefined, crypto.randomUUID(), '/outapi/product/70', 'GET');
+    expect(detail.status, detail.msg).toBe(200); expect(detail.data.productInfo).toMatchObject({ is_presale_product: 1, presale_day: 7 });
+    expect(detail.data.productInfo.presale_time).toHaveLength(2);
+    const omitted = await request(f.db, body); expect(omitted.status, omitted.msg).toBe(200);
+    expect((await f.db.select().from(storeProduct).where(eq(storeProduct.id, 70)))[0]).toMatchObject({ isPresaleProduct: 1, presaleStartTime: start, presaleEndTime: end, presaleDay: 7 });
+    await waitForFinanceClock(f.db, start * 1000);
+    const selected = await addPresaleCart(f.container, { uid: 11, productId: 70, unique: 'qared001', cartNum: 2, type: 6, isNew: 1 });
+    const receipt = await confirm(selected.id), created = await create(receipt);
+    const after = await state(), order = after.orders.find(row => row.orderId === created.orderId);
+    expect(order).toMatchObject({ type: 6, paid: 0 });
+    const snapshot = JSON.parse(after.details.find(row => row.oid === order!.id)!.cartInfo!);
+    expect(snapshot.presale).toMatchObject({ version: 'presale-full-payment-v1', productId: 70, startsAt: start, endsAt: end, shippingDaysAfterEnd: 7 });
+    const beforeReplay = await state(), replay = await request(f.db, data, key); expect(replay.status, replay.msg).toBe(200); expect(replay.data.idempotent).toBe(true);
+    expect(await state()).toEqual(beforeReplay);
+    const changed = await request(f.db, { ...body, presale_day: 8 }); expect(changed.status, changed.msg).toBe(200);
+    const afterChange = await state(); expect(afterChange.details).toEqual(beforeReplay.details);
+    expect(afterChange.products.find(row => row.id === 70)?.presaleDay).toBe(8);
+  }, 30_000);
+
+  it('creates a new presale product and returns the original terms in Out detail', async () => {
+    await f.exec("SELECT setval(pg_get_serial_sequence('store_product','id'),70,true); SELECT setval(pg_get_serial_sequence('store_product_attr_value','id'),1,true)");
+    const start = Math.floor(Date.now() / 1000) + 120, end = start + 3600;
+    const result = await request(f.db, { ...body, is_presale_product: 1, presale_time: [start, end], presale_day: 3 },
+      crypto.randomUUID(), '/outapi/product', 'POST');
+    expect(result.status, result.msg).toBe(200);
+    const [product] = await f.db.select().from(storeProduct).where(eq(storeProduct.id, result.data.id));
+    expect(product).toMatchObject({ isPresaleProduct: 1, presaleStartTime: start, presaleEndTime: end, presaleDay: 3 });
+    const detail = await request(f.db, undefined, crypto.randomUUID(), `/outapi/product/${result.data.id}`, 'GET');
+    expect(detail.status, detail.msg).toBe(200); expect(detail.data.productInfo).toMatchObject({ is_presale_product: 1, presale_day: 3 });
+  }, 30_000);
+
+  it('refuses stale checkout after an Out disable and distinguishes old ignored-empty receipts', async () => {
+    const { start, end } = schedule(), data = { ...body, is_presale_product: 1, presale_time: [start, end], presale_day: 7 };
+    expect((await request(f.db, data)).status).toBe(200); await waitForFinanceClock(f.db, start * 1000);
+    const selected = await addPresaleCart(f.container, { uid: 11, productId: 70, unique: 'qared001', cartNum: 2, type: 6, isNew: 1 });
+    const receipt = await confirm(selected.id), disabled = await request(f.db, { ...body, is_presale_product: 0, presale_time: [] });
+    expect(disabled.status, disabled.msg).toBe(200);
+    const [product] = await f.db.select().from(storeProduct).where(eq(storeProduct.id, 70));
+    expect(product).toMatchObject({ isPresaleProduct: 0, presaleStartTime: 0, presaleEndTime: 0, presaleDay: 7 });
+    const before = await state(); await expect(create(receipt)).rejects.toThrow(); expect(await state()).toEqual(before);
+    const key = crypto.randomUUID(), old = normalizeOutPhysicalProductInput(body);
+    const hash = await outRequestHash({ operation: 'product_update', productId: 70, input: old });
+    await f.db.insert(outProductWriteReplay).values({ outAccountId: 7, operation: 'product_update', requestKey: key, requestHash: hash, productId: 70 });
+    const beforeConflict = await state(), conflict = await request(f.db, { ...body, is_presale_product: 0, presale_time: [], presale_day: 0 }, key);
+    expect(conflict.status).not.toBe(200); expect(await state()).toEqual(beforeConflict);
+  }, 30_000);
+
+  it('rejects past or reversed plans and rolls back deferred changes and no-op rewrites', async () => {
+    const before = await state(), now = Math.floor(Date.now() / 1000);
+    for (const terms of [{ is_presale_product: 1, presale_time: [now - 60, now + 60] },
+      { is_presale_product: 1, presale_time: [now + 100, now + 50] }, { is_presale_product: 1, presale_time: [] }]) {
+      const result = await request(f.db, { ...body, ...terms }); expect(result.status).not.toBe(200); expect(await state()).toEqual(before);
+    }
+    for (const mutation of ['presale_day=99', 'presale_day=presale_day']) {
+      await f.exec(`CREATE FUNCTION test_out_presale_damage() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN UPDATE store_product SET ${mutation} WHERE id=70; RETURN NEW; END $$; CREATE CONSTRAINT TRIGGER test_out_presale_damage AFTER INSERT ON out_product_write_replay DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION test_out_presale_damage()`);
+      const { start, end } = schedule(), result = await request(f.db, { ...body, is_presale_product: 1, presale_time: [start, end], presale_day: 7 });
+      expect(result.status).not.toBe(200); expect(await state()).toEqual(before);
+      await f.exec('DROP TRIGGER test_out_presale_damage ON out_product_write_replay; DROP FUNCTION test_out_presale_damage()');
+    }
+  }, 30_000);
+
+  it('saves and reads future terms with existing restricted App privileges', async () => {
+    if (!owned.withRuntimeRole) throw Error('Native restricted LOGIN required');
+    await owned.withRuntimeRole(async runtime => {
+      const plan = runtimeBusinessPrivilegePlan('app'), quote = (name: string) => {
+        if (!/^[a-z_][a-z_0-9]*$/.test(name)) throw Error('Invalid owned grant identifier'); return `"${name}"`;
+      };
+      const tables = await f.db.execute<{ name: string }>(sql`SELECT relname AS name FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r' ORDER BY relname`);
+      for (const { name } of tables) { const rights = plan.tables[name]; if (!rights) continue;
+        await f.exec(`GRANT ${rights.join(',')} ON public.${quote(name)} TO ${quote(runtime.role)}`);
+        const columns = plan.updateColumns[name]; if (columns?.length) await f.exec(`GRANT UPDATE(${columns.map(quote).join(',')}) ON public.${quote(name)} TO ${quote(runtime.role)}`);
+      }
+      const sequences = await f.db.execute<{ table_name: string; sequence_name: string | null }>(sql`SELECT c.relname AS table_name,
+        pg_get_serial_sequence('public.'||quote_ident(c.relname),a.attname) AS sequence_name FROM pg_class c
+        JOIN pg_attribute a ON a.attrelid=c.oid AND a.attnum>0 AND NOT a.attisdropped WHERE c.relnamespace='public'::regnamespace AND c.relkind='r'`);
+      for (const row of sequences) if (row.sequence_name && plan.tables[row.table_name]?.includes('INSERT')) {
+        const parts = row.sequence_name.split('.'); if (parts.length !== 2 || parts[0] !== 'public') throw Error('Unexpected owned sequence');
+        await f.exec(`GRANT USAGE ON SEQUENCE public.${quote(parts[1])} TO ${quote(runtime.role)}`);
+      }
+      const start = Math.floor(Date.now() / 1000) + 120, end = start + 3600;
+      const saved = await request(runtime.db, { ...body, is_presale_product: 1, presale_time: [start, end], presale_day: 3 }); expect(saved.status, saved.msg).toBe(200);
+      const detail = await request(runtime.db, undefined, crypto.randomUUID(), '/outapi/product/70', 'GET');
+      expect(detail.status, detail.msg).toBe(200); expect(detail.data.productInfo).toMatchObject({ is_presale_product: 1, presale_day: 3 });
+    });
+  }, 30_000);
+});
