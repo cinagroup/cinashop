@@ -1,0 +1,194 @@
+{
+  "feature": "Out platform product ensure binding and consistent read, composed with brand edits",
+  "base": "fa7e7f56b1e62288caca99d157abe1084a61cfc5",
+  "candidateHashes": {
+    "workers-ts/src/services/out/OutProductService.ts": "1a64085ff724f5d26a871d60d84b8974f22ee60356f93c833ae21a24fd543b6c",
+    "workers-ts/src/services/out/OutProductBrandBindings.ts": "c5ee1e6cc229f9edeb5bb4c4d02c6a57949c34b7345db1900db4f90f098bd519",
+    "workers-ts/src/services/out/OutProductEnsureBindings.ts": "79fabf763f3027e4805b8bf113f46fe94f28480241cba664d466715e6d7f6bf4",
+    "workers-ts/src/services/out/OutProductRelationFence.ts": "ca51e55a349784bdea57891081e7508d07a16cf4cea5dce621d274471122e26c",
+    "workers-ts/test/out-product-migration.test.ts": "1682f43918edf046cb301027372f7bbdb3368c1d5ec054c6697fb918a0424b03",
+    "workers-ts/test/checkout-out-product-concurrency.test.ts": "b4e21bfd06905b1dc0f20fbd834ffc2f3e49735fefb31dc8e2573af220ed281c"
+  },
+  "legacySource": {
+    "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+    "sources": [
+      {
+        "file": "app/controller/out/Product.php",
+        "bytes": 8803,
+        "gitBlobSha1": "5a55a3a43001325abfd36cee3c6af3e3b45cac66",
+        "sha256": "a52f6c6392594116e66803572a67e6c15d424fa13eac48df6bc9d7a6ef01c24a",
+        "lineReferences": [
+          239,
+          255,
+          257
+        ]
+      },
+      {
+        "file": "app/services/product/product/StoreProductServices.php",
+        "bytes": 136399,
+        "gitBlobSha1": "f8163c25f694dd0ff84486d89926ef004ba9e81e",
+        "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+        "lineReferences": [
+          757,
+          813,
+          814,
+          816
+        ]
+      },
+      {
+        "file": "app/services/product/product/StoreProductRelationServices.php",
+        "bytes": 6123,
+        "gitBlobSha1": "e627850fa3acabe8427e6d31b778113773a46a9b",
+        "sha256": "1bd25c8d6c91a3871f2d859e84eb4c3fc41855552e194b46c8fd19a77735c063",
+        "lineReferences": [
+          69
+        ]
+      },
+      {
+        "file": "app/listener/product/CreateSuccess.php",
+        "bytes": 4489,
+        "gitBlobSha1": "1db3d791f0db7ec5da1515e9bd2570ccaa16075f",
+        "sha256": "06402ea2098c72255c99b63e005324651f1ea0ec53c1b742812de746c3c6ff70",
+        "lineReferences": [
+          49
+        ]
+      },
+      {
+        "file": "app/model/product/product/StoreProduct.php",
+        "bytes": 20315,
+        "gitBlobSha1": "d4bf574d3192acc7e9dc7f6e73bb01d8a8bbfcb5",
+        "sha256": "696b6b6601e9ba8ba9fcde26a4ed12bda7f98edaaa81fc72ced3cae5321dc1a9",
+        "lineReferences": [
+          114,
+          117
+        ]
+      }
+    ],
+    "rawSourceUploaded": false,
+    "phpExecuted": false
+  },
+  "contract": {
+    "omissionPreservesHistoricalEnsureScalarRelationsAndOldHashShape": true,
+    "explicitEmptyClearsWithNewBoundIntent": true,
+    "catalogMustBePlatformOwned": true,
+    "disabledServiceRetainedOnlyFromConsistentPreviousSelection": true,
+    "catalogRowsPinnedInStableOrderWithNowait": true,
+    "brandEnsureRelationsAndOriginalReplayAreAtomic": true,
+    "finalReceiptAndLaterAuthorInterferenceRejected": true,
+    "omittedMetadataScalarsAndUnownedRelationsIncludingXminPreserved": true,
+    "sameKeyReplayPrecedesCurrentCatalogAdmission": true,
+    "detailUsesExistingReadOnlyRepeatableReadTransaction": true,
+    "legitimateOutShowRelationStatusZeroAccepted": true
+  },
+  "validation": {
+    "completeOutCheckoutNative": {
+      "files": 1,
+      "passed": 58,
+      "failed": 0,
+      "skipped": 0,
+      "genuineRestrictedLOGIN": true,
+      "realCheckoutFirst": true,
+      "fixtureCleanupZero": true,
+      "clusterStopped": true
+    },
+    "completeDirectNativeConsumers": {
+      "files": 2,
+      "passed": 77,
+      "failed": 0,
+      "skipped": 0,
+      "fixtureCleanupZero": true,
+      "clusterStopped": true
+    },
+    "completeCompatibilityFiles": {
+      "files": 6,
+      "passed": 533,
+      "failed": 0,
+      "skipped": 0
+    },
+    "completeWorkerTypes": {
+      "unitExitCode": 0,
+      "runtimeExitCode": 0
+    },
+    "retainedInputs": {
+      "base": "fa7e7f56b1e62288caca99d157abe1084a61cfc5",
+      "tests": [
+        {
+          "file": "workers-ts/test/out-product-migration.test.ts",
+          "originalDefinitions": 7,
+          "originalCases": 16,
+          "currentCases": 27,
+          "originalBodiesUnchanged": true
+        },
+        {
+          "file": "workers-ts/test/checkout-out-product-concurrency.test.ts",
+          "originalDefinitions": 25,
+          "originalCases": 37,
+          "currentCases": 58,
+          "originalBodiesUnchanged": true
+        }
+      ],
+      "unchangedProtectedInputs": [
+        {
+          "file": "workers-ts/src/services/out/OutIdempotency.ts",
+          "sha256": "08e91eeefe399d2f09d77ed31c8485cf5e7b2085c9ed19ee24bf4f4effbcfac8"
+        },
+        {
+          "file": "workers-ts/src/services/supplier/SupplierProductEnsureBindings.ts",
+          "sha256": "23b56a05f97e46befb0af9daf879b3eb984dd9b032482dc2bb3bcfe27697567d"
+        },
+        {
+          "file": "workers-ts/src/services/product/ProductExperienceService.ts",
+          "sha256": "850fac97bb5979ac477c03524e8d5be91c739658d514bff1cbcf516a44019d50"
+        },
+        {
+          "file": "workers-ts/src/services/supplier/SupplierProductBrandBindings.ts",
+          "sha256": "3d228e12a0243064ce58d82501120e0e0d0ae501f8684522deb82a19c91cf7dd"
+        },
+        {
+          "file": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+          "sha256": "4044d51930d72620f9d124c375779e37a99fdfb8e8c815cf2cb30420080d4324"
+        },
+        {
+          "file": "workers-ts/src/routes/outapi.ts",
+          "sha256": "29423ec72749778c88374fb4c4165d1fb4b451678f9dd8d10fb1ec1e9b85d38f"
+        },
+        {
+          "file": "workers-ts/src/controllers/out/OutApiController.ts",
+          "sha256": "21bab85795333324ac30e7684409f0c64b09e7e183efbc245939480f1f639f45"
+        },
+        {
+          "file": ".gitleaks.toml",
+          "sha256": "8d3f6557cffc5c61bc1ab6a8c5ac26400542f6da5d7c2320306ee17373a14eea"
+        },
+        {
+          "file": ".gitleaksignore",
+          "sha256": "1f6204fa08c92058b8a8f3e9b99dfbcb90c4537da28de17fc782e3f8a4c988bb"
+        },
+        {
+          "file": ".github/workflows/workers-runtime-linux.yml",
+          "sha256": "cd1d81bab3cb25272b3eca15dedb979527ecbeabb382bc9c17a7da156fa14cfa"
+        }
+      ],
+      "productionSchemaOrGrantChanged": false
+    },
+    "sharedSerialWrapper": true,
+    "maxWorkers": 1,
+    "fileParallelism": false,
+    "nativeCaseAndFileBudgetsUnchanged": true
+  },
+  "validationHistory": [],
+  "limits": {
+    "newSchema": false,
+    "runtimePrivilegePlanChanged": false,
+    "routesOrAuthenticationChanged": false,
+    "syntheticOutHTTPAccount": true,
+    "fullRoleInstallerClaimed": false,
+    "actualProviderCalls": false,
+    "rawPHPUploaded": false,
+    "PHPExecuted": false,
+    "deployed": false,
+    "fullMigrationComplete": false,
+    "newCommitRemoteCIPassed": false,
+    "baseWorkerFullCIStillFailsBeforeTestsOnUnavailableFixedPHPRef": true
+  }
+}

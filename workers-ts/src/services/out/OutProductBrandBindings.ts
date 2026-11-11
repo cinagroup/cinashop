@@ -1,10 +1,10 @@
-import { and, asc, eq, getTableColumns, inArray, notInArray, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
 import { storeBrand, storeProduct, storeProductRelation } from '@/models/schema';
-import { ServiceUnavailableException, ValidateException } from '@/utils/errors';
+import { ValidateException } from '@/utils/errors';
 import { supplierProductBrandPath, supplierProductBrandPathMatches } from '@/services/supplier/SupplierProductBrandBindings';
+import { assertOutProductRelationFence, type OutProductRelationFence } from './OutProductRelationFence';
 
-const columns = { ...getTableColumns(storeProductRelation), rowVersion: sql<string>`xmin::text` };
 const same = (left: unknown, right: unknown) => JSON.stringify(left) === JSON.stringify(right);
 const scope = (id: number) => and(eq(storeProduct.id, id), eq(storeProduct.type, 0),
   eq(storeProduct.relationId, 0), eq(storeProduct.productType, 0), eq(storeProduct.isDel, 0));
@@ -15,21 +15,11 @@ export interface OutProductBrandProof {
   brandCom: string;
   ids: readonly number[];
   relations: Array<typeof storeProductRelation.$inferSelect>;
-  protectedRows: Awaited<ReturnType<typeof outBrandProtectedRelations>>;
-}
-
-/** Ordinary Out saves own category rows; an explicit brand edit owns type2.
- * All other historical associations, including physical row versions, survive. */
-export async function outBrandProtectedRelations(tx: DbClient, productId: number) {
-  const rows = await tx.select(columns).from(storeProductRelation).where(and(
-    eq(storeProductRelation.productId, productId), notInArray(storeProductRelation.type, [1, 2]),
-  )).orderBy(asc(storeProductRelation.id)).limit(2001).for('share', { noWait: true });
-  if (rows.length > 2000) throw new ServiceUnavailableException('商品历史关联过多，请先核对');
-  return rows;
+  fence: OutProductRelationFence;
 }
 
 export async function replaceOutProductBrandBindings(tx: DbClient, productId: number,
-  ids: readonly number[], protectedRows: Awaited<ReturnType<typeof outBrandProtectedRelations>>) {
+  ids: readonly number[], fence: OutProductRelationFence) {
   const [product] = await tx.select().from(storeProduct).where(scope(productId)).limit(1);
   if (!product || product.brandId !== (ids.at(-1) ?? 0) || product.brandCom !== ids.join(','))
     throw new ValidateException('平台商品品牌写入结果已变化');
@@ -43,7 +33,7 @@ export async function replaceOutProductBrandBindings(tx: DbClient, productId: nu
     || inserted.some(row => row.productId !== productId || row.type !== 2 || row.relationPid !== 0
       || row.status !== 1 || row.addTime !== now)) throw new ValidateException('平台商品品牌关联写入结果已变化');
   const proof: OutProductBrandProof = { productId, brandId: product.brandId, brandCom: product.brandCom,
-    ids: [...ids], relations: inserted, protectedRows };
+    ids: [...ids], relations: inserted, fence };
   await assertOutProductBrandBindings(tx, proof);
   return proof;
 }
@@ -57,9 +47,9 @@ export async function assertOutProductBrandBindings(tx: DbClient, proof: OutProd
     eq(storeProductRelation.productId, proof.productId), eq(storeProductRelation.type, 2),
   )).orderBy(asc(storeProductRelation.id));
   if (!read || read.brandId !== proof.brandId || read.brandCom !== proof.brandCom
-    || !same(actual, [...proof.relations].sort((a, b) => a.id - b.id))
-    || !same(await outBrandProtectedRelations(tx, proof.productId), proof.protectedRows))
+    || !same(actual, [...proof.relations].sort((a, b) => a.id - b.id)))
     throw new ValidateException('平台商品品牌或历史关联已变化');
+  await assertOutProductRelationFence(tx, proof.fence);
 }
 
 /** Reads the stored path without inferring a new path from today's catalog. */

@@ -24,7 +24,10 @@ import { PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE } from "@/services/product/ProductS
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { normalizeOutRequestKey, outRequestHash } from "@/services/out/OutIdempotency";
 import { supplierProductBrandInput, lockSupplierProductBrandPath } from '@/services/supplier/SupplierProductBrandBindings';
-import { assertOutProductBrandBindings, outBrandProtectedRelations, outProductBrandSelection, replaceOutProductBrandBindings } from './OutProductBrandBindings';
+import { assertOutProductBrandBindings, outProductBrandSelection, replaceOutProductBrandBindings } from './OutProductBrandBindings';
+import { supplierProductEnsureInput } from '@/services/supplier/SupplierProductEnsureBindings';
+import { assertOutProductEnsureBindings, lockOutProductEnsures, outProductEnsureSelection, replaceOutProductEnsureBindings } from './OutProductEnsureBindings';
+import { captureOutProductRelationFence } from './OutProductRelationFence';
 
 type UnknownRecord = Record<string, unknown>;
 type ProductWriteOperation = "product_create" | "product_update" | "product_show" | "stock_upload";
@@ -44,6 +47,7 @@ interface OutAccountIdentity {
 
 interface OutPhysicalProductInput extends SupplierPhysicalProductInput {
   brandIds?: number[];
+  ensureIds?: number[];
   deliveryType: string;
   freight: 1 | 2 | 3;
   isShow: 0 | 1;
@@ -148,7 +152,6 @@ function rejectUnmigratedProductFeatures(input: UnknownRecord): void {
     "auto_on_time",
     "coupon_ids",
     "custom_form",
-    "ensure_id",
     "is_presale_product",
     "is_vip_product",
     "label_id",
@@ -202,9 +205,11 @@ export function normalizeOutPhysicalProductInput(input: UnknownRecord): OutPhysi
     image: safeAsset(sku.image, "SKU图片", 128),
   }));
   const brandIds = supplierProductBrandInput(input);
+  const ensureIds = supplierProductEnsureInput(input);
   return {
     ...base,
     ...(brandIds === undefined ? {} : { brandIds }),
+    ...(ensureIds === undefined ? {} : { ensureIds }),
     sliderImages,
     skus,
     videoLink: safeAsset(base.videoLink, "商品视频", 500),
@@ -388,6 +393,7 @@ export class OutProductService {
     const key = normalizeOutProductRequestKey(requestKeyInput);
     const input = normalizeOutPhysicalProductInput(rawInput);
     const brandIds = input.brandIds;
+    const ensureIds = input.ensureIds;
     const operation: ProductWriteOperation = productId > 0 ? "product_update" : "product_create";
     const hash = await outRequestHash({ operation, productId, input });
     return withTx(this.container, async (tx) => {
@@ -460,8 +466,11 @@ export class OutProductService {
         moneyCents(right) < moneyCents(left) ? right : left
       );
       const now = Math.floor(Date.now() / 1000);
+      const admittedEnsures = ensureIds === undefined ? undefined
+        : await inventoryLock(() => lockOutProductEnsures(tx, ensureIds, existing));
       const productValues = {
         ...(brandIds === undefined ? {} : { brandId: brandIds.at(-1) ?? 0, brandCom: brandIds.join(',') }),
+        ...(ensureIds === undefined ? {} : { ensureId: ensureIds.join(',') }),
         productType: PHYSICAL_PRODUCT_TYPE,
         type: PLATFORM_TYPE,
         relationId: PLATFORM_RELATION_ID,
@@ -509,8 +518,9 @@ export class OutProductService {
         autoOffTime: input.isShow ? 0 : (existing?.autoOffTime ?? 0),
       } as const;
 
-      const protectedBrandRows = brandIds !== undefined && existing
-        ? await inventoryLock(() => outBrandProtectedRelations(tx, productId)) : [];
+      const relationFence = brandIds === undefined && ensureIds === undefined ? undefined
+        : await inventoryLock(() => captureOutProductRelationFence(tx, existing,
+          [1, ...(brandIds === undefined ? [] : [2]), ...(ensureIds === undefined ? [] : [5])]));
       let savedProductId = productId;
       if (existing) {
         await tx.update(storeProduct).set(productValues).where(eq(storeProduct.id, productId));
@@ -617,13 +627,17 @@ export class OutProductService {
         type: PRODUCT_ATTR_TYPE,
       });
       await updateCartStatus(tx, savedProductId, input.isShow);
+      if (relationFence) relationFence.productId = savedProductId;
       const brandProof = brandIds === undefined ? undefined
-        : await inventoryLock(() => replaceOutProductBrandBindings(tx, savedProductId, brandIds, protectedBrandRows));
+        : await inventoryLock(() => replaceOutProductBrandBindings(tx, savedProductId, brandIds, relationFence!));
+      const ensureProof = ensureIds === undefined ? undefined
+        : await inventoryLock(() => replaceOutProductEnsureBindings(tx, savedProductId, ensureIds, admittedEnsures!, relationFence!));
       await recordReplay(tx, account.id, operation, key, hash, savedProductId);
       if (brandProof) {
         await inventoryLock(() => assertOutProductBrandBindings(tx, brandProof));
         await inventoryLock(() => lockSupplierProductBrandPath(tx, brandProof.ids));
       }
+      if (ensureProof) await inventoryLock(() => assertOutProductEnsureBindings(tx, ensureProof));
       return { id: savedProductId, idempotent: false, stock_preserved: !!existing };
     });
   }
@@ -685,6 +699,7 @@ export class OutProductService {
       return {
         ...product,
         ...await outProductBrandSelection(tx, product),
+        ...await outProductEnsureSelection(tx, product),
         cate_id: categories.map((row) => row.relation_id),
         description: descriptions[0]?.description ?? "",
         items,

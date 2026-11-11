@@ -29,6 +29,25 @@ function physicalProduct() {
 }
 
 describe("Out API product write migration", () => {
+  it('binds explicit ensure selections while omission retains the old normalized request shape', async () => {
+    const omitted = normalizeOutPhysicalProductInput(physicalProduct());
+    expect(Object.hasOwn(omitted, 'ensureIds')).toBe(false);
+    expect(normalizeOutPhysicalProductInput({ ...physicalProduct(), ensure_id: undefined })).toEqual(omitted);
+    const selected = normalizeOutPhysicalProductInput({ ...physicalProduct(), ensure_id: ['91', '92'] });
+    expect(selected.ensureIds).toEqual([91, 92]);
+    const clear = normalizeOutPhysicalProductInput({ ...physicalProduct(), ensure_id: [] });
+    expect(clear.ensureIds).toEqual([]);
+    expect(await outRequestHash(clear)).not.toBe(await outRequestHash(omitted));
+    expect(await outRequestHash(selected)).not.toBe(await outRequestHash(clear));
+    expect(normalizeOutPhysicalProductInput({ ...physicalProduct(), brand_id: [30], ensure_id: [92] }))
+      .toMatchObject({ brandIds: [30], ensureIds: [92] });
+  });
+  it.each([{ ensure_id: null }, { ensure_id: 91 }, { ensure_id: '91,92' }, { ensure_id: {} },
+    { ensure_id: [91, 91] }, { ensure_id: [true] }, { ensure_id: ['091'] }, { ensure_id: [2147483648] },
+    { ensure_id: [1.5] }, { ensure_id: Array(201).fill(91) }])(
+    'rejects malformed ensure selections before any database work ($ensure_id)', ({ ensure_id }) => {
+      expect(() => normalizeOutPhysicalProductInput({ ...physicalProduct(), ensure_id })).toThrow('保障服务');
+    });
   it('accepts explicit complete brand paths, distinguishes clear from omission and binds the canonical path in replay', async () => {
     const omitted = normalizeOutPhysicalProductInput(physicalProduct());
     expect(Object.hasOwn(omitted, 'brandIds')).toBe(false);
