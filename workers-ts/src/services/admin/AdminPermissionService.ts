@@ -29,7 +29,7 @@ export interface AdminPermissionTreeNode {
  */
 export const ADMIN_PERMISSION_GROUPS: readonly AdminPermissionGroup[] = [
   { key: "dashboard", label: "控制台", path: "/dashboard", matches: ["home/", "new_push"], manage: false },
-  { key: "outbox", label: "支付后置任务", path: "/operations/outbox", matches: ["order/outbox"], manage: true },
+  { key: "outbox", label: "支付后置任务", path: "/operations/outbox", matches: ["order/outbox", "order/product-label-tasks"], manage: true },
   {
     key: "legacy_runtime",
     label: "迁移运行历史",

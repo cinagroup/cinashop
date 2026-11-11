@@ -1,3 +1,6 @@
+import { enqueuePurchasedProductLabelsTx } from './PurchasedProductLabelSource';
+import { purchasedLabelRuntimeFromEnv, type PurchasedLabelRuntimeDeclaration } from './PurchasedProductLabelRuntimeDeclaration';
+import { PurchasedProductLabelTaskService } from './PurchasedProductLabelTaskService';
 import {RECHARGE_PAID_NOTICE_EVENT,processRechargePaidNoticeTx} from './RechargePaidNoticeService';
 import {rechargePaidNoticeSubjectId} from './RechargePaidNoticeCodec';
 import {prepareRechargePaidNoticeTx} from '@/migrations/rechargePaidNotice';
@@ -100,7 +103,7 @@ const OUTBOX_STATUSES = [
 
 export type OrderOutboxStatus = (typeof OUTBOX_STATUSES)[number];
 
-export interface OrderOutboxEnvironment extends Partial<Pick<Env, 'APP_KEY' | 'ROUTINE_SUBSCRIPTION_ACCOUNT_CREDENTIALS' | 'HYPERDRIVE'>> {
+export interface OrderOutboxEnvironment extends Partial<Pick<Env, 'APP_KEY' | 'ROUTINE_SUBSCRIPTION_ACCOUNT_CREDENTIALS' | 'HYPERDRIVE' | 'PURCHASED_PRODUCT_LABEL_RUNTIME'>> {
   ORDER_QUEUE: Queue<OrderMessage>;
   STAFF_NOTICE?: StaffPublisher;
   WITHDRAWAL_WECOM_ROBOT_ENABLED?: string;
@@ -302,10 +305,17 @@ export async function enqueueOrderPaidEvent(
 }
 
 export class OrderOutboxService {
+  private readonly purchasedLabels: PurchasedLabelRuntimeDeclaration | undefined;
   constructor(
     private readonly container: Container,
     private readonly env: OrderOutboxEnvironment,
-  ) {}
+  ) { this.purchasedLabels = purchasedLabelRuntimeFromEnv(env); }
+
+  async dispatchPurchasedProductLabels(message: OrderPaidOutboxMessage): Promise<void> {
+    if (!this.purchasedLabels) return;
+    await new PurchasedProductLabelTaskService(this.container, { ORDER_QUEUE: this.env.ORDER_QUEUE,
+      PURCHASED_PRODUCT_LABEL_RUNTIME: this.purchasedLabels }).dispatchPending(20, undefined, message.outboxId);
+  }
 
   /** 必须在订单 paid=0→1 的同一事务中调用。 */
   async enqueueOrderPaid(
@@ -787,6 +797,7 @@ export class OrderOutboxService {
           changeTime: now,
         });
         if (!recovery) await enqueuePaidBuyerNoticesTx(tx, event, allocation, this.env, now);
+        await enqueuePurchasedProductLabelsTx(tx, event, allocation, this.purchasedLabels, now);
       } else if (event.eventType === PRESALE_DELIVERY_EVENT) {
         const intent = readPresaleDeliveryIntent(event.payload, event.aggregateId);
         if (await deliverDuePresale(tx, intent) === 'waiting') {

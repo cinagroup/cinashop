@@ -5,6 +5,7 @@ import type { DbClient } from '@/lib/di';
 import { outRequestHash } from '@/services/out/OutIdempotency';
 import { pricingIdentifier } from './checkoutPricingLockCatalog';
 import { PURCHASED_LABEL_IMMUTABLE_BODY } from './purchasedProductLabelContract';
+import { capturePurchasedLabelPrincipals, purchasedLabelExpectedAcl, type PurchasedLabelPrincipals } from './purchasedProductLabelPermissions';
 
 type Query = Pick<DbClient, 'execute'>;
 export const PURCHASED_LABEL_STORAGE_GATE = [731953, 0] as const;
@@ -91,8 +92,12 @@ export interface PurchasedLabelStorageInspection {
 /** Full local namespace, not just successful to_regclass lookups. Objects in
  * other user schemas, detached prefix objects and extra dependencies refuse.
  * The owner-only stage grants nothing to App/Admin/Manager/Financial/PUBLIC. */
-export async function inspectPurchasedLabelStorage(tx: Query, input: PurchasedLabelStorageTarget): Promise<PurchasedLabelStorageInspection> {
+export async function inspectPurchasedLabelStorageCatalog(tx: Query, input: PurchasedLabelStorageTarget,
+  runtime?: PurchasedLabelPrincipals): Promise<PurchasedLabelStorageInspection> {
   const target = capturePurchasedLabelStorageTarget(input);
+  const principals = runtime === undefined ? undefined : capturePurchasedLabelPrincipals(runtime);
+  if (principals && [principals.app, principals.admin].includes(target.maintenance)) throw Error('Independent purchased label maintenance required');
+  const expectedAcl = purchasedLabelExpectedAcl(principals);
   const result: PurchasedLabelStorageInspection = { present: false, storageReady: false, runtimeReady: false, failures: [] };
   const [inventory] = await tx.execute<{ present: boolean; namespace: boolean }>(sql`WITH
     relations AS(SELECT c.*,n.nspname FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
@@ -135,9 +140,6 @@ export async function inspectPurchasedLabelStorage(tx: Query, input: PurchasedLa
     AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_publication WHERE puballtables)
     AND (SELECT count(*)=13 AND bool_and(c.relowner=r.oid AND NOT c.relrowsecurity AND NOT c.relforcerowsecurity
       AND NOT c.relispartition AND NOT c.relhasrules AND c.relpersistence='p'
-      AND NOT EXISTS(SELECT 1 FROM pg_catalog.aclexplode(COALESCE(c.relacl,pg_catalog.acldefault('r',c.relowner))) a
-        WHERE a.grantee<>r.oid OR a.grantor<>r.oid)
-      AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_attribute a WHERE a.attrelid=c.oid AND a.attnum>0 AND a.attacl IS NOT NULL)
       AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_inherits i WHERE i.inhrelid=c.oid OR i.inhparent=c.oid)
       AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_rewrite w WHERE w.ev_class=c.oid)
       AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_policy p WHERE p.polrelid=c.oid)
@@ -168,6 +170,27 @@ export async function inspectPurchasedLabelStorage(tx: Query, input: PurchasedLa
       AND f.proname='purchased_product_label_immutable_v1'
     JOIN pg_catalog.pg_language l ON l.oid=f.prolang WHERE r.rolname=${target.maintenance}`);
   if (metadata?.safe !== true) { result.failures.push('owner_or_dependencies'); return result; }
+  const acl = await tx.execute<{ entry: string; bad: boolean }>(sql`WITH objects AS(
+    SELECT c.* FROM pg_catalog.pg_class c WHERE c.relnamespace='public'::regnamespace
+      AND c.relname ~ '^(purchased_product_label|ppli_|ppls_|pplr_)')
+    SELECT 'table:'||c.relname||':'||COALESCE(r.rolname,'PUBLIC')||':'||a.privilege_type AS entry,
+      a.is_grantable OR a.grantor<>c.relowner AS bad FROM objects c
+      CROSS JOIN LATERAL pg_catalog.aclexplode(COALESCE(c.relacl,pg_catalog.acldefault('r',c.relowner))) a
+      LEFT JOIN pg_catalog.pg_roles r ON r.oid=a.grantee WHERE a.grantee<>c.relowner OR a.grantor<>c.relowner
+    UNION ALL SELECT 'column:'||c.relname||':'||col.attname||':'||COALESCE(r.rolname,'PUBLIC')||':'||a.privilege_type,
+      a.is_grantable OR a.grantor<>c.relowner FROM objects c JOIN pg_catalog.pg_attribute col ON col.attrelid=c.oid AND col.attnum>0
+      CROSS JOIN LATERAL pg_catalog.aclexplode(col.attacl) a LEFT JOIN pg_catalog.pg_roles r ON r.oid=a.grantee
+    UNION ALL SELECT 'marker:'||c.relname||':'||a.attname,false FROM objects c JOIN pg_catalog.pg_attribute a
+      ON a.attrelid=c.oid AND a.attnum>0 AND a.attacl IS NOT NULL`);
+  if (acl.some(r => r.bad !== false) || JSON.stringify(acl.map(r => r.entry).sort()) !== JSON.stringify(expectedAcl)) {
+    result.failures.push('exact_acl'); return result;
+  }
   result.storageReady = true;
   return result;
+}
+
+/** The original owner-only contract remains strict after commissioning. A
+ * separately declared runtime successor must call the named catalog variant. */
+export async function inspectPurchasedLabelStorage(tx: Query, input: PurchasedLabelStorageTarget): Promise<PurchasedLabelStorageInspection> {
+  return inspectPurchasedLabelStorageCatalog(tx, input);
 }

@@ -163,6 +163,7 @@ export async function resolveDiscountPackageSelection(
     now?: number;
   },
 ): Promise<ResolvedDiscountPackage> {
+  if (params.lockRows && Object.hasOwn(container.db, '$client')) throw Error('套餐锁定读取须使用下单所属事务');
   if (!Number.isSafeInteger(params.discountId) || params.discountId <= 0) {
     throw new ValidateException("套餐参数错误");
   }
@@ -184,7 +185,10 @@ export async function resolveDiscountPackageSelection(
     .where(eq(storeDiscountsProducts.discountId, discount.id))
     .orderBy(storeDiscountsProducts.id)
     .$dynamic();
-  const entries = await (params.lockRows ? entryQuery.for("update") : entryQuery);
+  // The package parent is already locked above. Every supported Admin entry
+  // author locks that parent before replacing its members. App reads these
+  // rows without gaining UPDATE authority on the catalogue child table.
+  const entries = await entryQuery;
   const normalized = validateDiscountPackageSelection(discount, entries, params.selections);
   const productIds = normalized.map(({ entry }) => entry.productId);
   const entryIds = normalized.map(({ entry }) => entry.id);

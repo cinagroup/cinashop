@@ -1,3 +1,4 @@
+import type { PurchasedProductLabelMessage, PurchasedProductLabelDispatch } from './services/order/PurchasedProductLabelQueue';
 import type {RechargeRefundNoticeMessage,RechargeRefundNoticeDispatch}from '@/services/payment/RechargeRefundNoticeQueue';
 import type {UserLabelSyncMessage} from './services/admin/AdminUserLabelSyncQueue';
 import type { RechargeRefundRecoveryDispatchMessage,RechargeRefundRecoveryMessage } from './services/payment/RechargeRefundRecoveryQueue';
@@ -30,6 +31,8 @@ export interface Env extends Omit<WorkerBindings, "ALLOWED_ORIGINS" | "PC_AUTH_A
    * Never accept this authority from HTTP, discover it from ACLs or borrow an
    * App/Manager connection. Missing configuration keeps the Admin author shut. */
   ADMIN_FULFILLMENT_ASSIGNMENT_RUNTIME?: RuntimeGiftPeerDeclarations;
+  /** Trusted complete maintenance declaration for the independent purchased-label task. Never request JSON. */
+  PURCHASED_PRODUCT_LABEL_RUNTIME?: RuntimeGiftPeerDeclarations;
   /** Exact trusted assignment plus success-receipt successor. The dedicated
    * Manager path never infers this authority from HTTP, ACLs or an App binding. */
   MANAGER_FULFILLMENT_ASSIGNMENT_RUNTIME?: RuntimeGiftPeerDeclarations;
@@ -517,6 +520,8 @@ export interface PaymentReconciliationDispatchMessage {
 }
 
 export type OrderMessage =
+  | PurchasedProductLabelMessage
+  | PurchasedProductLabelDispatch
   | RechargeRefundNoticeMessage
   | RechargeRefundNoticeDispatch
   | RechargeRefundRecoveryDispatchMessage

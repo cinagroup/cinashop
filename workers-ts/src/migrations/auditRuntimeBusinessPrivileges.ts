@@ -1,3 +1,4 @@
+import { applyPurchasedLabelRuntimePlan, inspectPurchasedLabelRuntime } from './purchasedProductLabelRuntime';
 import { inspectRoutineRefundCatalog, ROUTINE_REFUND_RUNTIME_PRIVILEGES } from './routineRefund';
 import { applyRechargeRefundRuntimePlan, inspectRechargeRefundRuntimeProfile } from './rechargeRefundRuntimeProfile';
 import { ROUTINE_REFUND_ACTOR_TABLE_PRIVILEGES } from './routineRefundActorAddon';
@@ -214,6 +215,10 @@ async function inspectRuntimeBusinessProfile(tx:Pick<DbClient,'execute'>,kind:'a
       ||peers.target.app!==names.app||peers.target.admin!==names.admin))failures.push('recharge_refund_declaration');
     else if(recharge?.ready)applyRechargeRefundRuntimePlan(plan,kind);
     const reviewedRechargeSourceLock=recharge?.ready?recharge.lockSourceFunctionOid:null;
+    const purchased=peers?.purchasedProductLabels?await inspectPurchasedLabelRuntime(tx,peers.target,peers.purchasedProductLabels):null;
+    if(purchased&&(!purchased.ready||version!=='current'||peers?.target.maintenance!==names.maintenance
+      ||peers.target.app!==names.app||peers.target.admin!==names.admin))failures.push('purchased_label_declaration');
+    else if(purchased?.ready)applyPurchasedLabelRuntimePlan(plan,kind);
     // Assignment permission is a declared successor, not an installed-table
     // exception learned from ACLs. App retains no new data access.
     const assignment=await inspectStoreOrderFulfillmentAssignment(tx,{maintenance:names.maintenance,admin:names.admin});

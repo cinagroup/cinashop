@@ -1,3 +1,4 @@
+import { PurchasedProductLabelTaskService } from '@/services/order/PurchasedProductLabelTaskService';
 import type { Context } from "hono";
 import type { AppVariables, Env } from "@/env";
 import { OrderOutboxService } from "@/services/order/OrderOutboxService";
@@ -13,7 +14,7 @@ function service(c: C) {
 }
 
 function deadLetterService(c: C) {
-  return new OrderQueueDeadLetterService(c.get("container"), c.env.ORDER_QUEUE);
+  return new OrderQueueDeadLetterService(c.get("container"), c.env.ORDER_QUEUE, new PurchasedProductLabelTaskService(c.get("container"), c.env));
 }
 
 function positiveInt(value: string | undefined, label: string): number | undefined {
@@ -130,4 +131,18 @@ export async function orderQueueDeadLetterResolve(c: C) {
     body.reason,
   );
   return jsonOk(c, result, "死信已标记解决");
+}
+
+/** Same registered Admin authentication domain as the existing Outbox console. */
+export async function orderPurchasedLabelList(c: C) {
+  const q = c.req.query();
+  return jsonOk(c, await new PurchasedProductLabelTaskService(c.get('container'), c.env).list({
+    status: q.status || undefined, afterId: q.after_id || undefined, limit: positiveInt(q.limit, '每页数量'),
+  }));
+}
+export async function orderPurchasedLabelReplay(c: C) {
+  const body = await operationBody(c);
+  if (body.confirm !== 'REPLAY_PURCHASED_LABEL_TASK') throw new ValidateException('缺少购买标签重放确认');
+  const result = await new PurchasedProductLabelTaskService(c.get('container'), c.env).replay(c.req.param('id') ?? '', adminId(c), body.reason);
+  return jsonOk(c, result, result.completed ? '原购买标签任务已完成' : '原购买标签任务已进入补偿队列');
 }

@@ -1,3 +1,5 @@
+import { isPurchasedProductLabelMessage, isPurchasedProductLabelDispatch, capturePurchasedProductLabelMessage, capturePurchasedProductLabelDispatch } from './PurchasedProductLabelQueue';
+import type { PurchasedProductLabelTaskService } from './PurchasedProductLabelTaskService';
 import type { OrderMessage } from "@/env";
 import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
@@ -200,6 +202,14 @@ function messageAction(value: unknown): string {
 
 /** Classify before persistence so sensitive or unsupported messages can never be replayed. */
 export function prepareOrderQueueDeadLetter(value: unknown): PreparedOrderQueueDeadLetter {
+  if (isPurchasedProductLabelMessage(value)) {
+    const body = capturePurchasedProductLabelMessage(value);
+    return { messageType: body.action, replayPolicy: 'ALLOW', body: { action: body.action, taskId: body.taskId, eventKey: body.eventKey }, replayMessage: body };
+  }
+  if (isPurchasedProductLabelDispatch(value)) {
+    const body = capturePurchasedProductLabelDispatch(value);
+    return { messageType: body.action, replayPolicy: 'ALLOW', body: { action: body.action }, replayMessage: body };
+  }
   if(isRechargeRefundNoticeMessage(value)||isRechargeRefundNoticeDispatch(value)){
     const body=isRechargeRefundNoticeMessage(value)?captureRechargeRefundNoticeMessage(value):captureRechargeRefundNoticeDispatch(value);
     return{messageType:body.action,replayPolicy:'ALLOW',body:sanitizeUnknownQueueBody(body),replayMessage:body};
@@ -416,6 +426,7 @@ export class OrderQueueDeadLetterService {
   constructor(
     private readonly container: Container,
     private readonly orderQueue: Pick<Queue<OrderMessage>, "send">,
+    private readonly purchasedLabels?: Pick<PurchasedProductLabelTaskService, 'replayInTransaction'>,
   ) {}
 
   async archive(
@@ -567,6 +578,11 @@ export class OrderQueueDeadLetterService {
       }
       if (await sha256(prepared.body) !== row.bodySha256) {
         throw new ValidateException("归档消息完整性校验失败");
+      }
+      if (isPurchasedProductLabelMessage(prepared.replayMessage)) {
+        if (!this.purchasedLabels) throw new ValidateException('购买标签死信重放需配置正式任务作者');
+        const replay = await this.purchasedLabels.replayInTransaction(tx, prepared.replayMessage.taskId, operatorId, reason);
+        if (replay.eventKey !== prepared.replayMessage.eventKey) throw new ValidateException('购买标签死信引用与原任务不匹配');
       }
       const updated = await tx
         .update(systemQueueDeadLetter)

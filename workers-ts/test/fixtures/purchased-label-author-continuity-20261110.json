@@ -1,0 +1,648 @@
+{
+  "schema": "purchased-label-author-continuity/v1",
+  "predecessorCommit": "dd9b2f8e065f7f5bcb1ab472c2ecc194becb5b63",
+  "sources": [
+    {
+      "file": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "current": {
+        "bytes": 139327,
+        "sha256": "b97d2506cded11dd53f4e98bb313a942514ddb106b85b5bf75ed060135b575e4",
+        "gitBlobSha1": "10060b8bbd4166654bd96e74fa0c005b17ac7475"
+      },
+      "predecessor": {
+        "bytes": 139211,
+        "sha256": "059fb9795b7e050af5e0f7a5ac6a52085952dcbefdbddedcf5d0f4e99aad9d3d",
+        "gitBlobSha1": "0c24b8246d362d2a6d6615ed646e2ea181ad0ccf"
+      },
+      "inverseEdits": [
+        {
+          "start": 427,
+          "after": [
+            "    'test/purchased-product-label-author-native.test.ts',\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 1587,
+          "after": [
+            "    'test/purchased-product-label-author-native.test.ts',\n"
+          ],
+          "before": []
+        }
+      ],
+      "origin": {
+        "commit": "dd9b2f8e065f7f5bcb1ab472c2ecc194becb5b63",
+        "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+        "gitBlobSha1": "0c24b8246d362d2a6d6615ed646e2ea181ad0ccf"
+      }
+    },
+    {
+      "file": "workers-ts/src/controllers/api/v1/AdminOrderOutboxController.ts",
+      "current": {
+        "bytes": 5510,
+        "sha256": "a00808e251915679c958ef2264fe102688548a5fc5fc1da5d4044727cd5ec20f",
+        "gitBlobSha1": "71a72ab08ded8721acaf6e076fd27467b7b8c9f8"
+      },
+      "predecessor": {
+        "bytes": 4472,
+        "sha256": "a78b555109c70e142dbbe614491b5cd4c5c989cfb8e8e7b41886402ff984dc9c",
+        "gitBlobSha1": "0b20f99389f46094f2bf539da53cec1cff5c0ecd"
+      },
+      "inverseEdits": [
+        {
+          "start": 0,
+          "after": [
+            "import { PurchasedProductLabelTaskService } from '@/services/order/PurchasedProductLabelTaskService';\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 16,
+          "after": [
+            "  return new OrderQueueDeadLetterService(c.get(\"container\"), c.env.ORDER_QUEUE, new PurchasedProductLabelTaskService(c.get(\"container\"), c.env));\n"
+          ],
+          "before": [
+            "  return new OrderQueueDeadLetterService(c.get(\"container\"), c.env.ORDER_QUEUE);\n"
+          ]
+        },
+        {
+          "start": 134,
+          "after": [
+            "\n",
+            "/** Same registered Admin authentication domain as the existing Outbox console. */\n",
+            "export async function orderPurchasedLabelList(c: C) {\n",
+            "  const q = c.req.query();\n",
+            "  return jsonOk(c, await new PurchasedProductLabelTaskService(c.get('container'), c.env).list({\n",
+            "    status: q.status || undefined, afterId: q.after_id || undefined, limit: positiveInt(q.limit, '每页数量'),\n",
+            "  }));\n",
+            "}\n",
+            "export async function orderPurchasedLabelReplay(c: C) {\n",
+            "  const body = await operationBody(c);\n",
+            "  if (body.confirm !== 'REPLAY_PURCHASED_LABEL_TASK') throw new ValidateException('缺少购买标签重放确认');\n",
+            "  const result = await new PurchasedProductLabelTaskService(c.get('container'), c.env).replay(c.req.param('id') ?? '', adminId(c), body.reason);\n",
+            "  return jsonOk(c, result, result.completed ? '原购买标签任务已完成' : '原购买标签任务已进入补偿队列');\n",
+            "}\n"
+          ],
+          "before": []
+        }
+      ],
+      "origin": {
+        "commit": "dd9b2f8e065f7f5bcb1ab472c2ecc194becb5b63",
+        "path": "workers-ts/src/controllers/api/v1/AdminOrderOutboxController.ts",
+        "gitBlobSha1": "0b20f99389f46094f2bf539da53cec1cff5c0ecd"
+      }
+    },
+    {
+      "file": "workers-ts/src/env.ts",
+      "current": {
+        "bytes": 27334,
+        "sha256": "54975ca2085286a95ea1fc2d15b408f935285c89ba29deb1775b4e95b096e5b9",
+        "gitBlobSha1": "66571b9aa92df827678f4f111b80cd2469d4b8cb"
+      },
+      "predecessor": {
+        "bytes": 26962,
+        "sha256": "75ad72f2a2a1d11e80f84f124eecb603d1e1473ef45b9fabf859109c2ccf9bcc",
+        "gitBlobSha1": "d5e76e1413597e7f06dadc6e98e59732b294ffde"
+      },
+      "inverseEdits": [
+        {
+          "start": 0,
+          "after": [
+            "import type { PurchasedProductLabelMessage, PurchasedProductLabelDispatch } from './services/order/PurchasedProductLabelQueue';\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 33,
+          "after": [
+            "  /** Trusted complete maintenance declaration for the independent purchased-label task. Never request JSON. */\n",
+            "  PURCHASED_PRODUCT_LABEL_RUNTIME?: RuntimeGiftPeerDeclarations;\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 522,
+          "after": [
+            "  | PurchasedProductLabelMessage\n",
+            "  | PurchasedProductLabelDispatch\n"
+          ],
+          "before": []
+        }
+      ],
+      "origin": {
+        "commit": "dd9b2f8e065f7f5bcb1ab472c2ecc194becb5b63",
+        "path": "workers-ts/src/env.ts",
+        "gitBlobSha1": "d5e76e1413597e7f06dadc6e98e59732b294ffde"
+      }
+    },
+    {
+      "file": "workers-ts/src/index.ts",
+      "current": {
+        "bytes": 40800,
+        "sha256": "ab7268db5bf01683d5e9495a3a6dda6028500c82c8d6988d656748819ab955da",
+        "gitBlobSha1": "4572c85b959dbb7588a2dcc3623e7d74fdfb329e"
+      },
+      "predecessor": {
+        "bytes": 39838,
+        "sha256": "5bcf071b5347c0fe9ad14b6d8d9536201983d309dfaf40589349c13688bd5e1a",
+        "gitBlobSha1": "edeab765c15b19aeb2b75b9ab75af8f870d831bb"
+      },
+      "inverseEdits": [
+        {
+          "start": 169,
+          "after": [
+            "    const { PurchasedProductLabelTaskService } = await import('./services/order/PurchasedProductLabelTaskService');\n",
+            "    const { isPurchasedProductLabelMessage, isPurchasedProductLabelDispatch } = await import('./services/order/PurchasedProductLabelQueue');\n",
+            "    const { consumePurchasedProductLabelQueueMessage } = await import('./services/order/PurchasedProductLabelQueueConsumer');\n",
+            "    const purchasedLabels = new PurchasedProductLabelTaskService(container, env);\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 547,
+          "after": [
+            "      if (isPurchasedProductLabelMessage(msg.body) || isPurchasedProductLabelDispatch(msg.body)) {\n",
+            "        await consumePurchasedProductLabelQueueMessage(msg, purchasedLabels);\n",
+            "        continue;\n",
+            "      }\n",
+            "\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 898,
+          "after": [
+            "  const { purchasedLabelRuntimeFromEnv } = await import('./services/order/PurchasedProductLabelRuntimeDeclaration');\n",
+            "  const purchased = purchasedLabelRuntimeFromEnv(env);\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 901,
+          "after": [
+            "    ...(purchased ? [env.ORDER_QUEUE.send({ action: 'dispatchPurchasedProductLabels' }, { contentType: 'json' })] : []),\n"
+          ],
+          "before": []
+        }
+      ],
+      "origin": {
+        "commit": "dd9b2f8e065f7f5bcb1ab472c2ecc194becb5b63",
+        "path": "workers-ts/src/index.ts",
+        "gitBlobSha1": "edeab765c15b19aeb2b75b9ab75af8f870d831bb"
+      }
+    },
+    {
+      "file": "workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+      "current": {
+        "bytes": 49773,
+        "sha256": "843cabc2feb45596a80ac6d2f3a703f59fd849a2b38052a50054a8967e3d41d7",
+        "gitBlobSha1": "40dd08a683d4bfc7d3f26186cf45535ae92d7864"
+      },
+      "predecessor": {
+        "bytes": 49231,
+        "sha256": "8b0c527119caf2e050fa5fe8f2d0cc8d0aa5e440c8796291496710473a55b3e9",
+        "gitBlobSha1": "0a8bf9eb58eb1120a822bc333b0abdfe93b7e4a3"
+      },
+      "inverseEdits": [
+        {
+          "start": 0,
+          "after": [
+            "import { applyPurchasedLabelRuntimePlan, inspectPurchasedLabelRuntime } from './purchasedProductLabelRuntime';\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 217,
+          "after": [
+            "    const purchased=peers?.purchasedProductLabels?await inspectPurchasedLabelRuntime(tx,peers.target,peers.purchasedProductLabels):null;\n",
+            "    if(purchased&&(!purchased.ready||version!=='current'||peers?.target.maintenance!==names.maintenance\n",
+            "      ||peers.target.app!==names.app||peers.target.admin!==names.admin))failures.push('purchased_label_declaration');\n",
+            "    else if(purchased?.ready)applyPurchasedLabelRuntimePlan(plan,kind);\n"
+          ],
+          "before": []
+        }
+      ],
+      "origin": {
+        "commit": "dd9b2f8e065f7f5bcb1ab472c2ecc194becb5b63",
+        "path": "workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+        "gitBlobSha1": "0a8bf9eb58eb1120a822bc333b0abdfe93b7e4a3"
+      }
+    },
+    {
+      "file": "workers-ts/src/migrations/customerRuntimeGiftPeers.ts",
+      "current": {
+        "bytes": 13991,
+        "sha256": "e74588a1256bf5353e475bd2f406ff93fcac5eef00fd76aa73d07e6b5bba1cb9",
+        "gitBlobSha1": "bc458954a6c85c439ea97bf8c0e482ef7f55b12b"
+      },
+      "predecessor": {
+        "bytes": 13072,
+        "sha256": "1225e6228908cf7e6b887900977be6a6785498d7f745d832cfb089b8d0a7efb6",
+        "gitBlobSha1": "c7925ffc20700e5d41662373bf85fdc8f1cb7077"
+      },
+      "inverseEdits": [
+        {
+          "start": 0,
+          "after": [
+            "import { capturePurchasedLabelRuntimeAddon, type PurchasedLabelRuntimeAddon } from './purchasedProductLabelRuntime';\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 34,
+          "after": [
+            "  purchasedProductLabels?:PurchasedLabelRuntimeAddon;\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 41,
+          "after": [
+            "    || Object.keys(value).some(key => !['target', 'financial', 'cashierSecondCard', 'manager','routineRefundActors','cityConflictReaders','fulfillmentAssignments','managerAssignedWholeExpress','rechargeRefund','purchasedProductLabels'].includes(key))\n"
+          ],
+          "before": [
+            "    || Object.keys(value).some(key => !['target', 'financial', 'cashierSecondCard', 'manager','routineRefundActors','cityConflictReaders','fulfillmentAssignments','managerAssignedWholeExpress','rechargeRefund'].includes(key))\n"
+          ]
+        },
+        {
+          "start": 90,
+          "after": [
+            "  const purchasedDescriptor=Object.getOwnPropertyDescriptor(value,'purchasedProductLabels');\n",
+            "  if(('purchasedProductLabels' in value)&&(!purchasedDescriptor||!purchasedDescriptor.enumerable||!('value'in purchasedDescriptor)))\n",
+            "    throw Error('Data-only purchased label runtime declaration required');\n",
+            "  const purchased=purchasedDescriptor?.value===undefined?undefined:capturePurchasedLabelRuntimeAddon(purchasedDescriptor.value);\n",
+            "  if(purchased&&(!value.financial||!cashier||value.manager!==true||!t.local?.includes(CUSTOMER_FINANCIAL_RUNTIME_ROLE)||!t.local.includes(MANAGER_RUNTIME_ROLE)))\n",
+            "    throw Error('Complete five purchased label runtime peers required');\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 108,
+          "after": [
+            "    ...(receipts?{managerAssignedWholeExpress:receipts}:{}),...(recharge?{rechargeRefund:recharge}:{}),\n",
+            "    ...(purchased?{purchasedProductLabels:purchased}:{}) };\n"
+          ],
+          "before": [
+            "    ...(receipts?{managerAssignedWholeExpress:receipts}:{}),...(recharge?{rechargeRefund:recharge}:{}) };\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "dd9b2f8e065f7f5bcb1ab472c2ecc194becb5b63",
+        "path": "workers-ts/src/migrations/customerRuntimeGiftPeers.ts",
+        "gitBlobSha1": "c7925ffc20700e5d41662373bf85fdc8f1cb7077"
+      }
+    },
+    {
+      "file": "workers-ts/src/migrations/purchasedProductLabelStorage.ts",
+      "current": {
+        "bytes": 18319,
+        "sha256": "1608ff73d93094dcae14c48d951df852c8185aa47e7f86c96030aa5265f9ca5b",
+        "gitBlobSha1": "a1af6f5dd0187bf372297064fc1b53ccf5d3e047"
+      },
+      "predecessor": {
+        "bytes": 16410,
+        "sha256": "dfa93301a4b292bc96c42b331728894f7da6f67ae1ec660125c94a128d39dc26",
+        "gitBlobSha1": "235efa743fe82ac741609d56e7336e788d12be03"
+      },
+      "inverseEdits": [
+        {
+          "start": 7,
+          "after": [
+            "import { capturePurchasedLabelPrincipals, purchasedLabelExpectedAcl, type PurchasedLabelPrincipals } from './purchasedProductLabelPermissions';\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 94,
+          "after": [
+            "export async function inspectPurchasedLabelStorageCatalog(tx: Query, input: PurchasedLabelStorageTarget,\n",
+            "  runtime?: PurchasedLabelPrincipals): Promise<PurchasedLabelStorageInspection> {\n"
+          ],
+          "before": [
+            "export async function inspectPurchasedLabelStorage(tx: Query, input: PurchasedLabelStorageTarget): Promise<PurchasedLabelStorageInspection> {\n"
+          ]
+        },
+        {
+          "start": 97,
+          "after": [
+            "  const principals = runtime === undefined ? undefined : capturePurchasedLabelPrincipals(runtime);\n",
+            "  if (principals && [principals.app, principals.admin].includes(target.maintenance)) throw Error('Independent purchased label maintenance required');\n",
+            "  const expectedAcl = purchasedLabelExpectedAcl(principals);\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 142,
+          "after": [],
+          "before": [
+            "      AND NOT EXISTS(SELECT 1 FROM pg_catalog.aclexplode(COALESCE(c.relacl,pg_catalog.acldefault('r',c.relowner))) a\n",
+            "        WHERE a.grantee<>r.oid OR a.grantor<>r.oid)\n",
+            "      AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_attribute a WHERE a.attrelid=c.oid AND a.attnum>0 AND a.attacl IS NOT NULL)\n"
+          ]
+        },
+        {
+          "start": 172,
+          "after": [
+            "  const acl = await tx.execute<{ entry: string; bad: boolean }>(sql`WITH objects AS(\n",
+            "    SELECT c.* FROM pg_catalog.pg_class c WHERE c.relnamespace='public'::regnamespace\n",
+            "      AND c.relname ~ '^(purchased_product_label|ppli_|ppls_|pplr_)')\n",
+            "    SELECT 'table:'||c.relname||':'||COALESCE(r.rolname,'PUBLIC')||':'||a.privilege_type AS entry,\n",
+            "      a.is_grantable OR a.grantor<>c.relowner AS bad FROM objects c\n",
+            "      CROSS JOIN LATERAL pg_catalog.aclexplode(COALESCE(c.relacl,pg_catalog.acldefault('r',c.relowner))) a\n",
+            "      LEFT JOIN pg_catalog.pg_roles r ON r.oid=a.grantee WHERE a.grantee<>c.relowner OR a.grantor<>c.relowner\n",
+            "    UNION ALL SELECT 'column:'||c.relname||':'||col.attname||':'||COALESCE(r.rolname,'PUBLIC')||':'||a.privilege_type,\n",
+            "      a.is_grantable OR a.grantor<>c.relowner FROM objects c JOIN pg_catalog.pg_attribute col ON col.attrelid=c.oid AND col.attnum>0\n",
+            "      CROSS JOIN LATERAL pg_catalog.aclexplode(col.attacl) a LEFT JOIN pg_catalog.pg_roles r ON r.oid=a.grantee\n",
+            "    UNION ALL SELECT 'marker:'||c.relname||':'||a.attname,false FROM objects c JOIN pg_catalog.pg_attribute a\n",
+            "      ON a.attrelid=c.oid AND a.attnum>0 AND a.attacl IS NOT NULL`);\n",
+            "  if (acl.some(r => r.bad !== false) || JSON.stringify(acl.map(r => r.entry).sort()) !== JSON.stringify(expectedAcl)) {\n",
+            "    result.failures.push('exact_acl'); return result;\n",
+            "  }\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 190,
+          "after": [
+            "\n",
+            "/** The original owner-only contract remains strict after commissioning. A\n",
+            " * separately declared runtime successor must call the named catalog variant. */\n",
+            "export async function inspectPurchasedLabelStorage(tx: Query, input: PurchasedLabelStorageTarget): Promise<PurchasedLabelStorageInspection> {\n",
+            "  return inspectPurchasedLabelStorageCatalog(tx, input);\n",
+            "}\n"
+          ],
+          "before": []
+        }
+      ],
+      "origin": {
+        "commit": "dd9b2f8e065f7f5bcb1ab472c2ecc194becb5b63",
+        "path": "workers-ts/src/migrations/purchasedProductLabelStorage.ts",
+        "gitBlobSha1": "235efa743fe82ac741609d56e7336e788d12be03"
+      }
+    },
+    {
+      "file": "workers-ts/src/routes/v1/index.ts",
+      "current": {
+        "bytes": 197547,
+        "sha256": "cde028ab955005680b808df71def1a4582082be9a59c9592bca922a7284caa2b",
+        "gitBlobSha1": "cabb9bc433be2325073a8eee7e5ff9ccb72537f3"
+      },
+      "predecessor": {
+        "bytes": 197327,
+        "sha256": "a543d4d1e9bf42a3fce4be80c4a5700dd3d11159456a4b339fe25601b5494e58",
+        "gitBlobSha1": "23f0583a98a3ff39f0f93dde341a1f3c2fdf5ed1"
+      },
+      "inverseEdits": [
+        {
+          "start": 1922,
+          "after": [
+            "v1Routes.get('/admin/order/product-label-tasks', adminAuth, AdminOrderOutbox.orderPurchasedLabelList);\n",
+            "v1Routes.post('/admin/order/product-label-tasks/:id/replay', adminAuth, AdminOrderOutbox.orderPurchasedLabelReplay);\n"
+          ],
+          "before": []
+        }
+      ],
+      "origin": {
+        "commit": "dd9b2f8e065f7f5bcb1ab472c2ecc194becb5b63",
+        "path": "workers-ts/src/routes/v1/index.ts",
+        "gitBlobSha1": "23f0583a98a3ff39f0f93dde341a1f3c2fdf5ed1"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/activity/StoreDiscountService.ts",
+      "current": {
+        "bytes": 19486,
+        "sha256": "afb1f81ae91bb70b1ef112cc3e68fe892cce47ec6af7960de141b43ac0637233",
+        "gitBlobSha1": "7f9170270ebd1b3147cd9677f33a97e461dc6e6b"
+      },
+      "predecessor": {
+        "bytes": 19180,
+        "sha256": "3d5a8fb2fec90c0847fd0067bc650ba5fc353730d130008a377b303b59fc42c3",
+        "gitBlobSha1": "33e5468acf63ef6d2103228e447dcbab8b6eda05"
+      },
+      "inverseEdits": [
+        {
+          "start": 165,
+          "after": [
+            "  if (params.lockRows && Object.hasOwn(container.db, '$client')) throw Error('套餐锁定读取须使用下单所属事务');\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 187,
+          "after": [
+            "  // The package parent is already locked above. Every supported Admin entry\n",
+            "  // author locks that parent before replacing its members. App reads these\n",
+            "  // rows without gaining UPDATE authority on the catalogue child table.\n",
+            "  const entries = await entryQuery;\n"
+          ],
+          "before": [
+            "  const entries = await (params.lockRows ? entryQuery.for(\"update\") : entryQuery);\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "dd9b2f8e065f7f5bcb1ab472c2ecc194becb5b63",
+        "path": "workers-ts/src/services/activity/StoreDiscountService.ts",
+        "gitBlobSha1": "33e5468acf63ef6d2103228e447dcbab8b6eda05"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/admin/AdminPermissionService.ts",
+      "current": {
+        "bytes": 153458,
+        "sha256": "52df31b2aaf02c53fd9a46339ca58484556c355c330b879a7b27ff04e5b791e6",
+        "gitBlobSha1": "d8c1ed9e9f1b917e14e3b398d6d1c731e8137b18"
+      },
+      "predecessor": {
+        "bytes": 153429,
+        "sha256": "253cabe9b494291c9ad0e036ac6091b7fa065be573c3fc9d940b0a98cef36475",
+        "gitBlobSha1": "618842f662c4c6ea03b37808ee837f25e9452f23"
+      },
+      "inverseEdits": [
+        {
+          "start": 31,
+          "after": [
+            "  { key: \"outbox\", label: \"支付后置任务\", path: \"/operations/outbox\", matches: [\"order/outbox\", \"order/product-label-tasks\"], manage: true },\n"
+          ],
+          "before": [
+            "  { key: \"outbox\", label: \"支付后置任务\", path: \"/operations/outbox\", matches: [\"order/outbox\"], manage: true },\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "dd9b2f8e065f7f5bcb1ab472c2ecc194becb5b63",
+        "path": "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "gitBlobSha1": "618842f662c4c6ea03b37808ee837f25e9452f23"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/order/OrderOutboxService.ts",
+      "current": {
+        "bytes": 46269,
+        "sha256": "4c9751e466a7857e3dfff1b4f618f5e59c3be013fedf42372b180a5bde08687f",
+        "gitBlobSha1": "a8c67f26aa4bf5348294bc8bd3dda2530b91dfe1"
+      },
+      "predecessor": {
+        "bytes": 45352,
+        "sha256": "2edbf668cba6ac99dae579157efac64f190c74b987201824e3bc4d955d906522",
+        "gitBlobSha1": "5d2d13d9ca8cf8f673c9031aefabfa34390ea3d3"
+      },
+      "inverseEdits": [
+        {
+          "start": 0,
+          "after": [
+            "import { enqueuePurchasedProductLabelsTx } from './PurchasedProductLabelSource';\n",
+            "import { purchasedLabelRuntimeFromEnv, type PurchasedLabelRuntimeDeclaration } from './PurchasedProductLabelRuntimeDeclaration';\n",
+            "import { PurchasedProductLabelTaskService } from './PurchasedProductLabelTaskService';\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 105,
+          "after": [
+            "export interface OrderOutboxEnvironment extends Partial<Pick<Env, 'APP_KEY' | 'ROUTINE_SUBSCRIPTION_ACCOUNT_CREDENTIALS' | 'HYPERDRIVE' | 'PURCHASED_PRODUCT_LABEL_RUNTIME'>> {\n"
+          ],
+          "before": [
+            "export interface OrderOutboxEnvironment extends Partial<Pick<Env, 'APP_KEY' | 'ROUTINE_SUBSCRIPTION_ACCOUNT_CREDENTIALS' | 'HYPERDRIVE'>> {\n"
+          ]
+        },
+        {
+          "start": 307,
+          "after": [
+            "  private readonly purchasedLabels: PurchasedLabelRuntimeDeclaration | undefined;\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 311,
+          "after": [
+            "  ) { this.purchasedLabels = purchasedLabelRuntimeFromEnv(env); }\n",
+            "\n",
+            "  async dispatchPurchasedProductLabels(message: OrderPaidOutboxMessage): Promise<void> {\n",
+            "    if (!this.purchasedLabels) return;\n",
+            "    await new PurchasedProductLabelTaskService(this.container, { ORDER_QUEUE: this.env.ORDER_QUEUE,\n",
+            "      PURCHASED_PRODUCT_LABEL_RUNTIME: this.purchasedLabels }).dispatchPending(20, undefined, message.outboxId);\n",
+            "  }\n"
+          ],
+          "before": [
+            "  ) {}\n"
+          ]
+        },
+        {
+          "start": 799,
+          "after": [
+            "        await enqueuePurchasedProductLabelsTx(tx, event, allocation, this.purchasedLabels, now);\n"
+          ],
+          "before": []
+        }
+      ],
+      "origin": {
+        "commit": "dd9b2f8e065f7f5bcb1ab472c2ecc194becb5b63",
+        "path": "workers-ts/src/services/order/OrderOutboxService.ts",
+        "gitBlobSha1": "5d2d13d9ca8cf8f673c9031aefabfa34390ea3d3"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/order/OrderPaidOutboxQueueConsumer.ts",
+      "current": {
+        "bytes": 6680,
+        "sha256": "9e8e934a07a6eca9a2c8e8f982cae0a1fbb15c1da74562632bd1ae1e482f03a1",
+        "gitBlobSha1": "179d9ea35fa48b5ec0c54f6746e131ae83cbab72"
+      },
+      "predecessor": {
+        "bytes": 6249,
+        "sha256": "a211880cb6e7436081d088d7c83ce31c88fc2737778bf561dfccee1627ab53e5",
+        "gitBlobSha1": "5629a9107b0ff3f6fa796ef4d5f8dfa73383f85c"
+      },
+      "inverseEdits": [
+        {
+          "start": 10,
+          "after": [
+            "type OrderPaidOutboxProcessor = Pick<OrderOutboxService, \"processMessage\"> & Partial<Pick<OrderOutboxService, 'dispatchPaidBuyerNotices'|'dispatchPurchasedProductLabels'>>;\n"
+          ],
+          "before": [
+            "type OrderPaidOutboxProcessor = Pick<OrderOutboxService, \"processMessage\"> & Partial<Pick<OrderOutboxService, 'dispatchPaidBuyerNotices'>>;\n"
+          ]
+        },
+        {
+          "start": 69,
+          "after": [
+            "    }\n",
+            "    if((result==='completed'||result==='already-completed')&&processor.dispatchPurchasedProductLabels){\n",
+            "      try{await processor.dispatchPurchasedProductLabels(message.body);}\n",
+            "      catch(error){emitOperationalEvent('error',{event:'purchased_product_labels_accelerator_failed',component:'queue',\n",
+            "        operation:'outbox_consume',outcome:'failure',errorCode:operationalErrorCode(error)});}\n"
+          ],
+          "before": []
+        }
+      ],
+      "origin": {
+        "commit": "dd9b2f8e065f7f5bcb1ab472c2ecc194becb5b63",
+        "path": "workers-ts/src/services/order/OrderPaidOutboxQueueConsumer.ts",
+        "gitBlobSha1": "5629a9107b0ff3f6fa796ef4d5f8dfa73383f85c"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/order/OrderQueueDeadLetterService.ts",
+      "current": {
+        "bytes": 27042,
+        "sha256": "a75024250a2517b99e617273e9613d53cb894ee89199f78c1bd79e02897a2efb",
+        "gitBlobSha1": "7bcfc61f04bffefd91642f85d5d67eea78e7962f"
+      },
+      "predecessor": {
+        "bytes": 25693,
+        "sha256": "fcf16be469c31bead0a1da4d3c7998cd33bb0d73d7e77b0ff05ed1a785fb7f62",
+        "gitBlobSha1": "0109c6caa88f848fa41ec1c9e147736882e44dfb"
+      },
+      "inverseEdits": [
+        {
+          "start": 0,
+          "after": [
+            "import { isPurchasedProductLabelMessage, isPurchasedProductLabelDispatch, capturePurchasedProductLabelMessage, capturePurchasedProductLabelDispatch } from './PurchasedProductLabelQueue';\n",
+            "import type { PurchasedProductLabelTaskService } from './PurchasedProductLabelTaskService';\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 204,
+          "after": [
+            "  if (isPurchasedProductLabelMessage(value)) {\n",
+            "    const body = capturePurchasedProductLabelMessage(value);\n",
+            "    return { messageType: body.action, replayPolicy: 'ALLOW', body: { action: body.action, taskId: body.taskId, eventKey: body.eventKey }, replayMessage: body };\n",
+            "  }\n",
+            "  if (isPurchasedProductLabelDispatch(value)) {\n",
+            "    const body = capturePurchasedProductLabelDispatch(value);\n",
+            "    return { messageType: body.action, replayPolicy: 'ALLOW', body: { action: body.action }, replayMessage: body };\n",
+            "  }\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 428,
+          "after": [
+            "    private readonly purchasedLabels?: Pick<PurchasedProductLabelTaskService, 'replayInTransaction'>,\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 581,
+          "after": [
+            "      if (isPurchasedProductLabelMessage(prepared.replayMessage)) {\n",
+            "        if (!this.purchasedLabels) throw new ValidateException('购买标签死信重放需配置正式任务作者');\n",
+            "        const replay = await this.purchasedLabels.replayInTransaction(tx, prepared.replayMessage.taskId, operatorId, reason);\n",
+            "        if (replay.eventKey !== prepared.replayMessage.eventKey) throw new ValidateException('购买标签死信引用与原任务不匹配');\n",
+            "      }\n"
+          ],
+          "before": []
+        }
+      ],
+      "origin": {
+        "commit": "dd9b2f8e065f7f5bcb1ab472c2ecc194becb5b63",
+        "path": "workers-ts/src/services/order/OrderQueueDeadLetterService.ts",
+        "gitBlobSha1": "0109c6caa88f848fa41ec1c9e147736882e44dfb"
+      }
+    }
+  ]
+}

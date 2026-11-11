@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { PROVIDER_TRANSPORT_PROOF_FILE, PROVIDER_TRANSPORT_PROOF_SHA, providerTransportSourceContinuity as proof,
   projectProviderTransportPredecessor } from './helpers/providerTransportSourceContinuity';
 import { projectRechargeRefundPredecessor, readRechargeRefundPredecessorFile } from './helpers/rechargeRefundSourceContinuity';
+import { projectPurchasedLabelAuthorPredecessor } from './helpers/purchasedLabelAuthorSourceContinuity';
 const root = resolve(import.meta.dirname, '../..');
 const sha = (bytes: string | Uint8Array) => createHash('sha256').update(bytes).digest('hex');
 const physical = (file: string) => readFileSync(resolve(root, file), 'utf8');
@@ -23,7 +24,7 @@ describe('reviewed provider transport successor before unchanged historical proo
       const before = execFileSync('git', ['cat-file', 'blob', proof.predecessorCommit + ':' + row.file], { cwd: root, encoding: 'utf8' });
       const current = physical(row.file);
       expect(projectProviderTransportPredecessor(row.file, current)).toBe(before);
-      expect(sha(current)).toBe(row.current.sha256); expect(sha(before)).toBe(row.predecessor.sha256);
+      expect(sha(projectPurchasedLabelAuthorPredecessor(row.file, current))).toBe(row.current.sha256); expect(sha(before)).toBe(row.predecessor.sha256);
       expect(row.origin).toEqual({ commit: proof.predecessorCommit, path: row.file, gitBlobSha1: row.predecessor.gitBlobSha1 });
       expect(current).not.toBe(before);
     }

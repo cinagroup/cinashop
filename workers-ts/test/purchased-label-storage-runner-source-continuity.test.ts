@@ -6,7 +6,9 @@ import { PURCHASED_LABEL_RUNNER_FILE as file, projectPurchasedLabelRunnerPredece
   purchasedLabelRunnerProof as proof } from './helpers/purchasedLabelStorageRunnerSourceContinuity';
 import { projectOutLabelRunnerPredecessor } from './helpers/outProductLabelRunnerSourceContinuity';
 import { projectProviderTransportPredecessor } from './helpers/providerTransportSourceContinuity';
-const root = resolve(import.meta.dirname, '../..'), native = readFileSync(resolve(root, file), 'utf8');
+import { projectPurchasedLabelAuthorPredecessor } from './helpers/purchasedLabelAuthorSourceContinuity';
+const root = resolve(import.meta.dirname, '../..'), physical = readFileSync(resolve(root, file), 'utf8');
+const native = projectPurchasedLabelAuthorPredecessor(file, physical);
 const admission = "    'test/purchased-product-label-storage-native.test.ts',\n";
 // Fixed Git image metadata was independently checked against fc568ece locally.
 // No new shallow-CI commit supply dependency is introduced by this successor.
@@ -18,8 +20,8 @@ describe('purchased-label storage runner explicit successor', () => {
     expect(createHash('sha256').update(predecessor).digest('hex')).toBe(proof.predecessor.sha256);
     expect(createHash('sha1').update('blob '+Buffer.byteLength(predecessor)+'\0').update(predecessor).digest('hex')).toBe(proof.predecessor.gitBlobSha1);
     expect(projectPurchasedLabelRunnerPredecessor(file, native)).toBe(predecessor);
-    expect(projectProviderTransportPredecessor(file, native)).toBe(projectOutLabelRunnerPredecessor(file, predecessor));
-    expect(readFileSync(resolve(root, file), 'utf8')).toBe(native);
+    expect(projectProviderTransportPredecessor(file, physical)).toBe(projectOutLabelRunnerPredecessor(file, predecessor));
+    expect(readFileSync(resolve(root, file), 'utf8')).toBe(physical);
     expect(Object.isFrozen(proof.inverseEdits)).toBe(true);
     expect(projectPurchasedLabelRunnerPredecessor('unrelated.ts', 'untouched')).toBe('untouched');
   });

@@ -8,7 +8,7 @@ import {
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 import type { OrderNotificationDeliveryService } from './OrderNotificationDeliveryService';
 
-type OrderPaidOutboxProcessor = Pick<OrderOutboxService, "processMessage"> & Partial<Pick<OrderOutboxService, 'dispatchPaidBuyerNotices'>>;
+type OrderPaidOutboxProcessor = Pick<OrderOutboxService, "processMessage"> & Partial<Pick<OrderOutboxService, 'dispatchPaidBuyerNotices'|'dispatchPurchasedProductLabels'>>;
 type OrderPaidOutboxQueueMessage = Pick<
   Message<OrderMessage>,
   "body" | "attempts" | "ack" | "retry"
@@ -67,6 +67,11 @@ export async function consumeOrderPaidOutboxQueueMessage(
       try{await processor.dispatchPaidBuyerNotices(message.body);}
       catch(error){emitOperationalEvent('error',{event:'paid_buyer_notice_dispatch_failed',component:'queue',
         operation:'notification_outbox',outcome:'failure',errorCode:operationalErrorCode(error)});}
+    }
+    if((result==='completed'||result==='already-completed')&&processor.dispatchPurchasedProductLabels){
+      try{await processor.dispatchPurchasedProductLabels(message.body);}
+      catch(error){emitOperationalEvent('error',{event:'purchased_product_labels_accelerator_failed',component:'queue',
+        operation:'outbox_consume',outcome:'failure',errorCode:operationalErrorCode(error)});}
     }
     if(notifications&&(result==='completed'||result==='already-completed')){
       try{await notifications.dispatchPending(10,message.body.eventKey);}

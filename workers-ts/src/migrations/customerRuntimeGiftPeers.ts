@@ -1,3 +1,4 @@
+import { capturePurchasedLabelRuntimeAddon, type PurchasedLabelRuntimeAddon } from './purchasedProductLabelRuntime';
 import { captureCustomerFinancialRoutineRefund, type CustomerFinancialRoutineRefundAddon } from './customerFinancialRoutineRefund';
 import { captureRoutineRefundActorAddons, type RoutineRefundActorAddons } from './routineRefundActorAddon';
 import { captureFulfillmentCityConflictReadersAddon, type FulfillmentCityConflictReadersAddon } from './fulfillmentCityConflictReader';
@@ -31,13 +32,14 @@ export interface RuntimeGiftPeerDeclarations {
   fulfillmentAssignments?:StoreOrderFulfillmentAssignmentsAddon;
   managerAssignedWholeExpress?:ManagerAssignedWholeExpressAddon;
   rechargeRefund?:RechargeRefundRuntimeAddon;
+  purchasedProductLabels?:PurchasedLabelRuntimeAddon;
 }
 const giftTable = 'store_order_promotion_gift_coupon_reward';
 const giftSequence = giftTable + '_id_seq';
 
 export function captureRuntimeGiftPeerDeclarations(value: RuntimeGiftPeerDeclarations): RuntimeGiftPeerDeclarations {
   if (!value || typeof value !== 'object' || Array.isArray(value)
-    || Object.keys(value).some(key => !['target', 'financial', 'cashierSecondCard', 'manager','routineRefundActors','cityConflictReaders','fulfillmentAssignments','managerAssignedWholeExpress','rechargeRefund'].includes(key))
+    || Object.keys(value).some(key => !['target', 'financial', 'cashierSecondCard', 'manager','routineRefundActors','cityConflictReaders','fulfillmentAssignments','managerAssignedWholeExpress','rechargeRefund','purchasedProductLabels'].includes(key))
     || !value.target || ![value.financial, value.cashierSecondCard, value.manager].some(Boolean))
     throw Error('Explicit bounded gift peer declarations required');
   const t = value.target;
@@ -86,6 +88,12 @@ export function captureRuntimeGiftPeerDeclarations(value: RuntimeGiftPeerDeclara
   if(recharge&&(!value.financial||value.manager!==true||!cashier
     ||!t.local?.includes(CUSTOMER_FINANCIAL_RUNTIME_ROLE)||!t.local.includes(MANAGER_RUNTIME_ROLE)))
     throw Error('Complete existing five profiles are required for recharge refunds');
+  const purchasedDescriptor=Object.getOwnPropertyDescriptor(value,'purchasedProductLabels');
+  if(('purchasedProductLabels' in value)&&(!purchasedDescriptor||!purchasedDescriptor.enumerable||!('value'in purchasedDescriptor)))
+    throw Error('Data-only purchased label runtime declaration required');
+  const purchased=purchasedDescriptor?.value===undefined?undefined:capturePurchasedLabelRuntimeAddon(purchasedDescriptor.value);
+  if(purchased&&(!value.financial||!cashier||value.manager!==true||!t.local?.includes(CUSTOMER_FINANCIAL_RUNTIME_ROLE)||!t.local.includes(MANAGER_RUNTIME_ROLE)))
+    throw Error('Complete five purchased label runtime peers required');
   return { target: { database: t.database, maintenance: t.maintenance, app: t.app, admin: t.admin,
     ...(t.local ? { local: [...t.local] } : {}),
     ...(t.caseLock ? { caseLock: { owner: t.caseLock.owner, runtimeRoles: [...t.caseLock.runtimeRoles] } } : {}) },
@@ -98,7 +106,8 @@ export function captureRuntimeGiftPeerDeclarations(value: RuntimeGiftPeerDeclara
       ...(cashier.formImages ? { formImages: true as const } : {}) } } : {}),
     ...(value.manager ? { manager: true as const } : {}),...(refundActors?{routineRefundActors:refundActors}:{}),
     ...(cityReaders?{cityConflictReaders:cityReaders}:{}),...(assignments?{fulfillmentAssignments:assignments}:{}),
-    ...(receipts?{managerAssignedWholeExpress:receipts}:{}),...(recharge?{rechargeRefund:recharge}:{}) };
+    ...(receipts?{managerAssignedWholeExpress:receipts}:{}),...(recharge?{rechargeRefund:recharge}:{}),
+    ...(purchased?{purchasedProductLabels:purchased}:{}) };
 }
 
 export async function inspectReviewedRuntimeGiftPeers(db: Pick<DbClient, 'execute'>,

@@ -1920,6 +1920,8 @@ v1Routes.get("/admin/order/delivery/list", adminAuth, AdminStore.deliverySelectL
 v1Routes.post("/admin/order/delivery/:orderId", adminAuth, AdminCrud.adminOrderDelivery);
 v1Routes.post("/admin/order/writeoff_info", adminAuth, StoreOrderWriteoff.adminInfo);
 v1Routes.post("/admin/order/writeoff", adminAuth, StoreOrderWriteoff.adminExecute);
+v1Routes.get('/admin/order/product-label-tasks', adminAuth, AdminOrderOutbox.orderPurchasedLabelList);
+v1Routes.post('/admin/order/product-label-tasks/:id/replay', adminAuth, AdminOrderOutbox.orderPurchasedLabelReplay);
 v1Routes.get("/admin/order/outbox", adminAuth, AdminOrderOutbox.orderOutboxList);
 v1Routes.post("/admin/order/outbox/:id/replay", adminAuth, AdminOrderOutbox.orderOutboxReplay);
 v1Routes.get(

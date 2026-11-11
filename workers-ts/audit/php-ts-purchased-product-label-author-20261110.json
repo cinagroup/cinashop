@@ -1,0 +1,385 @@
+{
+  "schema": "php-ts-purchased-product-label-author/v1",
+  "base": "dd9b2f8e065f7f5bcb1ab472c2ecc194becb5b63",
+  "fullMigrationComplete": false,
+  "implemented": [
+    "Explicit named/OID-bound App/Admin successor after full five-profile audit",
+    "Real paid-allocation author and full immutable original-payment source hash",
+    "Reference-only Queue, independent scanner, bounded lease/retry and guarded task/DLQ replay",
+    "Execute-time single-statement product/type5/catalog/membership snapshot after customer lock",
+    "Approved own-scope append-only grants, immutable result and completed state in one transaction",
+    "Existing registered Admin authentication and Outbox view/manage capabilities",
+    "Package member SELECT under genuine parent lock, preserving readonly App child catalogue"
+  ],
+  "enabledByDefault": false,
+  "deployed": false,
+  "legacyPHPUploaded": false,
+  "realProvidersCalled": false,
+  "subagentsSpawned": false,
+  "productDecision": "Platform labels stay type0/relation0; active store labels must match actual financial order.storeId; fulfillment assignments are not ownership authority; preserve existing relations and append missing exact scope only",
+  "legacySource": {
+    "fixedCommit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+    "files": [
+      {
+        "file": "app/jobs/order/OrderJob.php",
+        "bytes": 16130,
+        "sha256": "04cb1e12b561bd0a5a973e01cfb15cc2ed7277f595be3e6271bd01732e08421d",
+        "gitBlobSha1": "5ba432613a1c50d2f567d683db16251ceb2d312c",
+        "fixedCommit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5"
+      },
+      {
+        "file": "app/dao/BaseDao.php",
+        "bytes": 16491,
+        "sha256": "43fd77897402aed4ccf5f3504251df696ccc8ab4a1decdc6c1054ecb208ea603",
+        "gitBlobSha1": "a4dff5ce6c815366586f6dc28297f35e5ddd92eb",
+        "fixedCommit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5"
+      },
+      {
+        "file": "crmeb/basic/BaseModel.php",
+        "bytes": 1931,
+        "sha256": "d09d99c98900f9e9f2ed2bf328d6d879592656cbf358f19208bcf9eee086748a",
+        "gitBlobSha1": "4eae8025f6cbb1f3faf1140f339bbbfc4832a861",
+        "fixedCommit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5"
+      },
+      {
+        "file": "app/model/product/product/StoreProduct.php",
+        "bytes": 20315,
+        "sha256": "696b6b6601e9ba8ba9fcde26a4ed12bda7f98edaaa81fc72ced3cae5321dc1a9",
+        "gitBlobSha1": "d4bf574d3192acc7e9dc7f6e73bb01d8a8bbfcb5",
+        "fixedCommit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5"
+      },
+      {
+        "file": "app/model/activity/discounts/StoreDiscounts.php",
+        "bytes": 2477,
+        "sha256": "eadc933307ae88977c14ae1139791c42cd029480f106180cfc5088ce53d186a2",
+        "gitBlobSha1": "05512bb3c013d1c36e76c1f5b3c43549eda3da9f",
+        "fixedCommit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5"
+      },
+      {
+        "file": "crmeb/traits/ModelTrait.php",
+        "bytes": 4990,
+        "sha256": "0b821909ee4b6bcffd51834f7b213e46ad001e64215d73dd27d951637cbb1fe6",
+        "gitBlobSha1": "5caa6659e7d40c8a078a63a10d5ea5d65f29727d",
+        "fixedCommit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5"
+      }
+    ],
+    "uploaded": false
+  },
+  "runtime": {
+    "fiveActualDirectLoginsVerified": true,
+    "appAdminOnlyNewFixedPermissions": true,
+    "financialManagerCashierNewTableAccess": false,
+    "canonicalStorageCatalogSha256": "07c2843b4efd96edb224030fcff3505c5fea6e0d2668b9712679c8cc0b0d19c1",
+    "noStartupGrantRepairOrRoleInference": true,
+    "consumerIsolation": "READ COMMITTED; acquire customer row lock before ONE config+catalog+membership SQL snapshot; catalogue row shared locks; no user fact writes",
+    "processingAttemptsMax": 8,
+    "dispatchAttemptsMax": 8,
+    "manualReplayMax": 20
+  },
+  "atomicity": {
+    "intentAndPaidCompletionSameTransaction": true,
+    "grantResultCompletedSameTransaction": true,
+    "deferredCommitFailureRollsAllBack": true,
+    "completedReceiptBeforeLiveSourceConfigMembershipReads": true,
+    "completedReplayDoesNotRegrantManuallyRemovedMembership": true,
+    "twoActualAppSessionsCovered": true,
+    "legacyWrongScopePreservedCorrectScopeAdded": true
+  },
+  "sourceContinuity": {
+    "fixture": "workers-ts/test/fixtures/purchased-label-author-continuity-20261110.json",
+    "sha256": "ecc4a0945f00150af49582f54eb87f0a0a695e761817c1d299d67bdccbf1fcd8",
+    "sources": 13,
+    "fixedPredecessor": "dd9b2f8e065f7f5bcb1ab472c2ecc194becb5b63",
+    "oldProofJsonHashesInventoryAssertionsBudgetsUnchanged": true,
+    "nativeExecutionImportsPhysicalSource": true,
+    "noNewShallowCICommitDependency": true
+  },
+  "candidateInputs": [
+    {
+      "file": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "bytes": 139327,
+      "sha256": "b97d2506cded11dd53f4e98bb313a942514ddb106b85b5bf75ed060135b575e4"
+    },
+    {
+      "file": "workers-ts/src/controllers/api/v1/AdminOrderOutboxController.ts",
+      "bytes": 5510,
+      "sha256": "a00808e251915679c958ef2264fe102688548a5fc5fc1da5d4044727cd5ec20f"
+    },
+    {
+      "file": "workers-ts/src/env.ts",
+      "bytes": 27334,
+      "sha256": "54975ca2085286a95ea1fc2d15b408f935285c89ba29deb1775b4e95b096e5b9"
+    },
+    {
+      "file": "workers-ts/src/index.ts",
+      "bytes": 40800,
+      "sha256": "ab7268db5bf01683d5e9495a3a6dda6028500c82c8d6988d656748819ab955da"
+    },
+    {
+      "file": "workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+      "bytes": 49773,
+      "sha256": "843cabc2feb45596a80ac6d2f3a703f59fd849a2b38052a50054a8967e3d41d7"
+    },
+    {
+      "file": "workers-ts/src/migrations/customerRuntimeGiftPeers.ts",
+      "bytes": 13991,
+      "sha256": "e74588a1256bf5353e475bd2f406ff93fcac5eef00fd76aa73d07e6b5bba1cb9"
+    },
+    {
+      "file": "workers-ts/src/migrations/purchasedProductLabelPermissions.ts",
+      "bytes": 2655,
+      "sha256": "8f5c7ee9d536d30e5337136771330475371627675c38369bf929d02ca65103ea"
+    },
+    {
+      "file": "workers-ts/src/migrations/purchasedProductLabelRuntime.ts",
+      "bytes": 11100,
+      "sha256": "b284f3362fc17bbb927ef75f472b9f2a2398aac8a80aa5aa3e62d9c5a9faca03"
+    },
+    {
+      "file": "workers-ts/src/migrations/purchasedProductLabelStorage.ts",
+      "bytes": 18319,
+      "sha256": "1608ff73d93094dcae14c48d951df852c8185aa47e7f86c96030aa5265f9ca5b"
+    },
+    {
+      "file": "workers-ts/src/migrations/upgradePurchasedProductLabelRuntime.ts",
+      "bytes": 7210,
+      "sha256": "f99d137776cd99b6dabd26004b20489eed2975ef89e536192e8d67651bcc9902"
+    },
+    {
+      "file": "workers-ts/src/routes/v1/index.ts",
+      "bytes": 197547,
+      "sha256": "cde028ab955005680b808df71def1a4582082be9a59c9592bca922a7284caa2b"
+    },
+    {
+      "file": "workers-ts/src/services/activity/StoreDiscountService.ts",
+      "bytes": 19486,
+      "sha256": "afb1f81ae91bb70b1ef112cc3e68fe892cce47ec6af7960de141b43ac0637233"
+    },
+    {
+      "file": "workers-ts/src/services/admin/AdminPermissionService.ts",
+      "bytes": 153458,
+      "sha256": "52df31b2aaf02c53fd9a46339ca58484556c355c330b879a7b27ff04e5b791e6"
+    },
+    {
+      "file": "workers-ts/src/services/order/OrderOutboxService.ts",
+      "bytes": 46269,
+      "sha256": "4c9751e466a7857e3dfff1b4f618f5e59c3be013fedf42372b180a5bde08687f"
+    },
+    {
+      "file": "workers-ts/src/services/order/OrderPaidOutboxQueueConsumer.ts",
+      "bytes": 6680,
+      "sha256": "9e8e934a07a6eca9a2c8e8f982cae0a1fbb15c1da74562632bd1ae1e482f03a1"
+    },
+    {
+      "file": "workers-ts/src/services/order/OrderQueueDeadLetterService.ts",
+      "bytes": 27042,
+      "sha256": "a75024250a2517b99e617273e9613d53cb894ee89199f78c1bd79e02897a2efb"
+    },
+    {
+      "file": "workers-ts/src/services/order/PurchasedProductLabelGrant.ts",
+      "bytes": 5722,
+      "sha256": "c029eb62b322895aae34ae5b875670c933f1b739ed7a8c0a676eaae79996b480"
+    },
+    {
+      "file": "workers-ts/src/services/order/PurchasedProductLabelQueue.ts",
+      "bytes": 2114,
+      "sha256": "f05880c7005a154ce525c7544b3a8afa7f1fe10df3483bade7b8ae2a78956de5"
+    },
+    {
+      "file": "workers-ts/src/services/order/PurchasedProductLabelQueueConsumer.ts",
+      "bytes": 1294,
+      "sha256": "8f6ca279369f74b204141b1a8f7e8f4e5d6a012a311910b25f21686fae56f6cb"
+    },
+    {
+      "file": "workers-ts/src/services/order/PurchasedProductLabelResult.ts",
+      "bytes": 5344,
+      "sha256": "e015e9462e03a257584e50fa3b559eafe3b0fc5720a1aa4cd9e3707c173741cd"
+    },
+    {
+      "file": "workers-ts/src/services/order/PurchasedProductLabelRuntimeDeclaration.ts",
+      "bytes": 3724,
+      "sha256": "49b391b6f79e1b8f14b555fb01524ac09caab532474933678a01e517374cd525"
+    },
+    {
+      "file": "workers-ts/src/services/order/PurchasedProductLabelSource.ts",
+      "bytes": 10896,
+      "sha256": "5c07c2b6f3e673138b0cebad45a70f30b6adff4fe8c6eb9893337cda19bd9791"
+    },
+    {
+      "file": "workers-ts/src/services/order/PurchasedProductLabelTaskService.ts",
+      "bytes": 17239,
+      "sha256": "2842b434979e08df3269e2607b2bcee21ddfa2cdad98119316cc8001942669d8"
+    },
+    {
+      "file": "workers-ts/test/fixtures/purchased-label-author-continuity-20261110.json",
+      "bytes": 28047,
+      "sha256": "ecc4a0945f00150af49582f54eb87f0a0a695e761817c1d299d67bdccbf1fcd8"
+    },
+    {
+      "file": "workers-ts/test/helpers/providerTransportSourceContinuity.ts",
+      "bytes": 4828,
+      "sha256": "2eca8e7a2ecbbbbd9f37898f2b321aabec3bfd65f8b42bf3973b2b58f3b02a77"
+    },
+    {
+      "file": "workers-ts/test/helpers/purchasedLabelAuthorSourceContinuity.ts",
+      "bytes": 4432,
+      "sha256": "63e199a19fbf2aaf501c9db2b67a072df24739608246c78b59f206b4a311fa71"
+    },
+    {
+      "file": "workers-ts/test/out-product-label-runner-source-continuity.test.ts",
+      "bytes": 4179,
+      "sha256": "7bad5e9bba84f0d40f392289ca0e438a825e012a46c16f497be547406b703bc4"
+    },
+    {
+      "file": "workers-ts/test/provider-transport-source-continuity.test.ts",
+      "bytes": 4227,
+      "sha256": "b4cac4da1e0077a22e509d212e4b65f194e8f529f4ec716da8e8736cece89bd8"
+    },
+    {
+      "file": "workers-ts/test/purchased-label-author-source-continuity.test.ts",
+      "bytes": 3008,
+      "sha256": "dfbcbc565a8b5f2c905212430104c7d83ab5d4d4947f4e770628c3a9136c0b08"
+    },
+    {
+      "file": "workers-ts/test/purchased-label-storage-runner-source-continuity.test.ts",
+      "bytes": 3074,
+      "sha256": "dfa1c67d930cdd7b88450af28f90dc311751ba0470f5219eb121d2b9958bd53e"
+    },
+    {
+      "file": "workers-ts/test/purchased-product-label-author-native.test.ts",
+      "bytes": 35405,
+      "sha256": "e5b0c83e83738fc04e3d46c571e937b167f2ad9e2b0c2ebec7a3ee897d94c629"
+    },
+    {
+      "file": "workers-ts/test/purchased-product-label-queue.test.ts",
+      "bytes": 5116,
+      "sha256": "1f2014e537fdf3fe6ac1fb433bfea07cb3801b8ed54f34611b6ed8fb3ca12a37"
+    },
+    {
+      "file": "workers-ts/test/purchased-product-label-result.test.ts",
+      "bytes": 4322,
+      "sha256": "98fafe300648114753ee7271682844d2cd97d36dd08fb00830cb076bf51470dd"
+    },
+    {
+      "file": "workers-ts/test/purchased-product-label-runtime.test.ts",
+      "bytes": 5717,
+      "sha256": "38fc63dd8d856c5ee2a0b0e5a90868cb36e1de28513d30d3bc7ff7a9d3da52d9"
+    },
+    {
+      "file": "workers-ts/test/purchased-product-label-source.test.ts",
+      "bytes": 3387,
+      "sha256": "d08237bc1ccbf6b34c4ceac616de12609c410519adeeeffcd536f11f871bf6c2"
+    }
+  ],
+  "validation": {
+    "distinctFinalCases": 1683,
+    "unitPassed": 1638,
+    "unitFiles": 29,
+    "unitPgOnlyPendingCoveredByNative": [
+      "paid promotion label effects serializes concurrent first grants on the user row"
+    ],
+    "nativeAuthorPassed": 17,
+    "nativeOriginalStoragePassed": 27,
+    "nativeUnchangedPromotionPassed": 6,
+    "fivePurePromotionCasesOverlapUnit": 5,
+    "failedFinal": 0,
+    "skippedAfterNativeCoverage": 0,
+    "workerUnitTypesPassed": true,
+    "workerRuntimeTypesPassed": true,
+    "allOwnedFixturesCleaned": true,
+    "allOwnedClustersStopped": true,
+    "executions": [
+      {
+        "name": "compat-unit",
+        "status": "completed",
+        "timeoutSeconds": 600,
+        "exitCode": 0,
+        "elapsedSeconds": 173.68,
+        "reusedAfterOnlyNativeFixtureQueueNameAlignment": true
+      },
+      {
+        "name": "native-dlq-binding",
+        "status": "completed",
+        "timeoutSeconds": 600,
+        "exitCode": 0,
+        "elapsedSeconds": 158.5
+      },
+      {
+        "name": "typecheck-unit",
+        "status": "completed",
+        "timeoutSeconds": 600,
+        "exitCode": 0,
+        "elapsedSeconds": 253.86
+      },
+      {
+        "name": "typecheck-runtime",
+        "status": "completed",
+        "timeoutSeconds": 600,
+        "exitCode": 0,
+        "elapsedSeconds": 106.56
+      }
+    ]
+  },
+  "developmentHistory": [
+    "payment-native-04.log: cashier actual financial store0, test expected1 corrected",
+    "types-unit-06.log:6 compile errors corrected",
+    "families-native-09.log: actual RR duplicate; overlength SKU; package child row-lock permission; gift repetitions preparation",
+    "families-native-10.log: package child lock42501 isolated; superseded user no-op version approach replaced with one RC statement snapshot",
+    "families-native-11.log: new statement JSON activityId parameter needed explicit integer cast; corrected42P18",
+    "typecheck-unit-final-original.log: fixture DLQ literal name did not match generated WorkerBinding; only test input name aligned to formal binding, no production change"
+  ],
+  "fixtureTypeFollowup": {
+    "file": "workers-ts/test/purchased-product-label-author-native.test.ts",
+    "onlyChange": {
+      "before": "f.env.ORDER_DLQ_NAME = 'owned-purchased-label-dlq';",
+      "after": "f.env.ORDER_DLQ_NAME = 'cinashop-order-dlq';"
+    },
+    "oldSha256": "5ca8c47fe061ea94e87a93d577bf4733e2c6dfd2ee5ded10fe4eb11e6248322c",
+    "newSha256": "e5b0c83e83738fc04e3d46c571e937b167f2ad9e2b0c2ebec7a3ee897d94c629",
+    "other34CoreInputsUnchanged": true,
+    "productionCodeUnchanged": true,
+    "unitFilesDoNotIncludeChangedNativeFile": true,
+    "reuseUnitReportSha256": "dc22e64dfc6900ca9b5555881d7caf811cead28da5451dd66fe66b0cba0291b9"
+  },
+  "baseRemoteCI": {
+    "sha": "dd9b2f8e065f7f5bcb1ab472c2ecc194becb5b63",
+    "runId": 42962249520,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/42962249520",
+    "status": "completed",
+    "success": [
+      "Isolated PostgreSQL 16 migration catalog execution",
+      "Admin build",
+      "PC build",
+      "Kefu build",
+      "Supplier build",
+      "workerd runtime tests",
+      "Repository secret scan",
+      "UniApp editorial author and PHP style execution",
+      "UniApp type, runtime and three-platform build execution",
+      "UniApp build"
+    ],
+    "failure": [
+      {
+        "job": "Worker type, unit, schema and route execution (shard 1/2)",
+        "firstFailedStep": "Check out fixed legacy PHP input"
+      },
+      {
+        "job": "Worker type, unit, schema and route execution (shard 2/2)",
+        "firstFailedStep": "Check out fixed legacy PHP input"
+      },
+      {
+        "job": "Worker type, unit, schema and route gates",
+        "reason": "requires both worker shards"
+      }
+    ],
+    "legacyUploaded": false
+  },
+  "scanReports": "Full final files and exact commit scans follow this artifact; local completion record retains both reports",
+  "remaining": [
+    "Exact new SHA push authorization and remote CI",
+    "Production runtime composition/Hyperdrive commissioning and deployment acceptance",
+    "Dedicated frontend task operations page",
+    "Fixed legacy PHP CI checkout supply problem without uploading PHP",
+    "Other PHP to TS migration gaps"
+  ]
+}

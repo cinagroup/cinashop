@@ -167,6 +167,10 @@ export default {
       consumeOrderWaybillJobMessage,
       isOrderWaybillJobMessage,
     } = await import("./services/waybill/OrderWaybillJobService");
+    const { PurchasedProductLabelTaskService } = await import('./services/order/PurchasedProductLabelTaskService');
+    const { isPurchasedProductLabelMessage, isPurchasedProductLabelDispatch } = await import('./services/order/PurchasedProductLabelQueue');
+    const { consumePurchasedProductLabelQueueMessage } = await import('./services/order/PurchasedProductLabelQueueConsumer');
+    const purchasedLabels = new PurchasedProductLabelTaskService(container, env);
     const outbox = new OrderOutboxService(container, env);
     const paymentCallbacks = new PaymentCallbackEventService(container, env);
     const wechatCallbacks = new WechatCallbackService(container, env);
@@ -541,6 +545,11 @@ export default {
         continue;
       }
 
+      if (isPurchasedProductLabelMessage(msg.body) || isPurchasedProductLabelDispatch(msg.body)) {
+        await consumePurchasedProductLabelQueueMessage(msg, purchasedLabels);
+        continue;
+      }
+
       if (isOrderPaidOutboxMessage(msg.body)) {
         await consumeOrderPaidOutboxQueueMessage(msg, outbox, notificationDeliveries);
         continue;
@@ -887,7 +896,10 @@ async function handleScheduled(env: Env, scheduledAt: number, cron: string): Pro
   }
   const {createRechargeRefundRecoveryRoot}=await import('./services/payment/RechargeRefundRecoveryQueue');
   const {createRechargeRefundNoticeRoot}=await import('./services/payment/RechargeRefundNoticeQueue');
+  const { purchasedLabelRuntimeFromEnv } = await import('./services/order/PurchasedProductLabelRuntimeDeclaration');
+  const purchased = purchasedLabelRuntimeFromEnv(env);
   await Promise.all([
+    ...(purchased ? [env.ORDER_QUEUE.send({ action: 'dispatchPurchasedProductLabels' }, { contentType: 'json' })] : []),
     env.ORDER_QUEUE.send(createRechargeRefundRecoveryRoot(scheduledAt),{contentType:'json'}),
     env.ORDER_QUEUE.send(createRechargeRefundNoticeRoot(),{contentType:'json'}),
     env.ORDER_QUEUE.send({ action: 'dispatchProductVideoCleanup', scope: 'admin' }),
