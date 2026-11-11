@@ -1,4 +1,5 @@
-import { and, asc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, is, sql } from 'drizzle-orm';
+import { PgVarchar } from 'drizzle-orm/pg-core';
 import type { DbClient } from '@/lib/di';
 import { legacyCategory, storeProduct, storeProductLabel, storeProductRelation, userLabel } from '@/models/schema';
 import { ValidateException } from '@/utils/errors';
@@ -31,7 +32,13 @@ export function outProductLabelIds(value: unknown, kind: Kind): number[] {
     return id;
   });
   if (new Set(ids).size !== ids.length) throw new ValidateException('标签编号不能重复');
-  if (kind === 'user' && ids.join(',').length > 255) throw new ValidateException('用户标签编号总长度不能超过255字符');
+  if (kind === 'user') {
+    const column = storeProduct.labelId;
+    if (!is(column, PgVarchar) || typeof column.length !== 'number' || !Number.isSafeInteger(column.length) || column.length < 1)
+      throw new ValidateException('用户标签字段容量未就绪');
+    if (ids.join(',').length > column.length)
+      throw new ValidateException(`用户标签编号总长度不能超过${column.length}字符`);
+  }
   return ids;
 }
 export function outProductLabelInput(body: Record<string, unknown>) {

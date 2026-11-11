@@ -1696,9 +1696,10 @@ export class OutApiService {
   async productInfo(idInput: unknown) {
     const id = positiveInteger(idInput);
     if (!id) throw new ValidateException("参数错误");
-    const product = await new OutProductService(this.container).detail(id);
+    const { tempList, cateList, productInfo, ...flat } = await new OutProductService(this.container, this.env.APP_KEY).detail(id);
     return {
-      ...(toSnakeValue(product) as Record<string, unknown>),
+      ...(toSnakeValue(flat) as Record<string, unknown>),
+      tempList, cateList, productInfo,
       pages_url: `/pages/goods_details/index?id=${id}`,
     };
   }

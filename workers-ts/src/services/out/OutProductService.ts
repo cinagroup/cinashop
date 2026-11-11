@@ -24,11 +24,12 @@ import { PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE } from "@/services/product/ProductS
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { normalizeOutRequestKey, outRequestHash } from "@/services/out/OutIdempotency";
 import { supplierProductBrandInput, lockSupplierProductBrandPath } from '@/services/supplier/SupplierProductBrandBindings';
-import { assertOutProductBrandBindings, outProductBrandSelection, replaceOutProductBrandBindings } from './OutProductBrandBindings';
+import { assertOutProductBrandBindings, replaceOutProductBrandBindings } from './OutProductBrandBindings';
 import { supplierProductEnsureInput } from '@/services/supplier/SupplierProductEnsureBindings';
-import { assertOutProductEnsureBindings, lockOutProductEnsures, outProductEnsureSelection, replaceOutProductEnsureBindings } from './OutProductEnsureBindings';
+import { assertOutProductEnsureBindings, lockOutProductEnsures, replaceOutProductEnsureBindings } from './OutProductEnsureBindings';
 import { captureOutProductRelationFence } from './OutProductRelationFence';
-import { outProductLabelInput, lockOutProductLabels, replaceOutProductLabelBindings, assertOutProductLabelBindings, outProductLabelsSelection } from './OutProductLabelBindings';
+import { readOutProductDetail } from './OutProductDetailRead';
+import { outProductLabelInput, lockOutProductLabels, replaceOutProductLabelBindings, assertOutProductLabelBindings } from './OutProductLabelBindings';
 
 type UnknownRecord = Record<string, unknown>;
 type ProductWriteOperation = "product_create" | "product_update" | "product_show" | "stock_upload";
@@ -371,7 +372,7 @@ async function updateCartStatus(tx: DbClient, productId: number, status: number)
 }
 
 export class OutProductService {
-  constructor(private readonly container: Container) {}
+  constructor(private readonly container: Container, private readonly appKey?: string) {}
 
   private async categories(tx: DbClient, ids: number[]) {
     const rows = await tx
@@ -659,76 +660,7 @@ export class OutProductService {
   }
 
   async detail(productId: number) {
-    return withTx(this.container, async tx => {
-      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
-      const product = (
-        await tx
-          .select()
-          .from(storeProduct)
-          .where(and(
-            eq(storeProduct.id, productId),
-            eq(storeProduct.type, PLATFORM_TYPE),
-            eq(storeProduct.relationId, PLATFORM_RELATION_ID),
-            eq(storeProduct.isDel, 0),
-          ))
-          .limit(1)
-      )[0];
-      if (!product) throw new NotFoundException("商品不存在或不属于平台");
-      const [categories, descriptions, dimensions, skus] = await Promise.all([
-        tx
-          .select({ relation_id: storeProductRelation.relationId })
-          .from(storeProductRelation)
-          .where(and(
-            eq(storeProductRelation.productId, productId),
-            eq(storeProductRelation.type, CATEGORY_RELATION_TYPE),
-          ))
-          .orderBy(asc(storeProductRelation.id)),
-        tx
-          .select({ description: storeProductDescription.description })
-          .from(storeProductDescription)
-          .where(and(
-            eq(storeProductDescription.productId, productId),
-            eq(storeProductDescription.type, PHYSICAL_PRODUCT_TYPE),
-          ))
-          .limit(1),
-        tx
-          .select()
-          .from(storeProductAttr)
-          .where(and(
-            eq(storeProductAttr.productId, productId),
-            eq(storeProductAttr.type, PRODUCT_ATTR_TYPE),
-          ))
-          .orderBy(asc(storeProductAttr.id)),
-        tx
-          .select()
-          .from(storeProductAttrValue)
-          .where(and(
-            eq(storeProductAttrValue.productId, productId),
-            eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE),
-          ))
-          .orderBy(asc(storeProductAttrValue.id)),
-      ]);
-      const items = dimensions.map((dimension) => ({
-        value: dimension.attrName,
-        detail: dimension.attrValues.split(",").filter(Boolean),
-      }));
-      return {
-        ...product,
-        ...await outProductBrandSelection(tx, product),
-        ...await outProductEnsureSelection(tx, product),
-        ...await outProductLabelsSelection(tx, product),
-        cate_id: categories.map((row) => row.relation_id),
-        description: descriptions[0]?.description ?? "",
-        items,
-        attrs: skus.map((sku) => ({
-          ...sku,
-          detail: Object.fromEntries(items.map((item, index) => [
-            item.value,
-            sku.suk.split(",")[index] ?? "",
-          ])),
-        })),
-      };
-    });
+    return readOutProductDetail(this.container, productId, this.appKey);
   }
 
   async setShow(

@@ -134,6 +134,7 @@ export async function productList(c: C) {
 }
 
 export async function productInfo(c: C) {
+  privateResponse(c);
   return jsonOk(c, await service(c).productInfo(c.req.param("id")));
 }
 

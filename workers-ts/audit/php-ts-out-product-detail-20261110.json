@@ -1,0 +1,655 @@
+{
+  "feature": "Complete Out product detail envelope, bounded read snapshot and count-only virtual inventory",
+  "base": "b69577f344c2be2a4ec6b6370acda96077ec2f27",
+  "candidate": 6,
+  "productDecision": {
+    "answered": true,
+    "userChoice": "与 TS 后台一致：计数，凭据走受控导出（推荐）",
+    "needsCandidateRevision": false,
+    "reason": "Add genuine restricted LOGIN count-only acceptance denying card_no/card_pwd column privileges after current complete native file stops safely",
+    "legacyPlaintextCardsReturned": false,
+    "controlledExportRoutes": [
+      "/adminapi/product/virtual/:id/export-ticket",
+      "/adminapi/product/virtual/:id/export"
+    ],
+    "existingExportImplementationChanged": false,
+    "doesNotAuthorizePushOrDeployment": true,
+    "candidate": 6
+  },
+  "legacySource": {
+    "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+    "sources": [
+      {
+        "file": "app/controller/out/Product.php",
+        "bytes": 8803,
+        "sha256": "a52f6c6392594116e66803572a67e6c15d424fa13eac48df6bc9d7a6ef01c24a",
+        "gitBlobSha1": "5a55a3a43001325abfd36cee3c6af3e3b45cac66",
+        "lineReferences": [
+          255,
+          257
+        ]
+      },
+      {
+        "file": "app/services/product/product/StoreProductServices.php",
+        "bytes": 136399,
+        "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+        "gitBlobSha1": "f8163c25f694dd0ff84486d89926ef004ba9e81e",
+        "lineReferences": [
+          344,
+          364,
+          365,
+          366,
+          373,
+          383,
+          392,
+          405,
+          416,
+          428,
+          483,
+          486
+        ]
+      },
+      {
+        "file": "app/dao/product/product/StoreProductDao.php",
+        "bytes": 24769,
+        "sha256": "2cdc901c673a11e699a23bd2d4ddcd01abe108d10854ddd3588099ec712ec5e8",
+        "gitBlobSha1": "0d2d90499afc77c0ef98f191d6be11d6ecf8b58f",
+        "lineReferences": [
+          233,
+          235
+        ]
+      },
+      {
+        "file": "app/model/product/product/StoreProduct.php",
+        "bytes": 20315,
+        "sha256": "696b6b6601e9ba8ba9fcde26a4ed12bda7f98edaaa81fc72ced3cae5321dc1a9",
+        "gitBlobSha1": "d4bf574d3192acc7e9dc7f6e73bb01d8a8bbfcb5",
+        "lineReferences": [
+          63,
+          78,
+          89,
+          101,
+          114,
+          127,
+          259
+        ]
+      },
+      {
+        "file": "app/services/product/sku/StoreProductAttrResultServices.php",
+        "bytes": 4284,
+        "sha256": "136d66730ba803a8a4748edb3fd33f3c0b610556c466ddad6bde9f383704a9a1",
+        "gitBlobSha1": "05842d9ef04e4daa7a42ad5ff5724109e703cb99",
+        "lineReferences": [
+          40,
+          85,
+          102
+        ]
+      },
+      {
+        "file": "app/dao/product/shipping/ShippingTemplatesDao.php",
+        "bytes": 2616,
+        "sha256": "63c136db110d7e3f860a4d006aeb8ca8174e9c0057612aaa84faabf76e55828e",
+        "gitBlobSha1": "a946855646b03a480a81353e8080a36a69feb5c5",
+        "lineReferences": [
+          50,
+          52
+        ]
+      },
+      {
+        "file": "app/services/product/category/StoreProductCategoryServices.php",
+        "bytes": 17102,
+        "sha256": "77431e2d9eebeb2b85eff500f7bde1ed9359f3da801513f719b6a9080c1ad41e",
+        "gitBlobSha1": "80311ea81db80b3f2d09d7d8331caf7c10b67630",
+        "lineReferences": [
+          128,
+          130,
+          131
+        ]
+      },
+      {
+        "file": "app/services/system/form/SystemFormServices.php",
+        "bytes": 2752,
+        "sha256": "7592c22bef6da315a09de29faa698fb3796c244e8286bb1bdbf215a30ff065c1",
+        "gitBlobSha1": "bd984419d7621e5608caf6a91ee108108f59c088",
+        "lineReferences": [
+          76,
+          83,
+          90
+        ]
+      },
+      {
+        "file": "app/dao/activity/coupon/StoreCouponIssueDao.php",
+        "bytes": 16120,
+        "sha256": "d216691392c2ffb14b70ca76eaf5dc4d1fdd2b512bf98fb5774020427f1f26ea",
+        "gitBlobSha1": "b9c5c4abed971cb8d8ed7b51737b116bb29795d2",
+        "lineReferences": [
+          386,
+          388
+        ]
+      },
+      {
+        "file": "app/model/product/sku/StoreProductAttrValue.php",
+        "bytes": 3751,
+        "sha256": "5f314d6aa61ea7cbf86803616cb49e948b441d9c69dd09a6f78e6ed54de2366d",
+        "gitBlobSha1": "a0c8805728cf65d0db401e525cb93db5be584971",
+        "lineReferences": [
+          25,
+          40
+        ]
+      },
+      {
+        "file": "app/services/product/sku/StoreProductVirtualServices.php",
+        "bytes": 3560,
+        "sha256": "1a44c129483d02f79b0f70f972fd5954b543eb7afb246a9e083de99e887613a1",
+        "gitBlobSha1": "17b37b9c854734bee05a410b2b31886d98e7f364",
+        "lineReferences": [
+          32,
+          34,
+          37
+        ]
+      },
+      {
+        "file": "app/dao/product/category/StoreProductCategoryDao.php",
+        "bytes": 8080,
+        "sha256": "996bdc89810d1c70bc612fd2b5c5321b4cd0df143fa36da2470ddfbfbda0a4f0",
+        "gitBlobSha1": "ff3b3dfe0916d440f7da5ec4eae56cd77f87f73f",
+        "lineReferences": [
+          63,
+          65
+        ]
+      },
+      {
+        "file": "config/app.php",
+        "bytes": 1807,
+        "sha256": "2fb949c2609d813c05ae974aef4379957decc2be6ad56d56be822c264820cfb3",
+        "gitBlobSha1": "e7dbedd7db3f1eb7b6ed3cfd9f769302a467bf1e",
+        "lineReferences": [
+          38
+        ]
+      }
+    ],
+    "rawSourceUploaded": false,
+    "PHPExecuted": false,
+    "postflightVerified": true
+  },
+  "validationHistory": [
+    {
+      "candidate": 2,
+      "nativePassed": 46,
+      "nativeFailed": 2,
+      "nativeSkipped": 0,
+      "log": "native-01.log",
+      "durationSeconds": 404.46,
+      "fixtureCleanupZero": true,
+      "clusterStopped": true,
+      "failure": "Two new fixtures attempted duplicate product_id/type descriptions, blocked by real canonical unique index23505",
+      "correction": "Update the actual author-created source row; test independent activity description and genuinely ambiguous site configuration instead",
+      "sourceReviewCorrections": [
+        "Exact PHP slider-image JSON getter and zero-string truthiness",
+        "Use plainly synthetic repeated-character HMAC fixture key"
+      ]
+    },
+    {
+      "candidate": 3,
+      "nativePassed": 47,
+      "nativeFailed": 1,
+      "nativeSkipped": 0,
+      "log": "candidate3-native-detail.log",
+      "durationSeconds": 402.78,
+      "fixtureCleanupZero": true,
+      "clusterStopped": true,
+      "failure": "Pricing-only config helper did not write site_url to SQL; KV-only authority not accepted by reader",
+      "correction": "Write actual SQL site_url fixture, preserve full HTTPS source expectation; separate stable video form value from validated playback preview and test unavailable history"
+    },
+    {
+      "candidate": 4,
+      "nativePassed": 48,
+      "nativeFailed": 0,
+      "nativeSkipped": 0,
+      "elapsedSeconds": 417.79,
+      "log": "candidate4-native-detail.log",
+      "stoppedAtSafeBoundaryForProductDecision": true,
+      "allComplete": false
+    },
+    {
+      "candidate": 5,
+      "unitTypecheckExitCode": 2,
+      "elapsedSeconds": 267.9,
+      "failure": "Model table wrapper exposes generic PgColumn without .length type; fallback return union lacks id property in test",
+      "correction": "Narrow actual column with Drizzle is/PgVarchar, validate its numeric length; annotate fallback as Row; assert actual varchar(64) SQL metadata without type assertion",
+      "noAssertionsRemoved": true,
+      "log": "candidate5-typecheck-unit.log"
+    }
+  ],
+  "contract": {
+    "flatTSClientsRetainedAlongsideExactCamelLegacyEnvelopeKeys": true,
+    "sourceGettersTimezoneNumericFieldsAndActualSKUIdentities": true,
+    "completePlatformTemplateAndVisibleCategoryDirectories": true,
+    "oneRepeatableReadReadOnlySnapshotForAllDatabaseExpansions": true,
+    "productOwnershipBeforeExpansionCatalogAccess": true,
+    "noGETSKURepairOrInventedIdentity": true,
+    "missingOrAmbiguousSKUsExplicitlyRequireRepair": true,
+    "retiredSKUsSeparateFromActiveEditorRows": true,
+    "sourceDataRowAndByteBudgetBeforeMaterialization": true,
+    "noSuccessWithSilentlyTruncatedDirectories": true,
+    "editorFormBytes": 786432,
+    "finalResponseBytes": 2097152,
+    "virtualQuerySelectsOnlyProductIDUniqueAndUID": true,
+    "realReadOnlyLOGINDeniedCardNoAndCardPwdSelectStillReturnsCorrectCounts": true,
+    "controlledExportImplementationUnchanged": true,
+    "stableMediaFormValuesSeparatedFromValidatedSignedPreviews": true,
+    "descriptionEditValueSeparateFromSanitizedPreview": true,
+    "privateNoStore": true,
+    "providerHTTPForbiddenInAcceptance": true,
+    "targetLabelCapacityFromActualVarcharModel": 64,
+    "realSQLExact64Accepted65RejectedBeforeBusinessAndReplayMutation": true,
+    "schemaRoutesAndRuntimePrivilegePlanUnchanged": true
+  },
+  "correctionToPreviousBatch": {
+    "historicalAudit": "workers-ts/audit/php-ts-out-product-labels-20261110.json",
+    "oldClaim": "userLabelCSVCapacity255Enforced",
+    "actualTargetVarcharCapacity": 64,
+    "historicalAuditPreserved": true,
+    "noSchemaExpansion": true
+  },
+  "validation": {
+    "checks": [
+      {
+        "name": "retained-inputs",
+        "status": "completed",
+        "timeoutSeconds": 60,
+        "exitCode": 0,
+        "elapsedSeconds": 0.79
+      },
+      {
+        "name": "inventory",
+        "status": "completed",
+        "timeoutSeconds": 120,
+        "exitCode": 0,
+        "elapsedSeconds": 15.32
+      },
+      {
+        "name": "compatibility",
+        "status": "completed",
+        "timeoutSeconds": 600,
+        "exitCode": 0,
+        "elapsedSeconds": 155.98
+      },
+      {
+        "name": "typecheck-unit",
+        "status": "completed",
+        "timeoutSeconds": 600,
+        "exitCode": 0,
+        "elapsedSeconds": 263.08
+      },
+      {
+        "name": "typecheck-runtime",
+        "status": "completed",
+        "timeoutSeconds": 600,
+        "exitCode": 0,
+        "elapsedSeconds": 110.96
+      },
+      {
+        "name": "native-detail",
+        "status": "completed",
+        "timeoutSeconds": 630,
+        "exitCode": 0,
+        "elapsedSeconds": 424.89
+      },
+      {
+        "name": "old-native",
+        "status": "completed",
+        "timeoutSeconds": 630,
+        "exitCode": 0,
+        "elapsedSeconds": 507.06
+      },
+      {
+        "name": "consumer-native",
+        "status": "completed",
+        "timeoutSeconds": 630,
+        "exitCode": 0,
+        "elapsedSeconds": 110.98
+      }
+    ],
+    "completeNativeFiles": {
+      "native-detail": {
+        "passed": 49,
+        "failed": 0,
+        "skipped": 0,
+        "fixtureCleanupZero": true,
+        "clusterStopped": true
+      },
+      "old-native": {
+        "passed": 58,
+        "failed": 0,
+        "skipped": 0,
+        "fixtureCleanupZero": true,
+        "clusterStopped": true
+      },
+      "consumer-native": {
+        "passed": 79,
+        "failed": 0,
+        "skipped": 0,
+        "fixtureCleanupZero": true,
+        "clusterStopped": true
+      }
+    },
+    "completeCompatibilityFiles": {
+      "files": 13,
+      "passed": 1428,
+      "failed": 0,
+      "skipped": 0
+    },
+    "distinctFinalTargetedCases": 1614,
+    "development85AndCandidate4Native48NotAddedAgain": true,
+    "retainedInputs": {
+      "base": "b69577f344c2be2a4ec6b6370acda96077ec2f27",
+      "tests": [
+        {
+          "file": "workers-ts/test/out-product-migration.test.ts",
+          "originalDefinitions": 13,
+          "originalCases": 49,
+          "currentCases": 49,
+          "originalBodiesUnchanged": true
+        },
+        {
+          "file": "workers-ts/test/checkout-out-product-concurrency.test.ts",
+          "originalDefinitions": 39,
+          "originalCases": 58,
+          "currentCases": 58,
+          "originalBodiesUnchanged": true
+        },
+        {
+          "file": "workers-ts/test/out-product-labels-postgres.test.ts",
+          "originalDefinitions": 16,
+          "originalCases": 39,
+          "currentCases": 49,
+          "originalBodiesUnchanged": true
+        }
+      ],
+      "unchangedProtectedInputs": [
+        {
+          "file": "workers-ts/src/services/out/OutIdempotency.ts",
+          "sha256": "08e91eeefe399d2f09d77ed31c8485cf5e7b2085c9ed19ee24bf4f4effbcfac8"
+        },
+        {
+          "file": "workers-ts/src/services/out/OutProductBrandBindings.ts",
+          "sha256": "c5ee1e6cc229f9edeb5bb4c4d02c6a57949c34b7345db1900db4f90f098bd519"
+        },
+        {
+          "file": "workers-ts/src/services/out/OutProductEnsureBindings.ts",
+          "sha256": "79fabf763f3027e4805b8bf113f46fe94f28480241cba664d466715e6d7f6bf4"
+        },
+        {
+          "file": "workers-ts/src/services/supplier/SupplierProductLabelBindings.ts",
+          "sha256": "18c88b7d61750e77640c187dccbc684a9465b05bf109afc21e96021119e15403"
+        },
+        {
+          "file": "workers-ts/src/services/product/PublicProductLabelData.ts",
+          "sha256": "28e3d1b9626f1edc823fbf2985cce931f542e6d831ddffba47679e5268cc8561"
+        },
+        {
+          "file": "workers-ts/src/services/admin/AdminLegacyProductInput.ts",
+          "sha256": "6d8f25e3baea268104d3b630d31227f970d644d57d943945fe3f628bc0ea186c"
+        },
+        {
+          "file": "workers-ts/src/services/admin/AdminLegacyProductSaveService.ts",
+          "sha256": "b6f61a28d6f9f7c8f780f57536f3295e573310bd2bb881d31ccc54cf6f667806"
+        },
+        {
+          "file": "workers-ts/scripts/local-finance-unit-gate.mjs",
+          "sha256": "5e954f277a80c820dc4735db556d0a284f5fc10bc0d51afa136a33795912c442"
+        },
+        {
+          "file": "workers-ts/src/services/supplier/SupplierProductEnsureBindings.ts",
+          "sha256": "23b56a05f97e46befb0af9daf879b3eb984dd9b032482dc2bb3bcfe27697567d"
+        },
+        {
+          "file": "workers-ts/src/services/product/ProductExperienceService.ts",
+          "sha256": "850fac97bb5979ac477c03524e8d5be91c739658d514bff1cbcf516a44019d50"
+        },
+        {
+          "file": "workers-ts/src/services/supplier/SupplierProductBrandBindings.ts",
+          "sha256": "3d228e12a0243064ce58d82501120e0e0d0ae501f8684522deb82a19c91cf7dd"
+        },
+        {
+          "file": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+          "sha256": "4044d51930d72620f9d124c375779e37a99fdfb8e8c815cf2cb30420080d4324"
+        },
+        {
+          "file": "workers-ts/src/routes/outapi.ts",
+          "sha256": "29423ec72749778c88374fb4c4165d1fb4b451678f9dd8d10fb1ec1e9b85d38f"
+        },
+        {
+          "file": "workers-ts/src/services/admin/AdminLegacyProductReadService.ts",
+          "sha256": "184bb61b4dbf3982c00d9ed877695d32530c78ed9c0cfc94856394ba23f8343a"
+        },
+        {
+          "file": "workers-ts/src/services/admin/AdminLegacyProductReadAuthority.ts",
+          "sha256": "50984ed698767bd966362fb3880e652917ec72c93d351e567254fb818a114cb1"
+        },
+        {
+          "file": "workers-ts/test/migration-merge-source-binding.test.ts",
+          "sha256": "c9b0be06176f163adc802dcfea0b735f61e0d818b460e773fa6b06e0de0b9c25"
+        },
+        {
+          "file": "workers-ts/test/provider-transport-source-continuity.test.ts",
+          "sha256": "ae00f99b5ea6527df3130ccb78dbe842892daf146157d67b8a90194c78aa61a9"
+        },
+        {
+          "file": "workers-ts/test/recharge-refund-source-continuity.test.ts",
+          "sha256": "66bb3a751de13032ea99273c9237ada3f3c8a0a19b6d8070097f93d5dca9a369"
+        },
+        {
+          "file": "workers-ts/test/fixtures/provider-transport-source-continuity-20261109.json",
+          "sha256": "be895c2c4a72e33c120aadd7da13fb71eae93b9ff6ff37e495ee6b8fcf81d1b1"
+        },
+        {
+          "file": "workers-ts/test/fixtures/unit-discovery-source-continuity-20261109.json",
+          "sha256": "68974165ff71c032f833bca3e5bd4711918b408b970ca4c2d6214cebebed1f4c"
+        },
+        {
+          "file": "workers-ts/test/fixtures/recharge-refund-notice-consumer-source-continuity-20261109.json",
+          "sha256": "dc74c4abd38298c3feed1afa7a1578d57e2f753360115538e5716e4f68257532"
+        },
+        {
+          "file": ".gitleaks.toml",
+          "sha256": "8d3f6557cffc5c61bc1ab6a8c5ac26400542f6da5d7c2320306ee17373a14eea"
+        },
+        {
+          "file": ".gitleaksignore",
+          "sha256": "1f6204fa08c92058b8a8f3e9b99dfbcb90c4537da28de17fc782e3f8a4c988bb"
+        },
+        {
+          "file": ".github/workflows/workers-runtime-linux.yml",
+          "sha256": "cd1d81bab3cb25272b3eca15dedb979527ecbeabb382bc9c17a7da156fa14cfa"
+        }
+      ],
+      "productionSchemaOrGrantChanged": false,
+      "newUnit": {
+        "file": "workers-ts/test/out-product-detail-projection.test.ts",
+        "cases": 15
+      },
+      "nativeRunner": {
+        "byteIdenticalToBase": true,
+        "deadlinesAndPermissionsUnchanged": true
+      },
+      "intentionalCorrection": {
+        "file": "workers-ts/test/out-product-migration.test.ts",
+        "originalExpectation": 255,
+        "correctedExpectation": 64,
+        "reason": "Registered varchar64 column; exact64/65 native SQL acceptance added"
+      },
+      "originalCompleteNativeFileByteIdentical": true
+    },
+    "nativeInventoryCollectionOnly": {
+      "files": 1756,
+      "shards": [
+        878,
+        878
+      ],
+      "digest": "351aeeeba6f4ba07bc518483e68d63ffa048ee5736850507631c907c7b0fabd4",
+      "newNativeFile": "test/out-product-labels-postgres.test.ts",
+      "newNativeShard": 1,
+      "completeAndDisjoint": true,
+      "collectionOnly": true,
+      "fullShardExecutionClaimed": false
+    },
+    "fullShardExecutionClaimed": false,
+    "genuineLOGINIsOwnedFixturePrivilegeProjectionNotProductionInstallerProof": true,
+    "httpUsesActualHonoHandlersServicesAndSQLWithSyntheticOutIdentity": true
+  },
+  "baseRemoteCI": {
+    "base": "b69577f344c2be2a4ec6b6370acda96077ec2f27",
+    "runID": 42946680773,
+    "allListedJobsTerminal": true,
+    "jobs": [
+      {
+        "id": 130281055458,
+        "name": "Repository secret scan",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 130281055800,
+        "name": "workerd runtime tests",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 130281055828,
+        "name": "Worker type, unit, schema and route execution (shard 1/2)",
+        "status": "completed",
+        "conclusion": "failure"
+      },
+      {
+        "id": 130281055860,
+        "name": "UniApp editorial author and PHP style execution",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 130281055864,
+        "name": "Supplier build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 130281056004,
+        "name": "Admin build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 130281056007,
+        "name": "Isolated PostgreSQL 16 migration catalog execution",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 130281056038,
+        "name": "PC build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 130281056076,
+        "name": "Kefu build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 130281056096,
+        "name": "UniApp type, runtime and three-platform build execution",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 130281056218,
+        "name": "Worker type, unit, schema and route execution (shard 2/2)",
+        "status": "completed",
+        "conclusion": "failure"
+      },
+      {
+        "id": 130284530417,
+        "name": "Worker type, unit, schema and route gates",
+        "status": "completed",
+        "conclusion": "failure"
+      },
+      {
+        "id": 130287335260,
+        "name": "UniApp build",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "existingWorkerFailure": "Fixed legacy PHP commit 8ed2a5b missing from supplier; previous exact job-log evidence retained",
+    "notNewSHACI": true
+  },
+  "secretScan": {
+    "pinnedVersion": "8.29.0",
+    "binarySHA256": "70134412aa75e86a0840ecb214cb020b41adc8519f331968cdc881d7922eca5b",
+    "configAndIgnoreUnchanged": true,
+    "completeFileAndExactCommitResultsRecordedInLocalCompletionReceipt": true
+  },
+  "limitations": [
+    "Full migration remains incomplete; purchased-product user label author chain still pending",
+    "Read migration does not enable unported activity/coupon/system-form/presale writers",
+    "Base remote Worker shards fail before tests because private supplier lacks fixed 8ed2a5b commit",
+    "Targeted local acceptance does not establish full remote CI success",
+    "No frontend changed; no browser acceptance claimed for this backend-only slice",
+    "No deployment, legacy PHP upload, real provider call, new dependency or grant change",
+    "New SHA requires explicit push authorization"
+  ],
+  "notDeployed": true,
+  "rawPHPUploaded": false,
+  "fullMigrationComplete": false,
+  "candidateInputs": [
+    {
+      "file": "workers-ts/src/services/out/OutProductDetailProjection.ts",
+      "sha256": "5dda8db83f422ccaa35f8c943d9086e17670328dc034385297daeabfa924138f"
+    },
+    {
+      "file": "workers-ts/src/services/out/OutProductDetailRead.ts",
+      "sha256": "8e94617fd92ac25895876e0176e783bdc42c091739cb36a72e469c3400c373f3"
+    },
+    {
+      "file": "workers-ts/src/services/out/OutProductService.ts",
+      "sha256": "52945ee872e969e84002721660b7db39fbf099c15e05653cb4eb62643082ddae"
+    },
+    {
+      "file": "workers-ts/src/services/out/OutApiService.ts",
+      "sha256": "88abd19ff005bbe0852768749bf019cc4a4ed6be27b93cf8f2529300705447e5"
+    },
+    {
+      "file": "workers-ts/src/controllers/out/OutApiController.ts",
+      "sha256": "ceccb63fcbdeb591adc0e20de2e8c874dba767c77356b1ca11a337ab5f91c188"
+    },
+    {
+      "file": "workers-ts/src/services/out/OutProductLabelBindings.ts",
+      "sha256": "301fd03212b7fb25839ba4f980b0625ebde8302441de4508b5d5a75b47120baa"
+    },
+    {
+      "file": "workers-ts/test/out-product-detail-projection.test.ts",
+      "sha256": "3799cbdb8babbec5bad54744248e749b956c723942343482d933fdd3475f9f8f"
+    },
+    {
+      "file": "workers-ts/test/out-product-migration.test.ts",
+      "sha256": "427f13363e113aa57c4bb1bd7028d038bb88ef014d124a6b4feac48804958938"
+    },
+    {
+      "file": "workers-ts/test/out-product-labels-postgres.test.ts",
+      "sha256": "fae04376cb1253a04b59bea259a62e50ae25ab0cc5a33b541c7a1bfd4d91bc21"
+    }
+  ],
+  "secretScanHistory": [
+    {
+      "attempt": 1,
+      "findings": 2,
+      "reason": "generic-api-key matched API filenames used as keys beside validated SHA256 file digests",
+      "bothExactlyMatchFrozenFileSHA256": true,
+      "correction": "Separate file and digest fields in structured candidate input records",
+      "configOrIgnoreChanges": false
+    }
+  ]
+}

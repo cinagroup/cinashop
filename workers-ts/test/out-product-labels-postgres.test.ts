@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { eq, sql } from 'drizzle-orm';
+import { eq, getTableName, sql } from 'drizzle-orm';
+import { createHmac } from 'node:crypto';
 import { Hono } from 'hono';
 import type { AppVariables, Env } from '../src/env';
 import type { DbClient } from '../src/lib/di';
@@ -15,7 +16,8 @@ import { runtimeBusinessPrivilegePlan } from '../src/migrations/runtimeBusinessP
 import { readPublicProductLabelMap, publicProductLabelIds } from '../src/services/product/PublicProductLabelData';
 import { legacyCategory, storeProduct, storeProductAttrValue, storeProductCategory, storeProductRelation,
   outProductWriteReplay, storeProductStockRecord, storeProductAttr, storeProductAttrResult, storeProductDescription,
-  storeBrand, storeProductEnsure, storeProductLabel, userLabel, userLabelRelation, storeProductLabelAuxiliary } from '../src/models/schema';
+  storeBrand, storeProductEnsure, storeProductLabel, userLabel, userLabelRelation, storeProductLabelAuxiliary,
+  shippingTemplates, storeCouponIssue, storeProductCoupon, systemForm, systemAttachment, systemConfig, storeProductVirtual } from '../src/models/schema';
 
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('real PG16 Out product and user label authors', () => {
   let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
@@ -305,4 +307,188 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('real PG16 Out pr
       await expect(runtime.exec('UPDATE user_label SET status=0 WHERE id=201')).rejects.toMatchObject({ code: '42501' });
     });
   }, 30_000);
+  type LegacyData = { productInfo: Record<string, unknown>; tempList: Array<{ id: number; name: string }>;
+    cateList: unknown[]; editor: { media_previews: Record<string, string>; video_preview: string; description_preview: string; retired_attrs: unknown[] } } & Record<string, unknown>;
+  const richDetail = async (db = f.db) => await detail(db) as unknown as { status: number; msg: string; data: LegacyData };
+  const rows = (value: unknown) => value as Array<Record<string, unknown>>;
+
+  it('authenticates the real varchar64 column and atomically accepts64/rejects65 user label CSV characters', async () => {
+    const [column] = await f.db.execute(sql`SELECT character_maximum_length AS capacity FROM information_schema.columns WHERE table_schema='public' AND table_name='store_product' AND column_name='label_id'`);
+    expect(column.capacity).toBe(64);
+    const fits = [100000000, 1000000001, 1000000002, 1000000003, 1000000004, 1000000005], exceeds = [1000000000, ...fits.slice(1)];
+    expect(fits.join(',')).toHaveLength(64); expect(exceeds.join(',')).toHaveLength(65);
+    await f.db.insert(userLabel).values([...new Set([...fits, ...exceeds])].map(id => ({ id, name: `边界${id}` })));
+    const accepted = await request(f.db, { ...body, label_id: fits }); expect(accepted.status, accepted.msg).toBe(200);
+    const before = await state(); expect(before.products[0].labelId).toBe(fits.join(','));
+    expect(before.relations.filter(row => row.type === 4).map(row => row.relationId)).toEqual(fits);
+    const denied = await request(f.db, { ...body, label_id: exceeds }, crypto.randomUUID()); expect(denied.status).not.toBe(200); expect(denied.msg).toContain('64');
+    expect(await state()).toEqual(before);
+  });
+
+  it('returns the full source envelope and option directories while retaining the real flat TS contract and every scalar transformation', async () => {
+    expect((await request(f.db, combined())).status).toBe(200);
+    await f.db.update(storeProduct).set({ image: '/main.png', sliderImage: '["/one.png","/two.png"]',
+      deliveryType: '1,3', price: '12.30', cost: '4.20', postage: '2.50', giveIntegral: '7.00', isSub: 1, isVip: 1,
+      isLimit: 1, videoOpen: 1, videoLink: '/legacy.mp4', isShow: 0, autoOnTime: 1704067200, autoOffTime: 1704153600,
+      isPresaleProduct: 1, presaleStartTime: 1704067200, presaleEndTime: 1704153600, presaleDay: 3,
+      activity: '3,0,1,2', specs: '[{"name":"材质","value":"陶瓷"}]', recommendList: '71,72,999',
+      systemFormId: 800, customForm: '[{"stored":"original"}]' }).where(eq(storeProduct.id, 70));
+    await f.db.insert(storeProduct).values([{ id: 71, image: '/owned.png' }, { id: 72, type: 2, relationId: 44, image: '/foreign.png' }]);
+    await f.db.insert(systemConfig).values({ menuName: 'site_url', value: '"https://shop.example.test"' });
+    await f.db.insert(shippingTemplates).values([{ id: 20, name: '历史平台模板', sort: 9, status: 0, isDel: 1 }, { id: 30, ownerType: 2, relationId: 44, name: '供应商模板', sort: 99 }]);
+    await f.db.insert(storeProductCategory).values([{ id: 12, pid: 9, cateName: '子分类', isShow: 1 },
+      { id: 13, type: 2, relationId: 44, cateName: '供应商分类', isShow: 1 }, { id: 14, pid: 9, cateName: '隐藏分类', isShow: 0 }, { id: 15, pid: 14, cateName: '隐藏父级子分类', isShow: 1 }]);
+    await f.db.insert(storeCouponIssue).values([{ id: 800, title: '赠券' }, { id: 801, title: '历史停用券', status: 0, isDel: 1 }]);
+    await f.db.insert(storeProductCoupon).values([{ productId: 70, issueCouponId: 801 }, { productId: 70, issueCouponId: 800 }]);
+    await f.db.insert(systemForm).values({ id: 800, value: '[{"id":"city","name":"selects","titleConfig":{"value":"城市"},"wordsConfig":{"list":["上海"]},"titleShow":{"val":true}}]' });
+    await f.db.update(storeProductDescription).set({ description: '<p>完整说明</p>' }).where(eq(storeProductDescription.productId, 70));
+    await f.db.insert(storeProductDescription).values({ productId: 70, type: 1, description: '<p>独立活动描述</p>' });
+    const before = await state(), response = await app(f.db).request('/outapi/product/70', undefined, f.env);
+    expect(response.headers.get('cache-control')).toBe('private, no-store');
+    const value = await response.json() as { status: number; msg: string; data: LegacyData }; expect(value.status, value.msg).toBe(200);
+    expect(value.data).not.toHaveProperty('temp_list'); expect(value.data).not.toHaveProperty('cate_list'); expect(value.data).not.toHaveProperty('product_info');
+    expect(value.data.tempList).toEqual([{ id: 20, name: '历史平台模板' }, { id: 10, name: '本地运费' }]);
+    expect(value.data.cateList).toEqual([{ value: 9, label: 'isolated', pid: 0, children: [{ value: 12, label: '子分类', pid: 9 }] }]);
+    expect(value.data).toMatchObject({ id: 70, store_name: 'Out label author', price: '12.30', slider_image: '["/one.png","/two.png"]', cate_id: [9] });
+    expect(value.data.productInfo).toMatchObject({ id: 70, store_name: 'Out label author', price: 12.3, cost: 4.2, postage: 2.5,
+      give_integral: 7, slider_image: ['/one.png', '/two.png'], delivery_type: ['1', '3'], cate_id: ['9'],
+      brand_id: [30, 31], ensure_id: [92], label_id: [{ id: 201, label_name: '兴趣用户' }, { id: 202, label_name: '长期用户' }],
+      store_label_id: [{ id: 101, label_name: '新品' }, { id: 102, label_name: '精选' }], is_sub: [1, 0], is_limit: true,
+      video_open: true, video_link: 'https://shop.example.test/legacy.mp4', recommend: [],
+      presale_time: ['2024-01-01 08:00:00', '2024-01-02 08:00:00'], auto_on_time: '2024-01-01 08:00:00', auto_off_time: '',
+      activity: ['拼团', '默认', '秒杀', '砍价'], specs: [{ name: '材质', value: '陶瓷' }], description: '<p>完整说明</p>',
+      coupons: [{ id: 800, title: '赠券' }, { id: 801, title: '历史停用券' }],
+      recommend_list: [{ product_id: '71', image: '/owned.png' }, { product_id: '72', image: '' }, { product_id: '999', image: '' }],
+      custom_form_info: [{ id: 'city', type: 'selects', name: '下拉框', title: '城市', list: ['上海'], require: true }],
+      items: [{ value: '颜色', detail: ['红色'] }, { value: '尺码', detail: ['大号'] }],
+      attrs: [{ id: 1, unique: 'qared001', value1: '红色', value2: '大号', price: 10, stock: 8, detail: { 颜色: '红色', 尺码: '大号' } }], sku_repair_required: false });
+    expect(await state()).toEqual(before);
+  }, 20_000);
+
+  it('returns the actual single SKU editor fields and separates retired identities without mutating their stock or history', async () => {
+    await f.db.update(storeProduct).set({ specType: 0 }).where(eq(storeProduct.id, 70));
+    await f.db.update(storeProductAttrValue).set({ suk: '默认', price: '12.30', weight: '1.50', volume: '2.25',
+      diskInfo: 'legacy disk metadata', writeTimes: 3, writeValid: 2, writeDays: 5, writeStart: 1704067200, writeEnd: 1704153600 }).where(eq(storeProductAttrValue.id, 1));
+    await f.db.insert(storeProductAttrValue).values({ id: 2, productId: 70, unique: 'retire01', suk: '停产', isRetired: 1, stock: 9 });
+    const before = await state(), result = await richDetail(); expect(result.status, result.msg).toBe(200);
+    expect(result.data.productInfo).toMatchObject({ items: [], attrs: [], sku_repair_required: false,
+      attr: { id: 1, unique: 'qared001', price: 12.3, stock: 8, weight: 1.5, volume: 2.25, disk_info: 'legacy disk metadata',
+        write_times: 3, write_valid: 2, days: 5, section_time: ['2024-01-01', '2024-01-02'] } });
+    expect(result.data.editor.retired_attrs).toMatchObject([{ id: 2, unique: 'retire01', is_retired: 1, stock: 9 }]);
+    expect(rows(result.data.attrs)).toHaveLength(2); expect(await state()).toEqual(before);
+  });
+
+  it('returns virtual counts on a real read-only LOGIN denied both credential columns without materializing cards', async () => {
+    await f.db.update(storeProduct).set({ productType: 1, specType: 0 }).where(eq(storeProduct.id, 70));
+    await f.db.update(storeProductAttrValue).set({ suk: '默认' }).where(eq(storeProductAttrValue.id, 1));
+    await f.db.insert(storeProductVirtual).values([0, 0, 11].map((uid, index) => ({
+      productId: 70, attrUnique: 'qared001', uid,
+      cardNo: `fixture-card-${index}`, cardPwd: `fixture-only-value-${index}`,
+    })));
+    await f.db.insert(storeProductVirtual).values({ productId: 71, attrUnique: 'qared001', cardNo: 'fixture-foreign-card' });
+    const before = await state(), cards = await f.db.select().from(storeProductVirtual).orderBy(storeProductVirtual.id);
+    if (!owned.withRuntimeRole) throw Error('Actual restricted LOGIN required');
+    await owned.withRuntimeRole(async runtime => {
+      const quote = (name: string) => { if (!/^[a-z_][a-z_0-9]*$/.test(name)) throw Error('Unexpected owned identifier'); return `"${name}"`; };
+      const tables = [storeProduct, storeProductAttr, storeProductAttrValue, storeProductDescription,
+        storeProductRelation, storeProductCoupon, shippingTemplates, storeProductCategory, systemConfig,
+        storeCouponIssue, systemForm, storeBrand, storeProductEnsure, storeProductLabel, userLabel,
+        legacyCategory, systemAttachment];
+      for (const table of tables) await f.exec(`GRANT SELECT ON public.${quote(getTableName(table))} TO ${quote(runtime.role)}`);
+      await f.exec(`GRANT SELECT(product_id,attr_unique,uid) ON public.store_product_virtual TO ${quote(runtime.role)}`);
+      const [identity] = await runtime.db.execute(sql`SELECT current_user AS role,session_user AS session,
+        (SELECT rolsuper OR rolcreatedb OR rolcreaterole OR rolinherit OR rolbypassrls FROM pg_roles WHERE rolname=current_user) AS elevated,
+        has_table_privilege(current_user,'public.store_product_virtual','SELECT') AS all_cards,
+        has_column_privilege(current_user,'public.store_product_virtual','card_no','SELECT') AS number,
+        has_column_privilege(current_user,'public.store_product_virtual','card_pwd','SELECT') AS password,
+        has_column_privilege(current_user,'public.store_product_virtual','uid','SELECT') AS count_state,
+        has_table_privilege(current_user,'public.store_product','UPDATE') AS mutation`);
+      expect(identity).toEqual({ role: runtime.role, session: runtime.role, elevated: false,
+        all_cards: false, number: false, password: false, count_state: true, mutation: false });
+      await expect(runtime.exec('SELECT card_no,card_pwd FROM store_product_virtual')).rejects.toMatchObject({ code: '42501' });
+      const result = await richDetail(runtime.db); expect(result.status, result.msg).toBe(200);
+      expect(result.data.productInfo).toMatchObject({ product_type: 1, sku_repair_required: false,
+        attr: { unique: 'qared001', virtual_list: [], virtual_available: 2, virtual_total: 3 } });
+      for (const forbidden of ['card_no', 'card_pwd', 'fixture-card-', 'fixture-only-value-', 'fixture-foreign-card'])
+        expect(JSON.stringify(result)).not.toContain(forbidden);
+    });
+    expect(await state()).toEqual(before);
+    expect(await f.db.select().from(storeProductVirtual).orderBy(storeProductVirtual.id)).toEqual(cards);
+  }, 20_000);
+
+  it('reports absent default SKU repair needs without executing the old GET-side repair or consuming SKU identities', async () => {
+    await f.db.update(storeProduct).set({ specType: 0 }).where(eq(storeProduct.id, 70)); await f.db.delete(storeProductAttrValue);
+    const before = await state(), result = await richDetail(); expect(result.status, result.msg).toBe(200);
+    expect(result.data.productInfo).toMatchObject({ items: [], attrs: [], sku_repair_required: true, attr: { stock: 8, price: 10, virtual_list: [] } });
+    expect(result.data.productInfo.attr).not.toHaveProperty('unique'); expect(await state()).toEqual(before);
+  });
+
+  it('keeps durable owned media in the legacy form and signs only validated image/video previews without provider HTTP', async () => {
+    f.env.APP_KEY = 'x'.repeat(32);
+    await f.db.insert(systemAttachment).values([
+      { attId: 301, type: 1, relationId: 0, moduleType: 1, imageType: 8, fileType: 1, attType: 'image/png', name: 'attachments/admin/1/detail.png', attDir: '/api/assets/301' },
+      { attId: 302, type: 4, relationId: 44, moduleType: 1, imageType: 8, fileType: 1, attType: 'image/png', name: 'attachments/supplier/44/foreign.png', attDir: '/api/assets/302' },
+      { attId: 303, type: 1, relationId: 0, moduleType: 1, imageType: 8, fileType: 2, attType: 'video/mp4', name: 'attachments/admin/1/detail.mp4', attDir: '/api/assets/303' },
+    ]);
+    await f.db.update(storeProduct).set({ image: '/api/assets/301', sliderImage: '["/api/assets/301","/api/assets/302"]', videoOpen: 1, videoLink: '/api/assets/303' }).where(eq(storeProduct.id, 70));
+    await f.db.update(storeProductAttrValue).set({ image: '/api/assets/302' }).where(eq(storeProductAttrValue.id, 1));
+    await f.db.insert(storeProductDescription).values({ productId: 70, description: '<p onclick="bad()"><img src="/api/assets/301"><img src="/api/assets/302"></p>' });
+    const before = await state(), result = await richDetail(); expect(result.status, result.msg).toBe(200);
+    expect(result.data.productInfo).toMatchObject({ image: '/api/assets/301', slider_image: ['/api/assets/301', ''], video_link: '/api/assets/303', attrs: [{ pic: '' }] });
+    expect(result.data.editor.media_previews).not.toHaveProperty('/api/assets/302');
+    for (const [path, signed] of [['/api/assets/301', result.data.editor.media_previews['/api/assets/301']], ['/api/assets/303', result.data.editor.video_preview]]) {
+      const url = new URL(signed, 'https://local.invalid'), expires = Number(url.searchParams.get('expires'));
+      expect(url.pathname).toBe(path); expect(expires).toBeGreaterThan(Math.floor(Date.now() / 1000));
+      expect(url.searchParams.get('signature')).toBe(createHmac('sha256', f.env.APP_KEY).update(`GET\n${path}\n${expires}`).digest('base64url'));
+    }
+    expect(result.data.editor.description_preview).not.toContain('onclick'); expect(result.data.editor.description_preview).not.toContain('/api/assets/302');
+    expect(await state()).toEqual(before);
+    for (const reference of ['/api/assets/302', 'http://legacy.example.test/old.mp4']) {
+      await f.db.update(storeProduct).set({ videoLink: reference }).where(eq(storeProduct.id, 70));
+      const unchanged = await state(), unavailable = await richDetail(); expect(unavailable.status, unavailable.msg).toBe(200);
+      expect(unavailable.data.productInfo.video_link).toBe(reference);
+      expect(unavailable.data.editor).toMatchObject({ video_preview: '', video_selection: { stored: reference, available: false } });
+      expect(await state()).toEqual(unchanged);
+    }
+  });
+
+  it('rejects ambiguous site configuration and oversized complete source data without returning partial forms or changing rows', async () => {
+    await f.db.insert(systemConfig).values([{ menuName: 'site_url', value: '"https://one.example.test"' }, { menuName: 'site_url', value: '"https://two.example.test"' }]);
+    let before = await state(), result = await richDetail(); expect(result.status).not.toBe(200); expect(result.msg).toContain('重复'); expect(await state()).toEqual(before);
+    await f.db.delete(systemConfig).where(eq(systemConfig.menuName, 'site_url'));
+    await f.db.insert(storeProductDescription).values({ productId: 70, description: '长'.repeat(400000) });
+    before = await state(); result = await richDetail(); expect(result.status).not.toBe(200); expect(result.msg).toContain('容量'); expect(await state()).toEqual(before);
+  });
+
+  it('refuses a complete directory over capacity instead of silently returning its first10000 rows', async () => {
+    await f.exec("INSERT INTO store_product_category(id,cate_name,is_show,type,relation_id) SELECT 10000+i,'extra-'||i,1,0,0 FROM generate_series(1,10001) i");
+    const before = await state(), result = await richDetail(); expect(result.status).not.toBe(200); expect(result.msg).toContain('容量'); expect(await state()).toEqual(before);
+  });
+
+  it('reads product, coupon, form, SKU and directory expansions from one real snapshot across a concurrent replacement', async () => {
+    await f.db.insert(storeCouponIssue).values({ id: 800, title: '旧券' }); await f.db.insert(storeProductCoupon).values({ productId: 70, issueCouponId: 800 });
+    await f.db.insert(systemForm).values({ id: 800, value: '[{"id":"old","name":"texts"}]' }); await f.db.update(storeProduct).set({ systemFormId: 800 }).where(eq(storeProduct.id, 70));
+    await peers(async ([holder, reader]) => {
+      await holder.exec('BEGIN; LOCK TABLE store_product_relation IN ACCESS EXCLUSIVE MODE'); const pending = richDetail(reader.db);
+      try {
+        await waitForFinanceBlock(f.db, reader.pid, holder.pid);
+        await holder.exec("UPDATE store_product SET store_name='并发新值',price='99.00' WHERE id=70; UPDATE store_product_attr_value SET price='88.00' WHERE id=1; UPDATE store_coupon_issue SET title='新券' WHERE id=800; UPDATE system_form SET value='[{\"id\":\"new\",\"name\":\"texts\"}]' WHERE id=800; UPDATE shipping_templates SET name='新模板' WHERE id=10; UPDATE store_product_category SET cate_name='新目录' WHERE id=9");
+      } finally { await holder.exec('COMMIT'); }
+      const old = await pending; expect(old.status, old.msg).toBe(200);
+      expect(old.data.productInfo).toMatchObject({ store_name: '完整报价隔离样本', price: 10, coupons: [{ id: 800, title: '旧券' }], custom_form: [{ id: 'old' }], attrs: [{ price: 10 }] });
+      expect(old.data.tempList).toEqual([{ id: 10, name: '本地运费' }]); expect(old.data.cateList).toMatchObject([{ label: 'isolated' }]);
+      const current = await richDetail(reader.db); expect(current.status, current.msg).toBe(200);
+      expect(current.data.productInfo).toMatchObject({ store_name: '并发新值', price: 99, coupons: [{ id: 800, title: '新券' }], custom_form: [{ id: 'new' }], attrs: [{ price: 88 }] });
+      expect(current.data.tempList).toEqual([{ id: 10, name: '新模板' }]); expect(current.data.cateList).toMatchObject([{ label: '新目录' }]);
+    });
+  }, 20_000);
+
+  it('rejects deleted or foreign products before consulting a missing expansion catalog', async () => {
+    await f.exec('ALTER TABLE shipping_templates RENAME TO hidden_out_detail_templates');
+    for (const extra of [{ type: 2, relationId: 44, isDel: 0 }, { type: 0, relationId: 44, isDel: 0 }, { type: 0, relationId: 0, isDel: 1 }]) {
+      await f.db.update(storeProduct).set(extra).where(eq(storeProduct.id, 70)); const before = await state();
+      const result = await richDetail(); expect(result.status).not.toBe(200); expect(result.msg).toContain('不属于平台'); expect(await state()).toEqual(before);
+    }
+  });
+
 });

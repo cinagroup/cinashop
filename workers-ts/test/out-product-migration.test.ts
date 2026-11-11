@@ -54,7 +54,7 @@ describe("Out API product write migration", () => {
       expect(() => normalizeOutPhysicalProductInput({ ...physicalProduct(), label_id: value })).toThrow('标签');
     });
   it('rejects user label CSV exceeding its actual main-column capacity before database work', () => {
-    expect(() => normalizeOutPhysicalProductInput({ ...physicalProduct(), label_id: Array.from({ length: 26 }, (_, i) => 1000000000 + i) })).toThrow('255');
+    expect(() => normalizeOutPhysicalProductInput({ ...physicalProduct(), label_id: Array.from({ length: 26 }, (_, i) => 1000000000 + i) })).toThrow('64');
   });
   it('binds explicit ensure selections while omission retains the old normalized request shape', async () => {
     const omitted = normalizeOutPhysicalProductInput(physicalProduct());
