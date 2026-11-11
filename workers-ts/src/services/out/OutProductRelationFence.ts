@@ -6,7 +6,7 @@ import { ServiceUnavailableException, ValidateException } from '@/utils/errors';
 const columns = { ...getTableColumns(storeProductRelation), rowVersion: sql<string>`xmin::text` };
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 type Product = typeof storeProduct.$inferSelect;
-type PreservedProduct = Partial<Pick<Product, 'brandId' | 'brandCom' | 'ensureId'>>;
+type PreservedProduct = Partial<Pick<Product, 'brandId' | 'brandCom' | 'ensureId' | 'storeLabelId' | 'labelId'>>;
 export interface OutProductRelationFence {
   productId: number;
   ownedTypes: readonly number[];
@@ -28,12 +28,15 @@ export async function captureOutProductRelationFence(tx: DbClient, product: Prod
     preservedProduct: product ? {
       ...(ownedTypes.includes(2) ? {} : { brandId: product.brandId, brandCom: product.brandCom }),
       ...(ownedTypes.includes(5) ? {} : { ensureId: product.ensureId }),
+      ...(ownedTypes.includes(3) ? {} : { storeLabelId: product.storeLabelId }),
+      ...(ownedTypes.includes(4) ? {} : { labelId: product.labelId }),
     } : {},
   };
 }
 export async function assertOutProductRelationFence(tx: DbClient, fence: OutProductRelationFence) {
   const [product] = await tx.select({ brandId: storeProduct.brandId, brandCom: storeProduct.brandCom,
-    ensureId: storeProduct.ensureId }).from(storeProduct).where(eq(storeProduct.id, fence.productId)).limit(1);
+    ensureId: storeProduct.ensureId, storeLabelId: storeProduct.storeLabelId, labelId: storeProduct.labelId })
+    .from(storeProduct).where(eq(storeProduct.id, fence.productId)).limit(1);
   if (!product || Object.entries(fence.preservedProduct).some(([key, value]) => product[key as keyof typeof product] !== value)
     || !same(await protectedRows(tx, fence.productId, fence.ownedTypes), fence.rows)) {
     throw new ValidateException('平台商品历史关联已变化');

@@ -1,0 +1,352 @@
+{
+  "feature": "Out platform product label and user label configuration authors with atomic metadata composition",
+  "base": "af2096c38c6b97e7cd27e5656b21c77b5bd73626",
+  "candidateHashes": {
+    "workers-ts/src/services/out/OutProductService.ts": "3ce432825025de958ff2f63d39d73cb35a736fdbcda8d49e45dc3f33060b9492",
+    "workers-ts/src/services/out/OutProductRelationFence.ts": "a39dcf5af61816d13c555e5af25c81f2f4cf814e5f4b409c196ffd23e3895273",
+    "workers-ts/src/services/out/OutProductLabelBindings.ts": "1ffe32654679e37fee53c7c20960d39f8ffc79b6294a588c1316992a5de3dd1d",
+    "workers-ts/scripts/run-local-finance-postgres.mjs": "40e3f1fc5545335fc7b57fb2244f5e67609c1238021e4fb7daed813bdb96b032",
+    "workers-ts/test/out-product-migration.test.ts": "f3132da11f61b958da7217356827327d5fda3f467dc2f330bd89720e974243ab",
+    "workers-ts/test/out-product-labels-postgres.test.ts": "c29abef19d396d96d82e25f0446208c8914fe044e8dfe35f8285823f485fe1dc",
+    "workers-ts/test/helpers/outProductLabelRunnerSourceContinuity.ts": "772d711e452734f3d4b35eec7d80db449f51c9585953606283a293955656281a",
+    "workers-ts/test/helpers/providerTransportSourceContinuity.ts": "d2a590e49227b5a0423bf765a1b26bf986cb892eed6e7faf4b1c782380778753",
+    "workers-ts/test/out-product-label-runner-source-continuity.test.ts": "182ea458c9e5864b9a3f0cebd088d01ddba0ade1beee55bd0f871eafb9c945ab"
+  },
+  "productDecision": {
+    "field": "Out label_id",
+    "choice": "与新编辑器一致双写（推荐）",
+    "changesFixedPHPORMSkipBehavior": true,
+    "existingAdminLegacyRoutesChanged": false
+  },
+  "legacySource": {
+    "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+    "sources": [
+      {
+        "file": "app/controller/out/Product.php",
+        "bytes": 8803,
+        "sha256": "a52f6c6392594116e66803572a67e6c15d424fa13eac48df6bc9d7a6ef01c24a",
+        "gitBlobSha1": "5a55a3a43001325abfd36cee3c6af3e3b45cac66",
+        "lineReferences": [
+          217,
+          238,
+          255,
+          257
+        ]
+      },
+      {
+        "file": "app/services/product/product/StoreProductServices.php",
+        "bytes": 136399,
+        "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+        "gitBlobSha1": "f8163c25f694dd0ff84486d89926ef004ba9e81e",
+        "lineReferences": [
+          383,
+          385,
+          389,
+          392,
+          755,
+          756,
+          808,
+          809,
+          811,
+          923,
+          486,
+          487
+        ]
+      },
+      {
+        "file": "app/model/product/product/StoreProduct.php",
+        "bytes": 20315,
+        "sha256": "696b6b6601e9ba8ba9fcde26a4ed12bda7f98edaaa81fc72ced3cae5321dc1a9",
+        "gitBlobSha1": "d4bf574d3192acc7e9dc7f6e73bb01d8a8bbfcb5",
+        "lineReferences": [
+          89,
+          101
+        ]
+      },
+      {
+        "file": "app/services/product/product/StoreProductRelationServices.php",
+        "bytes": 6123,
+        "sha256": "1bd25c8d6c91a3871f2d859e84eb4c3fc41855552e194b46c8fd19a77735c063",
+        "gitBlobSha1": "e627850fa3acabe8427e6d31b778113773a46a9b",
+        "lineReferences": [
+          69
+        ]
+      },
+      {
+        "file": "app/listener/product/CreateSuccess.php",
+        "bytes": 4489,
+        "sha256": "06402ea2098c72255c99b63e005324651f1ea0ec53c1b742812de746c3c6ff70",
+        "gitBlobSha1": "1db3d791f0db7ec5da1515e9bd2570ccaa16075f",
+        "lineReferences": [
+          45,
+          47
+        ]
+      },
+      {
+        "file": "app/services/user/label/UserLabelServices.php",
+        "bytes": 12798,
+        "sha256": "a3880e5910f14f0611270ba70c5c34fb2e175fccd45213045c581a55cc46847f",
+        "gitBlobSha1": "60567a80e3232eb12cf62891ee72f33797ebac68",
+        "lineReferences": [
+          60
+        ]
+      },
+      {
+        "file": "vendor/topthink/think-orm/src/db/Builder.php",
+        "bytes": 22391,
+        "sha256": "f8e63be6b9ac26b71f6e8c115169af32d227ec48b6cd45636a8a4ac9c7a17e50",
+        "gitBlobSha1": "898e465aa3fbf6ddaa3de21d0f99d54d1006259d",
+        "lineReferences": [
+          37,
+          66,
+          81,
+          93
+        ]
+      }
+    ],
+    "rawSourceUploaded": false,
+    "PHPExecuted": false
+  },
+  "validationHistory": [
+    {
+      "candidate": 1,
+      "completeCompatibility": {
+        "passed": 1290,
+        "failed": 2,
+        "skipped": 0
+      },
+      "failure": "Both historical merge-proof views rejected the actual new runner hash after one explicit admission line; original assertions retained",
+      "correctedBy": "Exact complete-image runner predecessor before unchanged historical readers"
+    }
+  ],
+  "contract": {
+    "omissionPreservesScalarsRelationsAndOldNormalizedHashShape": true,
+    "explicitEmptyClearsWithNewBoundIntent": true,
+    "userLabelsDualWriteCSVAndType4PerUserDecision": true,
+    "existingAdminLegacyAdapterUnchanged": true,
+    "canonicalIDsOnlyWithUntrustedUserIDNameEchoAccepted": true,
+    "productAndUserLabelIntentDistinct": true,
+    "catalogMustBePlatformOwnedAndEnabled": true,
+    "productLabelMustBeShownAndHaveOwnedVisibleProductGroup": true,
+    "userLabelCategoriesRemainOrganizational": true,
+    "userLabelCSVCapacity255Enforced": true,
+    "catalogAndGroupRowsPinnedInStableOrderWithNowait": true,
+    "brandEnsureBothLabelsAndReplayAreAtomic": true,
+    "laterAuthorAndFinalReceiptInterferenceRejected": true,
+    "omittedMetadataScalarsAndUnownedRelationValuesAndXminPreserved": true,
+    "sameKeyReplayPrecedesCurrentCatalogAdmission": true,
+    "detailUsesExistingReadOnlyRepeatableReadTransaction": true,
+    "legalOutShowRelationStatusesZeroAndOneAccepted": true,
+    "foreignCatalogNamesFilteredAndBadHistoryNotRepaired": true,
+    "doesNotDirectlyAssignCustomerLabels": true
+  },
+  "validation": {
+    "completeNewLabelNative": {
+      "files": 1,
+      "passed": 39,
+      "failed": 0,
+      "skipped": 0,
+      "fixtureCleanupZero": true,
+      "clusterStopped": true,
+      "genuineRestrictedLOGIN": true,
+      "realCheckoutBeforeCompositeEdit": true,
+      "realPublicLabelConsumer": true
+    },
+    "completeUnchangedOutCheckoutNative": {
+      "files": 1,
+      "passed": 58,
+      "failed": 0,
+      "skipped": 0,
+      "fixtureCleanupZero": true,
+      "clusterStopped": true
+    },
+    "completeDirectNativeConsumers": {
+      "files": 3,
+      "passed": 79,
+      "failed": 0,
+      "skipped": 0,
+      "fixtureCleanupZero": true,
+      "clusterStopped": true
+    },
+    "completeCompatibilityFiles": {
+      "files": 12,
+      "passed": 1413,
+      "failed": 0,
+      "skipped": 0
+    },
+    "historicalRunnerSuccessor": {
+      "exactFile": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "oldProofsAndAssertionsUnchanged": true,
+      "nativeInputsUnchangedFromPassingCandidate1": true
+    },
+    "initialOutUnit": {
+      "files": 2,
+      "passed": 70,
+      "includedInFinalCompatibilityCount": true
+    },
+    "completeWorkerTypes": {
+      "unitExitCode": 0,
+      "runtimeExitCode": 0
+    },
+    "retainedInputs": {
+      "base": "af2096c38c6b97e7cd27e5656b21c77b5bd73626",
+      "tests": [
+        {
+          "file": "workers-ts/test/out-product-migration.test.ts",
+          "originalDefinitions": 9,
+          "originalCases": 27,
+          "currentCases": 49,
+          "originalBodiesUnchanged": true
+        },
+        {
+          "file": "workers-ts/test/checkout-out-product-concurrency.test.ts",
+          "originalDefinitions": 39,
+          "originalCases": 58,
+          "currentCases": 58,
+          "originalBodiesUnchanged": true
+        }
+      ],
+      "unchangedProtectedInputs": [
+        {
+          "file": "workers-ts/src/services/out/OutIdempotency.ts",
+          "sha256": "08e91eeefe399d2f09d77ed31c8485cf5e7b2085c9ed19ee24bf4f4effbcfac8"
+        },
+        {
+          "file": "workers-ts/src/services/out/OutProductBrandBindings.ts",
+          "sha256": "c5ee1e6cc229f9edeb5bb4c4d02c6a57949c34b7345db1900db4f90f098bd519"
+        },
+        {
+          "file": "workers-ts/src/services/out/OutProductEnsureBindings.ts",
+          "sha256": "79fabf763f3027e4805b8bf113f46fe94f28480241cba664d466715e6d7f6bf4"
+        },
+        {
+          "file": "workers-ts/src/services/supplier/SupplierProductLabelBindings.ts",
+          "sha256": "18c88b7d61750e77640c187dccbc684a9465b05bf109afc21e96021119e15403"
+        },
+        {
+          "file": "workers-ts/src/services/product/PublicProductLabelData.ts",
+          "sha256": "28e3d1b9626f1edc823fbf2985cce931f542e6d831ddffba47679e5268cc8561"
+        },
+        {
+          "file": "workers-ts/src/services/admin/AdminLegacyProductInput.ts",
+          "sha256": "6d8f25e3baea268104d3b630d31227f970d644d57d943945fe3f628bc0ea186c"
+        },
+        {
+          "file": "workers-ts/src/services/admin/AdminLegacyProductSaveService.ts",
+          "sha256": "b6f61a28d6f9f7c8f780f57536f3295e573310bd2bb881d31ccc54cf6f667806"
+        },
+        {
+          "file": "workers-ts/scripts/local-finance-unit-gate.mjs",
+          "sha256": "5e954f277a80c820dc4735db556d0a284f5fc10bc0d51afa136a33795912c442"
+        },
+        {
+          "file": "workers-ts/src/services/supplier/SupplierProductEnsureBindings.ts",
+          "sha256": "23b56a05f97e46befb0af9daf879b3eb984dd9b032482dc2bb3bcfe27697567d"
+        },
+        {
+          "file": "workers-ts/src/services/product/ProductExperienceService.ts",
+          "sha256": "850fac97bb5979ac477c03524e8d5be91c739658d514bff1cbcf516a44019d50"
+        },
+        {
+          "file": "workers-ts/src/services/supplier/SupplierProductBrandBindings.ts",
+          "sha256": "3d228e12a0243064ce58d82501120e0e0d0ae501f8684522deb82a19c91cf7dd"
+        },
+        {
+          "file": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+          "sha256": "4044d51930d72620f9d124c375779e37a99fdfb8e8c815cf2cb30420080d4324"
+        },
+        {
+          "file": "workers-ts/src/routes/outapi.ts",
+          "sha256": "29423ec72749778c88374fb4c4165d1fb4b451678f9dd8d10fb1ec1e9b85d38f"
+        },
+        {
+          "file": "workers-ts/src/controllers/out/OutApiController.ts",
+          "sha256": "21bab85795333324ac30e7684409f0c64b09e7e183efbc245939480f1f639f45"
+        },
+        {
+          "file": "workers-ts/test/migration-merge-source-binding.test.ts",
+          "sha256": "c9b0be06176f163adc802dcfea0b735f61e0d818b460e773fa6b06e0de0b9c25"
+        },
+        {
+          "file": "workers-ts/test/provider-transport-source-continuity.test.ts",
+          "sha256": "ae00f99b5ea6527df3130ccb78dbe842892daf146157d67b8a90194c78aa61a9"
+        },
+        {
+          "file": "workers-ts/test/recharge-refund-source-continuity.test.ts",
+          "sha256": "66bb3a751de13032ea99273c9237ada3f3c8a0a19b6d8070097f93d5dca9a369"
+        },
+        {
+          "file": "workers-ts/test/fixtures/provider-transport-source-continuity-20261109.json",
+          "sha256": "be895c2c4a72e33c120aadd7da13fb71eae93b9ff6ff37e495ee6b8fcf81d1b1"
+        },
+        {
+          "file": "workers-ts/test/fixtures/unit-discovery-source-continuity-20261109.json",
+          "sha256": "68974165ff71c032f833bca3e5bd4711918b408b970ca4c2d6214cebebed1f4c"
+        },
+        {
+          "file": "workers-ts/test/fixtures/recharge-refund-notice-consumer-source-continuity-20261109.json",
+          "sha256": "dc74c4abd38298c3feed1afa7a1578d57e2f753360115538e5716e4f68257532"
+        },
+        {
+          "file": ".gitleaks.toml",
+          "sha256": "8d3f6557cffc5c61bc1ab6a8c5ac26400542f6da5d7c2320306ee17373a14eea"
+        },
+        {
+          "file": ".gitleaksignore",
+          "sha256": "1f6204fa08c92058b8a8f3e9b99dfbcb90c4537da28de17fc782e3f8a4c988bb"
+        },
+        {
+          "file": ".github/workflows/workers-runtime-linux.yml",
+          "sha256": "cd1d81bab3cb25272b3eca15dedb979527ecbeabb382bc9c17a7da156fa14cfa"
+        }
+      ],
+      "productionSchemaOrGrantChanged": false,
+      "newNative": {
+        "file": "workers-ts/test/out-product-labels-postgres.test.ts",
+        "cases": 39
+      },
+      "nativeRunner": {
+        "onlyExplicitFilenameAdded": "workers-ts/test/out-product-labels-postgres.test.ts",
+        "deadlinesAndPermissionsUnchanged": true
+      },
+      "originalCompleteNativeFileByteIdentical": true
+    },
+    "nativeInventory": {
+      "files": 1755,
+      "shards": [
+        878,
+        877
+      ],
+      "digest": "1fc3421c08d4fd683c0b4d2f83dd91ce769a8dd3799292b7e83e754d2f15e23d",
+      "newNativeFile": "test/out-product-labels-postgres.test.ts",
+      "newNativeShard": 1,
+      "completeAndDisjoint": true,
+      "collectionOnly": true,
+      "fullShardExecutionClaimed": false
+    },
+    "sharedSerialWrapper": true,
+    "maxWorkers": 1,
+    "fileParallelism": false,
+    "completeNativeFilesRunSeparatelyWithinOriginalBudgets": true,
+    "nativeCaseAndFileBudgetsUnchanged": true,
+    "distinctFinalTestCases": 1589
+  },
+  "limits": {
+    "schemaOrPrivilegePlanChanged": false,
+    "routesOrAuthenticationChanged": false,
+    "syntheticOutHTTPAccount": true,
+    "fullProductionRoleInstallerClaimed": false,
+    "actualProviderCalls": false,
+    "rawPHPUploaded": false,
+    "PHPExecuted": false,
+    "deployed": false,
+    "fullMigrationComplete": false,
+    "newCommitRemoteCIPassed": false,
+    "baseWorkerFullCIStillFailsBeforeTestsOnUnavailableFixedPHPRef": true,
+    "remainingRequirements": [
+      "Complete legacy Out detail envelope and option catalogs",
+      "Follow up source OrderJob::setUserLabel purchased-product label effects; current TS paid outbox only grants promotion labels"
+    ],
+    "otherUnmigratedOutFeaturesRemainExplicitlyRejected": true
+  }
+}

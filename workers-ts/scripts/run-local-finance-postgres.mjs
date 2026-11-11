@@ -823,6 +823,7 @@ if (schemaMaintenance) {
     'test/checkout-catalog-management.test.ts',
     'test/checkout-mobile-product-concurrency.test.ts',
     'test/checkout-out-product-concurrency.test.ts',
+    'test/out-product-labels-postgres.test.ts',
     'test/account-cancellation-order-admission-postgres.test.ts',
     'test/seckill-concurrency-postgres.test.ts',
     'test/checkout-sku-lifecycle-concurrency.test.ts',

@@ -29,6 +29,33 @@ function physicalProduct() {
 }
 
 describe("Out API product write migration", () => {
+  it('binds two distinct label selections and canonicalizes legacy user id/name echoes without trusting metadata', async () => {
+    const omitted = normalizeOutPhysicalProductInput(physicalProduct());
+    expect(Object.hasOwn(omitted, 'storeLabelIds')).toBe(false); expect(Object.hasOwn(omitted, 'userLabelIds')).toBe(false);
+    expect(normalizeOutPhysicalProductInput({ ...physicalProduct(), store_label_id: undefined, label_id: undefined })).toEqual(omitted);
+    const selected = normalizeOutPhysicalProductInput({ ...physicalProduct(), store_label_id: ['101'], label_id: [{ id: '201', label_name: '旧回显', type: 2, relation_id: 99 }] });
+    expect(selected).toMatchObject({ storeLabelIds: [101], userLabelIds: [201] });
+    expect(selected).toEqual(normalizeOutPhysicalProductInput({ ...physicalProduct(), store_label_id: [101], label_id: [201] }));
+    const clear = normalizeOutPhysicalProductInput({ ...physicalProduct(), store_label_id: [], label_id: [] });
+    expect(clear).toMatchObject({ storeLabelIds: [], userLabelIds: [] });
+    expect(await outRequestHash(clear)).not.toBe(await outRequestHash(omitted));
+    expect(await outRequestHash(selected)).not.toBe(await outRequestHash(clear));
+    expect(await outRequestHash(normalizeOutPhysicalProductInput({ ...physicalProduct(), store_label_id: [201] })))
+      .not.toBe(await outRequestHash(normalizeOutPhysicalProductInput({ ...physicalProduct(), label_id: [201] })));
+  });
+  it.each([{ value: null }, { value: 101 }, { value: '101,102' }, { value: {} }, { value: [101, 101] },
+    { value: [true] }, { value: ['0101'] }, { value: [2147483648] }, { value: [{ id: 101 }] }, { value: Array(101).fill(1) }])(
+    'rejects malformed product label ids ($value)', ({ value }) => {
+      expect(() => normalizeOutPhysicalProductInput({ ...physicalProduct(), store_label_id: value })).toThrow('标签');
+    });
+  it.each([{ value: null }, { value: 201 }, { value: '201,202' }, { value: {} }, { value: [201, { id: '201' }] },
+    { value: [true] }, { value: ['0201'] }, { value: [2147483648] }, { value: [{ label_name: '无编号' }] }, { value: Array(101).fill(1) }])(
+    'rejects malformed user label ids ($value)', ({ value }) => {
+      expect(() => normalizeOutPhysicalProductInput({ ...physicalProduct(), label_id: value })).toThrow('标签');
+    });
+  it('rejects user label CSV exceeding its actual main-column capacity before database work', () => {
+    expect(() => normalizeOutPhysicalProductInput({ ...physicalProduct(), label_id: Array.from({ length: 26 }, (_, i) => 1000000000 + i) })).toThrow('255');
+  });
   it('binds explicit ensure selections while omission retains the old normalized request shape', async () => {
     const omitted = normalizeOutPhysicalProductInput(physicalProduct());
     expect(Object.hasOwn(omitted, 'ensureIds')).toBe(false);

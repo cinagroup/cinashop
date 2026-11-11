@@ -28,6 +28,7 @@ import { assertOutProductBrandBindings, outProductBrandSelection, replaceOutProd
 import { supplierProductEnsureInput } from '@/services/supplier/SupplierProductEnsureBindings';
 import { assertOutProductEnsureBindings, lockOutProductEnsures, outProductEnsureSelection, replaceOutProductEnsureBindings } from './OutProductEnsureBindings';
 import { captureOutProductRelationFence } from './OutProductRelationFence';
+import { outProductLabelInput, lockOutProductLabels, replaceOutProductLabelBindings, assertOutProductLabelBindings, outProductLabelsSelection } from './OutProductLabelBindings';
 
 type UnknownRecord = Record<string, unknown>;
 type ProductWriteOperation = "product_create" | "product_update" | "product_show" | "stock_upload";
@@ -48,6 +49,8 @@ interface OutAccountIdentity {
 interface OutPhysicalProductInput extends SupplierPhysicalProductInput {
   brandIds?: number[];
   ensureIds?: number[];
+  storeLabelIds?: number[];
+  userLabelIds?: number[];
   deliveryType: string;
   freight: 1 | 2 | 3;
   isShow: 0 | 1;
@@ -154,14 +157,12 @@ function rejectUnmigratedProductFeatures(input: UnknownRecord): void {
     "custom_form",
     "is_presale_product",
     "is_vip_product",
-    "label_id",
     "presale_day",
     "presale_time",
     "recommend",
     "recommend_list",
     "specs",
     "specs_id",
-    "store_label_id",
   ].filter((key) => nonEmpty(input[key]));
   if (unsupported.length > 0) {
     throw new ValidateException(`以下商品能力尚未迁移，不能静默丢弃：${unsupported.join(",")}`);
@@ -210,6 +211,7 @@ export function normalizeOutPhysicalProductInput(input: UnknownRecord): OutPhysi
     ...base,
     ...(brandIds === undefined ? {} : { brandIds }),
     ...(ensureIds === undefined ? {} : { ensureIds }),
+    ...outProductLabelInput(input),
     sliderImages,
     skus,
     videoLink: safeAsset(base.videoLink, "商品视频", 500),
@@ -394,6 +396,7 @@ export class OutProductService {
     const input = normalizeOutPhysicalProductInput(rawInput);
     const brandIds = input.brandIds;
     const ensureIds = input.ensureIds;
+    const { storeLabelIds, userLabelIds } = input;
     const operation: ProductWriteOperation = productId > 0 ? "product_update" : "product_create";
     const hash = await outRequestHash({ operation, productId, input });
     return withTx(this.container, async (tx) => {
@@ -468,9 +471,15 @@ export class OutProductService {
       const now = Math.floor(Date.now() / 1000);
       const admittedEnsures = ensureIds === undefined ? undefined
         : await inventoryLock(() => lockOutProductEnsures(tx, ensureIds, existing));
+      const admittedProductLabels = storeLabelIds === undefined ? undefined
+        : await inventoryLock(() => lockOutProductLabels(tx, 'product', storeLabelIds));
+      const admittedUserLabels = userLabelIds === undefined ? undefined
+        : await inventoryLock(() => lockOutProductLabels(tx, 'user', userLabelIds));
       const productValues = {
         ...(brandIds === undefined ? {} : { brandId: brandIds.at(-1) ?? 0, brandCom: brandIds.join(',') }),
         ...(ensureIds === undefined ? {} : { ensureId: ensureIds.join(',') }),
+        ...(storeLabelIds === undefined ? {} : { storeLabelId: storeLabelIds.join(',') }),
+        ...(userLabelIds === undefined ? {} : { labelId: userLabelIds.join(',') }),
         productType: PHYSICAL_PRODUCT_TYPE,
         type: PLATFORM_TYPE,
         relationId: PLATFORM_RELATION_ID,
@@ -518,9 +527,10 @@ export class OutProductService {
         autoOffTime: input.isShow ? 0 : (existing?.autoOffTime ?? 0),
       } as const;
 
-      const relationFence = brandIds === undefined && ensureIds === undefined ? undefined
+      const relationFence = [brandIds, ensureIds, storeLabelIds, userLabelIds].every(ids => ids === undefined) ? undefined
         : await inventoryLock(() => captureOutProductRelationFence(tx, existing,
-          [1, ...(brandIds === undefined ? [] : [2]), ...(ensureIds === undefined ? [] : [5])]));
+          [1, ...(brandIds === undefined ? [] : [2]), ...(storeLabelIds === undefined ? [] : [3]),
+            ...(userLabelIds === undefined ? [] : [4]), ...(ensureIds === undefined ? [] : [5])]));
       let savedProductId = productId;
       if (existing) {
         await tx.update(storeProduct).set(productValues).where(eq(storeProduct.id, productId));
@@ -632,12 +642,18 @@ export class OutProductService {
         : await inventoryLock(() => replaceOutProductBrandBindings(tx, savedProductId, brandIds, relationFence!));
       const ensureProof = ensureIds === undefined ? undefined
         : await inventoryLock(() => replaceOutProductEnsureBindings(tx, savedProductId, ensureIds, admittedEnsures!, relationFence!));
+      const productLabelProof = admittedProductLabels === undefined ? undefined
+        : await inventoryLock(() => replaceOutProductLabelBindings(tx, savedProductId, admittedProductLabels, relationFence!));
+      const userLabelProof = admittedUserLabels === undefined ? undefined
+        : await inventoryLock(() => replaceOutProductLabelBindings(tx, savedProductId, admittedUserLabels, relationFence!));
       await recordReplay(tx, account.id, operation, key, hash, savedProductId);
       if (brandProof) {
         await inventoryLock(() => assertOutProductBrandBindings(tx, brandProof));
         await inventoryLock(() => lockSupplierProductBrandPath(tx, brandProof.ids));
       }
       if (ensureProof) await inventoryLock(() => assertOutProductEnsureBindings(tx, ensureProof));
+      if (productLabelProof) await inventoryLock(() => assertOutProductLabelBindings(tx, productLabelProof));
+      if (userLabelProof) await inventoryLock(() => assertOutProductLabelBindings(tx, userLabelProof));
       return { id: savedProductId, idempotent: false, stock_preserved: !!existing };
     });
   }
@@ -700,6 +716,7 @@ export class OutProductService {
         ...product,
         ...await outProductBrandSelection(tx, product),
         ...await outProductEnsureSelection(tx, product),
+        ...await outProductLabelsSelection(tx, product),
         cate_id: categories.map((row) => row.relation_id),
         description: descriptions[0]?.description ?? "",
         items,
