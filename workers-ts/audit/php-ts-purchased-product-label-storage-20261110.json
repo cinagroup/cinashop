@@ -1,0 +1,388 @@
+{
+  "schema": "php-ts-purchased-product-label-storage/v1",
+  "base": "fc568ece3558053f961188d4f6acb7cdf90ff1ad",
+  "candidate": 5,
+  "scope": "Prospective owner-only durable intent, mutable task state, immutable receipt, finite source capture and user-approved scope selection",
+  "runtimeEnabled": false,
+  "realPaymentAuthorImplemented": false,
+  "labelMembershipWriterImplemented": false,
+  "queueScannerReplayImplemented": false,
+  "productDecision": {
+    "answered": true,
+    "userChoice": "按标签自身归属：平台标签留在平台；门店标签须匹配订单实际财务门店（推荐）",
+    "platformLabelsRemainType0Relation0": true,
+    "storeLabelsRequireType1AndMatchingActualFinancialStore": true,
+    "fulfillmentAssignmentTargetIsNotFinancialOwnership": true,
+    "independentTaskAndExecuteTimeProductConfiguration": true,
+    "appendMissingOnlyNoRemovals": true,
+    "doesNotAuthorizePushOrDeployment": true
+  },
+  "legacySource": {
+    "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+    "sources": [
+      {
+        "file": "app/jobs/order/OrderJob.php",
+        "bytes": 16130,
+        "sha256": "04cb1e12b561bd0a5a973e01cfb15cc2ed7277f595be3e6271bd01732e08421d",
+        "gitBlobSha1": "5ba432613a1c50d2f567d683db16251ceb2d312c",
+        "lineReferences": [
+          116,
+          138,
+          147,
+          152
+        ]
+      },
+      {
+        "file": "app/jobs/order/SpliteStoreOrderJob.php",
+        "bytes": 1340,
+        "sha256": "693fc4f7106cf32269ec9a11c3bb8781a9244646fd11364640a8ed6924df6a23",
+        "gitBlobSha1": "fae75f864e0fba5db44e266d4d482eb9a9f52b00",
+        "lineReferences": [
+          26,
+          29
+        ]
+      },
+      {
+        "file": "app/jobs/order/ShareOrderJob.php",
+        "bytes": 6039,
+        "sha256": "77b498bd4a26aea11f9209884f80c76f7833d6039c1e5e9861a3b751f812227c",
+        "gitBlobSha1": "f73a5670e553e53d68ce9a292167023ee14a3622",
+        "lineReferences": [
+          44,
+          102,
+          115,
+          119,
+          131
+        ]
+      },
+      {
+        "file": "app/services/user/label/UserLabelRelationServices.php",
+        "bytes": 4134,
+        "sha256": "925e4fbb6c7def792f5b41441d2a94a6edee6536b8bb1af74f7ca8f618bbcba6",
+        "gitBlobSha1": "7d5bea45ce4ec0dcb5e66da7c043e2b9bdecbad8",
+        "lineReferences": [
+          56,
+          69,
+          78,
+          91
+        ]
+      }
+    ],
+    "observedContract": {
+      "legacyEntry": "ShareOrderJob -> SpliteStoreOrderJob::splitAfter -> OrderJob::setUserLabel",
+      "readsProductLabelsAtJobExecution": true,
+      "discountType5AdditionalLabels": true,
+      "appendMissingOnly": true,
+      "platformAndStoreScopesDistinct": true,
+      "legacyErrorsLoggedAndSwallowed": true
+    },
+    "rawSourceUploaded": false
+  },
+  "storage": {
+    "ownerOnly": true,
+    "runtimeReady": false,
+    "pgMajor": 16,
+    "logicalCatalogSha256": "07c2843b4efd96edb224030fcff3505c5fea6e0d2668b9712679c8cc0b0d19c1",
+    "fullOwnedCatalogCaptureSha256": "9767934d807f4f70b5f830808170c7b49073fc84b3ada2f077c25a810e093792",
+    "independentRestrictedLoginPermissionDenials": true,
+    "parentAndChildRITriggersPinned": true,
+    "repeatsRetainOidsRowsAndDefinitions": true,
+    "noRuntimeGrants": true,
+    "notAnActorOrPaymentAuthorization": true
+  },
+  "candidateInputs": [
+    {
+      "file": "workers-ts/docs/php-ts-purchased-product-label-storage-20261110.md",
+      "sha256": "184f683339ec15cbf2de44355016c0da74ea96ce5511a90264fd7a3818aac9f0"
+    },
+    {
+      "file": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "059fb9795b7e050af5e0f7a5ac6a52085952dcbefdbddedcf5d0f4e99aad9d3d"
+    },
+    {
+      "file": "workers-ts/src/migrations/installPurchasedProductLabelStorage.ts",
+      "sha256": "f6f0b3a363080c543d942b32236d6933c3e7113ee223574e41fc17ce68f3b7b6"
+    },
+    {
+      "file": "workers-ts/src/migrations/purchasedProductLabelContract.ts",
+      "sha256": "af40efd31079f13a17ebdde11bb05fca01480daa0a9aaf7094be179754db2591"
+    },
+    {
+      "file": "workers-ts/src/migrations/purchasedProductLabelStorage.ts",
+      "sha256": "dfa93301a4b292bc96c42b331728894f7da6f67ae1ec660125c94a128d39dc26"
+    },
+    {
+      "file": "workers-ts/src/services/order/PurchasedProductLabelCodec.ts",
+      "sha256": "62a4d0c72c044593607a5bc9b1ddfa3a1b25fb69a61c602fbc56a721f55643cc"
+    },
+    {
+      "file": "workers-ts/src/services/order/PurchasedProductLabelSelection.ts",
+      "sha256": "216fe4ab1b0eec09b6272f3e21a20e091b20a8dced85579d739221ff2103789b"
+    },
+    {
+      "file": "workers-ts/test/fixtures/purchased-label-storage-runner-continuity-20261110.json",
+      "sha256": "946bffa54ae23fde86b310e92edf59ad3aa62f17e8ffc3835bdc15aa0629b026"
+    },
+    {
+      "file": "workers-ts/test/helpers/providerTransportSourceContinuity.ts",
+      "sha256": "657559a52a94ddebf649b135e0752961a9fa7c96bef9008de6c29ad6e369741a"
+    },
+    {
+      "file": "workers-ts/test/helpers/purchasedLabelStorageRunnerSourceContinuity.ts",
+      "sha256": "acb158942aa01dbe6611a6b285b88085e4d17687672d24c544d3ef69ae9de5b2"
+    },
+    {
+      "file": "workers-ts/test/out-product-label-runner-source-continuity.test.ts",
+      "sha256": "744b042d95571042fe705d46841fbb4a13f7b8d304fcf4cc318b2da667f80461"
+    },
+    {
+      "file": "workers-ts/test/purchased-label-storage-runner-source-continuity.test.ts",
+      "sha256": "ecba06f53f0e26a52fc2656acbab3fe5deb319dde1815a0d4104b9992931c499"
+    },
+    {
+      "file": "workers-ts/test/purchased-product-label-codec.test.ts",
+      "sha256": "da8f82ef5a1ebd3d71715f49605fa0aa127fd59ef2d31cf1b924600d14f4532a"
+    },
+    {
+      "file": "workers-ts/test/purchased-product-label-selection.test.ts",
+      "sha256": "2b7da14698f4cff41a45918683614da37d2ed2b17bb555202a4d72f7a8e994e1"
+    },
+    {
+      "file": "workers-ts/test/purchased-product-label-storage-native.test.ts",
+      "sha256": "e39c9cde8ffdf472ceaee5af30d068a8a8ef9e96a501271ddcf39a7f47db878f"
+    }
+  ],
+  "retainedInputs": {
+    "base": "fc568ece3558053f961188d4f6acb7cdf90ff1ad",
+    "protected": [
+      {
+        "file": "workers-ts/src/services/order/OrderOutboxService.ts",
+        "sha256": "2edbf668cba6ac99dae579157efac64f190c74b987201824e3bc4d955d906522",
+        "unchanged": true
+      },
+      {
+        "file": "workers-ts/src/services/order/OrderRewardService.ts",
+        "sha256": "3e176eb02577defb6af98eba59995354c38c33013b35ce27f8237d932f1fa785",
+        "unchanged": true
+      },
+      {
+        "file": "workers-ts/src/services/order/OrderSupplierAllocationService.ts",
+        "sha256": "e3c03ab0c0852357edf3ea704ac098b0663a6528bb6ca98b8498d7c092c63ad9",
+        "unchanged": true
+      },
+      {
+        "file": "workers-ts/src/models/schema/order_outbox.ts",
+        "sha256": "51021f1a87cf554cd50c5b9ce335a7285327e85ccf6abe0eb9f78d095e0914a2",
+        "unchanged": true
+      },
+      {
+        "file": "workers-ts/src/migrations/paidNotice.ts",
+        "sha256": "4a8f4f4eff3af5163800ef72931a38e8a1e483e046eb15ac0affa3ea6942f7a1",
+        "unchanged": true
+      },
+      {
+        "file": "workers-ts/src/services/order/OrderPaidNoticeCodec.ts",
+        "sha256": "106688d2e4d71ba19d749f7d14e946d32bb032b6a9c313c73276e5f56111518a",
+        "unchanged": true
+      },
+      {
+        "file": ".gitleaks.toml",
+        "sha256": "8d3f6557cffc5c61bc1ab6a8c5ac26400542f6da5d7c2320306ee17373a14eea",
+        "unchanged": true
+      },
+      {
+        "file": ".gitleaksignore",
+        "sha256": "1f6204fa08c92058b8a8f3e9b99dfbcb90c4537da28de17fc782e3f8a4c988bb",
+        "unchanged": true
+      }
+    ],
+    "fixedRunnerPredecessorVerifiedAgainstActualGit": true,
+    "legacyPHPRawSourceUploaded": false
+  },
+  "validation": {
+    "distinctFinalCases": 1485,
+    "unit": {
+      "passed": 1452,
+      "failed": 0,
+      "skipped": 0,
+      "completeFiles": 16,
+      "affectedSourceProofCasesRerun": 588,
+      "unchangedFrozenCasesReused": 864,
+      "initialAll1452ReportSha256": "67dd1c438d8d195cb462664f0bfe929a905f7f28f11bfa5b9da75bac46d25d3e",
+      "followup588ReportSha256": "150929f459da370af144ec9f220ee305f25ef32b73cea71af47d9d1674b2d76a"
+    },
+    "nativeStorage": {
+      "passed": 27,
+      "failed": 0,
+      "skipped": 0,
+      "structuralSpecimensOnly": true,
+      "remainingFixtures": 0,
+      "clusterStopped": true
+    },
+    "nativeUnchangedPromotion": {
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "concurrentFirstGrantExecuted": true,
+      "remainingFixtures": 0,
+      "clusterStopped": true
+    },
+    "workerUnitTypecheckPassed": true,
+    "workerRuntimeTypecheckPassed": true,
+    "executions": [
+      {
+        "name": "source-followup",
+        "status": "completed",
+        "timeoutSeconds": 600,
+        "exitCode": 0,
+        "elapsedSeconds": 18.54
+      },
+      {
+        "name": "typecheck-unit",
+        "status": "completed",
+        "timeoutSeconds": 600,
+        "exitCode": 0,
+        "elapsedSeconds": 256.51
+      },
+      {
+        "name": "typecheck-runtime",
+        "status": "completed",
+        "timeoutSeconds": 600,
+        "exitCode": 0,
+        "elapsedSeconds": 107.67
+      }
+    ]
+  },
+  "developmentHistory": [
+    "Initial shared-Outbox experiment archived; notification catalog restored to exact base",
+    "catalog-capture-04: test structural specimen used wrong Outbox fields; corrected to aggregateId",
+    "catalog-capture-05/06: development unpinned capture intentionally failed until full owned PG16 shape fixed",
+    "storage-native-07: standalone TRUNCATE intent failed on FK before trigger; CASCADE specimen now verifies actual immutable-trigger denial",
+    "storage-native-08: PUBLIC defaults are intentionally revoked by DDL; changed negative case to genuine unexpected independent runtime default grant",
+    "types-unit-09: invocation omitted repository standard8192MB; default4096MB V8 heap exhausted before type diagnostics; full standard-command checks still required",
+    "candidate4 full unit types: TS2345 requires explicit TextDecoder ignoreBOM; set false (existing default), no runtime/SQL/runner/admission changes"
+  ],
+  "runnerSuccessor": {
+    "literalAdmissionLinesAdded": 2,
+    "budgetsUnchanged": true,
+    "fixture": "workers-ts/test/fixtures/purchased-label-storage-runner-continuity-20261110.json",
+    "oldProofsAndAssertionsRetained": true,
+    "olderOutLabelTestReadsFixedPredecessorOnlyThroughWholeImageCheckedSuccessor": true,
+    "nativeDescriptorReadsRemainCurrent": true,
+    "noNewShallowCICommitDependency": true
+  },
+  "baseRemoteCI": {
+    "base": "fc568ece3558053f961188d4f6acb7cdf90ff1ad",
+    "runId": 42956121380,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/42956121380",
+    "jobs": [
+      {
+        "id": 130311529068,
+        "name": "UniApp editorial author and PHP style execution",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 130311529303,
+        "name": "Worker type, unit, schema and route execution (shard 2/2)",
+        "status": "completed",
+        "conclusion": "failure"
+      },
+      {
+        "id": 130311529347,
+        "name": "Repository secret scan",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 130311529371,
+        "name": "UniApp type, runtime and three-platform build execution",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 130311529379,
+        "name": "Worker type, unit, schema and route execution (shard 1/2)",
+        "status": "completed",
+        "conclusion": "failure"
+      },
+      {
+        "id": 130311529404,
+        "name": "Isolated PostgreSQL 16 migration catalog execution",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 130311529438,
+        "name": "Supplier build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 130311529472,
+        "name": "PC build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 130311529479,
+        "name": "Admin build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 130311529495,
+        "name": "workerd runtime tests",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 130311529596,
+        "name": "Kefu build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 130315324586,
+        "name": "Worker type, unit, schema and route gates",
+        "status": "completed",
+        "conclusion": "failure"
+      },
+      {
+        "id": 130318141869,
+        "name": "UniApp build",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "previouslyVerifiedFailure": {
+      "jobs": [
+        130311529303,
+        130311529379
+      ],
+      "beforeUnitExecution": true,
+      "missingFixedLegacyCommit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "source": "Previous completed turn filtered exact job logs, retained in out-product-detail new-sha-ci.json"
+    },
+    "legacyPHPUploadedByThisTask": false,
+    "fullCISuccess": false
+  },
+  "scanReports": "Run full candidate-file and exact-commit scans after writing this audit; results retained in the local completion record",
+  "constraints": {
+    "legacyPHPUploaded": false,
+    "deployed": false,
+    "realProviderCalls": false,
+    "subagentsSpawned": false,
+    "fullMigrationComplete": false
+  },
+  "remaining": [
+    "Explicit named App/Admin runtime privilege successor and readiness",
+    "Real paid allocation source author and complete parent event hash fence",
+    "Execute-time product and type5 bundle configuration reader, approved-scope append-only membership and closed result codec",
+    "Atomic grant/result/completed transaction and completed replay without regrant",
+    "Dedicated Queue dispatch, scanner, bounded retries, deadletter and authenticated replay",
+    "Full actual checkout/payment/store/Supplier/split/gift/bundle/catalog-race/failure acceptance",
+    "New exact SHA push authorization and remote CI",
+    "Fixed legacy PHP CI input supply issue without uploading PHP"
+  ]
+}

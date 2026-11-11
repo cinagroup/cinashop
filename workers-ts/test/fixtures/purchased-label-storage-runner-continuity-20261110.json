@@ -1,0 +1,32 @@
+{
+  "schema": "purchased-label-storage-runner-continuity/v1",
+  "predecessorCommit": "fc568ece3558053f961188d4f6acb7cdf90ff1ad",
+  "file": "workers-ts/scripts/run-local-finance-postgres.mjs",
+  "current": {
+    "bytes": 139211,
+    "sha256": "059fb9795b7e050af5e0f7a5ac6a52085952dcbefdbddedcf5d0f4e99aad9d3d",
+    "gitBlobSha1": "0c24b8246d362d2a6d6615ed646e2ea181ad0ccf"
+  },
+  "predecessor": {
+    "bytes": 139093,
+    "sha256": "40e3f1fc5545335fc7b57fb2244f5e67609c1238021e4fb7daed813bdb96b032",
+    "gitBlobSha1": "6bb5a028b007e7e21aa33b5fec2bb7236b6496eb"
+  },
+  "inverseEdits": [
+    {
+      "start": 426,
+      "after": [
+        "    'test/purchased-product-label-storage-native.test.ts',\n"
+      ],
+      "before": []
+    },
+    {
+      "start": 1585,
+      "after": [
+        "    'test/purchased-product-label-storage-native.test.ts',\n"
+      ],
+      "before": []
+    }
+  ],
+  "scope": "Two literal admissions only; schema-maintenance file allowlist and corresponding isolated maintenance role predicate. Existing cases and budgets unchanged."
+}
