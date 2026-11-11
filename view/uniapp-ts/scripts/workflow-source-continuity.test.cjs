@@ -13,15 +13,21 @@ const current = readFileSync(resolve(root, WORKFLOW_FILE), 'utf8');
 const legacyBytes = readFileSync(resolve(root, 'workers-ts/test/fixtures/legacy-php-input-source-binding-20261103.json'));
 assert.equal(sha(legacyBytes), 'e5427c63002e4def70c41cd63c5c1e06bc771d6a2dc7400622db972f98f13d47');
 const legacy = JSON.parse(legacyBytes);
-const intermediate = current
+const operationsPredecessor = current.replace(
+  '        run: npm run test:admin-navigation && npm run test:purchased-label-tasks\n',
+  '        run: npm run test:admin-navigation\n');
+const intermediate = operationsPredecessor
   .replace("these exact predecessors' Git objects", "this exact predecessor's Git objects")
   .replace('fixed commits without', 'fixed commit without')
   .replace("          git fetch --no-tags --depth=1 origin 353ec0ed03a860eafbc850e9983da505a7ade748\n"
     + "          git cat-file -e '353ec0ed03a860eafbc850e9983da505a7ade748^{commit}'\n", '');
 
-test('complete native workflow derives the independent legacy candidate through exactly the two reviewed increments', () => {
-  assert.equal(Buffer.byteLength(current), 21512);
-  assert.equal(sha(current), PINS.provider.current.sha256);
+test('complete native workflow derives the independent legacy candidate through exactly the three reviewed increments', () => {
+  assert.equal(Buffer.byteLength(current), 21550);
+  assert.equal(sha(current), PINS.operations.current.sha256);
+  assert.equal(Buffer.byteLength(operationsPredecessor), 21512);
+  assert.equal(sha(operationsPredecessor), PINS.provider.current.sha256);
+  assert.deepEqual(PINS.operations.predecessor, PINS.provider.current);
   assert.equal(Buffer.byteLength(intermediate), 21344);
   assert.equal(sha(intermediate), PINS.provider.predecessor.sha256);
   assert.deepEqual(PINS.provider.predecessor, PINS.refund.current);
@@ -40,6 +46,10 @@ for (const [label, source] of [
   ['removed first fixed TS check', current.replace("          git cat-file -e '78240b7801a617ed5b1c1e444860228c066311b8^{commit}'\n", '')],
   ['removed second fixed TS check', current.replace("          git cat-file -e '353ec0ed03a860eafbc850e9983da505a7ade748^{commit}'\n", '')],
   ['ignored failure', current.replace('        run: |', '        continue-on-error: true\n        run: |')],
+  ['removed purchased-label execution', operationsPredecessor],
+  ['duplicated purchased-label execution', current.replace(' && npm run test:purchased-label-tasks', ' && npm run test:purchased-label-tasks && npm run test:purchased-label-tasks')],
+  ['replaced Admin navigation', current.replace('npm run test:admin-navigation && npm run test:purchased-label-tasks', 'npm run test:purchased-label-tasks')],
+  ['ignored purchased-label failure', current.replace(' && npm run test:purchased-label-tasks', ' && npm run test:purchased-label-tasks || true')],
   ['valid intermediate fallback', intermediate], ['old candidate fallback', legacy.images.candidate.raw_utf8],
   ['f2 fallback', legacy.images.predecessor.raw_utf8],
 ]) test('refuses unreviewed live workflow or historical fallback: ' + label, () => {
@@ -52,7 +62,7 @@ for (const value of [null, undefined, {}, [], Buffer.from(current)])
     assert.throws(() => project(WORKFLOW_FILE, value), /current workflow source differs/);
   });
 
-for (const kind of ['provider', 'refund']) {
+for (const kind of ['operations', 'provider', 'refund']) {
   const bytes = readFileSync(resolve(root, PINS[kind].file));
   test('decodes and freezes the complete independently pinned ' + kind + ' proof', () => {
     const proof = decodeWorkflowContinuityProof(kind, bytes);
@@ -73,7 +83,7 @@ for (const kind of ['provider', 'refund']) {
     assert.throws(() => decodeWorkflowContinuityProof(kind, altered), /complete proof bytes differ/);
   });
   for (const [label, mutate] of [
-    ['unselected source', p => { p.sources[0].current.sha256 = '0'.repeat(64); }],
+    ['unselected source', p => { p.sources.find(row => row.file !== WORKFLOW_FILE).current.sha256 = '0'.repeat(64); }],
     ['partial workflow-only proof', p => { p.sources = p.sources.filter(row => row.file === WORKFLOW_FILE); }],
     ['duplicate source', p => { p.sources.push(p.sources[0]); }],
     ['reordered source', p => { p.sources.reverse(); }],

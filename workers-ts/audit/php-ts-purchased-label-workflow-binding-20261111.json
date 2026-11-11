@@ -1,0 +1,162 @@
+{
+  "schema": "purchased-label-workflow-binding/v1",
+  "baseCommit": "fbc25a26d578e18a34bdbc113010c5bc96993902",
+  "preparedAt": "2026-11-11T10:52:03.692339+00:00",
+  "problem": {
+    "parentRun": 43005334874,
+    "job": 130471283965,
+    "jobUrl": "https://github.com/cinagroup/cinashop/actions/runs/43005334874/job/130471283965",
+    "error": "Uni workflow continuity: current workflow source differs",
+    "localBaselineExit": 1,
+    "localBaselineLogSha256": "2a6ce9fb1a58596bac882a81e7aa65f38f9bebcf980746ddb5f06f43a05b67b4"
+  },
+  "change": "Compose the existing complete six-source operations proof before the unchanged provider/refund/legacy workflow proofs.",
+  "validation": {
+    "baseCommit": "fbc25a26d578e18a34bdbc113010c5bc96993902",
+    "inputs": [
+      {
+        "file": ".github/workflows/workers-runtime-linux.yml",
+        "bytes": 21550,
+        "sha256": "94f08a84a76181eb0f0229f0f82d1f731b9c39ebbe09b5ceebb4ae3741d6cac6",
+        "unchangedFromBase": true
+      },
+      {
+        "file": "view/uniapp-ts/scripts/workflow-source-continuity.cjs",
+        "bytes": 6693,
+        "sha256": "2e048cd33ca91c8d7c1d64280a0c7cf66564f2b9e2cf3bbf563b8028c42a02e4",
+        "unchangedFromBase": false
+      },
+      {
+        "file": "view/uniapp-ts/scripts/workflow-source-continuity.test.cjs",
+        "bytes": 9377,
+        "sha256": "b9aba7e10fda0289a2e94e18ee86b75b625c99dc4c613e73451938070bfa1c95",
+        "unchangedFromBase": false
+      },
+      {
+        "file": "view/uniapp-ts/scripts/legacy-php-workflow-source-binding.cjs",
+        "bytes": 5545,
+        "sha256": "2773c11bad672cdbd761f5f624cdad655755a28a10db14665a9d39d07f21239f",
+        "unchangedFromBase": true
+      },
+      {
+        "file": "view/uniapp-ts/scripts/legacy-php-workflow-source-binding.test.cjs",
+        "bytes": 8425,
+        "sha256": "72316bfc179fa25e74db4ed7c70c23d5247cf6d300316ca0af7dbf17edb69dfc",
+        "unchangedFromBase": true
+      },
+      {
+        "file": "view/uniapp-ts/scripts/ci-migration-gates.test.cjs",
+        "bytes": 6943,
+        "sha256": "01f695cdddc38cbd5cdcfc4da702f3896cf1edea2d10fdf9476acc18168cfd2e",
+        "unchangedFromBase": true
+      },
+      {
+        "file": "view/uniapp-ts/scripts/ci-migration-gates.baseline.json",
+        "bytes": 21192,
+        "sha256": "4c8cd467d196650fa5d9fac21a6279199a455eb812646dda0d96e8083737e9c2",
+        "unchangedFromBase": true
+      },
+      {
+        "file": "workers-ts/test/fixtures/purchased-label-operations-continuity-20261110.json",
+        "bytes": 37217,
+        "sha256": "60144df5fb7fe5d781e24ba935060434d23efce30c24d06841b85f16c40271de",
+        "unchangedFromBase": true
+      },
+      {
+        "file": "workers-ts/test/fixtures/provider-transport-source-continuity-20261109.json",
+        "bytes": 46704,
+        "sha256": "be895c2c4a72e33c120aadd7da13fb71eae93b9ff6ff37e495ee6b8fcf81d1b1",
+        "unchangedFromBase": true
+      },
+      {
+        "file": "workers-ts/test/fixtures/recharge-refund-notice-consumer-source-continuity-20261109.json",
+        "bytes": 655361,
+        "sha256": "dc74c4abd38298c3feed1afa7a1578d57e2f753360115538e5716e4f68257532",
+        "unchangedFromBase": true
+      },
+      {
+        "file": "workers-ts/test/fixtures/legacy-php-input-source-binding-20261103.json",
+        "bytes": 64132,
+        "sha256": "e5427c63002e4def70c41cd63c5c1e06bc771d6a2dc7400622db972f98f13d47",
+        "unchangedFromBase": true
+      },
+      {
+        "file": "workers-ts/test/fixtures/uni-ci-workflow-source-binding-20261102.json",
+        "bytes": 72990,
+        "sha256": "72feefd0ae48a70f80edfc8c8124e880421754e50b45a496e9b284cc5023c1f0",
+        "unchangedFromBase": true
+      }
+    ],
+    "profiles": [
+      {
+        "profile": "final-partition",
+        "exit": 0,
+        "passed": 155,
+        "failed": 0,
+        "skipped": 0,
+        "seconds": 0.47
+      },
+      {
+        "profile": "no-git-partition",
+        "exit": 0,
+        "passed": 155,
+        "failed": 0,
+        "skipped": 0,
+        "seconds": 0.477
+      }
+    ],
+    "distinctCases": 155,
+    "caseExecutions": 310,
+    "noGitMetadata": true,
+    "phpSourceSupplied": false
+  },
+  "candidateImages": [
+    {
+      "file": "view/uniapp-ts/scripts/workflow-source-continuity.cjs",
+      "bytes": 6693,
+      "sha256": "2e048cd33ca91c8d7c1d64280a0c7cf66564f2b9e2cf3bbf563b8028c42a02e4"
+    },
+    {
+      "file": "view/uniapp-ts/scripts/workflow-source-continuity.test.cjs",
+      "bytes": 9377,
+      "sha256": "b9aba7e10fda0289a2e94e18ee86b75b625c99dc4c613e73451938070bfa1c95"
+    },
+    {
+      "file": "workers-ts/docs/php-ts-purchased-label-workflow-binding-20261111.md",
+      "bytes": 2382,
+      "sha256": "7cfe7f12d063c6fd5bc6438a03f692e4bd0f42132b1612eb8a1ab27b92f4436b"
+    }
+  ],
+  "artifacts": [
+    {
+      "name": "baseline-partition.log",
+      "sha256": "2a6ce9fb1a58596bac882a81e7aa65f38f9bebcf980746ddb5f06f43a05b67b4"
+    },
+    {
+      "name": "final-partition.log",
+      "sha256": "d6b029974ddfd10a515d8eb7c16ac35f5a7f281de2f3aa09b8f27562a455b30b"
+    },
+    {
+      "name": "no-git-partition.log",
+      "sha256": "c6c6199acfa142519e611c270681fde805e630a13b897875cdaf97d299f1f95b"
+    },
+    {
+      "name": "validation.json",
+      "sha256": "04895ac45f2ef0d9f4fc50f6df1e403114727379f970e482149de3480b6ce634"
+    }
+  ],
+  "boundaries": {
+    "workflowChanged": false,
+    "legacyBaselinesAndProofsChanged": false,
+    "jobOrTestBudgetsChanged": false,
+    "originalAggregateFailClosed": true,
+    "appRuntimeChanged": false,
+    "fullBuildReexecuted": false,
+    "newShaRemoteCiVerified": false,
+    "oldPhpSuppliedOrUploaded": false,
+    "deploymentPerformed": false,
+    "providerRequests": 0,
+    "wholeMigrationComplete": false
+  },
+  "parentWorkerFailure": "Required fixed legacy PHP checkout remains unsupplied; this change neither skips nor supplies it."
+}

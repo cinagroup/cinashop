@@ -1,7 +1,7 @@
 'use strict';
 
 // Historical Uni assertions only. Read the complete live workflow, reverse the
-// two already reviewed TS-only increments, then let the unchanged five-edit
+// three already reviewed TS-only increments, then let the unchanged five-edit
 // legacy-input proof run. This neither executes nor changes the actual gates.
 const { createHash } = require('node:crypto');
 const { readFileSync } = require('node:fs');
@@ -20,6 +20,14 @@ const freeze = value => {
   return value;
 };
 const PINS = freeze({
+  operations: {
+    file: 'workers-ts/test/fixtures/purchased-label-operations-continuity-20261110.json',
+    bytes: 37217, sha256: '60144df5fb7fe5d781e24ba935060434d23efce30c24d06841b85f16c40271de',
+    schema: 'purchased-label-operations-continuity/v1', count: 6,
+    predecessorCommit: '2e63c407db8b66baae76efbcb111f325417d1ad9',
+    current: { bytes: 21550, sha256: '94f08a84a76181eb0f0229f0f82d1f731b9c39ebbe09b5ceebb4ae3741d6cac6', gitBlobSha1: 'c928028113d6f075c50baa87ccc8d25e1aac0a39' },
+    predecessor: { bytes: 21512, sha256: 'cd1d81bab3cb25272b3eca15dedb979527ecbeabb382bc9c17a7da156fa14cfa', gitBlobSha1: '552bed24653cb1ea22716fc7ddf5ab9545c830d5' },
+  },
   provider: {
     file: 'workers-ts/test/fixtures/provider-transport-source-continuity-20261109.json',
     bytes: 46704, sha256: 'be895c2c4a72e33c120aadd7da13fb71eae93b9ff6ff37e495ee6b8fcf81d1b1',
@@ -58,8 +66,10 @@ function decodeWorkflowContinuityProof(kind, bytes) {
 
 const proofs = Object.fromEntries(Object.entries(PINS).map(([kind, pin]) =>
   [kind, decodeWorkflowContinuityProof(kind, readFileSync(resolve(root, pin.file)))]));
-const rows = ['provider', 'refund'].map(kind => proofs[kind].sources.find(row => row.file === WORKFLOW_FILE));
-if (JSON.stringify(rows[0].predecessor) !== JSON.stringify(rows[1].current)) fail('complete intermediate image differs');
+const rows = ['operations', 'provider', 'refund'].map(kind => proofs[kind].sources.find(row => row.file === WORKFLOW_FILE));
+for (let i = 1; i < rows.length; i++) {
+  if (JSON.stringify(rows[i-1].predecessor) !== JSON.stringify(rows[i].current)) fail('complete intermediate image differs');
+}
 
 function projectCurrentWorkflowToLegacyCandidate(file, source) {
   if (file !== WORKFLOW_FILE) return source;
