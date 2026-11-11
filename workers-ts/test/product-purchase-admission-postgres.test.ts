@@ -961,3 +961,151 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Out manual virtu
     });
   },30_000);
 });
+
+// Out second-card creation and fulfillment are exercised through the real authenticated routes.
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Out second-card author and checkout', () => {
+  let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
+  let owned: Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
+  let network: ReturnType<typeof vi.spyOn>, testEnv: Env, token: string;
+  const input = { product_type: 4, cate_id: [9], store_name: '隔离次卡', slider_image: ['/card.png'],
+    spec_type: 0, is_show: 1, attrs: [{ price: '10.00', stock: 5, bar_code: 'CARD-OUT', write_times: 3, write_valid: 2, days: 30 }] };
+  const app = (db = f.db) => { const a = new Hono<{ Bindings: Env; Variables: AppVariables }>();
+    a.use('*', async (c, next) => { c.set('container', createContainerFromDb(db)); await next(); });
+    a.onError((e, c) => c.json({ status: 400, msg: e.message, data: null }));
+    a.post('/outapi/product', outAuthMiddleware('POST', '/product'), productCreate);
+    a.get('/outapi/product/:id', outAuthMiddleware('GET', '/product/{id}'), productInfo);
+    a.put('/outapi/product/stock/upload', outAuthMiddleware('PUT', '/product/stock/upload'), productStockUpload);
+    a.put('/outapi/product/set_show/:id/:is_show', outAuthMiddleware('PUT', '/product/set_show/{id}/{is_show}'), productSetShow);
+    a.put('/outapi/product/:id', outAuthMiddleware('PUT', '/product/{id}'), productUpdate); return a; };
+  const call = async (path: string, method: string, data: object, key = crypto.randomUUID(), db = f.db) => {
+    const response = await app(db).request(path, { method, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', 'Idempotency-Key': key }, body: JSON.stringify(data) }, testEnv);
+    return response.json() as Promise<{ status: number; msg: string; data: any }>;
+  };
+  beforeEach(async () => {
+    network = vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('Isolated second-card test forbids external I/O'));
+    f = await createPcCheckoutQuoteFixture([], async () => { owned = await sequenceRunnerDatabase();
+      try { const api = await import('drizzle-kit/api'), schema = await import('@/models/schema');
+        await owned.exec((await api.generateMigration(api.generateDrizzleJson({}), api.generateDrizzleJson(schema))).join('\n'));
+        await completePurchaseOriginEvidenceOrm(owned.db); await completePurchaseCancellationEvidenceOrm(owned.db); return owned;
+      } catch (error) { await owned.close(); throw error; } });
+    await f.exec(`INSERT INTO store_product_category(id,cate_name,is_show) VALUES (9,'隔离分类',1);
+      INSERT INTO out_interface(id,type,method,url) VALUES (1,1,'POST','/product'),(2,1,'PUT','/product/{id}'),
+        (3,1,'PUT','/product/stock/upload'),(4,1,'PUT','/product/set_show/{id}/{is_show}'),(5,1,'GET','/product/{id}');
+      INSERT INTO out_account(id,appid,appsecret,rules) VALUES (1,'card-local','fixture-card-secret','[1,2,3,4,5]');
+      SELECT setval(pg_get_serial_sequence('store_product','id'),70,true);
+      SELECT setval(pg_get_serial_sequence('store_product_attr_value','id'),1,true);
+      SELECT setval(pg_get_serial_sequence('store_cart','id'),1,true)`);
+    testEnv = { ...f.env, APP_KEY: 'isolated-local-key-not-a-real-credential', TOKEN_BUCKET: { getByName: () => ({ consumeRateLimit: async () =>
+      ({ allowed: true, auditEvent: false, limit: 120, remaining: 119, resetAt: Date.now() + 60000 }) }) } } as unknown as Env;
+    token = (await createToken(1, 'out', md5('fixture-card-secret'), testEnv.APP_KEY)).token;
+  }, 120_000);
+  afterEach(async () => { try { expect(network).not.toHaveBeenCalled(); } finally { network?.mockRestore(); await f?.close(); } }, 60_000);
+  it('creates, replays, edits, synchronizes stock and purchases a real pickup card', async () => {
+    const key = crypto.randomUUID(), first = await call('/outapi/product', 'POST', input, key);
+    expect(first.status, first.msg).toBe(200); const id = Number(first.data.id);
+    expect((await call('/outapi/product', 'POST', input, key)).data).toMatchObject({ id, idempotent: true });
+    let [sku] = await f.db.execute<any>(sql`SELECT id, "unique", product_type, stock, write_times, write_valid, write_days FROM store_product_attr_value WHERE product_id=${id} AND type=0`);
+    expect(sku).toMatchObject({ product_type: 4, stock: 5, write_times: 3, write_valid: 2, write_days: 30 });
+    const edited = { ...input, attrs: [{ ...input.attrs[0], unique: sku.unique, stock: 999, write_times: 4, days: 7 }] };
+    const update = await call(`/outapi/product/${id}`, 'PUT', edited); expect(update.status, update.msg).toBe(200); expect(update.data.stock_preserved).toBe(true);
+    for (const show of [0, 1]) { const result = await call(`/outapi/product/set_show/${id}/${show}`, 'PUT', {}); expect(result.status, result.msg).toBe(200); }
+    const sync = await call('/outapi/product/stock/upload', 'PUT', { items: [{ bar_code: 'CARD-OUT', qty: 7 }] }); expect(sync.status, sync.msg).toBe(200);
+    const [product] = await f.db.execute<any>(sql`SELECT product_type,delivery_type,freight,temp_id,postage,stock FROM store_product WHERE id=${id}`);
+    [sku] = await f.db.execute<any>(sql`SELECT "unique",product_type,stock,write_times,write_valid,write_days FROM store_product_attr_value WHERE product_id=${id} AND type=0`);
+    expect(product).toMatchObject({ product_type: 4, delivery_type: '2', freight: 1, temp_id: 0, postage: '0.00', stock: 7 });
+    expect(sku).toMatchObject({ product_type: 4, stock: 7, write_times: 4, write_valid: 2, write_days: 7 });
+    const detailResponse = await app().request(`/outapi/product/${id}`, { headers: { Authorization: `Bearer ${token}` } }, testEnv);
+    const detail = await detailResponse.json() as { status: number; msg: string; data: any };
+    expect(detail.status, detail.msg).toBe(200); expect(detail.data.productInfo.attr).toMatchObject({ write_times: 4, write_valid: 2, days: 7 });
+    const cart = await new StoreCartService(f.container, f.env).add({ uid: 11, productId: id, unique: sku.unique, cartNum: 2, isNew: 1, type: 0 });
+    const selection = { cartIds: [cart.id], type: 0, shippingType: 2, storeId: 1, realName: '测试客户', userPhone: '13800138000', useIntegral: false };
+    const response = await f.app.request('/api/order/confirm', { method: 'POST', headers: { 'content-type': 'application/json', 'x-fixture-user': '11' }, body: JSON.stringify(selection) }, f.env);
+    const confirmed = await response.json() as { status: number; msg: string; data: { orderKey: string; quoteToken: string } }; expect(confirmed.status, confirmed.msg).toBe(200);
+    const order = await StoreOrderCreateService.createWithRuntime(f.container, { CONFIG_KV: f.env.CONFIG_KV, requireConfirmation: true, requirePurchaseOrigin: true,
+      nextOrderId: async () => `card_out_${id}` }, { ...selection, uid: 11, key: confirmed.data.orderKey, quoteToken: confirmed.data.quoteToken, userIp: '127.0.0.1' });
+    const [saved] = await f.db.execute<any>(sql`SELECT id,product_type,shipping_type,paid,total_num FROM store_order WHERE order_id=${order.orderId}`);
+    expect(saved).toMatchObject({ product_type: 4, shipping_type: 2, paid: 0, total_num: 2 });
+    const [line] = await f.db.execute<any>(sql`SELECT write_times,write_surplus_times,write_start,write_end,cart_info FROM store_order_cart_info WHERE oid=${saved.id}`);
+    expect(line).toMatchObject({ write_times: 8, write_surplus_times: 8, write_start: 0, write_end: 0 });
+    expect(JSON.parse(line.cart_info).sku).toMatchObject({ write_valid: 2, write_days: 7 });
+    const [finalSku] = await f.db.execute<any>(sql`SELECT stock FROM store_product_attr_value WHERE product_id=${id} AND type=0`); expect(finalSku.stock).toBe(5);
+  }, 30_000);
+  it('round-trips fixed validity and rejects a reused key with different rules', async () => {
+    const key = crypto.randomUUID(), body = { ...input, attrs: [{ ...input.attrs[0], write_valid: 3, section_time: ['2030-01-01', '2030-02-01'] }] };
+    const created = await call('/outapi/product', 'POST', body, key); expect(created.status, created.msg).toBe(200);
+    const [sku] = await f.db.execute<any>(sql`SELECT write_valid,write_days,write_start,write_end FROM store_product_attr_value WHERE product_id=${Number(created.data.id)}`);
+    expect(sku).toMatchObject({ write_valid: 3, write_days: 0, write_start: 1893427200, write_end: 1896105600 });
+    const before = await f.snapshot(), conflict = await call('/outapi/product', 'POST', input, key);
+    expect(conflict.status).not.toBe(200); expect(await f.snapshot()).toEqual(before);
+  }, 30_000);
+  it('requires a new confirmation after Out changes the quoted validity', async () => {
+    const created = await call('/outapi/product', 'POST', input); expect(created.status, created.msg).toBe(200); const id = Number(created.data.id);
+    const [sku] = await f.db.execute<any>(sql`SELECT "unique" FROM store_product_attr_value WHERE product_id=${id} AND type=0`);
+    const cart = await new StoreCartService(f.container, f.env).add({ uid: 11, productId: id, unique: sku.unique, cartNum: 1, isNew: 1, type: 0 });
+    const selection = { cartIds: [cart.id], type: 0, shippingType: 2, storeId: 1, realName: '测试客户', userPhone: '13800138000', useIntegral: false };
+    const response = await f.app.request('/api/order/confirm', { method: 'POST', headers: { 'content-type': 'application/json', 'x-fixture-user': '11' }, body: JSON.stringify(selection) }, f.env);
+    const confirmed = await response.json() as { status: number; msg: string; data: { orderKey: string; quoteToken: string } }; expect(confirmed.status, confirmed.msg).toBe(200);
+    const update = await call(`/outapi/product/${id}`, 'PUT', { ...input, attrs: [{ ...input.attrs[0], unique: sku.unique, days: 7 }] });
+    expect(update.status, update.msg).toBe(200); const before = await f.snapshot();
+    await expect(StoreOrderCreateService.createWithRuntime(f.container, { CONFIG_KV: f.env.CONFIG_KV, requireConfirmation: true, requirePurchaseOrigin: true,
+      nextOrderId: async () => `stale_card_${id}` }, { ...selection, uid: 11, key: confirmed.data.orderKey, quoteToken: confirmed.data.quoteToken, userIp: '127.0.0.1' })).rejects.toThrow('重新确认');
+    expect(await f.snapshot()).toEqual(before);
+  }, 30_000);
+  it('rejects a validity edit committed while checkout waits for the SKU lock', async () => {
+    const created = await call('/outapi/product', 'POST', input); expect(created.status, created.msg).toBe(200); const id = Number(created.data.id);
+    const [sku] = await f.db.execute<any>(sql`SELECT id,"unique" FROM store_product_attr_value WHERE product_id=${id} AND type=0`);
+    const cart = await new StoreCartService(f.container, f.env).add({ uid: 11, productId: id, unique: sku.unique, cartNum: 1, isNew: 1, type: 0 });
+    const selection = { cartIds: [cart.id], type: 0, shippingType: 2, storeId: 1, realName: '测试客户', userPhone: '13800138000', useIntegral: false };
+    const response = await f.app.request('/api/order/confirm', { method: 'POST', headers: { 'content-type': 'application/json', 'x-fixture-user': '11' }, body: JSON.stringify(selection) }, f.env);
+    const confirmed = await response.json() as { status: number; msg: string; data: { orderKey: string; quoteToken: string } }; expect(confirmed.status, confirmed.msg).toBe(200);
+    if (!owned.withPeer) throw Error('Dedicated PG16 peers required');
+    await owned.withPeer(holder => owned.withPeer!(async buyer => {
+      await holder.exec('BEGIN'); await holder.db.execute(sql`UPDATE store_product_attr_value SET write_days=7 WHERE id=${Number(sku.id)}`);
+      const pending = outcome(StoreOrderCreateService.createWithRuntime(createContainerFromDb(buyer.db), { CONFIG_KV: f.env.CONFIG_KV,
+        requireConfirmation: true, requirePurchaseOrigin: true, nextOrderId: async () => `racing_card_${id}` },
+        { ...selection, uid: 11, key: confirmed.data.orderKey, quoteToken: confirmed.data.quoteToken, userIp: '127.0.0.1' }));
+      let holding = true;
+      try { await waitForFinanceBlock(f.db, buyer.pid, holder.pid); await holder.exec('COMMIT'); holding = false;
+        const result = await pending; expect(result.ok).toBe(false);
+        if (!result.ok) { expect(result.error).toBeInstanceOf(ApiException); expect(result.error.message).toContain('重新确认'); }
+        const [row] = await f.db.execute<any>(sql`SELECT stock,write_days FROM store_product_attr_value WHERE id=${Number(sku.id)}`);
+        expect(row).toMatchObject({ stock: 5, write_days: 7 });
+        const [orders] = await f.db.execute<{ n: number }>(sql`SELECT count(*)::int AS n FROM store_order WHERE order_id=${`racing_card_${id}`}`);
+        expect(orders.n).toBe(0);
+      } finally { if (holding) await holder.exec('ROLLBACK'); await pending; }
+    }));
+  }, 30_000);
+  it('creates and synchronizes a second card using the restricted application login', async () => {
+    if (!owned.withRuntimeRole) throw Error('Native restricted LOGIN required');
+    await owned.withRuntimeRole(async runtime => {
+      const plan = runtimeBusinessPrivilegePlan('app'), quote = (name: string) => { if (!/^[a-z_][a-z_0-9]*$/.test(name)) throw Error('Invalid identifier'); return `"${name}"`; };
+      const tables = await f.db.execute<{ name: string }>(sql`SELECT relname AS name FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r' ORDER BY relname`);
+      for (const { name } of tables) { const rights = plan.tables[name]; if (!rights) continue;
+        await f.exec(`GRANT ${rights.join(',')} ON public.${quote(name)} TO ${quote(runtime.role)}`);
+        const columns = plan.updateColumns[name]; if (columns?.length) await f.exec(`GRANT UPDATE(${columns.map(quote).join(',')}) ON public.${quote(name)} TO ${quote(runtime.role)}`); }
+      const seqs = await f.db.execute<{ table_name: string; sequence_name: string | null }>(sql`SELECT c.relname AS table_name,pg_get_serial_sequence('public.'||quote_ident(c.relname),a.attname) AS sequence_name FROM pg_class c JOIN pg_attribute a ON a.attrelid=c.oid AND a.attnum>0 AND NOT a.attisdropped WHERE c.relnamespace='public'::regnamespace AND c.relkind='r'`);
+      for (const row of seqs) if (row.sequence_name && plan.tables[row.table_name]?.includes('INSERT')) { const parts = row.sequence_name.split('.');
+        if (parts.length !== 2 || parts[0] !== 'public') throw Error('Unexpected sequence'); await f.exec(`GRANT USAGE ON SEQUENCE public.${quote(parts[1])} TO ${quote(runtime.role)}`); }
+      const saved = await call('/outapi/product', 'POST', input, crypto.randomUUID(), runtime.db); expect(saved.status, saved.msg).toBe(200);
+      const sync = await call('/outapi/product/stock/upload', 'PUT', { items: [{ bar_code: 'CARD-OUT', qty: 9 }] }, crypto.randomUUID(), runtime.db); expect(sync.status, sync.msg).toBe(200);
+      const [row] = await f.db.execute<any>(sql`SELECT product_type,stock,delivery_type FROM store_product WHERE id=${Number(saved.data.id)}`);
+      expect(row).toMatchObject({ product_type: 4, stock: 9, delivery_type: '2' });
+      const [identity] = await runtime.db.execute(sql`SELECT current_user=session_user AS direct_login,has_table_privilege(current_user,'public.system_config','UPDATE') AS config_write`);
+      expect(identity).toEqual({ direct_login: true, config_write: false });
+    });
+  }, 30_000);
+  it('rolls back when a deferred trigger changes the saved SKU snapshot', async () => {
+    await f.exec(`CREATE FUNCTION test_out_card_snapshot_drift() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN UPDATE store_product_attr_result SET result='{}' WHERE product_id=NEW.product_id; RETURN NEW; END $$;
+      CREATE CONSTRAINT TRIGGER test_out_card_snapshot_drift AFTER INSERT ON out_product_write_replay DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION test_out_card_snapshot_drift()`);
+    const before = await f.snapshot(), result = await call('/outapi/product', 'POST', input);
+    expect(result.status).not.toBe(200); expect(result.msg).toContain('快照'); expect(await f.snapshot()).toEqual(before);
+    const [receipt] = await f.db.execute<{ n: number }>(sql`SELECT count(*)::int AS n FROM out_product_write_replay`); expect(receipt.n).toBe(0);
+  }, 30_000);
+  it('rolls back a deferred trigger that tampers with the card rules', async () => {
+    await f.exec(`CREATE FUNCTION test_out_card_drift() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN UPDATE store_product_attr_value SET write_times=99 WHERE product_id=NEW.product_id; RETURN NEW; END $$;
+      CREATE CONSTRAINT TRIGGER test_out_card_drift AFTER INSERT ON out_product_write_replay DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION test_out_card_drift()`);
+    const before = await f.snapshot(), result = await call('/outapi/product', 'POST', input);
+    expect(result.status).not.toBe(200); expect(result.msg).toContain('变化'); expect(await f.snapshot()).toEqual(before);
+    const [receipt] = await f.db.execute<{ n: number }>(sql`SELECT count(*)::int AS n FROM out_product_write_replay`); expect(receipt.n).toBe(0);
+  }, 30_000);
+});

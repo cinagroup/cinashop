@@ -6,7 +6,7 @@ import { supplierProductBrandPath, supplierProductBrandPathMatches } from '@/ser
 import { assertOutProductRelationFence, type OutProductRelationFence } from './OutProductRelationFence';
 
 const same = (left: unknown, right: unknown) => JSON.stringify(left) === JSON.stringify(right);
-const scope = (id: number, productType: 0 | 3) => and(eq(storeProduct.id, id), eq(storeProduct.type, 0),
+const scope = (id: number, productType: 0 | 3 | 4) => and(eq(storeProduct.id, id), eq(storeProduct.type, 0),
   eq(storeProduct.relationId, 0), eq(storeProduct.productType, productType), eq(storeProduct.isDel, 0));
 
 export interface OutProductBrandProof {

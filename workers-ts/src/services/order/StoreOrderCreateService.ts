@@ -1871,6 +1871,8 @@ export class StoreOrderCreateService {
           deliveryType: item.integralActivity.deliveryType, systemFormId: item.integralActivity.systemFormId } : null,
         skuId: item.sku.id, unique: item.sku.unique, suk: item.sku.suk, activitySkuId: item.activitySku?.id ?? 0,
         ...(item.cart.productType === 4 ? { secondCardUnitEntitlements: Math.max(item.sku.writeTimes, 1) } : {}),
+        ...(!cashier && item.cart.productType === 4 ? { secondCardValidity: { mode: item.sku.writeValid, days: item.sku.writeDays,
+          startsAt: item.sku.writeStart, endsAt: item.sku.writeEnd } } : {}),
         ...(cashier ? { cashierSecondCardValidity: { mode: item.sku.writeValid, days: item.sku.writeDays,
           startsAt: item.sku.writeStart, endsAt: item.sku.writeEnd } } : {}),
         weight: item.sku.weight, volume: item.sku.volume, rawUnitPriceCents: item.rawUnitPriceCents,
@@ -2813,6 +2815,9 @@ export class StoreOrderCreateService {
             eq(storeProductAttrValue.unique, sku.unique), eq(storeProductAttrValue.suk, sku.suk), eq(storeProductAttrValue.isRetired, 0),
             eq(storeProductAttrValue.price, sku.price),
             cart.productType === 4 ? eq(storeProductAttrValue.writeTimes, sku.writeTimes) : undefined,
+            cart.productType === 4 && !cashier ? and(eq(storeProductAttrValue.writeValid, sku.writeValid),
+              eq(storeProductAttrValue.writeDays, sku.writeDays), eq(storeProductAttrValue.writeStart, sku.writeStart),
+              eq(storeProductAttrValue.writeEnd, sku.writeEnd)) : undefined,
             cashier ? and(eq(storeProductAttrValue.writeValid,sku.writeValid),eq(storeProductAttrValue.writeDays,sku.writeDays),
               eq(storeProductAttrValue.writeStart,sku.writeStart),eq(storeProductAttrValue.writeEnd,sku.writeEnd),
               sql`${storeProductAttrValue.writeTimes}>0`,sql`(${storeProductAttrValue.writeValid}<>3 OR ${storeProductAttrValue.writeEnd}>floor(extract(epoch from clock_timestamp()))::bigint)`) : undefined,
@@ -2832,6 +2837,7 @@ export class StoreOrderCreateService {
             type === 6 ? presaleSkuQuoteGuard(sku, cart.productType) : undefined))
           .returning({ id: storeProductAttrValue.id });
         if (!skuUpdated.length) {
+          if (cart.productType === 4 && confirmation) throw new OrderQuoteReconfirmRequired(key);
           throw new ValidateException(shippingSnapshot ? "配送商品规格已变化或库存不足，请刷新后重试" : type === 1 ? "秒杀基础规格已变化或库存不足，请刷新后重试" : `商品「${product.storeName}」库存不足`);
         }
 

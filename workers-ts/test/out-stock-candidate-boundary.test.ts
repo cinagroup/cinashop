@@ -131,7 +131,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('full-ORM bounded
 
   it.each([
     { name: 'nonphysical product', product: { productType: 1 }, sku: {} },
-    { name: 'unsupported second-card product', product: { productType: 4 }, sku: {} },
+    { name: 'second-card product with mismatched SKU type', product: { productType: 4 }, sku: {} },
     { name: 'manual product with mismatched SKU type', product: { productType: 3 }, sku: { productType: 0 } },
     { name: 'nonplatform owner', product: { type: 1, relationId: 51 }, sku: {} },
     { name: 'nonzero platform relation', product: { relationId: 51 }, sku: {} },
@@ -194,5 +194,42 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('full-ORM bounded
     }
     const rows = await f.db.select().from(storeProductAttrValue).orderBy(storeProductAttrValue.id);
     expect(rows.slice(1).map(row => ({ barCode: row.barCode, stock: row.stock }))).toEqual(codes.map((barCode, i) => ({ barCode, stock: i + 2 })));
+  }, 20_000);
+  it('updates second-card inventory and rejects a physical collision', async () => {
+    await seed(['SECOND', 'CROSS', 'CROSS']);
+    const [base] = await f.db.select().from(storeProduct).where(eq(storeProduct.id, 70));
+    await f.db.insert(storeProduct).values({ ...base, id: 71, spu: 'second71', productType: 4, stock: 2, deliveryType: '2', freight: 1, tempId: 0, postage: '0.00' });
+    await f.db.update(storeProductAttrValue).set({ productId: 71, productType: 4 }).where(inArray(storeProductAttrValue.id, [2, 4]));
+    await f.db.update(storeProduct).set({ stock: 9 }).where(eq(storeProduct.id, 70));
+    expect(await request([{ bar_code: 'SECOND', qty: 6 }])).toMatchObject({ status: 200, data: { updated: 1, idempotent: false } });
+    const after = await state();
+    expect(after.skus.find(row => row.id === 2)).toMatchObject({ productId: 71, productType: 4, stock: 6 });
+    expect(after.products.find(row => row.id === 71)).toMatchObject({ productType: 4, stock: 7, isSold: 0 });
+    expect(await request([{ bar_code: 'SECOND', qty: 6 }])).toMatchObject({ status: 200, data: { updated: 1, idempotent: true } });
+    expect(await state()).toEqual(after);
+    const duplicate = await request([{ bar_code: 'CROSS', qty: 8 }], crypto.randomUUID());
+    expect(duplicate.status).toBe(400); expect(duplicate.msg).toContain('存在重复'); expect(await state()).toEqual(after);
+  }, 20_000);
+
+  it('rolls back stock synchronization if a deferred trigger changes card validity', async () => {
+    await f.db.update(storeProduct).set({ productType: 4, deliveryType: '2', freight: 1, tempId: 0, postage: '0.00' }).where(eq(storeProduct.id, 70));
+    await f.db.update(storeProductAttrValue).set({ productType: 4, writeTimes: 3, writeValid: 2, writeDays: 30 }).where(eq(storeProductAttrValue.id, 1));
+    await f.exec(`CREATE FUNCTION test_card_rule_drift() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
+      UPDATE store_product_attr_value SET write_days=2 WHERE id=1; RETURN NEW; END $$;
+      CREATE CONSTRAINT TRIGGER test_card_rule_drift AFTER INSERT ON out_product_write_replay DEFERRABLE INITIALLY DEFERRED
+      FOR EACH ROW EXECUTE FUNCTION test_card_rule_drift()`);
+    const before = await state(), result = await request([{ bar_code: 'OUT-A', qty: 6 }]);
+    expect(result.status).toBe(400); expect(await state()).toEqual(before);
+  }, 20_000);
+
+  it('rolls back second-card inventory and receipt on deferred SKU tampering', async () => {
+    await f.db.update(storeProduct).set({ productType: 4, deliveryType: '2', freight: 1, tempId: 0, postage: '0.00' }).where(eq(storeProduct.id, 70));
+    await f.db.update(storeProductAttrValue).set({ productType: 4 }).where(eq(storeProductAttrValue.id, 1));
+    await f.exec(`CREATE FUNCTION test_card_stock_drift() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
+      UPDATE store_product_attr_value SET stock=999 WHERE id=1; RETURN NEW; END $$;
+      CREATE CONSTRAINT TRIGGER test_card_stock_drift AFTER INSERT ON out_product_write_replay DEFERRABLE INITIALLY DEFERRED
+      FOR EACH ROW EXECUTE FUNCTION test_card_stock_drift()`);
+    const before = await state(), result = await request([{ bar_code: 'OUT-A', qty: 6 }]);
+    expect(result.status).toBe(400); expect(result.msg).toContain('库存'); expect(await state()).toEqual(before);
   }, 20_000);
 });

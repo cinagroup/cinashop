@@ -16,7 +16,7 @@ const active = (row: Label, kind: Kind) => platform(row) && row.status === 1
   && (kind === 'user' || 'isShow' in row && row.isShow === 1);
 const validGroup = (row: Group | undefined) => !!row && row.type === 0 && row.relationId === 0
   && row.ownerId === 0 && row.group === 2 && row.isShow === 1;
-const scope = (id: number, productType: 0 | 3) => and(eq(storeProduct.id, id), eq(storeProduct.type, 0),
+const scope = (id: number, productType: 0 | 3 | 4) => and(eq(storeProduct.id, id), eq(storeProduct.type, 0),
   eq(storeProduct.relationId, 0), eq(storeProduct.productType, productType), eq(storeProduct.isDel, 0));
 
 export function outProductLabelIds(value: unknown, kind: Kind): number[] {

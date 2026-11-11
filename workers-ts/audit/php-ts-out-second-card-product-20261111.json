@@ -1,0 +1,277 @@
+{
+  "schema": "php-ts-out-second-card-product/v1",
+  "baseCommit": "dfd629246eda842d38019398ca6e06357c4d7fd0",
+  "sourceHashes": [
+    {
+      "path": "workers-ts/src/services/out/OutProductBrandBindings.ts",
+      "sha256": "1251e8e456a3378b779c1851dafbc773c0a99bf775f5e1a473e67429441954eb"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductEnsureBindings.ts",
+      "sha256": "a3fa0d7ce68e812179a1d215c7b911dc4ab5bfd402d324b93166a6243590ee0f"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductFormBindings.ts",
+      "sha256": "5ec0dcc7bcc2856ed2ec8fdea70dfe2c8e485f30853ef29efaa99089be8c1c42"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductLabelBindings.ts",
+      "sha256": "b2c339d1c0a81f0606643d3cdc1e31a620466f33177edfbcce5b7e0cd8a69dc1"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductParameterBindings.ts",
+      "sha256": "e3b526bcb9a929e5483feb7fd54b756bfb522e1b2edd814c7043e96f9c277b2c"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductRelationFence.ts",
+      "sha256": "c63433e627ae3b312b1e8169f4bcc960f6bc6dadcc7c17d4113887ebc26371ab"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductScheduleBindings.ts",
+      "sha256": "4b1639fa4cd0a7bc36e6fcea4fbf0618d0509b9336c0b0f1d4777aeb4210ad93"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductService.ts",
+      "sha256": "5ff164fcadef2f87d9f49705b43431667c55eabb6296b93b0e2295d41b01a166"
+    },
+    {
+      "path": "workers-ts/test/out-stock-candidate-boundary.test.ts",
+      "sha256": "2149ddc94df44e899e4202e883a559a7bd86d5c3a00008bfd050cab1aca90203"
+    },
+    {
+      "path": "workers-ts/test/product-purchase-admission-postgres.test.ts",
+      "sha256": "b6256d507ec973dbcfda169172ee57d7f84cf817a314a807d400bdeb48d0d107"
+    },
+    {
+      "path": "workers-ts/test/out-manual-virtual-product.test.ts",
+      "sha256": "eefa2769b3b644beb61498adce75d37734f06a9fac043ec09f48ce8f601add50"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutSecondCardInput.ts",
+      "sha256": "f13b225e0218759ce850f1c6f1b59d84a81ce3b2a18a8f8ffbe116f19b9624c1"
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+      "sha256": "39f9621fc26b4062d8714dadab5928e532965ea74d7c0df48dfa8461c5feb9d7"
+    },
+    {
+      "path": "workers-ts/test/out-second-card-input.test.ts",
+      "sha256": "c2d2cdf781c8c6a0478588e06de795551b6e1ca3001fb4f9a899afa1f0ddac94"
+    }
+  ],
+  "legacyCommit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "legacySources": [
+    {
+      "path": "app/controller/out/Product.php",
+      "gitBlob": "5a55a3a43001325abfd36cee3c6af3e3b45cac66",
+      "sha256": "a52f6c6392594116e66803572a67e6c15d424fa13eac48df6bc9d7a6ef01c24a",
+      "bytes": 8803
+    },
+    {
+      "path": "app/services/product/product/StoreProductServices.php",
+      "gitBlob": "f8163c25f694dd0ff84486d89926ef004ba9e81e",
+      "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+      "bytes": 136399
+    },
+    {
+      "path": "app/services/product/sku/StoreProductAttrServices.php",
+      "gitBlob": "8a4c405eb7495985b0e6b3b8dddfc1f0c3eb62e4",
+      "sha256": "dae3878db9eb0392b01f52c5db1d8ba1cbf35456a9ddb081150a1955f87b0de9",
+      "bytes": 21089
+    },
+    {
+      "path": "app/services/order/StoreCartServices.php",
+      "gitBlob": "2585c6fc693992a48e44954786c8570d7c72d857",
+      "sha256": "d4c2a3f74175979c23da0d93e9b239cc287b32d0b1e48c6082a785c8c0776d92",
+      "bytes": 57698
+    }
+  ],
+  "validation": {
+    "profiles": [
+      {
+        "profile": "unit",
+        "exit": 0,
+        "seconds": 44.07,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "unit-types-shard-1",
+        "exit": 0,
+        "seconds": 163.72,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "unit-types-shard-2",
+        "exit": 0,
+        "seconds": 163.55,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "runtime-types",
+        "exit": 0,
+        "seconds": 105.21,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-stock",
+        "exit": 0,
+        "seconds": 163.24,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-author",
+        "exit": 0,
+        "seconds": 259.06,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-fulfillment",
+        "exit": 0,
+        "seconds": 71.52,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-cashier",
+        "exit": 0,
+        "seconds": 42.82,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-checkout",
+        "exit": 0,
+        "seconds": 559.4,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-associations",
+        "exit": 0,
+        "seconds": 540.94,
+        "budgetSeconds": 600
+      }
+    ],
+    "unitPassed": 221,
+    "unitSkipped": 0,
+    "nativePassed": {
+      "native-stock": 19,
+      "native-author": 57,
+      "native-fulfillment": 43,
+      "native-cashier": 17,
+      "native-checkout": 71,
+      "native-associations": 69
+    },
+    "nativeSkipped": 0,
+    "remainingOwnedFixtures": 0,
+    "typeShards": {
+      "originalRoots": 4340,
+      "commonRoots": 1899,
+      "testRoots": 2441,
+      "shardTestCounts": [
+        1221,
+        1220
+      ],
+      "unionExactlyMatchesOriginal": true,
+      "optionsExactlyMatchOriginal": true
+    },
+    "typeShardConfigs": [
+      {
+        "file": "tsconfig.out-second-card-shard-1.generated.json",
+        "sha256": "1ff6d92d0632c070819e5f0503e971f17c13208d037b8aeec2b86079feb1c082"
+      },
+      {
+        "file": "tsconfig.out-second-card-shard-2.generated.json",
+        "sha256": "b67f48462a1213a1b24cfd1dc8f15d5b2f7961ee41b5580b44e5d0312472b79e"
+      }
+    ],
+    "logHashes": [
+      {
+        "file": "baseline-mature.log",
+        "sha256": "c30f187877dd79e68b36a1ba1d8709875d6cd636322d74b2c54925ae024f3e1d"
+      },
+      {
+        "file": "native-associations.log",
+        "sha256": "4bfc4b9ccb6a9f5725e23d50f35151f462eb26fbc722e4bb980ff50ae0a92e2b"
+      },
+      {
+        "file": "native-author.log",
+        "sha256": "0b3d00ceb8c0ffe7446852ecd9ea790dc752ee7c90492587dc79c02f8f9078ab"
+      },
+      {
+        "file": "native-cashier.log",
+        "sha256": "5d8c3ab4fa2ea43e13aa8b9b2412b158d19fc1d58c556a25d09365e513a2187f"
+      },
+      {
+        "file": "native-checkout.log",
+        "sha256": "e13fe5e1a8de765a5c41a264f0b5cfa92c00014e894245692c65bde3846ccd6d"
+      },
+      {
+        "file": "native-fulfillment.log",
+        "sha256": "83c56d59dc38882f01dbf5631c950a4d6c7139209042f7fe6fdbb9a0a57544d1"
+      },
+      {
+        "file": "native-mature-initial.log",
+        "sha256": "34509256a566d24490740ad262425845db53b16d0f12d1311c803b8ad2813ebd"
+      },
+      {
+        "file": "native-stock.log",
+        "sha256": "af4b4859fb4f64d6466948465422763b55dee3a3eff89fcb8d339ce4eb8af0ac"
+      },
+      {
+        "file": "previous-ci-shard1.log",
+        "sha256": "4dbbd11fd23fbbc8889d41c77ab7390fe744738c07975bd32c70cb37281bb319"
+      },
+      {
+        "file": "runtime-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "unit-types-shard-1.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "unit-types-shard-2.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "unit.log",
+        "sha256": "5bb5f1ab99e40901ba62f7953f0a6f42085638edb6aabb411ded3166d2b023e9"
+      }
+    ]
+  },
+  "baselineMatureScenarioFailure": {
+    "testsFailed": 2,
+    "testsPassed": 2,
+    "failure": "Private-schema fixture does not meet the public writeoff-notice catalog contract",
+    "baselineCommit": "dfd629246eda842d38019398ca6e06357c4d7fd0",
+    "baselineLog": "baseline-mature.log",
+    "changedSourceLog": "native-mature-initial.log",
+    "bothRunsCleanedFixtures": true
+  },
+  "testContinuity": {
+    "purchaseOriginalBytesPreserved": true,
+    "stockOriginalRetained": "The previously excluded type-4 rows still have SKU type 0 and are tested as mismatches; valid type-4 stock and cross-type ambiguity are now tested."
+  },
+  "previousCi": {
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/43100007026",
+    "status": "completed",
+    "conclusion": "failure",
+    "reason": "Both Worker shards failed before tests while fetching fixed legacy PHP commit; the remote reported not our ref."
+  },
+  "limitations": [
+    "Out author for product types 1 and 2 remains incomplete",
+    "The pre-existing private-schema mature writeoff suite has two failures on both the base and this change; see baselineMatureScenarioFailure",
+    "No deployment, PHP upload or real external provider"
+  ],
+  "wholeMigrationComplete": false,
+  "generatedAt": "2026-11-11T21:59:26.202522+00:00",
+  "fullFileScanReview": {
+    "findings": 1,
+    "reviewedNonSecret": 1,
+    "unresolved": 0,
+    "finding": {
+      "rule": "generic-api-key",
+      "path": "workers-ts/test/out-stock-candidate-boundary.test.ts",
+      "line": 31,
+      "reason": "Unchanged synthetic UUID used as a test idempotency key; identical at the verified base commit."
+    }
+  }
+}
