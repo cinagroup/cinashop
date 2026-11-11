@@ -47,7 +47,8 @@ import {
 } from "@/services/order/StoreOrderRefundService";
 import { amountToCents } from "@/services/payment/RefundGateway";
 import { assertInvoiceWriteEvidence, invoiceWriteAmount, lockSingleOrderInvoice } from '@/services/order/InvoiceWriteGuard';
-import { StoreProductService, type GoodsListParams } from "@/services/product/StoreProductService";
+import { StoreProductService } from "@/services/product/StoreProductService";
+import { normalizeOutProductListFilters } from "@/services/out/OutProductListFilters";
 import { OutProductService } from "@/services/out/OutProductService";
 import { OutCouponService } from "@/services/out/OutCouponService";
 import { OutUserService } from "@/services/out/OutUserService";
@@ -1677,15 +1678,8 @@ export class OutApiService {
   }
 
   async productList(query: Record<string, unknown>) {
-    const params: GoodsListParams = {
-      store_name: String(query.store_name ?? "").trim() || undefined,
-      cate_id: query.cate_id === undefined ? undefined : String(query.cate_id),
-      news: query.is_new === undefined || query.is_new === "" ? undefined : Number(query.is_new),
-      brand_id: query.brand_id === undefined ? undefined : String(query.brand_id),
-      page: positiveInteger(query.page, 1),
-      limit: Math.min(positiveInteger(query.limit, 20), MAX_PAGE_SIZE),
-    };
-    const result = await new StoreProductService(this.container, this.env).getGoodsList(params, 0);
+    const result = await new StoreProductService(this.container, this.env)
+      .getOutGoodsList(normalizeOutProductListFilters(query));
     const list = result.list.map((row) => ({
       ...row,
       pages_url: `/pages/goods_details/index?id=${row.id}`,

@@ -1,0 +1,150 @@
+{
+  "schema": "php-ts-out-product-list-filters/v1",
+  "baseCommit": "db93bc3f33a8864db88f48d39bcc6ef5e438394f",
+  "sourceHashes": [
+    {
+      "path": "workers-ts/src/models/searchers/product.ts",
+      "sha256": "3f9ae63ca82e9f92e67f748fe2161ab382089efc044cf286402b883158cf35e9"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutApiService.ts",
+      "sha256": "69ec208546fd2ecd409dfb4b814f51b1bbf5dbdb731ea2c20c26a2fa2ba0af64"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductListFilters.ts",
+      "sha256": "0dfbe096b70629fe0e4986bd0d5686add7f705883f8311c189ecd2d43d42afef"
+    },
+    {
+      "path": "workers-ts/src/services/product/StoreProductService.ts",
+      "sha256": "ed050883fa57d1a0b28564ea8417a47498e79801fe475301a1609d24b70be04c"
+    },
+    {
+      "path": "workers-ts/test/product-purchase-admission-postgres.test.ts",
+      "sha256": "4965c328091b2f301e92a6bec7638607b55951f31c0444edd7337322a96c025d"
+    },
+    {
+      "path": "workers-ts/test/out-product-list-filters.test.ts",
+      "sha256": "762c80fc8e23cf879d7b467544836b41a18108c6c40762428999fdeaaebf821d"
+    }
+  ],
+  "legacyCommit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "legacySources": [
+    {
+      "path": "app/controller/out/Product.php",
+      "gitBlob": "5a55a3a43001325abfd36cee3c6af3e3b45cac66",
+      "sha256": "a52f6c6392594116e66803572a67e6c15d424fa13eac48df6bc9d7a6ef01c24a",
+      "bytes": 8803
+    },
+    {
+      "path": "app/services/product/product/StoreProductServices.php",
+      "gitBlob": "f8163c25f694dd0ff84486d89926ef004ba9e81e",
+      "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+      "bytes": 136399
+    },
+    {
+      "path": "app/dao/product/product/StoreProductDao.php",
+      "gitBlob": "0d2d90499afc77c0ef98f191d6be11d6ecf8b58f",
+      "sha256": "2cdc901c673a11e699a23bd2d4ddcd01abe108d10854ddd3588099ec712ec5e8",
+      "bytes": 24769
+    },
+    {
+      "path": "app/model/product/product/StoreProduct.php",
+      "gitBlob": "d4bf574d3192acc7e9dc7f6e73bb01d8a8bbfcb5",
+      "sha256": "696b6b6601e9ba8ba9fcde26a4ed12bda7f98edaaa81fc72ced3cae5321dc1a9",
+      "bytes": 20315
+    }
+  ],
+  "validation": {
+    "profiles": [
+      {
+        "profile": "unit",
+        "exit": 0,
+        "seconds": 26.8,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "unit-types",
+        "exit": 0,
+        "seconds": 256.93,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "runtime-types",
+        "exit": 0,
+        "seconds": 106.99,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-pricing",
+        "exit": 0,
+        "seconds": 25.77,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-membership",
+        "exit": 0,
+        "seconds": 47.56,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-out",
+        "exit": 0,
+        "seconds": 153.31,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-category",
+        "exit": 0,
+        "seconds": 45.99,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-public-promotions",
+        "exit": 0,
+        "seconds": 19.21,
+        "budgetSeconds": 600
+      }
+    ],
+    "unitPassed": 95,
+    "unitSkipped": 0,
+    "nativePassed": {
+      "native-pricing": 6,
+      "native-membership": 26,
+      "native-out": 39,
+      "native-category": 8,
+      "native-public-promotions": 3
+    },
+    "nativeSkipped": 0,
+    "remainingOwnedFixtures": 0,
+    "logSha256": {
+      "initial-unit.log": "52dcbe5b6b8265d11a826639eed72758b3da0779677ee83bcb7b5e76d4859571",
+      "native-category.log": "6144052c0d564e91d6231790a2529701acd0962c1f6f772bc301e346a046f48e",
+      "native-membership.log": "5fabef6c7a796ab9a7bbf569a7dfde686b2ab6ec3b317f74a6296ec46d8fa4c1",
+      "native-out.log": "6173d6bc9f0a8af8fa7116c43b79a30e366c6e04ccdf1d59692b287ea6b76870",
+      "native-pricing.log": "fd7fdd58b01bdc1fa2094ef4e71ce5fd61c162fb0afd0292c3be76c4e09ba712",
+      "native-public-promotions.log": "740c4d30bbff306fbce2f793ca475e70f82d5ceff9a932057696050062bd2fc3",
+      "runtime-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "unit-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "unit.log": "52dcbe5b6b8265d11a826639eed72758b3da0779677ee83bcb7b5e76d4859571"
+    },
+    "initialLightweightFixtureFailures": {
+      "failed": 9,
+      "cause": "purchase origin table not installed by lightweight fixture",
+      "subsequentNativeSuites": "native-pricing and native-membership passed in full"
+    }
+  },
+  "originalPurchaseTestPrefixUnchanged": true,
+  "ciPrevious": {
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/43077636337",
+    "status": "completed",
+    "conclusion": "failure",
+    "failedStep": "Check out fixed legacy PHP input"
+  },
+  "limitations": [
+    "existing TS list card DTO retained; PHP full list projection not yet migrated",
+    "no production deployment or PHP upload",
+    "no real external providers"
+  ],
+  "wholeMigrationComplete": false,
+  "generatedAt": "2026-11-11T18:58:14.330594+00:00"
+}

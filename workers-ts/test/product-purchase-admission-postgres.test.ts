@@ -606,3 +606,120 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Out member-only 
     });
   }, 30_000);
 });
+
+// Authenticated Out catalogue reads exercise legacy filters on actual PG16.
+import { beforeAll, afterAll } from 'vitest';
+import { liveGoods, outAccount, outInterface } from '@/models/schema';
+import { productList as outProductListController } from '@/controllers/out/OutApiController';
+import { outAuthMiddleware } from '@/middleware/out-auth';
+import { createToken, md5 } from '@/utils/jwt';
+import { OutApiService } from '@/services/out/OutApiService';
+import { StoreProductService } from '@/services/product/StoreProductService';
+
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('authenticated Out product list native PG16', () => {
+  let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
+  let owned: Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
+  let network: ReturnType<typeof vi.spyOn>;
+  let app: Hono<{Bindings: Env; Variables: AppVariables}>;
+  let testEnv: Env, token: string;
+  const ids = (result: {list: Record<string, unknown>[]}) => result.list.map(row => Number(row.id));
+  const list = (query: Record<string, unknown> = {}) => new OutApiService(f.container, testEnv).productList(query);
+  beforeAll(async () => {
+    network = vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('Out catalogue test forbids external I/O'));
+    f = await createPcCheckoutQuoteFixture([], async () => {
+      owned = await sequenceRunnerDatabase();
+      try { const api = await import('drizzle-kit/api'), schema = await import('@/models/schema');
+        await owned.exec((await api.generateMigration(api.generateDrizzleJson({}), api.generateDrizzleJson(schema))).join('\n'));
+        await completePurchaseOriginEvidenceOrm(owned.db); await completePurchaseCancellationEvidenceOrm(owned.db); return owned;
+      } catch (error) { await owned.close(); throw error; }
+    });
+    await f.db.insert(storeProduct).values([
+      {id:71,storeName:'会员预售',isShow:1,isVerify:1,isVipProduct:1,isPresaleProduct:1,sort:71},
+      {id:72,storeName:'会员常规',isShow:1,isVerify:1,isVipProduct:1,sort:72},
+      {id:73,storeName:'常规预售',isShow:1,isVerify:1,isPresaleProduct:1,sort:73},
+      {id:74,storeName:'待审核',isShow:1,isVerify:0,sort:74},
+      {id:75,storeName:'已下架',isShow:0,isVerify:1,sort:75},
+      {id:76,storeName:'已删除',isShow:1,isVerify:1,isDel:1,sort:76},
+      {id:77,storeName:'供应商品',isShow:1,isVerify:1,type:2,relationId:42,sort:77},
+    ]);
+    await f.db.insert(storeProductCategory).values([
+      {id:9,cateName:'一级',pid:0,level:0,path:''}, {id:10,cateName:'二级',pid:9,level:1,path:'9'},
+      {id:11,cateName:'三级',pid:10,level:2,path:'9,10'},
+    ]);
+    await f.db.insert(storeProductRelation).values([
+      {productId:70,relationId:9,type:1}, {productId:71,relationId:10,type:1}, {productId:72,relationId:11,type:1},
+      {productId:71,relationId:4,type:3}, {productId:72,relationId:4,type:3}, {productId:73,relationId:7,type:3},
+    ]);
+    await f.db.insert(liveGoods).values([{productId:71,auditStatus:0,isDel:0}, {productId:72,auditStatus:3,isDel:0},
+      {productId:73,auditStatus:0,isDel:1}]);
+    await f.db.insert(storeProductAttrValue).values({id:2,productId:72,unique:'qlist072',suk:'测试',barCode:'SAMPLE-EXACT'});
+    await f.db.insert(outInterface).values({id:1,type:1,method:'GET',url:'/product/list'});
+    await f.db.insert(outAccount).values({id:1,appid:'out-catalog-local',appsecret:'fixture-only-catalog-secret',rules:'[1]'});
+    testEnv = {...f.env, APP_KEY:'isolated-local-key-not-a-real-credential', TOKEN_BUCKET:{getByName:() => ({consumeRateLimit:async () =>
+      ({allowed:true,auditEvent:false,limit:120,remaining:119,resetAt:Date.now()+60000})})}} as unknown as Env;
+    token = (await createToken(1,'out',md5('fixture-only-catalog-secret'),testEnv.APP_KEY)).token;
+    app = new Hono<{Bindings: Env; Variables: AppVariables}>();
+    app.use('*', async (c,next) => {c.set('container', f.container); await next();});
+    app.onError((error,c) => c.json({status:400,msg:error.message,data:null}));
+    app.get('/outapi/product/list',outAuthMiddleware('GET','/product/list'),outProductListController);
+  }, 180_000);
+  afterAll(async () => { try { expect(network).not.toHaveBeenCalled(); } finally { network?.mockRestore(); await f?.close(); } }, 60_000);
+
+  it('uses the real token and permission boundary and includes VIP products by default', async () => {
+    const denied = await app.request('/outapi/product/list',{},testEnv);
+    expect((await denied.json() as {status:number}).status).not.toBe(200);
+    const response = await app.request('/outapi/product/list',{headers:{Authorization:`Bearer ${token}`}},testEnv);
+    const json = await response.json() as {status:number;msg:string;data:{list:Record<string,unknown>[];count:number;pages_url:string}};
+    expect(json.status,json.msg).toBe(200); expect(ids(json.data)).toEqual([77,73,72,71,70]);
+    expect(json.data.count).toBe(5); expect(json.data.pages_url).toBe('/pages/goods/goods_list/index');
+    expect(json.data.list.find(row => row.id===71)?.pages_url).toBe('/pages/goods_details/index?id=71');
+  },30_000);
+  it('combines membership, presale, relation labels and live exclusions before counting and pagination', async () => {
+    expect(ids(await list({is_vip_product:'1'}))).toEqual([72,71]);
+    expect(ids(await list({is_vip_product:'0',is_presale_product:'1'}))).toEqual([73]);
+    expect(ids(await list({is_vip_product:'1',store_label_id:'4',is_live:'1'}))).toEqual([72]);
+    expect(ids(await list({is_new:'1'}))).toEqual([72,71]);
+    const page = await list({store_label_id:'4',page:'2',limit:'1'});
+    expect(page.count).toBe(2); expect(ids(page)).toEqual([71]);
+  },30_000);
+  it('matches category descendants and exact SKU barcode without writing search history', async () => {
+    expect(ids(await list({cate_id:'9'}))).toEqual([72,71,70]);
+    expect(ids(await list({cate_id:'10'}))).toEqual([72,71]);
+    expect(ids(await list({cate_id:'11'}))).toEqual([72]);
+    expect(ids(await list({store_name:'SAMPLE-EXACT'}))).toEqual([72]);
+    expect(ids(await list({store_name:'SAMPLE'}))).toEqual([]);
+    const [history] = await f.db.execute<{count:number}>(sql`SELECT count(*)::int AS count FROM user_search`);
+    expect(history.count).toBe(0);
+  },30_000);
+  it('honours status while preserving the legacy explicit show and delete predicates', async () => {
+    expect(ids(await list({type:'0'}))).toEqual([74]);
+    expect(ids(await list({type:''}))).toEqual([77,74,73,72,71,70]);
+    expect(ids(await list({type:'2'}))).toEqual([]);
+  },30_000);
+  it('keeps the anonymous storefront restricted while the authenticated Out list includes VIP items', async () => {
+    const storefront = await new StoreProductService(f.container,testEnv).getGoodsList({},0);
+    expect(ids(storefront)).toEqual([73,70]);
+    expect(ids(await list({is_vip_product:'1'}))).toEqual([72,71]);
+  },30_000);
+  it('performs the actual authenticated read using only the existing App SELECT grants', async () => {
+    if (!owned.withRuntimeRole) throw Error('Native restricted LOGIN required');
+    await owned.withRuntimeRole(async runtime => {
+      const plan = runtimeBusinessPrivilegePlan('app');
+      const quote = (name: string) => { if (!/^[a-z_][a-z_0-9]*$/.test(name)) throw Error('Invalid owned grant identifier'); return `"${name}"`; };
+      const tables = await f.db.execute<{name:string}>(sql`SELECT relname AS name FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r'`);
+      for (const {name} of tables) if (plan.tables[name]?.includes('SELECT'))
+        await f.exec(`GRANT SELECT ON public.${quote(name)} TO ${quote(runtime.role)}`);
+      const restricted = new Hono<{Bindings: Env; Variables: AppVariables}>();
+      restricted.use('*',async (c,next) => {c.set('container',createContainerFromDb(runtime.db)); await next();});
+      restricted.onError((error,c) => c.json({status:400,msg:error.message,data:null}));
+      restricted.get('/outapi/product/list',outAuthMiddleware('GET','/product/list'),outProductListController);
+      const response = await restricted.request('/outapi/product/list?is_vip_product=1&is_live=1',
+        {headers:{Authorization:`Bearer ${token}`}},testEnv);
+      const json = await response.json() as {status:number;msg:string;data:{list:Record<string,unknown>[]}};
+      expect(json.status,json.msg).toBe(200); expect(ids(json.data)).toEqual([72]);
+      const [rights] = await runtime.db.execute(sql`SELECT current_user=session_user AS direct_login,
+        has_table_privilege(current_user,'public.user_search','INSERT') AS history_insert`);
+      expect(rights).toEqual({direct_login:true,history_insert:false});
+    });
+  },30_000);
+});

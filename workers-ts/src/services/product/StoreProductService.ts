@@ -57,6 +57,17 @@ export interface GoodsListParams {
   limit?: number;
 }
 
+/** Authenticated legacy Out product-list filters; never inferred from a public request. */
+export interface OutGoodsListParams extends GoodsListParams {
+  outCategoryId?: number;
+  outStoreLabelIds?: number[];
+  outNew?: boolean;
+  outNotLive?: boolean;
+  outVip?: -1 | 0 | 1;
+  outPresale?: 0 | 1;
+  outStatus?: number;
+}
+
 export interface RecommendProductParams {
   ids?: number[];
   cateIds?: number[];
@@ -171,8 +182,14 @@ export class StoreProductService {
       return new StoreProductService(createContainerFromDb(tx), this.env).getGoodsListInSnapshot(params, _uid);
     });
   }
-  private async getGoodsListInSnapshot(params: GoodsListParams, _uid: number): Promise<{ list: Record<string, unknown>[]; count: number }> {
-    await validatePublicCategoryFilters(this.container.db, { cid: params.cid, sid: params.sid, tid: params.tid, selectId: params.selectId });
+  async getOutGoodsList(params: OutGoodsListParams): Promise<{ list: Record<string, unknown>[]; count: number }> {
+    return withTx(this.container, async tx => {
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY`); await themeDeadlines(tx);
+      return new StoreProductService(createContainerFromDb(tx), this.env).getGoodsListInSnapshot(params, 0, params);
+    });
+  }
+  private async getGoodsListInSnapshot(params: GoodsListParams, _uid: number, out?: OutGoodsListParams): Promise<{ list: Record<string, unknown>[]; count: number }> {
+    if (!out) await validatePublicCategoryFilters(this.container.db, { cid: params.cid, sid: params.sid, tid: params.tid, selectId: params.selectId });
     // 1. 组装 where
     const where: Record<string, unknown> = {
       isShow: 1,
@@ -182,6 +199,22 @@ export class StoreProductService {
       isVipProduct: 0, // 非 svip 专属 (默认隐藏 svip 商品)
       publicCatalog: true,
     };
+
+    if (out) {
+      // Out::productList calls the management search with explicit is_show and
+      // is_del; unlike the storefront it has no anonymous VIP restriction.
+      delete where.isVerify;
+      delete where.publicCatalog;
+      if (out.outStatus === undefined) delete where.status;
+      else where.status = out.outStatus;
+      if (out.outVip === undefined || out.outVip === -1) delete where.isVipProduct;
+      else where.isVipProduct = out.outVip;
+      if (out.outPresale !== undefined) where.isPresaleProduct = out.outPresale;
+      if (out.outCategoryId) where.outCategory = out.outCategoryId;
+      if (out.outStoreLabelIds?.length) where.outStoreLabelIds = out.outStoreLabelIds;
+      if (out.outNew) where.outNew = true;
+      if (out.outNotLive) where.outNotLive = true;
+    }
 
     if (_uid) {
       const current = await this.container.userDao.findForAuth(_uid);
@@ -203,14 +236,14 @@ export class StoreProductService {
       else tid = params.selectId;
     }
 
-    if (params.store_name) where.store_name = params.store_name;
+    if (params.store_name) where[out ? 'outKeyword' : 'store_name'] = params.store_name;
     if (params.store_name) where.pid = 0;
-    if (params.news) where.timeOrder = 1;
+    if (!out && params.news) where.timeOrder = 1;
     if (params.cate_id) where.cateId = String(params.cate_id).split(",").map(Number);
     if (cid) where.cid = cid;
     if (sid) where.sid = sid;
     if (tid) where.tid = tid;
-    if (params.type !== undefined && params.type !== "") where.status = Number(params.type);
+    if (!out && params.type !== undefined && params.type !== "") where.status = Number(params.type);
     if (params.product_types?.length) where.productType = params.product_types;
     if (params.brand_id) where.brandId = String(params.brand_id).split(",").map(Number);
     if (params.store_label_id) {
@@ -236,7 +269,7 @@ export class StoreProductService {
     // PHP UserSearchServices::vicSearch caches the complete matching id set for
     // two hours, then stores/updates the user's search history before paging.
     const searchKeyword = params.store_name?.trim();
-    if (searchKeyword) {
+    if (searchKeyword && !out) {
       const searchIds = await new UserBehaviorService(this.container)
         .resolveProductSearch(_uid, searchKeyword, where);
       if (searchIds.length > 0) {

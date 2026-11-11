@@ -50,6 +50,25 @@ function relationIn(type: number, relationIds: number[]): SQL {
 }
 
 export const storeProductSearchers: SearcherMap<typeof storeProduct> = {
+  // The authenticated Out catalogue uses the legacy management search, not
+  // the public storefront's keyword-history and product-label shortcuts.
+  outKeyword: (value) => {
+    const pattern = `%${String(value).trim()}%`;
+    return or(keywordLike(String(value)), sql`${storeProduct.id}::text LIKE ${pattern}`,
+      sql`EXISTS (SELECT 1 FROM store_product_attr_value sku WHERE sku.product_id=${storeProduct.id} AND sku.bar_code=${String(value).trim()})`)!;
+  },
+  outCategory: (value) => {
+    const id = Number(value);
+    return sql`EXISTS (SELECT 1 FROM store_product_relation relation JOIN store_product_category category ON category.id=relation.relation_id
+      WHERE relation.product_id=${storeProduct.id} AND relation.type=1 AND (
+        (EXISTS (SELECT 1 FROM store_product_category selected WHERE selected.id=${id} AND selected.pid<>0)
+          AND (category.id=${id} OR category.pid=${id})) OR
+        (NOT EXISTS (SELECT 1 FROM store_product_category selected WHERE selected.id=${id} AND selected.pid<>0)
+          AND (category.id=${id} OR ${String(id)}=ANY(string_to_array(category.path, ','))))))`;
+  },
+  outStoreLabelIds: (value) => relationIn(3, value as number[]),
+  outNew: (value) => value ? relationIn(3, [4]) : undefined,
+  outNotLive: (value) => value ? sql`NOT EXISTS (SELECT 1 FROM live_goods goods WHERE goods.product_id=${storeProduct.id} AND goods.is_del=0 AND goods.audit_status<>3)` : undefined,
   publicCatalog: (value) => value ? publicOrdinaryProductIdentitySql() : undefined,
   // Explicit product-id scopes also drive CASE ordering in StoreProductDao.
   // Keep the predicate here so a requested subset cannot silently widen to all products.
