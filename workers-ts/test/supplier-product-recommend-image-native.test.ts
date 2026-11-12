@@ -1133,3 +1133,125 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier authore
     }finally{wiring.container=null;wiring.moderator=null;network.mockRestore();await f.close();}
   },240000);
 });
+
+const settingsHttpErrors = vi.hoisted(() => [] as Error[]);
+vi.mock('@/middleware/error', async original => {
+  const actual = await original<typeof import('@/middleware/error')>();
+  return { ...actual, errorHandler: (...args: Parameters<typeof actual.errorHandler>) => { settingsHttpErrors.push(args[0]); return actual.errorHandler(...args); } };
+});
+
+import { supplierProductSettingsFixture } from './helpers/supplierProductSettings';
+import { readDetailVideo } from '@/services/product/ProductDetailDesignData';
+
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier command word and explicit video settings',()=>{
+  let f:Awaited<ReturnType<typeof supplierProductSettingsFixture>>;
+  beforeEach(async()=>{vi.spyOn(globalThis,'fetch').mockRejectedValue(Error('Owned Supplier settings forbids providers'));f=await supplierProductSettingsFixture();wiring.container=f.container;},30000);
+  afterEach(async()=>{try{expect(fetch).not.toHaveBeenCalled();}finally{await f?.close();wiring.container=null;wiring.moderator=null;vi.restoreAllMocks();}},30000);
+  async function call(id:number,body?:object,actor:keyof typeof f.tokens|'anonymous'='manager'){
+    const response=await app.request('/supplierapi/product/product/'+id,{method:body?'POST':'GET',headers:{...(actor==='anonymous'?{}:{Authorization:'Bearer '+f.tokens[actor]}),...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})},f.env);
+    expect(response.headers.get('cache-control')).toContain('private, no-store');const result=await response.json<Envelope>();if(result.status===500)throw Error('Actual settings HTTP failed',{cause:settingsHttpErrors.at(-1)});return result;
+  }
+  it.each([0,1,3])('authors a Unicode command and independent closed/open video for fulfillment %i',async type=>f.withSettingsWriter(async writer=>{
+    wiring.container=writer.container;const id=type===1?81:80;
+    if(type===3){await f.db.update(storeProduct).set({productType:3}).where(eq(storeProduct.id,id));await f.db.update(storeProductAttrValue).set({productType:3}).where(eq(storeProductAttrValue.productId,id));}
+    const before=await f.product(id),command='🛍'.repeat(255),body=await f.body({video_link:'/api/assets/51'},id);
+    const saved=await call(id,{...body,command_word:' '+command+' ',video_open:false,mer_use:1});expect(saved.status,saved.msg).toBe(200);
+    expect((await call(id)).data.settings_selection).toEqual({version:1,command_word:command,video_open:0});expect(await f.product(id)).toMatchObject({videoLink:'/api/assets/51',videoOpen:0,commandWord:command,merUse:before.merUse,isShow:0,isVerify:0});
+    expect(await readDetailVideo(writer.db,await f.product(id))).toBe('');
+    const [rights]=await writer.db.execute(sql`SELECT current_user=session_user AS independent,has_table_privilege(current_user,'system_attachment','DELETE') AS lock_privilege,has_column_privilege(current_user,'system_attachment','name','UPDATE') AS metadata_edit`);expect(rights).toEqual({independent:true,lock_privilege:true,metadata_edit:false});
+    // The retained URL must not reopen the explicitly closed video.
+    expect((await call(id,body)).status).toBe(200);expect((await f.product(id)).videoOpen).toBe(0);expect((await f.product(id)).commandWord).toBe(command);
+    const opened=await call(id,{...body,video_open:'1'});expect(opened.status,opened.msg).toBe(200);expect(await readDetailVideo(writer.db,await f.product(id))).toBe('/api/assets/51');
+    expect((await call(id,{...body,command_word:'',video_open:0})).status).toBe(200);expect((await call(id)).data.settings_selection).toEqual({version:1,command_word:'',video_open:0});
+    for(const key of ['labelId','storeLabelId','giveIntegral','systemFormId','brandId','ensureId'] as const)expect((await f.product(id))[key]).toEqual(before[key]);
+  }));
+  it('retains omitted legacy malformed text and invalid public video while allowing clear and explicit disable repair',async()=>f.withSettingsWriter(async writer=>{
+    wiring.container=writer.container;await f.db.update(storeProduct).set({commandWord:'old\ncommand',videoOpen:1,videoLink:'javascript:old()'}).where(eq(storeProduct.id,80));
+    const body=await f.body({video_link:'javascript:old()'});expect((await call(80)).data.settings_selection).toEqual({version:1,command_word:'old\ncommand',video_open:1});
+    expect((await call(80,body)).status).toBe(200);expect(await f.product()).toMatchObject({commandWord:'old\ncommand',videoOpen:1,videoLink:'javascript:old()'});expect(await readDetailVideo(writer.db,await f.product())).toBe('');
+    const before=await f.snapshot();expect((await call(80,{...body,video_open:1})).status).not.toBe(200);expect(await f.snapshot()).toEqual(before);
+    expect((await call(80,{...body,video_open:0,command_word:''})).status).toBe(200);expect(await f.product()).toMatchObject({commandWord:'',videoOpen:0,videoLink:'javascript:old()'});
+  }));
+  it('keeps the legacy changed-link default, accepts shared platform media and refuses missing address on enable',async()=>f.withSettingsWriter(async writer=>{
+    wiring.container=writer.container;const body=await f.body();expect((await call(80,{...body,video_link:'/api/assets/53'})).status).toBe(200);expect(await f.product()).toMatchObject({videoOpen:1,videoLink:'/api/assets/53'});
+    const before=await f.snapshot();expect((await call(80,{...body,video_link:'',video_open:1})).status).toBe(400);expect(await f.snapshot()).toEqual(before);
+  }));
+  it('never targets command_word on omitted or undefined intent while an UPDATE OF tripwire is executable',async()=>f.withSettingsWriter(async writer=>{
+    wiring.container=writer.container;await f.exec("CREATE FUNCTION owned_command_omit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'command UPDATE entered'; END $$; CREATE TRIGGER owned_command_omit BEFORE UPDATE OF command_word ON store_product FOR EACH STATEMENT EXECUTE FUNCTION owned_command_omit()");
+    await expect(f.db.update(storeProduct).set({commandWord:''}).where(eq(storeProduct.id,80))).rejects.toThrow();const body=await f.body();expect((await call(80,body)).status).toBe(200);
+    await new SupplierProductManagementService(writer.container,f.env).saveProduct(7,80,{...body,command_word:undefined,video_open:undefined});
+  }));
+  it('refuses foreign, missing and mistyped private videos even on an explicit disabled save',async()=>f.withSettingsWriter(async writer=>{
+    wiring.container=writer.container;for(const video_link of ['/api/assets/52','/api/assets/99999','/api/assets/31'])for(const video_open of [0,1]){
+      const body=await f.body({video_link,video_open}),before=await f.snapshot(),seq=await f.sequences();expect((await call(80,body)).status).not.toBe(200);expect(await f.snapshot()).toEqual(before);expect(await f.sequences()).toEqual(seq);
+    }
+  }));
+  it('rejects malformed and unauthorized settings without any business or sequence change',async()=>f.withSettingsWriter(async writer=>{
+    wiring.container=writer.container;const body=await f.body(),before=await f.snapshot(),seq=await f.sequences();
+    for(const actor of ['viewer','denied','other','anonymous'] as const)expect((await call(80,{...body,command_word:'owned'},actor)).status).not.toBe(200);
+    for(const command_word of [null,1,{},'x'.repeat(256),'bad\ncommand','\ud800'])expect((await call(80,{...body,command_word})).status).toBe(400);
+    for(const video_open of [null,2,-1,'01',{},[]])expect((await call(80,{...body,video_open})).status).toBe(400);expect(await f.snapshot()).toEqual(before);expect(await f.sequences()).toEqual(seq);
+  }));
+  it.each(['skip','rewrite','later-main','catalogue','actor','deferred'] as const)('rejects %s settings tampering after an executable positive control',async mode=>f.withSettingsWriter(async writer=>{
+    const action=mode==='skip'?'RETURN NULL;':mode==='rewrite'?"NEW.command_word='tampered';RETURN NEW;":mode==='later-main'?'UPDATE store_product SET video_open=1 WHERE id=80;RETURN NEW;':mode==='catalogue'?"UPDATE system_attachment SET name='attachments/supplier/7/changed.mp4' WHERE att_id=51;RETURN NEW;":mode==='actor'?"UPDATE system_role SET rules='supplier.product.view' WHERE id=21;RETURN NEW;":"UPDATE store_product SET command_word='tampered' WHERE id=80;RETURN NEW;";
+    const main=['skip','rewrite','deferred'].includes(mode),when=mode==='deferred'?'CREATE CONSTRAINT TRIGGER owned_settings_tamper AFTER UPDATE ON store_product DEFERRABLE INITIALLY DEFERRED':`CREATE TRIGGER owned_settings_tamper ${main?'BEFORE UPDATE ON store_product':'AFTER INSERT OR UPDATE ON store_product_description'}`;
+    const condition=main?"NEW.id=80 AND NEW.command_word='desired'":"NEW.product_id=80";
+    await f.exec(`CREATE FUNCTION owned_settings_tamper() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN IF ${condition} THEN ${action} END IF;RETURN NEW;END $$;${when} FOR EACH ROW EXECUTE FUNCTION owned_settings_tamper()`);
+    const marker=Error('owned settings positive rollback');await expect(f.db.transaction(async tx=>{
+      if(main){const rows=await tx.update(storeProduct).set({commandWord:'desired'}).where(eq(storeProduct.id,80)).returning();await tx.execute(sql`SET CONSTRAINTS ALL IMMEDIATE`);if(mode==='skip')expect(rows).toHaveLength(0);else expect((await tx.select().from(storeProduct).where(eq(storeProduct.id,80)))[0].commandWord).toBe('tampered');}
+      else{await tx.update(storeProductDescription).set({description:'positive'}).where(eq(storeProductDescription.productId,80));if(mode==='later-main')expect((await tx.select().from(storeProduct).where(eq(storeProduct.id,80)))[0].videoOpen).toBe(1);else if(mode==='catalogue')expect((await tx.select().from(systemAttachment).where(eq(systemAttachment.attId,51)))[0].name).toBe('attachments/supplier/7/changed.mp4');else expect((await tx.select().from(systemRole).where(eq(systemRole.id,21)))[0].rules).toBe('supplier.product.view');}throw marker;
+    })).rejects.toBe(marker);
+    wiring.container=writer.container;const body=await f.body({command_word:'desired',video_open:0,video_link:'/api/assets/51'}),before=await f.snapshot(),asset=await f.db.select().from(systemAttachment).where(eq(systemAttachment.attId,51));
+    expect((await call(80,body)).status).not.toBe(200);expect(await f.snapshot()).toEqual(before);expect(await f.db.select().from(systemAttachment).where(eq(systemAttachment.attId,51))).toEqual(asset);
+  }));
+  it('combines settings with all existing explicit metadata authors',async()=>f.withSettingsWriter(async writer=>{
+    wiring.container=writer.container;const result=await call(80,await f.body({command_word:'combined',video_open:0,video_link:'/api/assets/51',give_integral:'2.75',recommend_image:'/api/assets/31',store_label_id:[31],brand_id:[104,105],ensure_id:[201],specs_id:301,specs:[{name:'材质',value:'棉'}],system_form_id:401,is_sub:[]}));
+    expect(result.status,result.msg).toBe(200);expect(await f.product()).toMatchObject({commandWord:'combined',videoOpen:0,videoLink:'/api/assets/51',giveIntegral:'2.75',recommendImage:'/api/assets/31',storeLabelId:'31',brandId:105,ensureId:'201',specsId:301,systemFormId:401});
+  }));
+  it('refuses an actual concurrent video metadata writer before any business write',async()=>f.withSettingsWriter(async writer=>f.withPeer!(async peer=>{
+    wiring.container=writer.container;const held=signal(),release=signal();const holding=peer.db.transaction(async tx=>{await tx.update(systemAttachment).set({name:'attachments/supplier/7/held.mp4'}).where(eq(systemAttachment.attId,51));held.resolve();await release.promise;throw Error('owned settings lock rollback');}).catch(error=>expect(error.message).toBe('owned settings lock rollback'));
+    try{await held.promise;const body=await f.body({video_link:'/api/assets/51',video_open:0}),before=await f.snapshot();expect((await call(80,body)).status).toBe(409);expect(await f.snapshot()).toEqual(before);}finally{release.resolve();await holding;}
+  })));
+});
+
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier settings actual public HTTP lifecycle',()=>{
+  it('keeps video off across unrelated saves and reopens only after explicit author and real moderation for all fulfillments',async()=>{
+    const network=vi.spyOn(globalThis,'fetch').mockRejectedValue(Error('Owned settings public lifecycle forbids providers'));const f=await refundRuntimeFixture();
+    try{
+      await f.db.update(pricingSupplier).set({adminId:21,isShow:1,isDel:0}).where(eq(pricingSupplier.id,7));
+      const password='owned-settings-supplier-password',reviewPassword='owned-settings-review-password';await f.db.insert(systemAdmin).values([{id:21,account:'owned-settings-supplier',pwd:password,adminType:4,relationId:7,status:1,isDel:0},{id:101,account:'owned-settings-review',pwd:reviewPassword,adminType:1,relationId:0,level:0,status:1,isDel:0}]);
+      await f.db.insert(pricingCategory).values({id:800001,type:2,relationId:7,cateName:'本地视频设置分类',isShow:1});
+      await f.exec("SELECT setval(pg_get_serial_sequence('store_product','id'),800010,true);SELECT setval(pg_get_serial_sequence('store_product_attr_value','id'),800010,true)");
+      const env={...f.env,NODE_ENV:'test',APP_KEY:'owned-supplier-settings-key',UPSTASH_REDIS_URL:'',UPSTASH_REDIS_TOKEN:''} as unknown as Env;
+      const supplierToken=(await createToken(21,'supplier',md5(password),env.APP_KEY)).token,reviewToken=(await createToken(101,'admin',md5(reviewPassword),env.APP_KEY)).token;
+      if(!f.withRuntimeRole)throw Error('Actual independent runtime LOGINs required');
+      await f.withRuntimeRole(appRole=>f.withRuntimeRole!(async adminRole=>{
+        const [database]=await f.db.execute(sql`SELECT current_database() AS name`),names={app:appRole.role,admin:adminRole.role,maintenance:'finance_test',database:String(database.name),pricingOwner:f.pricingOwner};
+        await runRuntimeBusinessCommissioning(f.db,names);expect((await runRoutinePaymentRuntimeInstallation(f.db,names)).after.ready).toBe(true);
+        expect(await auditRuntimeBusinessPrivileges(appRole.db,'app',names)).toMatchObject({ready:true,failures:[]});expect(await auditRuntimeBusinessPrivileges(adminRole.db,'admin',names)).toMatchObject({ready:true,failures:[]});
+        const container=createContainerFromDb(appRole.db);wiring.container=container;wiring.moderator=createContainerFromDb(adminRole.db);
+        async function request(method:string,path:string,body?:object,token:string|null=supplierToken){const tasks:Promise<unknown>[]=[];const response=await app.request(path,{method,headers:{...(token?{Authorization:'Bearer '+token}:{}),...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})},env,{waitUntil:task=>{tasks.push(task);},passThroughOnException(){},props:{}});await Promise.all(tasks);const result=await response.json<Envelope>();if(result.status===500)throw Error('Actual settings HTTP failed',{cause:settingsHttpErrors.at(-1)});return result;}
+        async function ok(method:string,path:string,body?:object,token:string|null=supplierToken){const result=await request(method,path,body,token);expect(result.status,result.msg).toBe(200);return result.data;}
+        for(const productType of [0,1,3]){
+          const assetId=800051+productType,ref='/api/assets/'+assetId,command='🛍'.repeat(255);
+          await f.db.insert(systemAttachment).values({attId:assetId,type:4,moduleType:1,relationId:7,fileType:2,imageType:8,name:`attachments/supplier/7/public-${productType}.mp4`,attDir:ref,attType:'video/mp4'});
+          const body={product_type:productType,store_name:'实际视频设置商品 '+productType,cate_id:[800001],slider_image:['/supplier-settings.png'],spec_type:0,freight:1,is_postage:1,is_sub:[],command_word:command,video_open:0,video_link:ref,attrs:[{price:'10.00',settle_price:'1.00',vip_price:'0.00',stock:8,...(productType===1?{delivery_mode:'fixed',disk_info:'Owned settings fixed content'}:{})}]};
+          const made=await ok('POST','/supplierapi/product/product/0',body),id=Number(made.id),path='/supplierapi/product/product/'+id,publicPath='/api/product/detail/'+id;
+          const {video_open:_open,command_word:_command,...legacyBody}=body;
+          const review=()=>ok('POST','/adminapi/product/product/set_verify/'+id,{is_verify:1,is_show:1,refusal:'',auto_on_time:''},reviewToken);
+          expect((await ok('GET',path)).settings_selection).toEqual({version:1,command_word:command,video_open:0});expect((await request('GET',publicPath,undefined,null)).status).not.toBe(200);await review();
+          let visible=await ok('GET',publicPath,undefined,null);expect(visible.video_link).toBe('');expect(visible.storeInfo.video_link).toBe('');expect(visible).not.toHaveProperty('commandWord');expect(visible).not.toHaveProperty('command_word');
+          const row=async()=>(await f.db.select().from(storeProduct).where(eq(storeProduct.id,id)))[0];expect(await row()).toMatchObject({videoOpen:0,videoLink:ref,commandWord:command,isShow:1,isVerify:1});
+          const current=await ok('GET',path);await ok('POST',path,{...legacyBody,attrs:current.attrs});expect(await row()).toMatchObject({videoOpen:0,videoLink:ref,commandWord:command,isShow:0,isVerify:0});await review();expect((await ok('GET',publicPath,undefined,null)).video_link).toBe('');
+          await ok('POST',path,{...legacyBody,attrs:current.attrs,video_open:1});expect((await request('GET',publicPath,undefined,null)).status).not.toBe(200);await review();visible=await ok('GET',publicPath,undefined,null);expect(visible.video_link).toContain(ref+'?');expect(visible.storeInfo.video_link).toBe(visible.video_link);
+          await ok('POST',path,{...legacyBody,attrs:current.attrs,video_open:0});await review();expect((await ok('GET',publicPath,undefined,null)).video_link).toBe('');expect((await row()).videoLink).toBe(ref);
+          await ok('POST',path,{...legacyBody,attrs:current.attrs,video_open:1,command_word:''});await review();visible=await ok('GET',publicPath,undefined,null);expect((await ok('GET',path)).settings_selection.command_word).toBe('');expect(visible.video_link).toContain(ref+'?');
+          // Real metadata lookup is current on every public detail, not a
+          // stale assembled response that keeps playing an unavailable asset.
+          await f.db.update(systemAttachment).set({attType:'image/png'}).where(eq(systemAttachment.attId,assetId));expect((await ok('GET',publicPath,undefined,null)).video_link).toBe('');
+          await f.db.update(systemAttachment).set({attType:'video/mp4'}).where(eq(systemAttachment.attId,assetId));expect((await ok('GET',publicPath,undefined,null)).video_link).toContain(ref+'?');
+        }
+      }));expect(network).not.toHaveBeenCalled();
+    }finally{wiring.container=null;wiring.moderator=null;network.mockRestore();await f.close();}
+  },180000);
+});

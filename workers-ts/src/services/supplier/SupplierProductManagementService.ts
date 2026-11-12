@@ -1,3 +1,4 @@
+import { supplierProductSettingsInput, admitSupplierProductSettings } from './SupplierProductSettings';
 import { supplierProductUserLabelInput, supplierUserLabelRelations, replaceSupplierUserLabels, assertSupplierUserLabels, readSupplierUserLabels } from './SupplierProductUserLabels';
 import { lockOutProductLabels } from '@/services/out/OutProductLabelBindings';
 import { supplierProductCouponInput, readSupplierProductCoupons } from './SupplierProductCoupons';
@@ -442,6 +443,8 @@ export class SupplierProductManagementService {
   }
 
   async saveProduct(supplierId: number, productId: number, rawInput: UnknownRecord, actor?: SupplierProductLabelActor) {
+    const settings = supplierProductSettingsInput(rawInput);
+    const hasSettings = Object.keys(settings).length > 0;
     const userLabelIds = supplierProductUserLabelInput(rawInput);
     const couponIds = supplierProductCouponInput(rawInput);
     const integralInput = supplierProductIntegralInput(rawInput);
@@ -464,7 +467,7 @@ export class SupplierProductManagementService {
       // any product/SKU/bargain lock, so no stale parent or missing category can
       // be committed while classification management is changing the tree.
       await lockSupplierCategoryScope(tx, supplierId);
-      if (labelIds !== undefined || hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined || systemFormId !== undefined || recommendImage !== undefined || priceOptions !== undefined || purchaseInput !== undefined || integralInput !== undefined || couponIds !== undefined || userLabelIds !== undefined) {
+      if (labelIds !== undefined || hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined || systemFormId !== undefined || recommendImage !== undefined || priceOptions !== undefined || purchaseInput !== undefined || integralInput !== undefined || couponIds !== undefined || userLabelIds !== undefined || hasSettings) {
         await tx.execute(sql`SET LOCAL lock_timeout='2s'`);
         await tx.execute(sql`SET LOCAL statement_timeout='10s'`);
         await labelAuthority.assertBindingAuthority(tx, supplierId, actor!, labelPath);
@@ -479,7 +482,7 @@ export class SupplierProductManagementService {
       // Legacy schema only indexed SKU unique; serialize saves so new rows can be checked globally
       // without racing another supplier product save. Historical duplicates remain a migration audit item.
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${PRODUCT_LOCK_NAMESPACE}, 0)`);
-      if ((labelIds !== undefined || hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined || systemFormId !== undefined || recommendImage !== undefined || priceOptions !== undefined || purchaseInput !== undefined || integralInput !== undefined || couponIds !== undefined || userLabelIds !== undefined) && productId > 0 && !await tryLockProductWrite(tx, productId)) {
+      if ((labelIds !== undefined || hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined || systemFormId !== undefined || recommendImage !== undefined || priceOptions !== undefined || purchaseInput !== undefined || integralInput !== undefined || couponIds !== undefined || userLabelIds !== undefined || hasSettings) && productId > 0 && !await tryLockProductWrite(tx, productId)) {
         throw new HttpApiException('商品正在修改，请刷新后重试', 409, 409);
       }
       const existing = productId > 0
@@ -523,8 +526,9 @@ export class SupplierProductManagementService {
       }
       // Existing legacy bytes do not grant asset authority. Canonical private
       // references are always revalidated, even when unchanged.
-      if (!existing || existing.videoLink !== input.videoLink || parseCanonicalAttachmentId(input.videoLink) !== null)
+      if (!existing || existing.videoLink !== input.videoLink || parseCanonicalAttachmentId(input.videoLink) !== null || settings.videoOpen === 1)
         await assertProductVideoReference(tx, input.videoLink, { type: 2, relationId: supplierId }, { allowLegacyRelative: true });
+      const settingsPlan = await admitSupplierProductSettings(tx, supplierId, settings, input.videoLink, existing);
       const userAdmission = userLabelIds === undefined ? undefined : await lockOutProductLabels(tx, 'user', userLabelIds);
       const originalUserRelations = userLabelIds !== undefined && existing ? await supplierUserLabelRelations(tx, productId) : [];
       let couponProof = couponIds !== undefined && existing ? await captureOutProductCoupons(tx, productId) : undefined;
@@ -572,7 +576,7 @@ export class SupplierProductManagementService {
         ...(input.autoOffTime === undefined ? {} : { autoOffTime: input.autoOffTime }),
         isPostage: input.isPostage,
         cost,
-        videoOpen: input.videoLink ? 1 : 0,
+        ...settingsPlan.values,
         videoLink: input.videoLink,
         specType: input.specType,
         isSupportRefund: input.isSupportRefund,
@@ -587,7 +591,7 @@ export class SupplierProductManagementService {
         // Checkout claims carts before SKU and product stock. Disable carts
         // before either row write so a checkout-owned cart cannot form a cycle.
         await tx.update(storeCart).set({ status: 0 }).where(eq(storeCart.productId, productId));
-        if (recommendImage === undefined && userLabelIds === undefined) {
+        if (recommendImage === undefined && userLabelIds === undefined && !hasSettings) {
           await tx.update(storeProduct).set(productValues).where(eq(storeProduct.id, productId));
         } else {
           const rows = await tx.update(storeProduct).set(productValues).where(eq(storeProduct.id, productId)).returning();
@@ -598,14 +602,14 @@ export class SupplierProductManagementService {
           .insert(storeProduct)
           .values({ ...productValues, addTime: now, isDel: 0 })
           .returning({ id: storeProduct.id });
-        if ((recommendImage !== undefined || userLabelIds !== undefined) && rows.length !== 1) throw recommendationConflict();
+        if ((recommendImage !== undefined || userLabelIds !== undefined || hasSettings) && rows.length !== 1) throw recommendationConflict();
         savedProductId = rows[0].id;
       }
       if (couponIds !== undefined && !couponProof) {
         couponProof = await captureOutProductCoupons(tx, savedProductId);
         if (couponProof.rows.length) throw new HttpApiException('新商品赠券关联已变化', 409, 409);
       }
-      if (recommendImage !== undefined || userLabelIds !== undefined) {
+      if (recommendImage !== undefined || userLabelIds !== undefined || hasSettings) {
         const [read] = await tx.select().from(storeProduct).where(eq(storeProduct.id, savedProductId)).limit(1);
         if (!read || read.isDel !== 0 || Object.entries(productValues).some(([key, value]) => read[key as keyof typeof productValues] !== value)
           || existing && !sameRecommendationState(read, { ...existing, ...productValues })) throw recommendationConflict();
@@ -706,6 +710,13 @@ export class SupplierProductManagementService {
         ...(parameters === undefined ? {} : { specsId: parameters.specs_id, specs: parameters.specs.length ? JSON.stringify(parameters.specs) : '' }),
         ...(systemFormId === undefined ? {} : { systemFormId }),
       }, userAdmission, originalUserRelations) : undefined;
+      const settingsMain = hasSettings && recommendationMain ? { ...recommendationMain,
+        ...(labelIds === undefined ? {} : { storeLabelId: labelIds.join(',') }),
+        ...(brandIds === undefined ? {} : { brandId: brandIds.at(-1) ?? 0, brandCom: brandIds.join(',') }),
+        ...(ensureIds === undefined ? {} : { ensureId: ensureIds.join(',') }),
+        ...(parameters === undefined ? {} : { specsId: parameters.specs_id, specs: parameters.specs.length ? JSON.stringify(parameters.specs) : '' }),
+        ...(systemFormId === undefined ? {} : { systemFormId }),
+      } : undefined;
       let couponMain: typeof storeProduct.$inferSelect | undefined;
       if (couponProof && couponIds !== undefined) {
         await assertOutProductCoupons(tx, couponProof);
@@ -716,7 +727,7 @@ export class SupplierProductManagementService {
         couponProof = await replaceOutProductCoupons(tx, couponProof, couponIds, now);
       }
       if (parameters !== undefined) await assertSupplierProductParameterTemplate(tx, parameters.specs_id, admittedParameter);
-      if (labelIds !== undefined || hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined || systemFormId !== undefined || recommendImage !== undefined || priceOptions !== undefined || purchaseInput !== undefined || integralInput !== undefined || couponIds !== undefined || userLabelIds !== undefined) await labelAuthority.assertBindingAuthority(tx, supplierId, actor!, labelPath);
+      if (labelIds !== undefined || hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined || systemFormId !== undefined || recommendImage !== undefined || priceOptions !== undefined || purchaseInput !== undefined || integralInput !== undefined || couponIds !== undefined || userLabelIds !== undefined || hasSettings) await labelAuthority.assertBindingAuthority(tx, supplierId, actor!, labelPath);
       if (hasSchedule) {
         const [read] = await tx.select({ id: storeProduct.id, type: storeProduct.type, relationId: storeProduct.relationId,
           isDel: storeProduct.isDel, isShow: storeProduct.isShow, isVerify: storeProduct.isVerify,
@@ -776,9 +787,13 @@ export class SupplierProductManagementService {
         await assertSupplierUserLabels(tx, supplierId, userProof);
         await labelAuthority.assertBindingAuthority(tx, supplierId, actor!, labelPath);
       }
+      if (settingsMain) {
+        await settingsPlan.assert(savedProductId, settingsMain);
+        await labelAuthority.assertBindingAuthority(tx, supplierId, actor!, labelPath);
+      }
       return { id: savedProductId, is_verify: 0, is_show: 0 };
     }).catch((error: unknown) => {
-      if (hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined || systemFormId !== undefined || recommendImage !== undefined || priceOptions !== undefined || purchaseInput !== undefined || integralInput !== undefined || couponIds !== undefined || userLabelIds !== undefined) {
+      if (hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined || systemFormId !== undefined || recommendImage !== undefined || priceOptions !== undefined || purchaseInput !== undefined || integralInput !== undefined || couponIds !== undefined || userLabelIds !== undefined || hasSettings) {
         let cause = error;
         for (let depth = 0; depth < 8 && cause && typeof cause === 'object'; depth++) {
           if ('code' in cause && ['55P03', '40P01', '40001'].includes(String(cause.code))) {
@@ -825,6 +840,7 @@ export class SupplierProductManagementService {
     const detail = {
       id: product.id,
       product_type: product.productType,
+      settings_selection: { version: 1 as const, command_word: product.commandWord, video_open: product.videoOpen },
       user_label_selection: await readSupplierUserLabels(this.container.db, product),
       coupon_selection: await readSupplierProductCoupons(this.container.db, productId),
       integral_selection: { version: 1 as const, give_integral: product.giveIntegral },

@@ -303,6 +303,9 @@ export interface ProductSku {
 }
 
 export interface ProductDetail {
+  settings_selection?: import('./utils/productSettings').ProductSettingsSelection;
+  command_word?: unknown;
+  video_open?: unknown;
   user_label_selection?: import('./utils/productUserLabels').SupplierUserLabelSelection;
   label_id?: unknown;
   coupon_selection?: import('./utils/productCoupons').SupplierCouponSelection;

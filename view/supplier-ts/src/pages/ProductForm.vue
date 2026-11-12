@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { productSettingsEditor, productSettingsPayload } from '@/utils/productSettings';
 import SupplierProductUserLabelPicker from '@/components/SupplierProductUserLabelPicker.vue';
 import { productUserLabelEditor, productUserLabelPayload, productUserLabelIds } from '@/utils/productUserLabels';
 import SupplierProductCouponPicker from '@/components/SupplierProductCouponPicker.vue';
@@ -285,6 +286,16 @@ function initialForm(): ProductDetail {
   };
 }
 
+const settings = reactive(productSettingsEditor(undefined, true));
+const settingsDisabled = computed(() => !settings.ready || loading.value || saving.value || !productReadReady.value || mediaInvalidated.value || !canManageProducts.value || copying.value);
+function changeCommandWord(value:string) {
+  if(settingsDisabled.value || !mediaSession.isCurrent()) return;
+  settings.commandWord=value;settings.commandChanged=true;
+}
+function changeVideoOpen(value:boolean) {
+  if(settingsDisabled.value || !mediaSession.isCurrent()) return;
+  settings.videoOpen=value?1:0;settings.videoChanged=true;
+}
 const userLabels = reactive(productUserLabelEditor(undefined, true));
 function changeUserLabels(value:number[]) {
   if (!userLabels.ready || loading.value || saving.value || !productReadReady.value || mediaInvalidated.value || !mediaSession.isCurrent() || !canManageProducts.value || copying.value) return;
@@ -300,6 +311,7 @@ const purchase = reactive(productPurchaseEditor(undefined, true));
 const form = reactive<ProductDetail>(initialForm());
 const priceOptions = ref<number[]>([]), priceOptionsReady = ref(true);
 function resetProductForm() {
+  Object.assign(settings, productSettingsEditor(undefined, true));
   Object.assign(userLabels, productUserLabelEditor(undefined, true));
   Object.assign(coupons, productCouponEditor(undefined, true));
   Object.assign(integral, productIntegralEditor(undefined, true));
@@ -333,6 +345,7 @@ function editableSku(sku: ProductSku, productType: ProductDetail['product_type']
 }
 
 function applyProductDetail(detail: ProductDetail) {
+  Object.assign(settings, productSettingsEditor(detail.settings_selection));
   Object.assign(userLabels, productUserLabelEditor(detail.user_label_selection));
   Object.assign(coupons, productCouponEditor(detail.coupon_selection));
   Object.assign(integral, productIntegralEditor(detail.integral_selection));
@@ -363,10 +376,12 @@ function openVideoUpload() {
 }
 function useUploadedVideo(value: { url: string; src: string }) {
   if (videoDisabled.value || !videoUploaderOpen.value || !mediaSession.isCurrent() || !/^\/api\/assets\/[1-9]\d{0,9}$/.test(value.url)) return;
+  if(settings.ready && !copying.value){settings.videoOpen=1;settings.videoChanged=true;}
   form.video_link = value.url; videoPreviewUrl.value = videoPreviewSource(value.url, value.src); videoUploaderOpen.value = false;
 }
 function removeVideo() {
   if (videoDisabled.value || !mediaSession.isCurrent()) return;
+  if(settings.ready && !copying.value){settings.videoOpen=0;settings.videoChanged=true;}
   form.video_link = ''; videoPreviewUrl.value = '';
 }
 watch(() => form.video_link, (value, previous) => { if (value !== previous && !videoPreviewSource(value, videoPreviewUrl.value)) videoPreviewUrl.value = ''; });
@@ -648,11 +663,12 @@ async function submit() {
       specs_id: _originalTemplate, specs: _originalParameters, specs_selection: _parameterSelection,
       system_form_id: _originalSystemForm, system_form_selection: _systemFormSelection, recommend_image: _originalRecommendImage, price_selection: _priceSelection, purchase_selection: _purchaseSelection,
       integral_selection: _integralSelection, give_integral: _giveIntegral,
+      settings_selection: _settingsSelection, command_word: _commandWord, video_open: _videoOpen,
       user_label_selection: _userLabelSelection, label_id: _originalUserLabels,
       coupon_selection: _couponSelection, coupon_ids: _couponIds, coupons: _legacyCoupons,
       is_vip_product: _memberOnly, is_presale_product: _presale, presale_time: _presalePeriod, presale_day: _presaleDays,
       ...editableForm } = form as ProductDetail & { video_preview_url?: unknown; coupon_ids?: unknown; coupons?: unknown; give_integral?: unknown; is_vip_product?: unknown; is_presale_product?: unknown; presale_time?: unknown; presale_day?: unknown };
-    const payload = { ...editableForm, attrs, ...(!copying.value ? { ...productPriceOptionsPayload(priceOptions.value, priceOptionsReady.value), ...productPurchasePayload(purchase), ...productIntegralPayload(integral), ...productCouponPayload(coupons), ...productUserLabelPayload(userLabels) } : {}), ...(labelsChanged.value ? { store_label_id: [...selectedLabelIds.value] } : {}),
+    const payload = { ...editableForm, attrs, ...(!copying.value ? { ...productPriceOptionsPayload(priceOptions.value, priceOptionsReady.value), ...productPurchasePayload(purchase), ...productIntegralPayload(integral), ...productCouponPayload(coupons), ...productUserLabelPayload(userLabels), ...productSettingsPayload(settings) } : {}), ...(labelsChanged.value ? { store_label_id: [...selectedLabelIds.value] } : {}),
       ...(!copying.value ? { ...productRecommendImagePayload(form.recommend_image, recommendImageChanged.value), ...productSchedulePayload(schedule), ...productBrandPayload(selectedBrandPath.value, brandChanged.value), ...productEnsurePayload(selectedEnsureIds.value, ensuresChanged.value), ...productParameterPayload(parameterDraft.value, parametersChanged.value), ...productSystemFormPayload(selectedSystemFormId.value, systemFormChanged.value) } : {}) };
     if (copying.value) {
       if (!copyContext.value || copyContext.value.source_id !== copyEntry.value.source) throw Error('请重新读取复制来源');
@@ -872,6 +888,11 @@ onMounted(load);
 
         <article class="surface product-form-card">
           <header class="card-heading-row"><div><h2>商品视频</h2><p>支持100 MiB以内的MP4；上传完成后明确选择使用，再保存商品。</p></div><el-button v-if="auth.can('supplier.attachment.manage')" :disabled="videoDisabled" @click="openVideoUpload">上传商品视频</el-button></header>
+          <el-checkbox v-if="!copying" :model-value="settings.videoOpen === 1" :disabled="settingsDisabled" @change="changeVideoOpen(!!$event)">在前台显示商品视频</el-checkbox>
+          <p v-else class="security-note">视频开关沿用来源商品，创建后可在编辑页调整。</p>
+          <p v-if="!copying && !settings.ready" class="security-note">尚未读取视频开关；可替换或移除视频，重新读取后再调整显示。</p>
+          <p v-else-if="!copying && ![0,1].includes(settings.videoOpen)" class="security-note">原视频开关异常，未修改时保留；可明确开启或关闭以修复。</p>
+          <p v-if="!copying" class="security-note">关闭后保留视频地址，前台不显示视频；选择使用新上传视频会开启显示。</p>
           <p v-if="form.video_link" class="video-reference">{{ form.video_link }}</p><p v-else>尚未设置商品视频</p>
           <video v-if="videoPreviewUrl && !mediaInvalidated" :src="videoPreviewUrl" controls preload="metadata" aria-label="商品视频预览" />
           <p v-else-if="form.video_link">视频引用已保留；可重读已保存预览。</p>
@@ -1039,6 +1060,15 @@ onMounted(load);
             <p v-if="!purchase.ready" class="security-note">尚未读取购买资格与预售条件，请重新读取后再调整。</p>
           </template>
           <p v-else class="security-note">复制保留来源的购买资格与预售条件，创建后可在编辑页调整。</p>
+        </article>
+        <article class="surface product-form-card compact-card">
+          <header><h2>商品口令</h2><p>随商品保存的文本口令。</p></header>
+          <template v-if="!copying">
+            <el-input :model-value="settings.commandWord" aria-label="商品口令" type="textarea" :rows="2" :disabled="settingsDisabled" @update:model-value="changeCommandWord" />
+            <p class="security-note">最多255个字符，不含换行；清空并保存可移除。保存后须重新审核。</p>
+            <p v-if="!settings.ready" class="security-note">尚未读取商品口令，请重新读取后再调整。</p>
+          </template>
+          <p v-else class="security-note">复制保留来源的商品口令，创建后可在编辑页调整。</p>
         </article>
         <article class="surface product-form-card compact-card">
           <header><h2>购买用户标签</h2><p>选择有效的平台用户标签，付款后由独立任务添加。</p></header>

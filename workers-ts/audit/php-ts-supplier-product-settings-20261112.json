@@ -1,0 +1,1664 @@
+{
+  "schema": "php-ts-supplier-product-settings/v1",
+  "baseCommit": "b3399d0a1c1f8aaa89f86d5c419fb1dfb7ef2fa7",
+  "wholeMigrationComplete": false,
+  "sourceHashes": [
+    {
+      "path": "view/supplier-ts/src/pages/ProductForm.vue",
+      "sha256": "c068f3201283f650d4ab7be232bdfe49e5a4d60292999aa4e9436e340b5c8e5a"
+    },
+    {
+      "path": "view/supplier-ts/src/types.ts",
+      "sha256": "0713a85aea45d783240310970113f6508c860159b48175d71fa6cb51edef2922"
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+      "sha256": "6ab3c467ea97bf3f75e650ce34593b4863c39e4c5d397f64f4d72cef52adfdda"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductManagementService.ts",
+      "sha256": "3437d58718baba2c8f5b6b6a449a29526b3f8780fd4804396d083748d5567fc2"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-media-frontend.test.ts",
+      "sha256": "23dcdb02ab48df7221fd6a380ff07dbc0a57c2d01407934c0912c5906ee31ba0"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-recommend-image-native.test.ts",
+      "sha256": "358e3988c6546dce5627400395fd78e11a38fa798bab83bed2c938137d6ba268"
+    },
+    {
+      "path": "view/supplier-ts/src/utils/productSettings.ts",
+      "sha256": "84d3f8b9f642ab17d5c508b3dc8ef2cd5311c5380ff127f3e0657dc58b5b1e80"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductSettings.ts",
+      "sha256": "549c8e9ef0156b917fb40c424c3725ee4b2b16179a55c75f47b2fba6bc00223f"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierProductSettings.ts",
+      "sha256": "d419dfb72fa56151028e4ca3ff5483eedbedbccfa50ef1ce20a3118b9ba6c904"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-settings.test.ts",
+      "sha256": "1b6c7ba30717c2166699d7700b565543af7aa669c3aecc44af69fbe2a20bfc04"
+    }
+  ],
+  "unchangedDependencies": [
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductIntegral.ts",
+      "sha256": "2b869e9067a8d001bb57f386999fe95311a5144bddc0a79112c080d4801efab6"
+    },
+    {
+      "path": "workers-ts/src/services/activity/ProductCouponService.ts",
+      "sha256": "aec6e37c95104b8865e4c5ae5629eb0beb4bb6520fd36bb6e21896e9c8577a39"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductCouponBindings.ts",
+      "sha256": "8b98bb1101d86421ec1b32010bd197e8da7d6d3d7930567b8df3f6044811d350"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductPurchaseOptions.ts",
+      "sha256": "6c84f76c07342f8fb1e294cbdf831cb05285826cddf1623bc1be6e4ece98fa01"
+    },
+    {
+      "path": "workers-ts/src/services/order/OrderRewardService.ts",
+      "sha256": "3e176eb02577defb6af98eba59995354c38c33013b35ce27f8237d932f1fa785"
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreOrderRefundService.ts",
+      "sha256": "ca2ef3db6b2649a61a31e3c88346984912a41d82ebd898c85f2b69c33537bc3a"
+    },
+    {
+      "path": "workers-ts/src/services/order/OrderSplitFinance.ts",
+      "sha256": "b6422fe5af793b50a6277cfb08d630087900e990f5937bbb7756e5dff2966652"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductPriceOptions.ts",
+      "sha256": "2db2f3c898d7b7dfb9b4301803958a48d88fa0dd7e5cf8350fdf9ce08e7feaf1"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductPresaleBindings.ts",
+      "sha256": "7c2c7cf5c59e11e7b405ba9bfc90ec823e6003db183b834dec72a951eb10d5ee"
+    },
+    {
+      "path": "workers-ts/src/services/order/OrdinaryVipCartAdmission.ts",
+      "sha256": "ebdd82b8cf09a59b9fb23509cd8e16df63d1e066888c11e051c34a25f5125214"
+    },
+    {
+      "path": "workers-ts/src/services/activity/PresaleCartService.ts",
+      "sha256": "edb60abcf3b4ab8a390cdae8fb02e75217fe7f8795800af198953ebe2b446547"
+    },
+    {
+      "path": "workers-ts/src/services/activity/PresalePurchaseSnapshot.ts",
+      "sha256": "c651e8055cdfcb284fa928a92ec16f6be2ab227f2df3a48391f05c41f5e964ca"
+    },
+    {
+      "path": "workers-ts/src/services/activity/PresaleDeliveryResolver.ts",
+      "sha256": "1d8880ff21094bdcddb7fc1637603ec6f93209775c4194d5630219594ed62953"
+    },
+    {
+      "path": "workers-ts/src/services/activity/PresaleFulfillmentSnapshot.ts",
+      "sha256": "7566126df220e97d5313a7252f6224a3ee60fdcab940c0078593ff0944eabeee"
+    },
+    {
+      "path": "workers-ts/src/services/product/PublicCatalogService.ts",
+      "sha256": "702a0b20a7ceac5bd2dd865cae5a4fba72c844e899031a59984b2743f6ab816a"
+    },
+    {
+      "path": "workers-ts/src/services/product/StoreProductService.ts",
+      "sha256": "7dc64077b57923f77e13fd654dbf2147b8387efb89417204424f20115b143fec"
+    },
+    {
+      "path": "workers-ts/src/services/payment/PaymentReadinessService.ts",
+      "sha256": "95657ab6d70b04de94c36de1371f8af844f04b05c122689c1805c2a582756db2"
+    },
+    {
+      "path": "workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+      "sha256": "843cabc2feb45596a80ac6d2f3a703f59fd849a2b38052a50054a8967e3d41d7"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "32c5fff9c6dbfaa30720fbd72dd729a3ea7a1e7fc3a02be5515fb541af55a074"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductService.ts",
+      "sha256": "8de49a1fd429bc48f08b5480ef8ca10a8f30289500c53c6d5fa9b57ff645fd56"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductPriceOptions.ts",
+      "sha256": "4d5f2aac570c7666315c6ad5c8b9da0962bc2b5c82d6343cc3b27c0b2a473083"
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+      "sha256": "2e15fb5be5dcd2a1e953d4c3e8944180a36d0a424ad6dee83a0b73572a1110b3"
+    },
+    {
+      "path": "workers-ts/src/services/order/OrderBrokerageService.ts",
+      "sha256": "aea8513e878d5d362f4fb3db01353bfd5a14894b7a8bda9416765e72c2e21474"
+    },
+    {
+      "path": "workers-ts/src/services/order/OrderOutboxService.ts",
+      "sha256": "4c9751e466a7857e3dfff1b4f618f5e59c3be013fedf42372b180a5bde08687f"
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreOrderPayService.ts",
+      "sha256": "94f7abd31652f77ab9b013c30f87a4bb75477bef6cbf5b45d679f2403c0d5050"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminProductModerationService.ts",
+      "sha256": "55eb1343feaca81e8a8a56e3c0659a693db7fd007289c76c42967f7b72c1b51d"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductSkuEditorService.ts",
+      "sha256": "b05f51653e92daa9e42c8f37e6f03dfbd35b5fe3cf6e5239051465e13d8f8ee4"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductSkuInput.ts",
+      "sha256": "c96247e8ac7befe362e9d2596c2d2a69d9b113930aa6c388ec1a78755ab1f23f"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductCopySource.ts",
+      "sha256": "eee6eccdf9f6a2e1558e03f9536c33539eb3a23824ad6c13024abb10680f09a7"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductCopyOperation.ts",
+      "sha256": "27264aca5cb7b8f6694d513a656a7778b6f70f12330d8cdf6aacb29cba8b6caf"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductCopyService.ts",
+      "sha256": "5d7d23e0578ffdb9c8e43024e4facdd9cfc4f1e8bb9b8e5da5cd7de8e77a5918"
+    },
+    {
+      "path": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+      "sha256": "4044d51930d72620f9d124c375779e37a99fdfb8e8c815cf2cb30420080d4324"
+    },
+    {
+      "path": "workers-ts/test/helpers/refundRuntimeFixture.ts",
+      "sha256": "cee737293c79fc2434f5031163410b684a900b1ce7c59e1e2fa876d3e3173b33"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-copy-native.test.ts",
+      "sha256": "38525e635b7035785c77d80e16f2f6a27353406c895bc9184ac9a43472b3f530"
+    },
+    {
+      "path": ".github/workflows/workers-runtime-linux.yml",
+      "sha256": "94f08a84a76181eb0f0229f0f82d1f731b9c39ebbe09b5ceebb4ae3741d6cac6"
+    },
+    {
+      "path": ".gitleaksignore",
+      "sha256": "1f6204fa08c92058b8a8f3e9b99dfbcb90c4537da28de17fc782e3f8a4c988bb"
+    },
+    {
+      "path": ".gitleaks.toml",
+      "sha256": "8d3f6557cffc5c61bc1ab6a8c5ac26400542f6da5d7c2320306ee17373a14eea"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductLabelBindings.ts",
+      "sha256": "1ad27d8ed1a4823090352e4ade5d90e984dc1a8c71d54dbbd40c2860d026c290"
+    },
+    {
+      "path": "workers-ts/src/services/order/PurchasedProductLabelTaskService.ts",
+      "sha256": "1f994280055af0ada3a1fd3d75f448d6f0f92e82b02b7fbc2e9a89a2c4b9eaef"
+    },
+    {
+      "path": "workers-ts/src/services/order/PurchasedProductLabelGrant.ts",
+      "sha256": "c029eb62b322895aae34ae5b875670c933f1b739ed7a8c0a676eaae79996b480"
+    },
+    {
+      "path": "workers-ts/src/services/order/PurchasedProductLabelSelection.ts",
+      "sha256": "216fe4ab1b0eec09b6272f3e21a20e091b20a8dced85579d739221ff2103789b"
+    },
+    {
+      "path": "workers-ts/src/services/order/PurchasedProductLabelRuntimeDeclaration.ts",
+      "sha256": "49b391b6f79e1b8f14b555fb01524ac09caab532474933678a01e517374cd525"
+    },
+    {
+      "path": "workers-ts/src/migrations/upgradePurchasedProductLabelRuntime.ts",
+      "sha256": "f99d137776cd99b6dabd26004b20489eed2975ef89e536192e8d67651bcc9902"
+    },
+    {
+      "path": "workers-ts/src/migrations/installPurchasedProductLabelStorage.ts",
+      "sha256": "f6f0b3a363080c543d942b32236d6933c3e7113ee223574e41fc17ce68f3b7b6"
+    },
+    {
+      "path": "workers-ts/test/helpers/customerCashierRuntimeHttpFixture.ts",
+      "sha256": "8dfa065fa1010d97866cfdb609b9358484a10a0647f2a6a44b9cbcceda19f6a5"
+    },
+    {
+      "path": "workers-ts/test/helpers/customerOriginalPaymentRuntimeFixture.ts",
+      "sha256": "634e08828173ad3faa941d2abe2ff37d062f9faafd0cb40ceea07553e78df53d"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductBrandBindings.ts",
+      "sha256": "3d228e12a0243064ce58d82501120e0e0d0ae501f8684522deb82a19c91cf7dd"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductEnsureBindings.ts",
+      "sha256": "23b56a05f97e46befb0af9daf879b3eb984dd9b032482dc2bb3bcfe27697567d"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductParameterBindings.ts",
+      "sha256": "217e008dd0143672b22df8406d285c6df1d15e269505497963059c95a5a5eef7"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductUserLabels.ts",
+      "sha256": "b126f4ff216341ed1fb45f07722b5491ff38b1bec735d7545cd8473ff483abed"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductSettings.ts",
+      "sha256": "721e1f929711877c6dc1e81aff9d4fe4e3b9bff9a5afa7725bc112fa43ae0da7"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductVideoPolicy.ts",
+      "sha256": "78f7e56f50a8fff97531331552e2d3e1b11144fcfd8635de7d2a9b03aceaeeea"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductDetailDesignData.ts",
+      "sha256": "01578562cb6eadf15e94deb9068a203a6510459b1ed113a25773a9f4621d59a4"
+    },
+    {
+      "path": "workers-ts/src/services/product/OrdinaryProductReadData.ts",
+      "sha256": "5ddd84f330ec7879a13d51393896ed1e24f35f43955b16d42b1996efa33fb98f"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/ProductController.ts",
+      "sha256": "e83852a2dc2bb7fcb0c5276e3074785a75539f24054ad3b9bbf7b2773cfabc35"
+    },
+    {
+      "path": "workers-ts/src/models/schema/product.ts",
+      "sha256": "2f43140480f12dc77c91c21721d1f5e948e3de673f37b35d1ea6ac8c6222e25a"
+    },
+    {
+      "path": "workers-ts/test/out-stock-candidate-boundary.test.ts",
+      "sha256": "f012d2b2a07942ddbeaea9c6ca597c372bf3780b56afae0a19fdace5588b165e"
+    }
+  ],
+  "continuity": {
+    "base": "b3399d0a1c1f8aaa89f86d5c419fb1dfb7ef2fa7",
+    "originalNativeCases": 119,
+    "originalNativeBytesUnchangedPrefix": true,
+    "originalNativeSha256": "4d0b4705a50a7e600455d7141170f11ff6d96c81258369596f5f09e67acab199",
+    "phpFixedRef": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+    "php": [
+      {
+        "path": "app/controller/supplier/product/StoreProduct.php",
+        "sha256": "f277e42009e9a4250c15e9731f8d54b47f502f36ce5a8e6fd8d62a37e1fb93c1",
+        "matchesFixedRef": true
+      },
+      {
+        "path": "app/services/product/product/StoreProductServices.php",
+        "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+        "matchesFixedRef": true
+      },
+      {
+        "path": "view/supplier/src/pages/product/productEdit/index.vue",
+        "sha256": "cad1d45b2e6067d499d857cf51a94071a57f2819fbfbb8d081ef28a381b02001",
+        "matchesFixedRef": true
+      }
+    ],
+    "originalMediaFrontendBytesUnchangedPrefix": true,
+    "originalMediaFrontendSha256": "a5a220eb3ceb258fe5f114908b881435873f5fbeec61f1841bee705e63fc170c"
+  },
+  "contract": {
+    "supportedSupplierProductTypes": [
+      0,
+      1,
+      3
+    ],
+    "writeFields": [
+      "command_word",
+      "video_open"
+    ],
+    "readField": "settings_selection",
+    "version": 1,
+    "actualCommandCharacterCapacity": 255,
+    "unicodeCodepointLength": true,
+    "sharedParserUnchanged": "OutProductSettings.outProductSettingsInput",
+    "platformMerUseNotAccepted": true,
+    "commandOmittedUndefinedDoesNotUpdateColumn": true,
+    "explicitEmptyCommandClears": true,
+    "videoSwitchOmittedAndSameLinkPreservesExisting": true,
+    "legacyCreatedOrChangedLinkInfersNonemptyAddressDefault": true,
+    "explicitDisabledVideoRetainsAddress": true,
+    "explicitEnabledVideoRequiresValidAddress": true,
+    "privateVideoMustBeAvailableAndOwnedEvenWhenDisabled": true,
+    "legacyInvalidPublicValueOmittableAndDisableRepairable": true,
+    "fullMainAndAttachmentSnapshotFinalProof": true,
+    "currentActorAndPendingReviewRequired": true,
+    "copySchemaAndProductionPrivilegePlanUnchanged": true,
+    "unknownReadNewFieldsDisabledAndOmitted": true,
+    "legacyUploadAndRemoveStillAvailableWithoutNewReadField": true,
+    "useUploadedVideoEnablesKnownSwitch": true,
+    "removeVideoDisablesKnownSwitch": true,
+    "publicCommandProtocolNotExpanded": true
+  },
+  "validation": {
+    "initialProfiles": [
+      {
+        "profile": "frontend-build",
+        "exit": 0,
+        "seconds": 29.94,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "unit",
+        "exit": 0,
+        "seconds": 84.24,
+        "budgetSeconds": 600,
+        "actualFileSetExactlyMatches": true,
+        "passedTests": 1038,
+        "files": [
+          "test/supplier-product-purchase-options.test.ts",
+          "test/out-product-presale.test.ts",
+          "test/product-purchase-admission.test.ts",
+          "test/presale-schedule.test.ts",
+          "test/supplier-product-price-options.test.ts",
+          "test/supplier-product-management.test.ts",
+          "test/out-product-price-options.test.ts",
+          "test/out-type2-compat.test.ts",
+          "test/out-card-product-input.test.ts",
+          "test/out-second-card-input.test.ts",
+          "test/out-manual-virtual-product.test.ts",
+          "test/supplier-product-copy-frontend.test.ts",
+          "test/supplier-product-detail-frontend.test.ts",
+          "test/supplier-product-shipping-editor-frontend.test.ts",
+          "test/supplier-product-media-frontend.test.ts",
+          "test/supplier-product-schedule-frontend.test.ts",
+          "test/supplier-product-brand-frontend.test.ts",
+          "test/supplier-product-ensures-frontend.test.ts",
+          "test/supplier-product-parameters-frontend.test.ts",
+          "test/supplier-product-system-form-frontend.test.ts",
+          "test/supplier-product-label-frontend.test.ts",
+          "test/supplier-product-rule-frontend.test.ts",
+          "test/supplier-product-rule-inline-frontend.test.ts",
+          "test/supplier-product-video-upload-frontend.test.ts",
+          "test/supplier-product-unit-frontend.test.ts",
+          "test/supplier-product-recommend-image-frontend.test.ts",
+          "test/supplier-product-label-picker-frontend.test.ts",
+          "test/supplier-sku-batch-frontend.test.ts",
+          "test/order-brokerage.test.ts",
+          "test/order-paid-outbox-queue-consumer.test.ts",
+          "test/supplier-product-integral.test.ts",
+          "test/order-reward.test.ts",
+          "test/supplier-product-coupons.test.ts",
+          "test/out-product-coupons.test.ts",
+          "test/product-coupon-migration.test.ts",
+          "test/supplier-product-category-permission.test.ts",
+          "test/supplier-product-batch-permission.test.ts",
+          "test/supplier-product-user-labels.test.ts",
+          "test/purchased-product-label-codec.test.ts",
+          "test/purchased-product-label-result.test.ts",
+          "test/purchased-product-label-selection.test.ts",
+          "test/purchased-product-label-source.test.ts",
+          "test/purchased-product-label-queue.test.ts",
+          "test/purchased-product-label-runtime.test.ts",
+          "test/purchased-label-operations.test.ts",
+          "test/supplier-product-settings.test.ts",
+          "test/out-product-settings.test.ts"
+        ]
+      },
+      {
+        "profile": "type-shards-plan",
+        "exit": 0,
+        "seconds": 0.43,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "type-shards-options",
+        "exit": 0,
+        "seconds": 0.38,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "unit-types-shard-1",
+        "exit": 2,
+        "seconds": 180.39,
+        "budgetSeconds": 600
+      }
+    ],
+    "finalTypeAndNativeProfiles": [
+      {
+        "profile": "unit-types-shard-1",
+        "exit": 0,
+        "seconds": 187.85,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "unit-types-shard-2",
+        "exit": 0,
+        "seconds": 193.55,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "runtime-types",
+        "exit": 0,
+        "seconds": 123.53,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-supplier-author",
+        "exit": 0,
+        "seconds": 470.4,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-copy",
+        "exit": 0,
+        "seconds": 60.95,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-out-settings",
+        "exit": 0,
+        "seconds": 406.75,
+        "budgetSeconds": 600
+      }
+    ],
+    "unitFiles": [
+      "test/supplier-product-purchase-options.test.ts",
+      "test/out-product-presale.test.ts",
+      "test/product-purchase-admission.test.ts",
+      "test/presale-schedule.test.ts",
+      "test/supplier-product-price-options.test.ts",
+      "test/supplier-product-management.test.ts",
+      "test/out-product-price-options.test.ts",
+      "test/out-type2-compat.test.ts",
+      "test/out-card-product-input.test.ts",
+      "test/out-second-card-input.test.ts",
+      "test/out-manual-virtual-product.test.ts",
+      "test/supplier-product-copy-frontend.test.ts",
+      "test/supplier-product-detail-frontend.test.ts",
+      "test/supplier-product-shipping-editor-frontend.test.ts",
+      "test/supplier-product-media-frontend.test.ts",
+      "test/supplier-product-schedule-frontend.test.ts",
+      "test/supplier-product-brand-frontend.test.ts",
+      "test/supplier-product-ensures-frontend.test.ts",
+      "test/supplier-product-parameters-frontend.test.ts",
+      "test/supplier-product-system-form-frontend.test.ts",
+      "test/supplier-product-label-frontend.test.ts",
+      "test/supplier-product-rule-frontend.test.ts",
+      "test/supplier-product-rule-inline-frontend.test.ts",
+      "test/supplier-product-video-upload-frontend.test.ts",
+      "test/supplier-product-unit-frontend.test.ts",
+      "test/supplier-product-recommend-image-frontend.test.ts",
+      "test/supplier-product-label-picker-frontend.test.ts",
+      "test/supplier-sku-batch-frontend.test.ts",
+      "test/order-brokerage.test.ts",
+      "test/order-paid-outbox-queue-consumer.test.ts",
+      "test/supplier-product-integral.test.ts",
+      "test/order-reward.test.ts",
+      "test/supplier-product-coupons.test.ts",
+      "test/out-product-coupons.test.ts",
+      "test/product-coupon-migration.test.ts",
+      "test/supplier-product-category-permission.test.ts",
+      "test/supplier-product-batch-permission.test.ts",
+      "test/supplier-product-user-labels.test.ts",
+      "test/purchased-product-label-codec.test.ts",
+      "test/purchased-product-label-result.test.ts",
+      "test/purchased-product-label-selection.test.ts",
+      "test/purchased-product-label-source.test.ts",
+      "test/purchased-product-label-queue.test.ts",
+      "test/purchased-product-label-runtime.test.ts",
+      "test/purchased-label-operations.test.ts",
+      "test/supplier-product-settings.test.ts",
+      "test/out-product-settings.test.ts"
+    ],
+    "unitPassed": 1038,
+    "unitSkipped": 0,
+    "passingCompleteNativeFiles": {
+      "native-supplier-author": 136,
+      "native-copy": 27,
+      "native-out-settings": 49
+    },
+    "completeNativeTotal": 212,
+    "nativeSkipped": 0,
+    "typeShards": {
+      "originalRoots": 4363,
+      "commonRoots": 1909,
+      "testRoots": 2454,
+      "shardTestCounts": [
+        1227,
+        1227
+      ],
+      "unionExactlyMatchesOriginal": true,
+      "optionsExactlyMatchOriginal": true
+    },
+    "heapMiB": 8192,
+    "serialWrapper": true,
+    "nativeRunnerAllowlistAnd600SecondBudgetUnchanged": true,
+    "sourceSecretScanFindings": 0,
+    "qa": {
+      "browser": "Codex In-app Browser / installed Browser plugin",
+      "browserId": "2",
+      "fallback": false,
+      "baseUrl": "http://127.0.0.1:41061",
+      "environment": "Local Supplier production build; finite synthetic HTTP fixture. Real Supplier/Admin/public HTTP with actual SQL and registered LOGINs is separately verified by native tests.",
+      "scenarios": [
+        {
+          "scenario": "desktop",
+          "url": "http://127.0.0.1:41061/products/80/edit?qa=desktop",
+          "title": "CinaShop 供应商中心",
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "checks": {
+            "pageIdentity": true,
+            "notBlank": true,
+            "noFrameworkOverlay": true,
+            "consoleHealth": true,
+            "screenshotEvidence": true,
+            "interactionProof": true
+          },
+          "screenshot": "desktop-final-visible.png"
+        },
+        {
+          "scenario": "mobile",
+          "url": "http://127.0.0.1:41061/products/80/edit?qa=mobile",
+          "title": "CinaShop 供应商中心",
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "checks": {
+            "pageIdentity": true,
+            "notBlank": true,
+            "noFrameworkOverlay": true,
+            "consoleHealth": true,
+            "screenshotEvidence": true,
+            "interactionProof": true
+          },
+          "screenshot": "mobile-final-visible.png"
+        },
+        {
+          "scenario": "unknown",
+          "newCommandDisabled": true,
+          "newVideoSwitchDisabled": true,
+          "legacyVideoRemovalEnabled": true,
+          "unrelatedSavesOmitCommandAndSwitch": true,
+          "saveCount": 2
+        },
+        {
+          "scenario": "unicode",
+          "readCodePoints": 255,
+          "overCapacityCodePoints": 256,
+          "overCapacityVisibleValidation": "商品口令最多255字符，不能含换行或控制字符",
+          "overCapacityDidNotSendRequest": true,
+          "acceptedSaveCodePoints": 255,
+          "savedAndFreshRead": true,
+          "screenshot": "unicode-visible.png"
+        }
+      ],
+      "consoleWarningsOrErrors": 0,
+      "interactions": [
+        "Unchanged desktop save omits both new fields and preserves a closed video with a retained URL",
+        "Command-only save then fresh read",
+        "Video-only enable then fresh read",
+        "Explicit command clear and video disable then fresh read",
+        "All preceding actions repeated on mobile, then command-only final save",
+        "Unknown settings response keeps new fields disabled; two unrelated saves omit them while legacy video actions remain available",
+        "255 Unicode codepoints saved; 256 rejected before HTTP submission"
+      ],
+      "corrections": [
+        "One mobile label click failed during auto-scroll. Fresh DOM/checked-state inspection plus PageUp restored the supported Browser interaction; no fallback used."
+      ],
+      "successfulSaves": {
+        "desktop": 4,
+        "mobile": 5,
+        "unknown": 2,
+        "unicode": 1
+      },
+      "screenshotsShowSavedStates": true
+    },
+    "actualUiWrites": {
+      "desktop": [
+        {
+          "id": 80,
+          "product_type": 0,
+          "store_name": "本地口令与视频商品",
+          "store_info": "关闭视频仍保留地址",
+          "keyword": "",
+          "unit_name": "件",
+          "bar_code": "",
+          "cate_id": [
+            11
+          ],
+          "slider_image": [
+            "/supplier-price.png"
+          ],
+          "description": "<p>本地受控商品</p>",
+          "spec_type": 0,
+          "items": [
+            {
+              "value": "规格",
+              "detail": [
+                "默认"
+              ]
+            }
+          ],
+          "attrs": [
+            {
+              "id": 8001,
+              "unique": "qared001",
+              "suk": "默认",
+              "detail": {
+                "规格": "默认"
+              },
+              "image": "/supplier-price.png",
+              "price": "10.00",
+              "settle_price": "1.00",
+              "cost": "0.00",
+              "ot_price": "10.00",
+              "vip_price": "7.50",
+              "stock": 5,
+              "bar_code": "SKU",
+              "weight": "0.00",
+              "volume": "0.00",
+              "brokerage": "2.00",
+              "brokerage_two": "1.00",
+              "code": "",
+              "disk_info": ""
+            }
+          ],
+          "freight": 1,
+          "postage": "0.00",
+          "temp_id": 0,
+          "is_postage": 1,
+          "is_support_refund": 1,
+          "is_limit": 0,
+          "limit_type": 0,
+          "limit_num": 0,
+          "sort": 0,
+          "ficti": 0,
+          "video_link": "/owned-video.mp4",
+          "is_show": 0,
+          "is_verify": 0,
+          "is_sub": []
+        },
+        {
+          "id": 80,
+          "product_type": 0,
+          "store_name": "本地口令与视频商品",
+          "store_info": "关闭视频仍保留地址",
+          "keyword": "",
+          "unit_name": "件",
+          "bar_code": "",
+          "cate_id": [
+            11
+          ],
+          "slider_image": [
+            "/supplier-price.png"
+          ],
+          "description": "<p>本地受控商品</p>",
+          "spec_type": 0,
+          "items": [
+            {
+              "value": "规格",
+              "detail": [
+                "默认"
+              ]
+            }
+          ],
+          "attrs": [
+            {
+              "id": 8001,
+              "unique": "qared001",
+              "suk": "默认",
+              "detail": {
+                "规格": "默认"
+              },
+              "image": "/supplier-price.png",
+              "price": "10.00",
+              "settle_price": "1.00",
+              "cost": "0.00",
+              "ot_price": "10.00",
+              "vip_price": "7.50",
+              "stock": 5,
+              "bar_code": "SKU",
+              "weight": "0.00",
+              "volume": "0.00",
+              "brokerage": "2.00",
+              "brokerage_two": "1.00",
+              "code": "",
+              "disk_info": ""
+            }
+          ],
+          "freight": 1,
+          "postage": "0.00",
+          "temp_id": 0,
+          "is_postage": 1,
+          "is_support_refund": 1,
+          "is_limit": 0,
+          "limit_type": 0,
+          "limit_num": 0,
+          "sort": 0,
+          "ficti": 0,
+          "video_link": "/owned-video.mp4",
+          "is_show": 0,
+          "is_verify": 0,
+          "is_sub": [],
+          "command_word": "桌面商品口令"
+        },
+        {
+          "id": 80,
+          "product_type": 0,
+          "store_name": "本地口令与视频商品",
+          "store_info": "关闭视频仍保留地址",
+          "keyword": "",
+          "unit_name": "件",
+          "bar_code": "",
+          "cate_id": [
+            11
+          ],
+          "slider_image": [
+            "/supplier-price.png"
+          ],
+          "description": "<p>本地受控商品</p>",
+          "spec_type": 0,
+          "items": [
+            {
+              "value": "规格",
+              "detail": [
+                "默认"
+              ]
+            }
+          ],
+          "attrs": [
+            {
+              "id": 8001,
+              "unique": "qared001",
+              "suk": "默认",
+              "detail": {
+                "规格": "默认"
+              },
+              "image": "/supplier-price.png",
+              "price": "10.00",
+              "settle_price": "1.00",
+              "cost": "0.00",
+              "ot_price": "10.00",
+              "vip_price": "7.50",
+              "stock": 5,
+              "bar_code": "SKU",
+              "weight": "0.00",
+              "volume": "0.00",
+              "brokerage": "2.00",
+              "brokerage_two": "1.00",
+              "code": "",
+              "disk_info": ""
+            }
+          ],
+          "freight": 1,
+          "postage": "0.00",
+          "temp_id": 0,
+          "is_postage": 1,
+          "is_support_refund": 1,
+          "is_limit": 0,
+          "limit_type": 0,
+          "limit_num": 0,
+          "sort": 0,
+          "ficti": 0,
+          "video_link": "/owned-video.mp4",
+          "is_show": 0,
+          "is_verify": 0,
+          "is_sub": [],
+          "video_open": 1
+        },
+        {
+          "id": 80,
+          "product_type": 0,
+          "store_name": "本地口令与视频商品",
+          "store_info": "关闭视频仍保留地址",
+          "keyword": "",
+          "unit_name": "件",
+          "bar_code": "",
+          "cate_id": [
+            11
+          ],
+          "slider_image": [
+            "/supplier-price.png"
+          ],
+          "description": "<p>本地受控商品</p>",
+          "spec_type": 0,
+          "items": [
+            {
+              "value": "规格",
+              "detail": [
+                "默认"
+              ]
+            }
+          ],
+          "attrs": [
+            {
+              "id": 8001,
+              "unique": "qared001",
+              "suk": "默认",
+              "detail": {
+                "规格": "默认"
+              },
+              "image": "/supplier-price.png",
+              "price": "10.00",
+              "settle_price": "1.00",
+              "cost": "0.00",
+              "ot_price": "10.00",
+              "vip_price": "7.50",
+              "stock": 5,
+              "bar_code": "SKU",
+              "weight": "0.00",
+              "volume": "0.00",
+              "brokerage": "2.00",
+              "brokerage_two": "1.00",
+              "code": "",
+              "disk_info": ""
+            }
+          ],
+          "freight": 1,
+          "postage": "0.00",
+          "temp_id": 0,
+          "is_postage": 1,
+          "is_support_refund": 1,
+          "is_limit": 0,
+          "limit_type": 0,
+          "limit_num": 0,
+          "sort": 0,
+          "ficti": 0,
+          "video_link": "/owned-video.mp4",
+          "is_show": 0,
+          "is_verify": 0,
+          "is_sub": [],
+          "command_word": "",
+          "video_open": 0
+        }
+      ],
+      "mobile": [
+        {
+          "id": 80,
+          "product_type": 0,
+          "store_name": "本地口令与视频商品",
+          "store_info": "关闭视频仍保留地址",
+          "keyword": "",
+          "unit_name": "件",
+          "bar_code": "",
+          "cate_id": [
+            11
+          ],
+          "slider_image": [
+            "/supplier-price.png"
+          ],
+          "description": "<p>本地受控商品</p>",
+          "spec_type": 0,
+          "items": [
+            {
+              "value": "规格",
+              "detail": [
+                "默认"
+              ]
+            }
+          ],
+          "attrs": [
+            {
+              "id": 8001,
+              "unique": "qared001",
+              "suk": "默认",
+              "detail": {
+                "规格": "默认"
+              },
+              "image": "/supplier-price.png",
+              "price": "10.00",
+              "settle_price": "1.00",
+              "cost": "0.00",
+              "ot_price": "10.00",
+              "vip_price": "7.50",
+              "stock": 5,
+              "bar_code": "SKU",
+              "weight": "0.00",
+              "volume": "0.00",
+              "brokerage": "2.00",
+              "brokerage_two": "1.00",
+              "code": "",
+              "disk_info": ""
+            }
+          ],
+          "freight": 1,
+          "postage": "0.00",
+          "temp_id": 0,
+          "is_postage": 1,
+          "is_support_refund": 1,
+          "is_limit": 0,
+          "limit_type": 0,
+          "limit_num": 0,
+          "sort": 0,
+          "ficti": 0,
+          "video_link": "/owned-video.mp4",
+          "is_show": 0,
+          "is_verify": 0,
+          "is_sub": []
+        },
+        {
+          "id": 80,
+          "product_type": 0,
+          "store_name": "本地口令与视频商品",
+          "store_info": "关闭视频仍保留地址",
+          "keyword": "",
+          "unit_name": "件",
+          "bar_code": "",
+          "cate_id": [
+            11
+          ],
+          "slider_image": [
+            "/supplier-price.png"
+          ],
+          "description": "<p>本地受控商品</p>",
+          "spec_type": 0,
+          "items": [
+            {
+              "value": "规格",
+              "detail": [
+                "默认"
+              ]
+            }
+          ],
+          "attrs": [
+            {
+              "id": 8001,
+              "unique": "qared001",
+              "suk": "默认",
+              "detail": {
+                "规格": "默认"
+              },
+              "image": "/supplier-price.png",
+              "price": "10.00",
+              "settle_price": "1.00",
+              "cost": "0.00",
+              "ot_price": "10.00",
+              "vip_price": "7.50",
+              "stock": 5,
+              "bar_code": "SKU",
+              "weight": "0.00",
+              "volume": "0.00",
+              "brokerage": "2.00",
+              "brokerage_two": "1.00",
+              "code": "",
+              "disk_info": ""
+            }
+          ],
+          "freight": 1,
+          "postage": "0.00",
+          "temp_id": 0,
+          "is_postage": 1,
+          "is_support_refund": 1,
+          "is_limit": 0,
+          "limit_type": 0,
+          "limit_num": 0,
+          "sort": 0,
+          "ficti": 0,
+          "video_link": "/owned-video.mp4",
+          "is_show": 0,
+          "is_verify": 0,
+          "is_sub": [],
+          "command_word": "手机商品口令"
+        },
+        {
+          "id": 80,
+          "product_type": 0,
+          "store_name": "本地口令与视频商品",
+          "store_info": "关闭视频仍保留地址",
+          "keyword": "",
+          "unit_name": "件",
+          "bar_code": "",
+          "cate_id": [
+            11
+          ],
+          "slider_image": [
+            "/supplier-price.png"
+          ],
+          "description": "<p>本地受控商品</p>",
+          "spec_type": 0,
+          "items": [
+            {
+              "value": "规格",
+              "detail": [
+                "默认"
+              ]
+            }
+          ],
+          "attrs": [
+            {
+              "id": 8001,
+              "unique": "qared001",
+              "suk": "默认",
+              "detail": {
+                "规格": "默认"
+              },
+              "image": "/supplier-price.png",
+              "price": "10.00",
+              "settle_price": "1.00",
+              "cost": "0.00",
+              "ot_price": "10.00",
+              "vip_price": "7.50",
+              "stock": 5,
+              "bar_code": "SKU",
+              "weight": "0.00",
+              "volume": "0.00",
+              "brokerage": "2.00",
+              "brokerage_two": "1.00",
+              "code": "",
+              "disk_info": ""
+            }
+          ],
+          "freight": 1,
+          "postage": "0.00",
+          "temp_id": 0,
+          "is_postage": 1,
+          "is_support_refund": 1,
+          "is_limit": 0,
+          "limit_type": 0,
+          "limit_num": 0,
+          "sort": 0,
+          "ficti": 0,
+          "video_link": "/owned-video.mp4",
+          "is_show": 0,
+          "is_verify": 0,
+          "is_sub": [],
+          "video_open": 1
+        },
+        {
+          "id": 80,
+          "product_type": 0,
+          "store_name": "本地口令与视频商品",
+          "store_info": "关闭视频仍保留地址",
+          "keyword": "",
+          "unit_name": "件",
+          "bar_code": "",
+          "cate_id": [
+            11
+          ],
+          "slider_image": [
+            "/supplier-price.png"
+          ],
+          "description": "<p>本地受控商品</p>",
+          "spec_type": 0,
+          "items": [
+            {
+              "value": "规格",
+              "detail": [
+                "默认"
+              ]
+            }
+          ],
+          "attrs": [
+            {
+              "id": 8001,
+              "unique": "qared001",
+              "suk": "默认",
+              "detail": {
+                "规格": "默认"
+              },
+              "image": "/supplier-price.png",
+              "price": "10.00",
+              "settle_price": "1.00",
+              "cost": "0.00",
+              "ot_price": "10.00",
+              "vip_price": "7.50",
+              "stock": 5,
+              "bar_code": "SKU",
+              "weight": "0.00",
+              "volume": "0.00",
+              "brokerage": "2.00",
+              "brokerage_two": "1.00",
+              "code": "",
+              "disk_info": ""
+            }
+          ],
+          "freight": 1,
+          "postage": "0.00",
+          "temp_id": 0,
+          "is_postage": 1,
+          "is_support_refund": 1,
+          "is_limit": 0,
+          "limit_type": 0,
+          "limit_num": 0,
+          "sort": 0,
+          "ficti": 0,
+          "video_link": "/owned-video.mp4",
+          "is_show": 0,
+          "is_verify": 0,
+          "is_sub": [],
+          "command_word": "",
+          "video_open": 0
+        },
+        {
+          "id": 80,
+          "product_type": 0,
+          "store_name": "本地口令与视频商品",
+          "store_info": "关闭视频仍保留地址",
+          "keyword": "",
+          "unit_name": "件",
+          "bar_code": "",
+          "cate_id": [
+            11
+          ],
+          "slider_image": [
+            "/supplier-price.png"
+          ],
+          "description": "<p>本地受控商品</p>",
+          "spec_type": 0,
+          "items": [
+            {
+              "value": "规格",
+              "detail": [
+                "默认"
+              ]
+            }
+          ],
+          "attrs": [
+            {
+              "id": 8001,
+              "unique": "qared001",
+              "suk": "默认",
+              "detail": {
+                "规格": "默认"
+              },
+              "image": "/supplier-price.png",
+              "price": "10.00",
+              "settle_price": "1.00",
+              "cost": "0.00",
+              "ot_price": "10.00",
+              "vip_price": "7.50",
+              "stock": 5,
+              "bar_code": "SKU",
+              "weight": "0.00",
+              "volume": "0.00",
+              "brokerage": "2.00",
+              "brokerage_two": "1.00",
+              "code": "",
+              "disk_info": ""
+            }
+          ],
+          "freight": 1,
+          "postage": "0.00",
+          "temp_id": 0,
+          "is_postage": 1,
+          "is_support_refund": 1,
+          "is_limit": 0,
+          "limit_type": 0,
+          "limit_num": 0,
+          "sort": 0,
+          "ficti": 0,
+          "video_link": "/owned-video.mp4",
+          "is_show": 0,
+          "is_verify": 0,
+          "is_sub": [],
+          "command_word": "手机商品口令"
+        }
+      ],
+      "unknown": [
+        {
+          "id": 80,
+          "product_type": 0,
+          "store_name": "本地口令与视频商品",
+          "store_info": "关闭视频仍保留地址",
+          "keyword": "",
+          "unit_name": "件",
+          "bar_code": "",
+          "cate_id": [
+            11
+          ],
+          "slider_image": [
+            "/supplier-price.png"
+          ],
+          "description": "<p>本地受控商品</p>",
+          "spec_type": 0,
+          "items": [
+            {
+              "value": "规格",
+              "detail": [
+                "默认"
+              ]
+            }
+          ],
+          "attrs": [
+            {
+              "id": 8001,
+              "unique": "qared001",
+              "suk": "默认",
+              "detail": {
+                "规格": "默认"
+              },
+              "image": "/supplier-price.png",
+              "price": "10.00",
+              "settle_price": "1.00",
+              "cost": "0.00",
+              "ot_price": "10.00",
+              "vip_price": "7.50",
+              "stock": 5,
+              "bar_code": "SKU",
+              "weight": "0.00",
+              "volume": "0.00",
+              "brokerage": "2.00",
+              "brokerage_two": "1.00",
+              "code": "",
+              "disk_info": ""
+            }
+          ],
+          "freight": 1,
+          "postage": "0.00",
+          "temp_id": 0,
+          "is_postage": 1,
+          "is_support_refund": 1,
+          "is_limit": 0,
+          "limit_type": 0,
+          "limit_num": 0,
+          "sort": 0,
+          "ficti": 0,
+          "video_link": "/owned-video.mp4",
+          "is_show": 0,
+          "is_verify": 0,
+          "is_sub": []
+        },
+        {
+          "id": 80,
+          "product_type": 0,
+          "store_name": "本地口令与视频商品",
+          "store_info": "关闭视频仍保留地址",
+          "keyword": "",
+          "unit_name": "件",
+          "bar_code": "",
+          "cate_id": [
+            11
+          ],
+          "slider_image": [
+            "/supplier-price.png"
+          ],
+          "description": "<p>本地受控商品</p>",
+          "spec_type": 0,
+          "items": [
+            {
+              "value": "规格",
+              "detail": [
+                "默认"
+              ]
+            }
+          ],
+          "attrs": [
+            {
+              "id": 8001,
+              "unique": "qared001",
+              "suk": "默认",
+              "detail": {
+                "规格": "默认"
+              },
+              "image": "/supplier-price.png",
+              "price": "10.00",
+              "settle_price": "1.00",
+              "cost": "0.00",
+              "ot_price": "10.00",
+              "vip_price": "7.50",
+              "stock": 5,
+              "bar_code": "SKU",
+              "weight": "0.00",
+              "volume": "0.00",
+              "brokerage": "2.00",
+              "brokerage_two": "1.00",
+              "code": "",
+              "disk_info": ""
+            }
+          ],
+          "freight": 1,
+          "postage": "0.00",
+          "temp_id": 0,
+          "is_postage": 1,
+          "is_support_refund": 1,
+          "is_limit": 0,
+          "limit_type": 0,
+          "limit_num": 0,
+          "sort": 0,
+          "ficti": 0,
+          "video_link": "/owned-video.mp4",
+          "is_show": 0,
+          "is_verify": 0,
+          "is_sub": []
+        }
+      ],
+      "unicode": [
+        {
+          "id": 80,
+          "product_type": 0,
+          "store_name": "本地口令与视频商品",
+          "store_info": "关闭视频仍保留地址",
+          "keyword": "",
+          "unit_name": "件",
+          "bar_code": "",
+          "cate_id": [
+            11
+          ],
+          "slider_image": [
+            "/supplier-price.png"
+          ],
+          "description": "<p>本地受控商品</p>",
+          "spec_type": 0,
+          "items": [
+            {
+              "value": "规格",
+              "detail": [
+                "默认"
+              ]
+            }
+          ],
+          "attrs": [
+            {
+              "id": 8001,
+              "unique": "qared001",
+              "suk": "默认",
+              "detail": {
+                "规格": "默认"
+              },
+              "image": "/supplier-price.png",
+              "price": "10.00",
+              "settle_price": "1.00",
+              "cost": "0.00",
+              "ot_price": "10.00",
+              "vip_price": "7.50",
+              "stock": 5,
+              "bar_code": "SKU",
+              "weight": "0.00",
+              "volume": "0.00",
+              "brokerage": "2.00",
+              "brokerage_two": "1.00",
+              "code": "",
+              "disk_info": ""
+            }
+          ],
+          "freight": 1,
+          "postage": "0.00",
+          "temp_id": 0,
+          "is_postage": 1,
+          "is_support_refund": 1,
+          "is_limit": 0,
+          "limit_type": 0,
+          "limit_num": 0,
+          "sort": 0,
+          "ficti": 0,
+          "video_link": "/owned-video.mp4",
+          "is_show": 0,
+          "is_verify": 0,
+          "is_sub": [],
+          "command_word": "🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍🛍"
+        }
+      ]
+    },
+    "uiSuccessfulWriteCounts": {
+      "desktop": 4,
+      "mobile": 5,
+      "unknown": 2,
+      "unicode": 1
+    },
+    "uiOvercapacityAttemptDidNotSendRequest": true,
+    "screenshots": [
+      {
+        "file": "desktop-final-visible.png",
+        "sha256": "4fcb55113afaffad0f8287e977beebc9de661ad20869b4bf88dfd345d4359d1d"
+      },
+      {
+        "file": "mobile-final-visible.png",
+        "sha256": "7697ec8f9f919498b1f773bae12ae198fac84b2075bf9559745805851dcaf282"
+      },
+      {
+        "file": "unicode-visible.png",
+        "sha256": "32ede1f40f95f2d3453ae3406d0ffa010e5818829f82ee250ff8bacef8d3bfab"
+      }
+    ],
+    "distManifestSha256": "b8d98dba3204dadc32a849b0cde8dc3516cf01c9b93e7b31399bd224782cd8bc"
+  },
+  "refinements": {
+    "initialFrontendPassed": 1033,
+    "initialFrontendFailed": 3,
+    "initialFailureNames": [
+      "keeps saved canonical video and signed preview separate and wires explicit uploader use into the actual form template",
+      "does not replace the draft video during preview refresh and rejects signed or late use events",
+      "preserves historical video while editing and explicitly removes its preview and reference together"
+    ],
+    "existingVideoCasesRestoredWithoutEditingTheirBytes": true,
+    "actualCompiledFormCoverageAdded": 2,
+    "typeOnlyFixtureFix": {
+      "onlyFile": "test/supplier-product-recommend-image-native.test.ts",
+      "change": "Owned fixture NODE_ENV test cast through unknown to generated production-only Env",
+      "erasedRuntimeJsExactlyUnchanged": true,
+      "passedPureAndFrontendSourcesExactlyUnchanged": true
+    },
+    "onlyNativeTestSourceChangedAfterPureAndBuildPass": true,
+    "typeOnlyFixExactReversibleEditVerified": true,
+    "noBusinessImplementationChangeForTypeFix": true,
+    "nativeMinimumRoleMissingTableLockPrivilege": "42501 reproduced before fixture DELETE grant; same grant already in production App plan",
+    "unexpectedNew500ErrorsThrowActualCause": true,
+    "publicCommandAssumptionCorrectedWithoutChangingPublicDto": true
+  },
+  "actualPublicHttpLifecycles": {
+    "fulfillments": [
+      0,
+      1,
+      3
+    ],
+    "completeMigrationDatabase": true,
+    "registeredIndependentAppAndAdminLogins": true,
+    "formalProfileAuditsReadyBeforeBusinessRequests": true,
+    "httpAuthentication": "real current Supplier/Admin JWT; anonymous public detail",
+    "routes": [
+      "POST /supplierapi/product/product/0",
+      "GET /supplierapi/product/product/:id",
+      "POST /supplierapi/product/product/:id",
+      "POST /adminapi/product/product/set_verify/:id",
+      "GET /api/product/detail/:id"
+    ],
+    "closedPublicFlatAndLegacyVideoEmpty": true,
+    "storedStableVideoReferenceRetained": true,
+    "unrelatedSaveDoesNotReopen": true,
+    "everySaveReturnsPendingAndUnpublished": true,
+    "unreviewedPublicReadRefused": true,
+    "explicitEnableVisibleOnlyAfterModeration": true,
+    "unavailableMetadataHiddenOnNextPublicRead": true,
+    "restoredMetadataVisibleOnNextRead": true,
+    "commandReadBackAndClearThroughSupplier": true,
+    "publicCommandFieldsStillAbsent": true,
+    "privateMetadataLockPositiveControlAndRollback": true,
+    "ownMinimalWriterHasDeleteForLockButNoNameUpdate": true,
+    "noPaymentFactsManufactured": true,
+    "publicLoginFlowClaimed": false,
+    "actualR2PlaybackClaimed": false,
+    "externalFetchCalls": 0
+  },
+  "sourceProofDebt": {
+    "testFile": "test/supplier-product-label-runtime-source-binding.test.ts",
+    "baseline": "b3399d0a1c1f8aaa89f86d5c419fb1dfb7ef2fa7",
+    "baselinePassed": 178,
+    "currentPassed": 178,
+    "baselineFailed": 10,
+    "currentFailed": 10,
+    "skipped": 0,
+    "failingFullNamesExactlyMatch": true,
+    "failedCases": [
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance admits the exact new definer only in current shared-shop pricing recognition while isolated scopes and the fixed privilege plan remain frozen",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance keeps all prior frontend public selection binding and privilege plan bytes unchanged for a backend-only closure",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance partitions true8023 before and all controlled changed/additional files with no missing or duplicated image",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance pins complete current and accepted ProductLabel bytes workers-ts/scripts/run-local-finance-postgres.mjs",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance pins complete current and accepted ProductLabel bytes workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance pins complete current and accepted ProductLabel bytes workers-ts/src/migrations/checkoutPricingLock.ts",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance refuses altered current and forged whole-file inverse workers-ts/scripts/run-local-finance-postgres.mjs",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance refuses altered current and forged whole-file inverse workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance rejects nonexact publication bytes and forged bridge hashes while composing each immutable validation layer",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance runs current789 callSites827 variants before keeping every exact report byte and predecessor call object"
+    ],
+    "restoredIgnoredResources": 150,
+    "profiles": [
+      {
+        "profile": "baseline",
+        "exit": 1,
+        "seconds": 35.25
+      },
+      {
+        "profile": "current",
+        "exit": 1,
+        "seconds": 17.06
+      }
+    ],
+    "isPassingGate": false,
+    "isRuntimeAcceptance": false
+  },
+  "carriedRefundMaterializationDebt": {
+    "baseline": {
+      "baseline": "bfd625826923e76b3fc890076750181d8ff4f891",
+      "testFile": "workers-ts/test/refund-order-materialization.test.ts",
+      "baselinePassed": 75,
+      "currentPassed": 75,
+      "baselineFailed": 1,
+      "currentFailed": 1,
+      "skipped": 0,
+      "failingFullNamesExactlyMatch": true,
+      "failedCases": [
+        "test/refund-order-materialization.test.ts > integrates durable v2 finalization with registered evidence but without default route activation"
+      ],
+      "unchangedFiles": {
+        "workers-ts/test/refund-order-materialization.test.ts": "2ddc928e952a11e5d7d38a4e915214175c55cedad5908d04bc1c517444b0bfac",
+        "workers-ts/src/services/order/StoreOrderRefundService.ts": "ca2ef3db6b2649a61a31e3c88346984912a41d82ebd898c85f2b69c33537bc3a"
+      },
+      "passingGate": false,
+      "allRuntimeAcceptanceClaimedGreen": false
+    },
+    "currentTestAndImplementationBytesUnchanged": true,
+    "rerunInThisBatch": false,
+    "passingGate": false
+  },
+  "previousCi": {
+    "runId": 43259144498,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/43259144498",
+    "terminal": true,
+    "workerFailureBeforeTests": "fixed remote PHP ref unavailable",
+    "otherJobsPassed": true
+  },
+  "noDeploy": true,
+  "noPhpUpload": true,
+  "artifactDirectory": "/tmp/php-ts-supplier-product-settings-20261112",
+  "createdAt": "2026-11-12T17:52:32.889458+00:00",
+  "logHashes": [
+    {
+      "file": "frontend-build.log",
+      "sha256": "ce53edff9f8a46d44476efb7176d93a73877f00ebeb1c22bab4a02b0537cb67c"
+    },
+    {
+      "file": "frontend-preflight.log",
+      "sha256": "bb04d32992979d79221f969733ecb3ffb8cce196cd91bac790209bdf2ca5a86e"
+    },
+    {
+      "file": "native-copy.log",
+      "sha256": "75e54fb705c528b6e2ce385319f83782f0961f5ae8277fd25ac88917086f1389"
+    },
+    {
+      "file": "native-diagnostic.log",
+      "sha256": "a4c64a4af6b1fb17e1a3ad1eabf9404207c8fa2946e311396233a0cb49ffff9f"
+    },
+    {
+      "file": "native-out-settings.log",
+      "sha256": "f58afaacc76e587a6233d5f714ff389792ccc7d0422ffcd12cbf92d7bb7ee3ae"
+    },
+    {
+      "file": "native-preflight-2.log",
+      "sha256": "7b306e7a8a0aba602704ac799f3dbc585d250abf95768e514b95df77ddec41fb"
+    },
+    {
+      "file": "native-preflight-3.log",
+      "sha256": "fb6374033f24fecb568febc2d7167c7eb4cc0cfb260620abe111c1280ac05432"
+    },
+    {
+      "file": "native-preflight.log",
+      "sha256": "d8080b6ea29948b7f8b488a40bd61ff717eeb831b87cf1c538a41dadba54bd21"
+    },
+    {
+      "file": "native-supplier-author.log",
+      "sha256": "e6729609ba3039fcc8ace5141f692c21a59e1b8d77e7031a60ced2125475915a"
+    },
+    {
+      "file": "pre-type-fix-source-baseline.log",
+      "sha256": "f1f9aa1bf99c1d22970435df7ca314da778e02da2e0289fd95fce6ea5f22aa9f"
+    },
+    {
+      "file": "pre-type-fix-source-current.log",
+      "sha256": "a6af453532951abaf5ca9d4a385036dbd8f335d83d2dacfdae413dec8e378fd9"
+    },
+    {
+      "file": "pre-type-fix-source-proof-progress.log",
+      "sha256": "73e76e6b05f98c5374bd656c5725af1d52633df8f70d2a291b082a017ace2caa"
+    },
+    {
+      "file": "previous-ci-shard1.log",
+      "sha256": "e4aca5cf9ce0be090eb26d588be2e08281818547ae116f6ed316301cc44fb9bb"
+    },
+    {
+      "file": "previous-ci-shard2.log",
+      "sha256": "9ff837c80a347ee88319a9e405bd0ec539549297a0450c8a09fe3ffd5318986b"
+    },
+    {
+      "file": "public-preflight.log",
+      "sha256": "85bac785e7d6f4043a8ff6d6446a9c6c96d6d043c432c9cd0bbcd46512d72ea0"
+    },
+    {
+      "file": "refined-progress.log",
+      "sha256": "f1db3997de85a799155fc14db45dda14abebd2ff7051103185cb607e7bc4b916"
+    },
+    {
+      "file": "runtime-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "source-baseline.log",
+      "sha256": "f1f9aa1bf99c1d22970435df7ca314da778e02da2e0289fd95fce6ea5f22aa9f"
+    },
+    {
+      "file": "source-current.log",
+      "sha256": "a6af453532951abaf5ca9d4a385036dbd8f335d83d2dacfdae413dec8e378fd9"
+    },
+    {
+      "file": "source-proof-progress.log",
+      "sha256": "10bd613157adc52fa73cb7778708aa712f5ab8d71e5b07f378e2215055aca3ef"
+    },
+    {
+      "file": "type-shards-options.log",
+      "sha256": "451c8f530554454f09121f2221e4fa3873c7d27851daeabdd2b798f9ccf149ef"
+    },
+    {
+      "file": "type-shards-plan.log",
+      "sha256": "efc2a7ccc858abe6f952045116bd4fb5ddff22d59f442c6849d93f2eaabd98f2"
+    },
+    {
+      "file": "ui-server.log",
+      "sha256": "fa4444c9c51f41d51d6177b3100170a4d3e594f75d9008a4334d03b3b038490e"
+    },
+    {
+      "file": "unit-initial.log",
+      "sha256": "37d093eec0be8fa731355b3970818ab482058a9df6cc4749b3fcee5e852cda01"
+    },
+    {
+      "file": "unit-preflight.log",
+      "sha256": "b3916265f5fc6474f7350f13518e7fa44821f9b29893492504e40971e40cb77a"
+    },
+    {
+      "file": "unit-types-shard-1-initial.log",
+      "sha256": "3978df26bc89d3ba97278d87b9a9923d32eb59258660c4ae9aa3d1954fb51e1e"
+    },
+    {
+      "file": "unit-types-shard-1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "unit-types-shard-2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "unit.log",
+      "sha256": "37d093eec0be8fa731355b3970818ab482058a9df6cc4749b3fcee5e852cda01"
+    },
+    {
+      "file": "validation-progress.log",
+      "sha256": "60e85bd977263789947a8dd9a5649792e6c95aae26056d60c8d7767cf1f85179"
+    }
+  ]
+}

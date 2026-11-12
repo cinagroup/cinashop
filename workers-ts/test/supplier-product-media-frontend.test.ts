@@ -440,3 +440,24 @@ it('preserves historical video while editing and explicitly removes its preview 
   try{expect(f.view.form.video_link).toBe(detail.video_link);expect(f.view.videoPreviewUrl.value).toBe('');f.view.removeVideo();expect(f.view.form.video_link).toBe('');expect(f.view.videoPreviewUrl.value).toBe('');}
   finally{f.close();}
 });
+
+it('uses the actual uploaded video event to enable a known video setting and excludes all read/legacy settings from the payload',async()=>{
+  const detail={...product(),video_link:'/api/assets/301',video_preview_url:ticket(301),command_word:'stale raw echo',video_open:1,settings_selection:{version:1,command_word:'old command',video_open:0}};
+  const f=await mount('Form',config=>config.url==='/product/product/5'?detail:undefined);
+  try{
+    expect(f.view.settings.videoOpen).toBe(0);expect(f.view.settings.commandWord).toBe('old command');
+    f.view.openVideoUpload();formTemplateNodes(f).find(node=>node.type?.name==='ProductVideoUploader').props.onUse({url:'/api/assets/302',src:ticket(302)});
+    expect(f.view.settings.videoOpen).toBe(1);expect(f.view.settings.videoChanged).toBe(true);f.view.changeCommandWord('new command');
+    await f.view.submit();const payload=JSON.parse(f.calls.find(call=>call.method==='post').data);
+    expect(payload).toMatchObject({video_link:'/api/assets/302',video_open:1,command_word:'new command'});expect(payload.settings_selection).toBeUndefined();expect(JSON.stringify(payload)).not.toContain('signature=');
+  }finally{f.close();}
+});
+it('explicit video removal disables a known switch while preserving an untouched command as omitted intent',async()=>{
+  const detail={...product(),video_link:'/api/assets/301',video_preview_url:ticket(301),command_word:'stale raw echo',video_open:0,settings_selection:{version:1,command_word:'keep command',video_open:1}};
+  const f=await mount('Form',config=>config.url==='/product/product/5'?detail:undefined);
+  try{
+    f.view.removeVideo();expect(f.view.settings.videoOpen).toBe(0);expect(f.view.settings.videoChanged).toBe(true);expect(f.view.videoPreviewUrl.value).toBe('');
+    await f.view.submit();const payload=JSON.parse(f.calls.find(call=>call.method==='post').data);
+    expect(payload.video_open).toBe(0);expect(payload.video_link).toBe('');expect(Object.hasOwn(payload,'command_word')).toBe(false);expect(payload.settings_selection).toBeUndefined();
+  }finally{f.close();}
+});
