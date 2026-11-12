@@ -14,8 +14,8 @@ export async function assertCustomerFulfillmentReady(tx:DbClient,state:{root:Ord
   if(root.uid!==order.uid||root.isDel||root.isSystemDel||order.isDel||order.isSystemDel||order.pid<0||order.supplierAllocationStatus===1||(root.id!==order.id&&order.pid!==root.id)||!allocated&&(root.storeId!==order.storeId||root.supplierId!==order.supplierId))throw new ValidateException('履约根单与物理订单归属无效');
   if(order.paid!==1||order.status!==0||![0,3].includes(order.refundStatus))throw new ValidateException('订单付款、状态或售后状态不允许发货');
   if(![1,3].includes(order.shippingType))throw new ValidateException('当前订单须通过独立核销合同交付');
-  if(![0,3].includes(order.productType))throw new ValidateException('当前商品须通过自动卡密或独立核销合同交付');
-  if(mode!=='manual'&&order.productType===3)throw new ValidateException('手工虚拟商品须整单虚拟交付');
+  if(![0,2,3].includes(order.productType))throw new ValidateException('当前商品须通过自动卡密或独立核销合同交付');
+  if(mode!=='manual'&&(order.productType===3||order.productType===2))throw new ValidateException('手工虚拟商品须整单虚拟交付');
   if(mode==='electronic'&&(order.shippingType!==1||order.productType!==0)||mode==='city'&&(![1,3].includes(order.shippingType)||order.productType!==0))throw new ValidateException('当前订单不支持该配送渠道');
   if(lock)await tx.execute(sql`LOCK TABLE store_order_refund,order_waybill_job,store_order_cart_info IN SHARE MODE NOWAIT`);
   const cartQuery=tx.select().from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid,order.id)).orderBy(asc(storeOrderCartInfo.id)).limit(501),carts=await(lock?cartQuery.for('share',{noWait:true}):cartQuery);

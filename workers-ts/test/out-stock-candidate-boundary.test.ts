@@ -586,3 +586,175 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Out product othe
     });
   }, 30_000);
 });
+
+import { refundRuntimeFixture } from './helpers/refundRuntimeFixture';
+import { runRuntimeBusinessCommissioning } from '@/migrations/runRuntimeBusinessCommissioning';
+import { runRoutinePaymentRuntimeInstallation } from '@/migrations/routinePaymentRuntime';
+import { auditRuntimeBusinessPrivileges } from '@/migrations/auditRuntimeBusinessPrivileges';
+import { applyStoreOrderBalancePayment } from '@/services/order/StoreOrderPayService';
+import { OrderOutboxService } from '@/services/order/OrderOutboxService';
+import { SupplierFulfillmentService, normalizeSupplierDeliveryInput } from '@/services/supplier/SupplierFulfillmentService';
+import { orderConfirm as type2Confirm, orderDetail as type2Detail } from '@/controllers/api/v1/OrderController';
+import { storeOrder, storeOrderOutbox, storeCouponIssue, storeCouponUser, storeOrderProductCouponReward, storeProductCategory, user } from '@/models/schema';
+import type { OrderMessage } from '@/env';
+import { assertCustomerFulfillmentReady } from '@/services/customer-work/customerFulfillmentAuthority';
+
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Out type-two actual wallet payment and manual fulfillment', () => {
+  it('creates through Out JWT, pays a real isolated balance once, grants generic coupons once and exposes only delivered buyer content', async () => {
+    const network = vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('Type-two acceptance forbids external providers'));
+    const f = await refundRuntimeFixture();
+    try {
+      await f.db.insert(storeProductCategory).values({ id: 800001, cateName: '隔离类型二分类', isShow: 1 });
+      await f.db.insert(storeCouponIssue).values({ id: 800001, couponTitle: '隔离支付赠券', couponType: 0, type: 1, couponPrice: '1.00',
+        receiveType: 3, isPermanent: 1, day: 7, status: 1 });
+      await f.db.update(user).set({ nowMoney: '100.00' }).where(eq(user.uid, 11));
+      await f.exec(`INSERT INTO out_interface(id,type,method,url) VALUES (800001,1,'POST','/product'),(800002,1,'PUT','/product/{id}'),(800003,1,'GET','/product/{id}');
+        INSERT INTO out_account(id,appid,appsecret,rules) VALUES (800001,'type-two-local','fixture-type-two-secret','[800001,800002,800003]');
+        SELECT setval(pg_get_serial_sequence('store_product','id'),800010,true);
+        SELECT setval(pg_get_serial_sequence('store_product_attr_value','id'),800010,true);
+        SELECT setval(pg_get_serial_sequence('store_cart','id'),800010,true)`);
+      const env = { ...f.env, APP_KEY: 'isolated-type-two-key-not-real', TOKEN_BUCKET: { getByName: () => ({ consumeRateLimit: async () =>
+        ({ allowed: true, auditEvent: false, limit: 120, remaining: 119, resetAt: Date.now() + 60000 }) }) } } as unknown as Env;
+      const token = (await createToken(800001, 'out', md5('fixture-type-two-secret'), env.APP_KEY)).token;
+      if (!f.withRuntimeRole) throw Error('Owned native runtime LOGINs required');
+      await f.withRuntimeRole(appRole => f.withRuntimeRole!(async adminRole => {
+        const [identity] = await f.db.execute(sql`SELECT current_database() AS name`);
+        const names = { app: appRole.role, admin: adminRole.role, maintenance: 'finance_test', database: String(identity.name), pricingOwner: f.pricingOwner };
+        await runRuntimeBusinessCommissioning(f.db, names);
+        expect((await runRoutinePaymentRuntimeInstallation(f.db, names)).after.ready).toBe(true);
+        expect(await auditRuntimeBusinessPrivileges(appRole.db, 'app', names)).toMatchObject({ ready: true, failures: [] });
+        const container = createContainerFromDb(appRole.db), errors: Error[] = [];
+        const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
+        app.use('*', async (c, next) => { c.set('container', container); c.set('uid', 11); await next(); });
+        app.onError((error,c) => { errors.push(error); return errorHandler(error,c); });
+        app.post('/outapi/product', outAuthMiddleware('POST', '/product'), productCreate);
+        app.get('/outapi/product/:id', outAuthMiddleware('GET', '/product/{id}'), productInfo);
+        app.post('/api/order/confirm', type2Confirm); app.get('/api/order/detail/:uni', type2Detail);
+        const post = async (path: string, body: object, key = crypto.randomUUID()) => {
+          const response = await app.request(path, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', 'Idempotency-Key': key }, body: JSON.stringify(body) }, env);
+          return response.json() as Promise<{ status: number; msg: string; data: any }>;
+        };
+        const input = { product_type: 2, cate_id: [800001], store_name: '历史类型二兑换商品', slider_image: ['/type-two.png'],
+          spec_type: 0, is_show: 1, coupon_ids: [800001], is_sub: [], attrs: [{ price: '10.00', stock: 5, bar_code: 'TYPE-TWO' }] };
+        const key = crypto.randomUUID(), created = await post('/outapi/product', input, key);
+        expect(created.status, JSON.stringify({ created, errors: errors.map(e => ({message:e.message,cause:e.cause})) })).toBe(200);
+        const id = Number(created.data.id); expect((await post('/outapi/product', input, key)).data.idempotent).toBe(true);
+        const [sku] = await appRole.db.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.productId, id));
+        expect(sku.productType).toBe(2); const cart = await new StoreCartService(container, env).add({ uid: 11, productId: id, unique: sku.unique, cartNum: 1, isNew: 1 });
+        const selection = { cartIds: [cart.id], shippingType: 1, useIntegral: false };
+        const confirmed = await post('/api/order/confirm', selection); expect(confirmed.status, JSON.stringify({confirmed,errors:errors.map(e=>e.message)})).toBe(200);
+        const order = await StoreOrderCreateService.createWithRuntime(container, { CONFIG_KV: env.CONFIG_KV, requireConfirmation: true,
+          requirePurchaseOrigin: true, nextOrderId: async () => 'type_two_isolated_order' }, { ...selection, uid: 11,
+          key: confirmed.data.orderKey, quoteToken: confirmed.data.quoteToken, userIp: '127.0.0.1' });
+        const detail = async () => {
+          const response = await app.request(`/api/order/detail/${order.orderId}`, {}, env);
+          const result = await response.json() as {status:number;msg:string;data:any}; expect(result.status,result.msg).toBe(200); return result;
+        };
+        expect((await detail()).data.fictitiousContent).toBe('');
+        const paid = await applyStoreOrderBalancePayment(container, { uid: 11, orderId: order.orderId, routineNotice: env });
+        expect(paid.outcome).toBe('paid'); expect(paid.outbox).not.toBeNull();
+        expect((await applyStoreOrderBalancePayment(container, { uid: 11, orderId: order.orderId })).outcome).toBe('already-paid');
+        const queue = { send: vi.fn(async()=>{}), sendBatch: vi.fn(async()=>({successful:1})) };
+        const consumer = new OrderOutboxService(container, { ORDER_QUEUE: queue as unknown as Queue<OrderMessage>, APP_KEY: env.APP_KEY });
+        const message = { action:'processOrderPaidOutbox' as const, outboxId: paid.outbox!.id, eventKey: paid.outbox!.eventKey };
+        expect(await consumer.processMessage(message)).toBe('completed'); expect(await consumer.processMessage(message)).toBe('already-completed');
+        const [pending] = await appRole.db.select().from(storeOrder).where(eq(storeOrder.orderId, order.orderId));
+        expect(pending).toMatchObject({ productType: 2, paid: 1, status: 0, payPrice: '10.00', payPostage: '0.00' });
+        await assertCustomerFulfillmentReady(appRole.db, {root:pending,order:pending}, 'manual', undefined, false);
+        for (const mode of ['split','electronic','city'] as const)
+          await expect(assertCustomerFulfillmentReady(appRole.db,{root:pending,order:pending},mode,undefined,false)).rejects.toThrow('须整单虚拟交付');
+        expect((await appRole.db.select().from(user).where(eq(user.uid, 11)))[0].nowMoney).toBe('90.00');
+        expect(await appRole.db.select().from(storeOrderProductCouponReward)).toHaveLength(1);
+        expect((await appRole.db.select().from(storeCouponUser)).filter(row=>row.issueCouponId===800001)).toHaveLength(1);
+        expect((await detail()).data.fictitiousContent).toBe('');
+        const fulfillment = new SupplierFulfillmentService(container, env), content = '隔离兑换说明：请凭本订单核对已赠优惠券';
+        await expect(fulfillment.deliver(0,pending.id,normalizeSupplierDeliveryInput({delivery_type:'express',delivery_name:'Local',delivery_code:'local',delivery_id:'NO-REAL-SHIPMENT'}),{expectedStoreId:0})).rejects.toThrow('只能使用虚拟交付');
+        const delivered = await fulfillment.deliver(0,pending.id,normalizeSupplierDeliveryInput({delivery_type:'fictitious',fictitious_content:content}),{expectedStoreId:0});
+        expect(delivered.idempotent).toBe(false);
+        await expect(fulfillment.deliver(0,pending.id,normalizeSupplierDeliveryInput({delivery_type:'fictitious',fictitious_content:content}),{expectedStoreId:0})).rejects.toThrow();
+        const visible = await detail(); expect(visible.status,visible.msg).toBe(200); expect(visible.data.fictitiousContent).toBe(content);
+        await expect(new StoreOrderCreateService(container,env).detail(22,order.orderId)).rejects.toThrow('订单不存在');
+        expect((await appRole.db.select().from(storeOrderOutbox).where(eq(storeOrderOutbox.id,paid.outbox!.id)))[0].status).toBe('COMPLETED');
+        expect(queue.send).not.toHaveBeenCalled(); expect(queue.sendBatch).not.toHaveBeenCalled();
+      }));
+      expect(network).not.toHaveBeenCalled();
+    } finally { network.mockRestore(); await f.close(); }
+  }, 180_000);
+});
+
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Out historical type-two author and inventory', () => {
+  let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>, token: string, env: Env, network: ReturnType<typeof vi.spyOn>;
+  const body = { product_type: 2, cate_id: [9], brand_id: [30,31], ensure_id: [91], store_label_id: [101], label_id: [201],
+    specs_id: 301, specs: [{name:'权益说明',value:'通用赠券'}], coupon_ids:[9001], custom_form:[], system_form_id:0,
+    store_name:'历史类型二多规格',slider_image:['/type-two.png'],spec_type:1,is_show:1,
+    items:[{value:'档位',detail:['甲','乙']}],attrs:[
+      {suk:'甲',detail:{档位:'甲'},price:'10.00',stock:3,bar_code:'LEGACY-A'},
+      {suk:'乙',detail:{档位:'乙'},price:'20.00',stock:7,bar_code:'LEGACY-B'}] };
+  const call = async (path:string, method:string, data:object, key=crypto.randomUUID()) => {
+    const app = new Hono<{Bindings:Env;Variables:AppVariables}>(); app.use('*',async(c,next)=>{c.set('container',f.container);await next();});app.onError(errorHandler);
+    app.post('/outapi/product',outAuthMiddleware('POST','/product'),productCreate);
+    app.put('/outapi/product/stock/upload',outAuthMiddleware('PUT','/product/stock/upload'),productStockUpload);
+    app.put('/outapi/product/:id',outAuthMiddleware('PUT','/product/{id}'),productUpdate);
+    const response=await app.request(path,{method,headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json','Idempotency-Key':key},body:JSON.stringify(data)},env);
+    return response.json() as Promise<{status:number;msg:string;data:any}>;
+  };
+  beforeEach(async()=>{
+    network=vi.spyOn(globalThis,'fetch').mockRejectedValue(Error('Isolated type-two author forbids providers'));
+    f=await createPcCheckoutQuoteFixture([],async()=>{const owned=await sequenceRunnerDatabase();try{
+      const api=await import('drizzle-kit/api'),schema=await import('@/models/schema');
+      await owned.exec((await api.generateMigration(api.generateDrizzleJson({}),api.generateDrizzleJson(schema))).join('\n'));
+      await completePurchaseOriginEvidenceOrm(owned.db);await completePurchaseCancellationEvidenceOrm(owned.db);return owned;
+    }catch(error){await owned.close();throw error;}});
+    await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key=>[key,'0'])));
+    await f.exec(`INSERT INTO store_product_category(id,cate_name,is_show) VALUES(9,'隔离分类',1);
+      INSERT INTO store_brand(id,brand_name,pid,is_show) VALUES(30,'父品牌',0,1),(31,'子品牌',30,1);
+      INSERT INTO store_product_ensure(id,name,status) VALUES(91,'隔离保障',1);
+      INSERT INTO category(id,"group",name,is_show) VALUES(300,2,'标签组',1),(301,3,'参数模板',1);
+      INSERT INTO store_product_label(id,label_name,label_cate,status,is_show) VALUES(101,'商品标签',300,1,1);
+      INSERT INTO user_label(id,name,status) VALUES(201,'用户标签',1);
+      INSERT INTO store_coupon_issue(id,coupon_title,coupon_type,type,coupon_price,receive_type,is_permanent,day,status) VALUES(9001,'通用赠券',0,1,'1.00',3,1,7,1);
+      INSERT INTO out_interface(id,type,method,url) VALUES(1,1,'POST','/product'),(2,1,'PUT','/product/{id}'),(3,1,'PUT','/product/stock/upload');
+      INSERT INTO out_account(id,appid,appsecret,rules) VALUES(1,'type-two-author','fixture-type-two-author','[1,2,3]');
+      SELECT setval(pg_get_serial_sequence('store_product','id'),70,true);
+      SELECT setval(pg_get_serial_sequence('store_product_attr_value','id'),1,true)`);
+    env={...f.env,APP_KEY:'isolated-type-two-author-key',TOKEN_BUCKET:{getByName:()=>({consumeRateLimit:async()=>({allowed:true,auditEvent:false,limit:120,remaining:119,resetAt:Date.now()+60000})})}} as unknown as Env;
+    token=(await createToken(1,'out',md5('fixture-type-two-author'),env.APP_KEY)).token;
+  },120_000);
+  afterEach(async()=>{try{expect(network).not.toHaveBeenCalled();}finally{network?.mockRestore();await f?.close();}},60_000);
+  const state=async()=>({...await f.snapshot(),relations:await f.db.execute(sql`SELECT * FROM store_product_relation ORDER BY id`),
+    coupons:await f.db.execute(sql`SELECT * FROM store_product_coupon ORDER BY id`),replays:await f.db.execute(sql`SELECT * FROM out_product_write_replay ORDER BY id`),
+    records:await f.db.execute(sql`SELECT * FROM store_product_stock_record ORDER BY id`),attrs:await f.db.execute(sql`SELECT * FROM store_product_attr ORDER BY id`),
+    snapshots:await f.db.execute(sql`SELECT * FROM store_product_attr_result ORDER BY id`),descriptions:await f.db.execute(sql`SELECT * FROM store_product_description ORDER BY product_id,type`)});
+  it('creates and edits complete multi-SKU type-two products, preserves inventory, clears coupons and synchronizes exact barcodes',async()=>{
+    const key=crypto.randomUUID(),made=await call('/outapi/product','POST',body,key);expect(made.status,made.msg).toBe(200);const id=Number(made.data.id);
+    expect((await call('/outapi/product','POST',body,key)).data).toMatchObject({id,idempotent:true});
+    const links=await f.db.execute(sql`SELECT type,relation_id FROM store_product_relation WHERE product_id=${id} ORDER BY type`);
+    expect(links).toEqual([{type:1,relation_id:9},{type:2,relation_id:30},{type:2,relation_id:31},{type:3,relation_id:101},{type:4,relation_id:201},{type:5,relation_id:91},{type:6,relation_id:301}]);
+    const before=await f.db.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.productId,id)).orderBy(storeProductAttrValue.id);
+    expect(before.map(s=>({suk:s.suk,stock:s.stock,productType:s.productType}))).toEqual([{suk:'甲',stock:3,productType:2},{suk:'乙',stock:7,productType:2}]);
+    const edit={...body,coupon_ids:[],attrs:body.attrs.map((s,i)=>({...s,unique:before[i].unique,stock:999}))};
+    const saved=await call(`/outapi/product/${id}`,'PUT',edit);expect(saved.status,saved.msg).toBe(200);expect(saved.data.stock_preserved).toBe(true);
+    expect(await f.db.execute(sql`SELECT id FROM store_product_coupon WHERE product_id=${id}`)).toEqual([]);
+    const stockKey=crypto.randomUUID(),stockBody={items:[{bar_code:'LEGACY-A',qty:8}]};
+    const synced=await call('/outapi/product/stock/upload','PUT',stockBody,stockKey);expect(synced.status,synced.msg).toBe(200);
+    const after=await state();expect((await call('/outapi/product/stock/upload','PUT',stockBody,stockKey)).data.idempotent).toBe(true);expect(await state()).toEqual(after);
+    expect(after.products.find(p=>p.id===id)).toMatchObject({productType:2,stock:15,freight:2,tempId:0,postage:'0.00',deliveryType:''});
+    expect(after.skus.filter(s=>s.productId===id).sort((a,b)=>a.id-b.id).map(s=>({suk:s.suk,stock:s.stock}))).toEqual([{suk:'甲',stock:8},{suk:'乙',stock:7}]);
+    await f.db.update(storeProductAttrValue).set({barCode:'LEGACY-A'}).where(eq(storeProductAttrValue.id,1));
+    const ambiguous=await state(),failed=await call('/outapi/product/stock/upload','PUT',{items:[{bar_code:'LEGACY-A',qty:6}]});
+    expect(failed.status).not.toBe(200);expect(failed.msg).toContain('存在重复');expect(await state()).toEqual(ambiguous);
+  },40_000);
+  it.each(['product','sku','receipt'])('rolls back the entire type-two author on %s tampering',async target=>{
+    const mutation=target==='product'?'UPDATE store_product SET product_type=3 WHERE id=NEW.product_id;':target==='sku'?'UPDATE store_product_attr_value SET product_type=0 WHERE product_id=NEW.product_id;':"NEW.request_hash:=repeat('0',64);";
+    await f.exec(`CREATE FUNCTION test_type_two_drift() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN ${mutation} RETURN NEW; END $$;
+      ${target==='receipt'?'CREATE TRIGGER':'CREATE CONSTRAINT TRIGGER'} test_type_two_drift ${target==='receipt'?'BEFORE':'AFTER'} INSERT ON out_product_write_replay ${target==='receipt'?'':'DEFERRABLE INITIALLY DEFERRED'} FOR EACH ROW EXECUTE FUNCTION test_type_two_drift()`);
+    const before=await state(),failed=await call('/outapi/product','POST',body);expect(failed.status).not.toBe(200);expect(await state()).toEqual(before);
+  },30_000);
+  it('refuses changed fulfillment types, foreign SKU identities and non-platform historical owners without side effects',async()=>{
+    const made=await call('/outapi/product','POST',body);expect(made.status,made.msg).toBe(200);const id=Number(made.data.id),before=await state();
+    const changed=await call(`/outapi/product/${id}`,'PUT',{...body,product_type:3});expect(changed.status).not.toBe(200);expect(await state()).toEqual(before);
+    const wrong=await call(`/outapi/product/${id}`,'PUT',{...body,attrs:body.attrs.map(s=>({...s,unique:'qared001'}))});expect(wrong.status).not.toBe(200);expect(await state()).toEqual(before);
+    await f.db.update(storeProduct).set({type:2,relationId:77}).where(eq(storeProduct.id,id));const foreign=await state();
+    const denied=await call(`/outapi/product/${id}`,'PUT',body);expect(denied.status).not.toBe(200);expect(await state()).toEqual(foreign);
+  },30_000);
+});

@@ -9,7 +9,7 @@ type Product = typeof storeProduct.$inferSelect;
 type PreservedProduct = Partial<Pick<Product, 'brandId' | 'brandCom' | 'ensureId' | 'storeLabelId' | 'labelId' | 'specsId' | 'specs'>>;
 export interface OutProductRelationFence {
   productId: number;
-  productType: 0 | 1 | 3 | 4;
+  productType: 0 | 1 | 2 | 3 | 4;
   ownedTypes: readonly number[];
   rows: Awaited<ReturnType<typeof protectedRows>>;
   preservedProduct: PreservedProduct;
@@ -23,7 +23,7 @@ async function protectedRows(tx: DbClient, productId: number, ownedTypes: readon
 }
 /** ownedTypes comes only from the coordinator's explicit field presence. */
 export async function captureOutProductRelationFence(tx: DbClient, product: Product | undefined,
-  ownedTypes: readonly number[], productType: 0 | 1 | 3 | 4): Promise<OutProductRelationFence> {
+  ownedTypes: readonly number[], productType: 0 | 1 | 2 | 3 | 4): Promise<OutProductRelationFence> {
   return { productId: product?.id ?? 0, productType, ownedTypes: [...ownedTypes],
     rows: product ? await protectedRows(tx, product.id, ownedTypes) : [],
     preservedProduct: product ? {

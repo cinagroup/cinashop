@@ -20,7 +20,7 @@ describe("E5E3 manual virtual product migration", () => {
     expect(() => assertManualOrderDeliveryType(4, "express"))
       .toThrow("次卡商品必须使用到店核销");
     expect(() => assertManualOrderDeliveryType(2, "express"))
-      .toThrow("当前商品履约类型不支持手工发货");
+      .toThrow("手工虚拟商品只能使用虚拟交付");
   });
 
   it("rejects pickup checkout for every legacy non-logistics product type", () => {

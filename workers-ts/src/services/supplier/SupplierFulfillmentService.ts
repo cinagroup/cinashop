@@ -899,7 +899,7 @@ export class SupplierFulfillmentService {
       if (!active) throw new ValidateException("该订单已全部发货");
       assertDeliverable(active);
       assertManualOrderDeliveryType(active.productType, input.deliveryType);
-      if (active.productType === 3) {
+      if (active.productType === 3 || active.productType === 2) {
         throw new ValidateException("手工虚拟商品不支持拆分发货，请整单填写交付内容");
       }
       await assertPinkCompleted(tx, active);

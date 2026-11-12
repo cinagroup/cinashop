@@ -78,7 +78,7 @@ export async function storeManagerFulfillmentActions(db: DbClient, scope: StoreM
   else if (order.status!==0) reason='订单状态不允许发货';
   else if (![1,3].includes(order.shippingType)) reason='当前配送方式须使用独立核销或收银合同';
   else if (![0,3].includes(order.refundStatus)) reason='订单存在进行中的售后';
-  else if (![0,3].includes(order.productType)) reason='当前商品不支持手工发货';
+  else if (![0,2,3].includes(order.productType)) reason='当前商品不支持手工发货';
   if (!reason && order.pid>0) {
     const roots=await db.select({uid:storeOrder.uid,storeId:storeOrder.storeId,supplierId:storeOrder.supplierId,isSystemDel:storeOrder.isSystemDel}).from(storeOrder).where(eq(storeOrder.id,order.pid)).limit(1);
     if (roots.length!==1 || roots[0].uid!==order.uid || roots[0].storeId!==scope.store_id || roots[0].supplierId!==order.supplierId || roots[0].isSystemDel) reason='拆单父订单归属须先核对';
@@ -116,7 +116,7 @@ export async function storeManagerFulfillmentActions(db: DbClient, scope: StoreM
     }
   }
   if (reason) actions.manual_delivery=actions.split_delivery=unavailable(reason);
-  else if (order.productType===3) actions.split_delivery=unavailable('手工虚拟商品须整单交付');
+  else if ((order.productType===3||order.productType===2)) actions.split_delivery=unavailable('手工虚拟商品须整单交付');
   return actions;
 }
 

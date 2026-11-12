@@ -5,6 +5,11 @@ export type ManualOrderDeliveryType = "express" | "send" | "fictitious" | "city_
 const PHYSICAL_PRODUCT_TYPE = 0;
 const CARD_PRODUCT_TYPE = 1;
 const MANUAL_VIRTUAL_PRODUCT_TYPE = 3;
+
+/** Historical type 2 uses generic coupon rewards and manual virtual delivery. */
+export function isManualVirtualProductType(type: number): boolean {
+  return type === MANUAL_VIRTUAL_PRODUCT_TYPE || type === 2;
+}
 const SECOND_CARD_PRODUCT_TYPE = 4;
 
 /** PHP treats product types 1/2/3 as non-logistics checkout products. */
@@ -20,13 +25,13 @@ export function assertProductCheckoutShippingType(productType: number, shippingT
 /**
  * Bind an operator-selected delivery channel to the immutable product type.
  * Card products are delivered by the payment outbox, while second-card orders
- * are completed through write-off. Manual virtual content belongs only to type 3.
+ * are completed through write-off. Historical types 2 and 3 use manual virtual content.
  */
 export function assertManualOrderDeliveryType(
   productType: number,
   deliveryType: ManualOrderDeliveryType,
 ): void {
-  if (productType === MANUAL_VIRTUAL_PRODUCT_TYPE) {
+  if (isManualVirtualProductType(productType)) {
     if (deliveryType !== "fictitious") {
       throw new ValidateException("手工虚拟商品只能使用虚拟交付");
     }

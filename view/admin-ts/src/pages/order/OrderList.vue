@@ -95,7 +95,7 @@
         <el-form-item label="订单号"><strong>{{ deliveryOrder?.orderId }}</strong></el-form-item>
         <el-form-item label="发货方式">
           <el-radio-group v-model="deliveryForm.delivery_type">
-            <template v-if="deliveryOrder?.productType === 3">
+            <template v-if="(deliveryOrder?.productType === 3 || deliveryOrder?.productType === 2)">
               <el-radio-button value="fictitious">虚拟交付</el-radio-button>
             </template>
             <template v-else>
@@ -281,7 +281,7 @@ async function deliver(row: AdminOrder) {
   deliveryOptions.value = []; expressOptions.value = []; deliveryOptionsLoading.value = true;
   deliveryOrder.value = row;
   Object.assign(deliveryForm, {
-    delivery_type: row.productType === 3 ? "fictitious" : "express",
+    delivery_type: (row.productType === 3 || row.productType === 2) ? "fictitious" : "express",
     delivery_name: "",
     carrier_id: 0,
     delivery_id: "",
@@ -290,7 +290,7 @@ async function deliver(row: AdminOrder) {
   });
   deliveryVisible.value = true;
   try {
-    const [deliveries, carriers] = row.productType === 3
+    const [deliveries, carriers] = (row.productType === 3 || row.productType === 2)
       ? [{ list: [] as AdminDeliveryOption[] }, [] as ExpressItem[]]
       : await Promise.all([apiAdminDeliveryOptions(scope.signal), apiAdminExpressList(scope.signal)]);
     if (!currentRow(row) || generation !== deliveryEpoch || !deliveryVisible.value) return;

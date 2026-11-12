@@ -45,9 +45,9 @@ describe('Out product other settings', () => {
   it.each([null, 1, {}, [], 'x'.repeat(256), 'bad\ntext', '\ud800'])('rejects malformed command text %j', value => {
     expect(() => outProductSettingsInput({ command_word: value })).toThrow('复制口令');
   });
-  it('retains all four implemented fulfillment types and the reserved type-2 boundary', () => {
-    for (const type of [0, 1, 3, 4]) expect(normalizeOutProductInput({ ...body, product_type: type, mer_use: 1, video_open: 0,
+  it('retains the implemented fulfillment types and rejects unknown product types', () => {
+    for (const type of [0, 1, 2, 3, 4]) expect(normalizeOutProductInput({ ...body, product_type: type, mer_use: 1, video_open: 0,
       attrs: [{ ...body.attrs[0], ...(type === 4 ? { write_times: 2, write_valid: 1 } : {}) }] })).toMatchObject({ productType: type, merUse: 1, videoOpen: 0 });
-    expect(() => normalizeOutProductInput({ ...body, product_type: 2 })).toThrow();
+    expect(() => normalizeOutProductInput({ ...body, product_type: 5 })).toThrow();
   });
 });

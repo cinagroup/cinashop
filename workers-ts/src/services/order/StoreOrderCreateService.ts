@@ -217,7 +217,7 @@ export function customerVisibleManualVirtualContent(order: {
 }): string {
   return order.paid === 1
     && order.status >= 1
-    && order.productType === 3
+    && (order.productType === 3 || order.productType === 2)
     && order.deliveryType === "fictitious"
     ? order.fictitiousContent
     : "";

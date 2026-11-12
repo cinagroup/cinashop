@@ -129,7 +129,7 @@ function reason(state: State) {
   if (order.paid !== 1 || order.status !== 1 || order.refundStatus !== 0 || ![1, 3].includes(order.shippingType)
     || order.isDel || order.isSystemDel || state.refund.length) return '仅未删除、无进行中售后的待收货包裹可修改';
   if (providers.managed) return '配送信息由配送员、面单或第三方任务管理，请到对应履约记录核对';
-  if (!(order.productType === 0 && ['express', 'send'].includes(order.deliveryType) || order.productType === 3 && order.deliveryType === 'fictitious'))
+  if (!(order.productType === 0 && ['express', 'send'].includes(order.deliveryType) || (order.productType === 3 || order.productType === 2) && order.deliveryType === 'fictitious'))
     return '当前商品履约类型不支持手工修改配送信息';
   return '';
 }

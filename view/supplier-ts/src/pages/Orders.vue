@@ -210,7 +210,7 @@ function canProactiveRefund(row: OrderRow) {
 async function openProactiveRefund(row: OrderRow) {
   if (canProactiveRefund(row)) await router.push(`/orders/${row.id}/refund`);
 }
-const isManualVirtualOrder = computed(() => deliveryTarget.value?.product_type === 3);
+const isManualVirtualOrder = computed(() => (deliveryTarget.value?.product_type === 3 || deliveryTarget.value?.product_type === 2));
 
 const deliveryTitle = computed(() => {
   const prefix = deliveryMode.value === "partial" ? "分批" : "整单";
@@ -417,12 +417,12 @@ async function saveRemark() {
 async function openDelivery(row: OrderRow) {
   if (!active() || !positiveId(row.id) || !canDeliver(row) || actionLoading.value) return;
   clearDelivery(); deliveryTarget.value = { ...row };
-  deliveryForm.delivery_type = row.product_type === 3 ? "fictitious" : "express";
+  deliveryForm.delivery_type = (row.product_type === 3 || row.product_type === 2) ? "fictitious" : "express";
   deliveryDialogOpen.value = true; deliveryLoading.value = true;
   const request = deliveryRequest.start(), id = row.id;
   try {
     const [companies, items] = await Promise.all([
-      row.product_type === 3 ? Promise.resolve([]) : getExpressList(request.signal),
+      (row.product_type === 3 || row.product_type === 2) ? Promise.resolve([]) : getExpressList(request.signal),
       getSplitCartInfo(id, request.signal),
     ]);
     if (!request.current() || !deliveryDialogOpen.value || deliveryTarget.value?.id !== id) return;
@@ -465,7 +465,7 @@ async function submitDelivery() {
   const validation = validateDelivery();
   if (validation) return void ElMessage.warning(validation);
   const id = deliveryTarget.value.id, mode = deliveryMode.value, type = deliveryForm.delivery_type, version = deliveryRequest.version;
-  if (deliveryTarget.value.product_type === 3 ? type !== "fictitious" || mode !== "whole" : !["express", "waybill"].includes(type)) return void ElMessage.warning("发货方式与订单不匹配");
+  if ((deliveryTarget.value.product_type === 3 || deliveryTarget.value.product_type === 2) ? type !== "fictitious" || mode !== "whole" : !["express", "waybill"].includes(type)) return void ElMessage.warning("发货方式与订单不匹配");
   if (splitItems.value.some(item => !Number.isSafeInteger(selectedQuantities[item.cart_id] ?? 0) || (selectedQuantities[item.cart_id] ?? 0) < 0
     || (selectedQuantities[item.cart_id] ?? 0) > item.surplus_num)) return void ElMessage.warning("请选择有效的发货数量");
   if (mode === "partial" && (selectedQuantity.value <= 0 || selectedQuantity.value >= availableQuantity.value)) return void ElMessage.warning("分批数量须大于零且小于全部可发数量");

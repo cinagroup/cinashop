@@ -266,7 +266,7 @@ const virtualItems = computed(() =>
   order.value?.product_type === 1 && Array.isArray(order.value.virtual_info) ? order.value.virtual_info : [],
 );
 const isManualVirtualDelivery = computed(() => Boolean(
-  order.value?.product_type === 3 && order.value.delivery_type === "fictitious" && order.value.status >= 1,
+  (order.value?.product_type === 3 || order.value?.product_type === 2) && order.value.delivery_type === "fictitious" && order.value.status >= 1,
 ));
 const virtualText = computed(() =>
   isManualVirtualDelivery.value
@@ -336,7 +336,7 @@ const statusText = computed(() => {
   if (order.value.supplier_allocation_status === 1) return "订单分配中";
   if (order.value.pid === -1) return `已拆分为 ${order.value.split_orders?.length ?? 0} 个履约订单`;
   if (order.value.delivery_type === "fictitious" && order.value.status >= 1) {
-    return order.value.product_type === 3 ? "虚拟商品已交付" : "卡密已发放";
+    return (order.value.product_type === 3 || order.value.product_type === 2) ? "虚拟商品已交付" : "卡密已发放";
   }
   if (order.value.shipping_type === 2 && order.value.status === 0) return "待到店核销";
   if (order.value.shipping_type === 2 && order.value.status === 5) return "部分核销";
@@ -358,7 +358,7 @@ const statusSub = computed(() => {
   if (order.value.supplier_allocation_status === 1) return "正在生成各供应商履约订单，请稍后刷新";
   if (order.value.pid === -1) return "可进入下方包裹分别查看物流与售后";
   if (order.value.delivery_type === "fictitious" && order.value.status >= 1) {
-    return order.value.product_type === 3
+    return (order.value.product_type === 3 || order.value.product_type === 2)
       ? "交付内容已显示在订单详情，请及时保存"
       : "卡密已发送到订单详情，请及时保存";
   }

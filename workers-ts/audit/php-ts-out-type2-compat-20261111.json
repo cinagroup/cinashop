@@ -1,0 +1,1296 @@
+{
+  "schema": "php-ts-out-type2-compat/v1",
+  "baseCommit": "88727848a9423f91bf2510b45211604dc22dffa5",
+  "sourceHashes": [
+    {
+      "path": "view/admin-ts/src/pages/order/OrderList.vue",
+      "sha256": "1590a692503c4981ce93e8f57b57d13240eda59c5a435162eeb07a5e7619b3fb"
+    },
+    {
+      "path": "view/pc-ts/src/pages/order/OrderDetail.vue",
+      "sha256": "7b37e579c43a13d35783d5a9684b2b1ca379356a457915d56844ca71c2b306a0"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/Orders.vue",
+      "sha256": "04ccd8f7da231e9f5b61120f4153cf7d79ad96a4f84bcc5b5ff64a8e575ec97b"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/delivery.vue",
+      "sha256": "0ca570d6511869930e956393db56b29fef4082059ca8931fa77a90189376f447"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/merchant/delivery.vue",
+      "sha256": "df69e505e65465f11f9a12b12ff9167fd2ce0c3c6fd59342dce9f20e8b2d9b29"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/order/detail.vue",
+      "sha256": "33b0a2a18b9085346c4001a4cc7ca5fefae9bc62f58e0b8becc051ead70ae08b"
+    },
+    {
+      "path": "workers-ts/src/services/customer-work/CustomerWorkFulfillmentRead.ts",
+      "sha256": "9f5fa35c1a9f2687e488efb86cde0ae6b0a963e613a00e8e6796a68efcbb3433"
+    },
+    {
+      "path": "workers-ts/src/services/customer-work/customerFulfillmentAuthority.ts",
+      "sha256": "e9285912180f8e093bff9fe8312a3d313722c51c5b24f0468e1d13104164ad76"
+    },
+    {
+      "path": "workers-ts/src/services/order/ManualVirtualDeliveryPolicy.ts",
+      "sha256": "b7196abcefd5b3cfdec20f10c28ea19ac0c8d780c717ed1dabd6e70dd17095fc"
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+      "sha256": "2e15fb5be5dcd2a1e953d4c3e8944180a36d0a424ad6dee83a0b73572a1110b3"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductBrandBindings.ts",
+      "sha256": "08496b0d6dfcff6d118f33428e0dfd1d0a08eb66aee75157205dd5bf972aec12"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductEnsureBindings.ts",
+      "sha256": "db525cc5acf32b252d2364265737843c8cc207ed2715de382a3d766acb94b3b4"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductFormBindings.ts",
+      "sha256": "90b755ce9408a0271080732e6e4035ae54733a0ceef8e84706f7ea007e4b5e10"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductLabelBindings.ts",
+      "sha256": "1ad27d8ed1a4823090352e4ade5d90e984dc1a8c71d54dbbd40c2860d026c290"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductParameterBindings.ts",
+      "sha256": "bd45706f85a87273ea401f2f63fcab8d2960b2f995533301f438e49251e7f624"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductRelationFence.ts",
+      "sha256": "fe06b6db096106712e7e49a200427cda5dc17eb34a8eeb073d019408dab163dd"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductScheduleBindings.ts",
+      "sha256": "07ffd1451fbb8fbc7ac4f67586b5b786889429ea4023cbf153aac408f8fa2b50"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductService.ts",
+      "sha256": "8de49a1fd429bc48f08b5480ef8ca10a8f30289500c53c6d5fa9b57ff645fd56"
+    },
+    {
+      "path": "workers-ts/src/services/store/StoreManagerOrderOperationService.ts",
+      "sha256": "b9a84a28feba321db019f235601f483d01c217b314c60bc37df70df5344b629a"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierFulfillmentService.ts",
+      "sha256": "cdb3b978ae2a38e17c5a91cbf31a9b7c950eb22fec1c873b1fe0a98aebc17c11"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierOrderDistributionService.ts",
+      "sha256": "8a0b04281a74910159b7ebe8717f74b3d3e2800cb2a28e0cda751be5cf671991"
+    },
+    {
+      "path": "workers-ts/test/manual-virtual-product.test.ts",
+      "sha256": "d58109b169ba920e9e85ab21f10a2197e75f979fb3745ce465b14e5085e87805"
+    },
+    {
+      "path": "workers-ts/test/out-manual-virtual-product.test.ts",
+      "sha256": "c9eaf66c76e477316ac4bb403dd4d5e3f1db186ba841be96c13435d64500ff2e"
+    },
+    {
+      "path": "workers-ts/test/out-product-settings.test.ts",
+      "sha256": "44f6996a64cb4339df8f33fdab97f077d7e9c24cf97c784c3365a2a936fc772a"
+    },
+    {
+      "path": "workers-ts/test/out-stock-candidate-boundary.test.ts",
+      "sha256": "f012d2b2a07942ddbeaea9c6ca597c372bf3780b56afae0a19fdace5588b165e"
+    },
+    {
+      "path": "workers-ts/test/out-type2-compat.test.ts",
+      "sha256": "46b5b30bfb1dee05af73f20f68a6e75ee072de85eb3c0a52cfd9d0862eb52e8e"
+    }
+  ],
+  "unchangedDependencies": [
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "32c5fff9c6dbfaa30720fbd72dd729a3ea7a1e7fc3a02be5515fb541af55a074"
+    },
+    {
+      "path": "workers-ts/src/services/order/OrderOutboxService.ts",
+      "sha256": "4c9751e466a7857e3dfff1b4f618f5e59c3be013fedf42372b180a5bde08687f"
+    },
+    {
+      "path": "workers-ts/test/product-purchase-admission-postgres.test.ts",
+      "sha256": "664bdf0fe3b0f34a229984f0abf02878d191567c82e93a51c60d48f5c92071ec"
+    },
+    {
+      "path": "workers-ts/test/customer-work-fulfillment-postgres.test.ts",
+      "sha256": "ac6ac01a79bfb8ac675ca6f703507b09f1c4ffad9025cb515a8315bde8259939"
+    },
+    {
+      "path": "workers-ts/test/merchant-manager-fulfillment-postgres.test.ts",
+      "sha256": "a959cc031f79dcad1ec30f04e053593f607297af965ef9078daefc1797bd8ad3"
+    },
+    {
+      "path": "workers-ts/test/supplier-order-distribution-native.test.ts",
+      "sha256": "414ef857f496cf23f960663971816cda89143ecf56aa13e1626fd3708402cbc2"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutApiService.ts",
+      "sha256": "69ec208546fd2ecd409dfb4b814f51b1bbf5dbdb731ea2c20c26a2fa2ba0af64"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutIdempotency.ts",
+      "sha256": "08e91eeefe399d2f09d77ed31c8485cf5e7b2085c9ed19ee24bf4f4effbcfac8"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductCouponBindings.ts",
+      "sha256": "8b98bb1101d86421ec1b32010bd197e8da7d6d3d7930567b8df3f6044811d350"
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreOrderPayService.ts",
+      "sha256": "94f7abd31652f77ab9b013c30f87a4bb75477bef6cbf5b45d679f2403c0d5050"
+    },
+    {
+      "path": "workers-ts/src/services/activity/ProductCouponService.ts",
+      "sha256": "aec6e37c95104b8865e4c5ae5629eb0beb4bb6520fd36bb6e21896e9c8577a39"
+    },
+    {
+      "path": "workers-ts/src/services/activity/OrderCouponService.ts",
+      "sha256": "2a63c5cbd3333b0740cab04dc9126f0001bb01a7a9349ab314e6f3d49b88cace"
+    },
+    {
+      "path": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+      "sha256": "4044d51930d72620f9d124c375779e37a99fdfb8e8c815cf2cb30420080d4324"
+    },
+    {
+      "path": "workers-ts/src/migrations/routinePaymentRuntime.ts",
+      "sha256": "dd01586c16bb65605cfd135733caa471bbba84fcd8726a1b6c5f3b0cf3dbe9c9"
+    },
+    {
+      "path": "workers-ts/test/helpers/refundRuntimeFixture.ts",
+      "sha256": "cee737293c79fc2434f5031163410b684a900b1ce7c59e1e2fa876d3e3173b33"
+    },
+    {
+      "path": ".gitleaks.toml",
+      "sha256": "8d3f6557cffc5c61bc1ab6a8c5ac26400542f6da5d7c2320306ee17373a14eea"
+    },
+    {
+      "path": ".gitleaksignore",
+      "sha256": "1f6204fa08c92058b8a8f3e9b99dfbcb90c4537da28de17fc782e3f8a4c988bb"
+    },
+    {
+      "path": ".github/workflows/workers-runtime-linux.yml",
+      "sha256": "94f08a84a76181eb0f0229f0f82d1f731b9c39ebbe09b5ceebb4ae3741d6cac6"
+    }
+  ],
+  "legacySources": {
+    "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+    "sources": [
+      {
+        "path": "app/controller/out/Product.php",
+        "sha256": "a52f6c6392594116e66803572a67e6c15d424fa13eac48df6bc9d7a6ef01c24a",
+        "bytes": 8803,
+        "gitBlob": "5a55a3a43001325abfd36cee3c6af3e3b45cac66"
+      },
+      {
+        "path": "app/controller/out/Order.php",
+        "sha256": "80724116257c61bdcc6c8cadb2eb2000c963dbb1659fd98bd0af4afe71089cc4",
+        "bytes": 18719,
+        "gitBlob": "7202ad605d9172bba313e4e6aa30a67c53f5cb60"
+      },
+      {
+        "path": "app/services/product/product/StoreProductServices.php",
+        "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+        "bytes": 136399,
+        "gitBlob": "f8163c25f694dd0ff84486d89926ef004ba9e81e"
+      },
+      {
+        "path": "app/services/product/sku/StoreProductAttrServices.php",
+        "sha256": "dae3878db9eb0392b01f52c5db1d8ba1cbf35456a9ddb081150a1955f87b0de9",
+        "bytes": 21089,
+        "gitBlob": "8a4c405eb7495985b0e6b3b8dddfc1f0c3eb62e4"
+      },
+      {
+        "path": "app/listener/order/Pay.php",
+        "sha256": "5b9645fc6ddb0ffc2411a9631a2e74b1750d4455434019e1d706d6b46b7e7638",
+        "bytes": 4877,
+        "gitBlob": "945f299b15150d0725b197f8f8c98f5036efbf1e"
+      },
+      {
+        "path": "app/jobs/order/OrderPayHandelJob.php",
+        "sha256": "4b07a008e22d133ebdb3ecc69dbf8458f70fdbee29a70f969284bb03193cf184",
+        "bytes": 7629,
+        "gitBlob": "fb39238b5312fe29beb8dc9411b47596b6bb403a"
+      },
+      {
+        "path": "app/jobs/product/ProductCouponJob.php",
+        "sha256": "36380034a2f194693d3c30a5f787f924ef20d4216041bc661183b2fb4c984d19",
+        "bytes": 2473,
+        "gitBlob": "cf6ed5db98800df1862cdff39997121529a7c09d"
+      },
+      {
+        "path": "app/services/order/StoreOrderDeliveryServices.php",
+        "sha256": "2991d5ac8e33b1970288aa9df842fd8e3e52f9ea1cf5789138d218292f832da5",
+        "bytes": 31204,
+        "gitBlob": "cc26160c0aaf5618ab06badab712db0bb961449b"
+      },
+      {
+        "path": "public/install/crmeb.sql",
+        "sha256": "0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a",
+        "bytes": 7322393,
+        "gitBlob": "e93c1a102da937e7507f5e31fe2b46ab12f883a9"
+      },
+      {
+        "path": "view/admin/src/pages/product/productAdd/index.vue",
+        "sha256": "3146b4167f07bdcdd5f996be46a1e7f7801465e8b06c7afdfa81543dcea7019f",
+        "bytes": 157763,
+        "gitBlob": "5c22b223f22b073125ca417fdfc08f4afc3a1c91"
+      }
+    ]
+  },
+  "wholeMigrationComplete": false,
+  "historicalApiDecision": {
+    "legacyEditorHiddenType2": true,
+    "actualOutApiAcceptsType2": true,
+    "rewardMechanism": "generic coupon_ids product rewards, independent of product type",
+    "noSkuCouponIdMapping": true,
+    "noType2AutomaticDelivery": true,
+    "outDeliveryHttpRemainsExpressOnly": true,
+    "authorUiChoiceUnchanged": true,
+    "supersedesPriorWholeType2ReservedInference": true
+  },
+  "validation": {
+    "profiles": [
+      {
+        "profile": "unit",
+        "exit": 0,
+        "seconds": 55.46,
+        "budgetSeconds": 600,
+        "actualFileSetExactlyMatches": true,
+        "files": [
+          "test/out-product-settings.test.ts",
+          "test/out-card-product-input.test.ts",
+          "test/out-product-price-options.test.ts",
+          "test/out-product-migration.test.ts",
+          "test/out-second-card-input.test.ts",
+          "test/out-manual-virtual-product.test.ts",
+          "test/out-product-activity.test.ts",
+          "test/out-product-coupons.test.ts",
+          "test/out-product-detail-projection.test.ts",
+          "test/out-product-forms.test.ts",
+          "test/out-product-parameters.test.ts",
+          "test/out-product-presale.test.ts",
+          "test/out-product-recommendations.test.ts",
+          "test/out-product-schedule.test.ts",
+          "test/out-product-vip.test.ts",
+          "test/second-card-product.test.ts",
+          "test/second-card-validity.test.ts",
+          "test/manual-virtual-product.test.ts",
+          "test/virtual-product-delivery.test.ts",
+          "test/virtual-product-inventory.test.ts",
+          "test/virtual-inventory-export.test.ts",
+          "test/out-product-label-runner-source-continuity.test.ts",
+          "test/out-type2-compat.test.ts",
+          "test/kefu-order-migration.test.ts",
+          "test/supplier-order-distribution-frontend.test.ts"
+        ],
+        "passedTests": 345
+      },
+      {
+        "profile": "baseline-compatibility",
+        "exit": 0,
+        "seconds": 17.65,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "type-shards-plan",
+        "exit": 0,
+        "seconds": 0.37,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "type-shards-options",
+        "exit": 0,
+        "seconds": 0.33,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "unit-types-shard-1",
+        "exit": 0,
+        "seconds": 176.99,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "unit-types-shard-2",
+        "exit": 0,
+        "seconds": 165.15,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "runtime-types",
+        "exit": 0,
+        "seconds": 109.25,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-stock-type2",
+        "exit": 0,
+        "seconds": 403.64,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-author",
+        "exit": 0,
+        "seconds": 346.73,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-customer-work",
+        "exit": 0,
+        "seconds": 72.94,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-merchant-manager",
+        "exit": 0,
+        "seconds": 31.86,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-supplier-distribution",
+        "exit": 0,
+        "seconds": 79.39,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "uni-page-runtime",
+        "exit": 0,
+        "seconds": 28.86,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "admin-ts-build",
+        "exit": 0,
+        "seconds": 89.1,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "supplier-ts-build",
+        "exit": 0,
+        "seconds": 30.62,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "pc-ts-build",
+        "exit": 0,
+        "seconds": 28.06,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "uni-types",
+        "exit": 0,
+        "seconds": 26.62,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "uni-h5-build",
+        "exit": 0,
+        "seconds": 29.49,
+        "budgetSeconds": 600
+      }
+    ],
+    "unitPassed": 345,
+    "unitFiles": 25,
+    "unitSkipped": 0,
+    "baselineSource": {
+      "baseCommit": "88727848a9423f91bf2510b45211604dc22dffa5",
+      "path": "workers-ts/src/services/out/OutProductService.ts",
+      "gitBlob": "4804fee1d5f8dbfb671743cc40543e02147427f5",
+      "bytes": 65186,
+      "sha256": "91837de19d0911fc073caa450ddaf5d3883dba8fbd83049d8da71f11739fc2c7",
+      "comparisonSourceSha256": "52f0991439b100533cd4086c502bda682a050ef782169cc4eb94a01aa6c50275",
+      "expectedComparisons": 40
+    },
+    "predecessorComparisons": [
+      {
+        "type": 0,
+        "video": null,
+        "explicitUndefined": false,
+        "hash": "c5de6ce54a39cd48cf66bd93ae3455e319945d087a61add46a237c2d9b16f3c5"
+      },
+      {
+        "type": 0,
+        "video": null,
+        "explicitUndefined": true,
+        "hash": "c5de6ce54a39cd48cf66bd93ae3455e319945d087a61add46a237c2d9b16f3c5"
+      },
+      {
+        "type": 0,
+        "video": "/fixture.mp4",
+        "explicitUndefined": false,
+        "hash": "dfe60fdd36a5b1e1375ae2943801551454ef6c89972dad5e2b11caad0e0d87eb"
+      },
+      {
+        "type": 0,
+        "video": "/fixture.mp4",
+        "explicitUndefined": true,
+        "hash": "dfe60fdd36a5b1e1375ae2943801551454ef6c89972dad5e2b11caad0e0d87eb"
+      },
+      {
+        "type": 0,
+        "video": "https://media.example.test/fixture.mp4",
+        "explicitUndefined": false,
+        "hash": "a8bda22aa86c8e8ae55efac89495488aaa722039f9c475c700da627def47683c"
+      },
+      {
+        "type": 0,
+        "video": "https://media.example.test/fixture.mp4",
+        "explicitUndefined": true,
+        "hash": "a8bda22aa86c8e8ae55efac89495488aaa722039f9c475c700da627def47683c"
+      },
+      {
+        "type": 0,
+        "video": "/api/assets/901",
+        "explicitUndefined": false,
+        "hash": "2ab59376c71cf80e9e2325b6b78519457b6369643fbe02c077982d4a83bc7b70"
+      },
+      {
+        "type": 0,
+        "video": "/api/assets/901",
+        "explicitUndefined": true,
+        "hash": "2ab59376c71cf80e9e2325b6b78519457b6369643fbe02c077982d4a83bc7b70"
+      },
+      {
+        "type": 0,
+        "video": "/api/assets/901?expires=1&signature=fixture",
+        "explicitUndefined": false,
+        "hash": "2ab59376c71cf80e9e2325b6b78519457b6369643fbe02c077982d4a83bc7b70"
+      },
+      {
+        "type": 0,
+        "video": "/api/assets/901?expires=1&signature=fixture",
+        "explicitUndefined": true,
+        "hash": "2ab59376c71cf80e9e2325b6b78519457b6369643fbe02c077982d4a83bc7b70"
+      },
+      {
+        "type": 1,
+        "video": null,
+        "explicitUndefined": false,
+        "hash": "2009ab76d71dc27ca6127046c03622195ded9d41df6e37efe0be0ebe382b0661"
+      },
+      {
+        "type": 1,
+        "video": null,
+        "explicitUndefined": true,
+        "hash": "2009ab76d71dc27ca6127046c03622195ded9d41df6e37efe0be0ebe382b0661"
+      },
+      {
+        "type": 1,
+        "video": "/fixture.mp4",
+        "explicitUndefined": false,
+        "hash": "09f20f72908f003874768b330888e5c0d09c0aa094b7d6ce3cd7b692390dfd84"
+      },
+      {
+        "type": 1,
+        "video": "/fixture.mp4",
+        "explicitUndefined": true,
+        "hash": "09f20f72908f003874768b330888e5c0d09c0aa094b7d6ce3cd7b692390dfd84"
+      },
+      {
+        "type": 1,
+        "video": "https://media.example.test/fixture.mp4",
+        "explicitUndefined": false,
+        "hash": "8629c3fd57213d4dd8c8e5e9e91512dc37e91059af64aaf59b02eb4ec724fc05"
+      },
+      {
+        "type": 1,
+        "video": "https://media.example.test/fixture.mp4",
+        "explicitUndefined": true,
+        "hash": "8629c3fd57213d4dd8c8e5e9e91512dc37e91059af64aaf59b02eb4ec724fc05"
+      },
+      {
+        "type": 1,
+        "video": "/api/assets/901",
+        "explicitUndefined": false,
+        "hash": "05460ddfab26943a92d6942f3cce6fc3ccdf56de98e9bb587597e0e3e1f17224"
+      },
+      {
+        "type": 1,
+        "video": "/api/assets/901",
+        "explicitUndefined": true,
+        "hash": "05460ddfab26943a92d6942f3cce6fc3ccdf56de98e9bb587597e0e3e1f17224"
+      },
+      {
+        "type": 1,
+        "video": "/api/assets/901?expires=1&signature=fixture",
+        "explicitUndefined": false,
+        "hash": "05460ddfab26943a92d6942f3cce6fc3ccdf56de98e9bb587597e0e3e1f17224"
+      },
+      {
+        "type": 1,
+        "video": "/api/assets/901?expires=1&signature=fixture",
+        "explicitUndefined": true,
+        "hash": "05460ddfab26943a92d6942f3cce6fc3ccdf56de98e9bb587597e0e3e1f17224"
+      },
+      {
+        "type": 3,
+        "video": null,
+        "explicitUndefined": false,
+        "hash": "ad3fd0fc10f92f8dc694f016a738fe34198a9b6135b855bac14050ce95c9c244"
+      },
+      {
+        "type": 3,
+        "video": null,
+        "explicitUndefined": true,
+        "hash": "ad3fd0fc10f92f8dc694f016a738fe34198a9b6135b855bac14050ce95c9c244"
+      },
+      {
+        "type": 3,
+        "video": "/fixture.mp4",
+        "explicitUndefined": false,
+        "hash": "b649a7594ea6b8a159b0929e04a2537edcfee88ca951512f24020fa86b44194b"
+      },
+      {
+        "type": 3,
+        "video": "/fixture.mp4",
+        "explicitUndefined": true,
+        "hash": "b649a7594ea6b8a159b0929e04a2537edcfee88ca951512f24020fa86b44194b"
+      },
+      {
+        "type": 3,
+        "video": "https://media.example.test/fixture.mp4",
+        "explicitUndefined": false,
+        "hash": "78bd19b90d3db2e2d1bf22f83e5b130a553477046b04f26ab4babc45f99b9851"
+      },
+      {
+        "type": 3,
+        "video": "https://media.example.test/fixture.mp4",
+        "explicitUndefined": true,
+        "hash": "78bd19b90d3db2e2d1bf22f83e5b130a553477046b04f26ab4babc45f99b9851"
+      },
+      {
+        "type": 3,
+        "video": "/api/assets/901",
+        "explicitUndefined": false,
+        "hash": "1c4f7018673686981f0dbd3aba8d5a09f79cb9104355bbbce7b031c316917062"
+      },
+      {
+        "type": 3,
+        "video": "/api/assets/901",
+        "explicitUndefined": true,
+        "hash": "1c4f7018673686981f0dbd3aba8d5a09f79cb9104355bbbce7b031c316917062"
+      },
+      {
+        "type": 3,
+        "video": "/api/assets/901?expires=1&signature=fixture",
+        "explicitUndefined": false,
+        "hash": "1c4f7018673686981f0dbd3aba8d5a09f79cb9104355bbbce7b031c316917062"
+      },
+      {
+        "type": 3,
+        "video": "/api/assets/901?expires=1&signature=fixture",
+        "explicitUndefined": true,
+        "hash": "1c4f7018673686981f0dbd3aba8d5a09f79cb9104355bbbce7b031c316917062"
+      },
+      {
+        "type": 4,
+        "video": null,
+        "explicitUndefined": false,
+        "hash": "19619b67482470fab8f6a603ef0b9b5d0d88bed07f15d755a15170473f8ddda3"
+      },
+      {
+        "type": 4,
+        "video": null,
+        "explicitUndefined": true,
+        "hash": "19619b67482470fab8f6a603ef0b9b5d0d88bed07f15d755a15170473f8ddda3"
+      },
+      {
+        "type": 4,
+        "video": "/fixture.mp4",
+        "explicitUndefined": false,
+        "hash": "cd6dc108e846f2db2106165e8b56a6cd83c713eb502ca047a711d4a97169b15d"
+      },
+      {
+        "type": 4,
+        "video": "/fixture.mp4",
+        "explicitUndefined": true,
+        "hash": "cd6dc108e846f2db2106165e8b56a6cd83c713eb502ca047a711d4a97169b15d"
+      },
+      {
+        "type": 4,
+        "video": "https://media.example.test/fixture.mp4",
+        "explicitUndefined": false,
+        "hash": "5d6f979bf8d06d01ad0f03e2398b209cc3da1661bd342401e3f4a7f1d05a3bae"
+      },
+      {
+        "type": 4,
+        "video": "https://media.example.test/fixture.mp4",
+        "explicitUndefined": true,
+        "hash": "5d6f979bf8d06d01ad0f03e2398b209cc3da1661bd342401e3f4a7f1d05a3bae"
+      },
+      {
+        "type": 4,
+        "video": "/api/assets/901",
+        "explicitUndefined": false,
+        "hash": "5154b2e6887b7cf69bb50e4cfbec4919182f3df3b05b4a22c3749cae5b88a90a"
+      },
+      {
+        "type": 4,
+        "video": "/api/assets/901",
+        "explicitUndefined": true,
+        "hash": "5154b2e6887b7cf69bb50e4cfbec4919182f3df3b05b4a22c3749cae5b88a90a"
+      },
+      {
+        "type": 4,
+        "video": "/api/assets/901?expires=1&signature=fixture",
+        "explicitUndefined": false,
+        "hash": "5154b2e6887b7cf69bb50e4cfbec4919182f3df3b05b4a22c3749cae5b88a90a"
+      },
+      {
+        "type": 4,
+        "video": "/api/assets/901?expires=1&signature=fixture",
+        "explicitUndefined": true,
+        "hash": "5154b2e6887b7cf69bb50e4cfbec4919182f3df3b05b4a22c3749cae5b88a90a"
+      }
+    ],
+    "predecessorPassed": 40,
+    "nativePassed": {
+      "native-stock-type2": 49,
+      "native-author": 65,
+      "native-customer-work": 43,
+      "native-merchant-manager": 39,
+      "native-supplier-distribution": 61
+    },
+    "nativeSkipped": 0,
+    "ownedFixturesRemaining": 0,
+    "typeShards": {
+      "originalRoots": 4348,
+      "commonRoots": 1903,
+      "testRoots": 2445,
+      "shardTestCounts": [
+        1223,
+        1222
+      ],
+      "unionExactlyMatchesOriginal": true,
+      "optionsExactlyMatchOriginal": true
+    },
+    "typeShardConfigs": [
+      {
+        "name": "tsconfig.out-type2-compat-shard-1.generated.json",
+        "sha256": "251c2bfa2171a2348b4a688bff079ec40e451698698271c888da170b7fe9a324"
+      },
+      {
+        "name": "tsconfig.out-type2-compat-shard-2.generated.json",
+        "sha256": "c02143a0ef3f487c0332532f06fe0d0e8f36444eed85487629d6b6138df8c214"
+      }
+    ],
+    "frontendRuntimePassed": 108,
+    "qa": {
+      "browser": "Browser plugin not available",
+      "fallback": "Existing Playwright 1.62.1 and installed Google Chrome, with localhost-only HTTP/API and notification socket fixtures",
+      "visuallyInspectedScreenshots": [
+        "pc.png",
+        "admin-delivery.png",
+        "supplier-delivery.png",
+        "uni-buyer.png",
+        "uni-merchant.png",
+        "uni-customer-work.png"
+      ],
+      "consoleRuntimeErrors": 0,
+      "knownWarnings": [
+        "UniApp dependency vue-router/dist/vue-router.esm-bundler.js import deprecation, preexisting vendor path"
+      ],
+      "viewports": [
+        {
+          "width": 1440,
+          "height": 1000
+        },
+        {
+          "width": 390,
+          "height": 844
+        }
+      ],
+      "screenshots": [
+        {
+          "name": "pc.png",
+          "sha256": "7efd1c95de3621f318539e2fddc3d28d37ed5189b36656a4b27595d0485d9f78"
+        },
+        {
+          "name": "admin-delivery.png",
+          "sha256": "e293d20e44c2b8777e9592bd89d4fbed5e675caf5a7c01e52bb68f7b5d791707"
+        },
+        {
+          "name": "supplier-delivery.png",
+          "sha256": "448daf5aa2ea6034288954ef73848eea4bb9c85354323b76ee9dbf7a3b3a5ffc"
+        },
+        {
+          "name": "uni-buyer.png",
+          "sha256": "0c8c3bf3a852b9cff67760bf45e7c7f07a99139b9edf839847fb4813901dcf86"
+        },
+        {
+          "name": "uni-merchant.png",
+          "sha256": "404df96ae26224ad09bbd2ecee23fea1d70046db1b10ce3e59cef7ca1cc63847"
+        },
+        {
+          "name": "uni-customer-work.png",
+          "sha256": "8e032511a86309ff892b3b1ff6d4be949ea3214fb26066cc6c44dae3e7133f70"
+        }
+      ],
+      "targetPages": [
+        {
+          "target": "pc",
+          "url": "http://127.0.0.1:40951/order/type_two_isolated_order",
+          "title": "CinaShop 本地验证",
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "checks": {
+            "identity": true,
+            "meaningfulContent": true,
+            "noOverlay": true,
+            "interaction": true,
+            "screenshot": true
+          },
+          "consoleErrors": [],
+          "consoleWarnings": [],
+          "unexpected": [],
+          "requests": [
+            {
+              "path": "/api/order/detail/type_two_isolated_order",
+              "method": "GET"
+            },
+            {
+              "path": "/api/cart/count",
+              "method": "GET"
+            },
+            {
+              "path": "/api/cart/list",
+              "method": "GET"
+            },
+            {
+              "path": "/api/site_config",
+              "method": "GET"
+            },
+            {
+              "path": "/api/share",
+              "method": "GET"
+            },
+            {
+              "path": "/api/pc/get_company_info",
+              "method": "GET"
+            }
+          ],
+          "writes": []
+        },
+        {
+          "target": "admin",
+          "url": "http://127.0.0.1:40952/order",
+          "title": "订单管理 - CinaShop 管理后台",
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "checks": {
+            "identity": true,
+            "meaningfulContent": true,
+            "noOverlay": true,
+            "interaction": true,
+            "screenshot": true
+          },
+          "consoleErrors": [],
+          "consoleWarnings": [],
+          "unexpected": [],
+          "requests": [
+            {
+              "path": "/api/get_script",
+              "method": "GET"
+            },
+            {
+              "path": "/api/site_config",
+              "method": "GET"
+            },
+            {
+              "path": "/adminapi/order/list",
+              "method": "GET"
+            },
+            {
+              "path": "/adminapi/order/chart",
+              "method": "GET"
+            },
+            {
+              "path": "/adminapi/new_push",
+              "method": "GET"
+            },
+            {
+              "path": "/adminapi/order/delivery/type_two_isolated_order",
+              "method": "POST"
+            },
+            {
+              "path": "/adminapi/order/list",
+              "method": "GET"
+            },
+            {
+              "path": "/adminapi/order/chart",
+              "method": "GET"
+            }
+          ],
+          "writes": [
+            {
+              "path": "/adminapi/order/delivery/type_two_isolated_order",
+              "body": {
+                "delivery_type": "fictitious",
+                "delivery_name": "",
+                "delivery_id": "",
+                "delivery_uid": 0,
+                "fictitious_content": "隔离兑换说明：请凭本订单核对已赠优惠券"
+              }
+            }
+          ]
+        },
+        {
+          "target": "supplier",
+          "url": "http://127.0.0.1:40953/orders",
+          "title": "CinaShop 供应商中心",
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "checks": {
+            "identity": true,
+            "meaningfulContent": true,
+            "noOverlay": true,
+            "interaction": true,
+            "screenshot": true
+          },
+          "consoleErrors": [],
+          "consoleWarnings": [],
+          "unexpected": [],
+          "requests": [
+            {
+              "path": "/api/get_script",
+              "method": "GET"
+            },
+            {
+              "path": "/supplierapi/order/list",
+              "method": "GET"
+            },
+            {
+              "path": "/supplierapi/order/split_cart_info/101",
+              "method": "GET"
+            },
+            {
+              "path": "/supplierapi/order/delivery/101",
+              "method": "PUT"
+            },
+            {
+              "path": "/supplierapi/order/list",
+              "method": "GET"
+            }
+          ],
+          "writes": [
+            {
+              "path": "/supplierapi/order/delivery/101",
+              "body": {
+                "delivery_type": "fictitious",
+                "delivery_name": "",
+                "delivery_code": "",
+                "delivery_id": "",
+                "fictitious_content": "隔离兑换说明：请凭本订单核对已赠优惠券"
+              }
+            }
+          ]
+        },
+        {
+          "target": "uni-buyer",
+          "url": "http://127.0.0.1:40954/#/pages/order/detail?orderId=type_two_isolated_order",
+          "title": "订单详情",
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "checks": {
+            "identity": true,
+            "meaningfulContent": true,
+            "noOverlay": true,
+            "interaction": true,
+            "screenshot": true
+          },
+          "consoleErrors": [],
+          "consoleWarnings": [
+            "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly."
+          ],
+          "unexpected": [],
+          "requests": [
+            {
+              "path": "/api/diy/diy_version/0",
+              "method": "GET"
+            },
+            {
+              "path": "/api/navigation",
+              "method": "GET"
+            },
+            {
+              "path": "/api/v2/diy/color_change/color_change",
+              "method": "GET"
+            },
+            {
+              "path": "/api/get_script",
+              "method": "GET"
+            },
+            {
+              "path": "/api/order/detail/type_two_isolated_order",
+              "method": "GET"
+            },
+            {
+              "path": "/api/diy/get_suspended",
+              "method": "GET"
+            }
+          ],
+          "writes": []
+        },
+        {
+          "target": "uni-merchant",
+          "url": "http://127.0.0.1:40954/#/pages/merchant/delivery?store_id=3&orderId=ORDER_101",
+          "title": "门店订单发货",
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "checks": {
+            "identity": true,
+            "meaningfulContent": true,
+            "noOverlay": true,
+            "interaction": true,
+            "screenshot": true
+          },
+          "consoleErrors": [],
+          "consoleWarnings": [
+            "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly."
+          ],
+          "unexpected": [],
+          "requests": [
+            {
+              "path": "/api/diy/diy_version/0",
+              "method": "GET"
+            },
+            {
+              "path": "/api/navigation",
+              "method": "GET"
+            },
+            {
+              "path": "/api/v2/diy/color_change/color_change",
+              "method": "GET"
+            },
+            {
+              "path": "/api/get_script",
+              "method": "GET"
+            },
+            {
+              "path": "/api/store/manager/context",
+              "method": "GET"
+            },
+            {
+              "path": "/api/store/manager/order/detail/ORDER_101",
+              "method": "GET"
+            },
+            {
+              "path": "/api/store/manager/order/delivery/gain/ORDER_101",
+              "method": "GET"
+            },
+            {
+              "path": "/api/store/manager/order/delivery/config",
+              "method": "GET"
+            },
+            {
+              "path": "/api/store/manager/order/split_cart_info/101",
+              "method": "GET"
+            },
+            {
+              "path": "/api/store/manager/order/delivery",
+              "method": "GET"
+            },
+            {
+              "path": "/api/store/manager/order/export_all",
+              "method": "GET"
+            }
+          ],
+          "writes": []
+        },
+        {
+          "target": "uni-customer-work",
+          "url": "http://127.0.0.1:40954/#/pages/customer-work/delivery?orderId=ORDER_1",
+          "title": "订单发货",
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "checks": {
+            "identity": true,
+            "meaningfulContent": true,
+            "noOverlay": true,
+            "interaction": true,
+            "screenshot": true
+          },
+          "consoleErrors": [],
+          "consoleWarnings": [
+            "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly."
+          ],
+          "unexpected": [],
+          "requests": [
+            {
+              "path": "/api/diy/diy_version/0",
+              "method": "GET"
+            },
+            {
+              "path": "/api/navigation",
+              "method": "GET"
+            },
+            {
+              "path": "/api/v2/diy/color_change/color_change",
+              "method": "GET"
+            },
+            {
+              "path": "/api/get_script",
+              "method": "GET"
+            },
+            {
+              "path": "/api/mobile/work/context",
+              "method": "GET"
+            },
+            {
+              "path": "/api/mobile/work/orders/ORDER_1/fulfillment",
+              "method": "GET"
+            },
+            {
+              "path": "/api/mobile/work/fulfillment/waybills",
+              "method": "GET"
+            },
+            {
+              "path": "/api/mobile/work/fulfillment/carriers",
+              "method": "GET"
+            },
+            {
+              "path": "/api/mobile/work/fulfillment/couriers",
+              "method": "GET"
+            },
+            {
+              "path": "/api/mobile/work/fulfillment/defaults",
+              "method": "GET"
+            }
+          ],
+          "writes": []
+        }
+      ]
+    },
+    "logHashes": [
+      {
+        "file": "admin-ts-build.log",
+        "sha256": "08635018b6d9b22a91dcae30066d1f66be897091cffe5690afe6c306436246fe"
+      },
+      {
+        "file": "baseline-compatibility.log",
+        "sha256": "4af65b4d36db6c020ad1fd89f5dc6fbfb61c58c470999317737d499db3b4460c"
+      },
+      {
+        "file": "native-author-snapshot-shape.log",
+        "sha256": "1c9bc1ef46e391796fa33a60df5ab664f30ae91caed64b1b96754f562092cb41"
+      },
+      {
+        "file": "native-author.log",
+        "sha256": "5084981f4ee42fb5b939f139d1b199480646c06bdab9e1c16f9865d3c81e5f22"
+      },
+      {
+        "file": "native-customer-work.log",
+        "sha256": "1c4d4b24844ed9f7a5ecdaf941d67a38122f7e09cc6ef69aa1961c0ab861652c"
+      },
+      {
+        "file": "native-merchant-manager.log",
+        "sha256": "72f87455ac50d717fdc8d4a80100015dcb754aa70ded2a4d54bf0511f2090857"
+      },
+      {
+        "file": "native-stock-type2.log",
+        "sha256": "5e75a95031fafa455239c982cbbe4371880143def089dbba1fc7f7b3e651326e"
+      },
+      {
+        "file": "native-supplier-distribution.log",
+        "sha256": "4621451b3a047a976f095e84c836918bcf518b7cc64ef407430f346f7eaff5c3"
+      },
+      {
+        "file": "native-type2-preflight-fixed.log",
+        "sha256": "db97ba77a33f060e7d578bb5c5f5eba253d61f21fd59af43bc7bbef23b04e0f2"
+      },
+      {
+        "file": "native-type2-preflight.log",
+        "sha256": "7b2b9b28fc8dfa736030d97666891390cc92d0d69b4ef4002e7033e2da0af796"
+      },
+      {
+        "file": "native-wallet-preflight.log",
+        "sha256": "92643406f607fccd15b3f95faead3b868add261907d39da4545a7807e97f8fe6"
+      },
+      {
+        "file": "native-wallet-response-shape-duplicate.log",
+        "sha256": "cee945b5f08a587922b650f999fbae7fd95153d8afb541791a4d64a44283ef59"
+      },
+      {
+        "file": "native-wallet-response-shape.log",
+        "sha256": "2b5d7230b1eab4800007075d58b3c57630c2c4de624a838a417867e9a839d3e9"
+      },
+      {
+        "file": "pc-ts-build.log",
+        "sha256": "153a006606aec83183ebf83e8b620bcc7a10f0a8a1707b1b9e8d2386f0b1d68f"
+      },
+      {
+        "file": "previous-ci-shard1.log",
+        "sha256": "cd9168a27c4cf75bbfa07552d022804e85d4da8b0080aa9b8f34ff3d8fbff45f"
+      },
+      {
+        "file": "qa-admin-final.log",
+        "sha256": "95b7ad09a140432e3106e1006aa905d2d252572a7d376a7852a59f751f8d75f0"
+      },
+      {
+        "file": "qa-admin-fixed.log",
+        "sha256": "99182265d59c3c6a65da3732ba71b4d6626c321a48b593478b59fa3c92294d81"
+      },
+      {
+        "file": "qa-admin-server.log",
+        "sha256": "e7ec923ecbb40a1e5d9715880b49cbc996469209532decb3488df3ca5835df92"
+      },
+      {
+        "file": "qa-admin.log",
+        "sha256": "e82af3447159c0a8669fcb7b2a8f575bee509d74c11c351e926ab55de8b6cbbb"
+      },
+      {
+        "file": "qa-pc-server.log",
+        "sha256": "30ac42760058d38143a80672b9cff18982355d4f2fe62cf6a5e98b4b635141fb"
+      },
+      {
+        "file": "qa-pc.log",
+        "sha256": "45d64bf7742dd714b0695e5e2f6bdfb1e49e1f85b942f2867f0633f17af60799"
+      },
+      {
+        "file": "qa-sequence-final.log",
+        "sha256": "6000fba878876ae99f85c29283d68b61f72fb2009977f1783ecab94b30a37062"
+      },
+      {
+        "file": "qa-supplier-final.log",
+        "sha256": "8103403d1593f7c2ddd67fd2593e2c318efce673371452255d6cf9eef3e4a909"
+      },
+      {
+        "file": "qa-supplier-server.log",
+        "sha256": "bcf8b682542c017e7db1e6cae3b3b2e4a79b98bdcc91ecfaa76e21d8d7e7b9fc"
+      },
+      {
+        "file": "qa-supplier.log",
+        "sha256": "99182265d59c3c6a65da3732ba71b4d6626c321a48b593478b59fa3c92294d81"
+      },
+      {
+        "file": "qa-uni-final.log",
+        "sha256": "6e69c75c7a81e2ed6dc68ae5b09a0c18296ad3fae55439791fb10a57e56f46cb"
+      },
+      {
+        "file": "qa-uni-server.log",
+        "sha256": "4c317c3671eed17e415cc88675090910bde4efc12df4772afdbfb60960c983d2"
+      },
+      {
+        "file": "qa-uni.log",
+        "sha256": "99182265d59c3c6a65da3732ba71b4d6626c321a48b593478b59fa3c92294d81"
+      },
+      {
+        "file": "runtime-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "source-scan.log",
+        "sha256": "25d4ec2ef1fd1858407890ada005016e4c1d20ef7a6e290b0d351045c8daa210"
+      },
+      {
+        "file": "supplier-ts-build.log",
+        "sha256": "2988cbb44ce8635b8060211a5d5b83d4af2d5448add0dc9a1f948735e356fd14"
+      },
+      {
+        "file": "type-shards-options.log",
+        "sha256": "6bdd1ba8d6c390cabc7e9d5f0c246b470a2af144a9e1d440a7d2f6ffc21938be"
+      },
+      {
+        "file": "type-shards-plan.log",
+        "sha256": "fe3455dc2f1ac446ee2cd35b69c7b6bad96b638e9c6034e40fda383c16b19e98"
+      },
+      {
+        "file": "uni-h5-build.log",
+        "sha256": "0da313d760840790d27ae1da505aecdebd41b861fb172d9e5a45a39970dea1f9"
+      },
+      {
+        "file": "uni-page-runtime.log",
+        "sha256": "245b7706497c83a3c2ecfa35ac29bb2778c553517b9af3957c80837b1ba2270f"
+      },
+      {
+        "file": "uni-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "unit-preflight.log",
+        "sha256": "adc54b55321bbfe01919e009bbc664184d02b65f2f892edf65b8ef7d12f725be"
+      },
+      {
+        "file": "unit-types-shard-1.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "unit-types-shard-2.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "unit.log",
+        "sha256": "c064a001f1ff72e24681f91d6e4bb3ca8fcdaca531d67022cc4775c63231af82"
+      }
+    ]
+  },
+  "testContinuity": {
+    "originalStockTestBytesPreservedAsPrefix": true,
+    "nativeRunnerAndBudgetUnchanged": true,
+    "nativeBudgetSeconds": 600,
+    "compilerHeapMiB": 8192,
+    "compilerOptionsAndRootUnionPreserved": true
+  },
+  "authenticationEvidence": {
+    "outProductHttp": "actual Out JWT and native database middleware",
+    "balancePayment": "actual isolated SQL balance debit, under a separately authenticated restricted APP LOGIN after commissioning",
+    "buyerDetailHttp": "actual controller with explicitly synthetic UID middleware; buyer JWT authentication is not claimed",
+    "manualDelivery": "trusted SupplierFulfillmentService domain call with explicit expectedStoreId=0; Out virtual-delivery HTTP is not claimed",
+    "frontend": "real Vite/UniApp render with synthetic local browser sessions and finite intercepted HTTP fixtures"
+  },
+  "previousCi": {
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/43147612051",
+    "terminal": true,
+    "workerFailure": "Fixed remote legacy PHP commit missing (not our ref), before Worker tests",
+    "allNonWorkerJobsPassed": true,
+    "snapshotSha256": "1bd62a358d697641fb62d25dcf8f72e26712d4ab69c126de44bcf15effa587ea"
+  },
+  "preflightCorrections": [
+    "Assertions corrected to the actual camelCase buyer response and deterministic SKU ordering; snapshot SQL uses actual composite description identity",
+    "Removed temporary fixture-file export from committed test so clean CI does not depend on a pre-created /tmp directory; final gates rerun on the frozen result",
+    "Browser fixtures now serve empty JavaScript analytics and local notification sockets; Uni textarea/custom disabled-button and localized modal selectors corrected; final six pages have no runtime errors"
+  ],
+  "limitations": [
+    "No deployment or PHP upload",
+    "No actual external payment, SMS, logistics or provider calls",
+    "Full PHP to TypeScript migration remains active and incomplete",
+    "No type-2 visual product author menu, SKU-specific coupon field or automatic fulfillment",
+    "UI fixtures do not prove public JWT authentication or backend authorization; native evidence is reported separately",
+    "UniApp emits existing vendor Vue Router import deprecation warning",
+    "Prior mature private-schema baseline failures and cumulative-limit proof boundaries remain outside this batch"
+  ],
+  "fullFileSourceScanReview": {
+    "findings": 1,
+    "reviewedNonSecrets": 1,
+    "unresolved": 0,
+    "unchangedBaselineTestUuid": {
+      "rule": "generic-api-key",
+      "path": "workers-ts/test/out-stock-candidate-boundary.test.ts",
+      "start": 31,
+      "end": 31,
+      "exactBaselineLines": true
+    },
+    "newIgnoreRules": false
+  },
+  "generatedAt": "2026-11-12T05:12:26.583790+00:00"
+}

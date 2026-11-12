@@ -9,7 +9,7 @@ type Product = typeof storeProduct.$inferSelect;
 type Template = typeof legacyCategory.$inferSelect;
 type Relation = typeof storeProductRelation.$inferSelect;
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
-const scope = (id: number, productType: 0 | 1 | 3 | 4) => and(eq(storeProduct.id, id), eq(storeProduct.type, 0), eq(storeProduct.relationId, 0), eq(storeProduct.productType, productType), eq(storeProduct.isDel, 0));
+const scope = (id: number, productType: 0 | 1 | 2 | 3 | 4) => and(eq(storeProduct.id, id), eq(storeProduct.type, 0), eq(storeProduct.relationId, 0), eq(storeProduct.productType, productType), eq(storeProduct.isDel, 0));
 export const outProductParameterInput = supplierProductParameterInput;
 export const outProductParameterTemplateOwned = (row: Pick<Template, 'type' | 'relationId' | 'group' | 'ownerId'>) =>
   row.type === 0 && row.relationId === 0 && row.group === 3 && row.ownerId === 0;
