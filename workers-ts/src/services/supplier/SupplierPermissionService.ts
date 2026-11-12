@@ -198,6 +198,9 @@ export function requiredSupplierPermissions(method: string, routePath: string): 
     if (verb === 'DELETE' && new RegExp(`^product/product/rule/delete/${id}$`).test(route)) return ['supplier.product.manage'];
     return null;
   }
+  if (route === 'product/coupon' || route.startsWith('product/coupon/')) {
+    return readMethod(method) && route === 'product/coupon/catalog' ? ['supplier.product.view'] : null;
+  }
   if (route === 'product/all_label' || route === 'product/label' || route.startsWith('product/label/')) {
     const verb = method.toUpperCase();
     if (readMethod(method) && ['product/all_label', 'product/label/catalog', 'product/label/form'].includes(route)) return ['supplier.product.view'];

@@ -816,3 +816,174 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier authore
     } finally { wiring.container = null; wiring.moderator = null; network.mockRestore(); await full.close(); }
   }, 180_000);
 });
+
+
+import { storeProductCoupon as supplierCouponLink, storeCouponIssue as supplierCouponIssue } from '@/models/schema';
+import { supplierProductCouponsFixture } from './helpers/supplierProductCoupons';
+
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier product coupon author and readonly catalogue', () => {
+  let f: Awaited<ReturnType<typeof supplierProductCouponsFixture>>;
+  beforeEach(async () => { vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('Owned coupon author forbids providers')); f = await supplierProductCouponsFixture(); wiring.container = f.container; }, 30_000);
+  afterEach(async () => { try { expect(fetch).not.toHaveBeenCalled(); } finally { await f?.close(); wiring.container = null; wiring.moderator = null; vi.restoreAllMocks(); } }, 30_000);
+  async function call(path: string, body?: object, actor: keyof typeof f.tokens | 'anonymous' = 'manager') {
+    const response = await app.request('/supplierapi' + path, { method: body ? 'POST' : 'GET', headers: {
+      ...(actor === 'anonymous' ? {} : { Authorization: 'Bearer ' + f.tokens[actor] }), 'X-Supplier-Id': '8',
+      ...(body ? { 'Content-Type': 'application/json' } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) }, f.env);
+    expect(response.headers.get('cache-control')).toContain('private, no-store'); return response.json<Envelope>();
+  }
+  const links = () => f.db.select().from(supplierCouponLink).where(eq(supplierCouponLink.productId, 80)).orderBy(supplierCouponLink.id);
+  it.each([0, 1, 3])('writes, reads, preserves omission and clears coupons for fulfillment %i', async type => {
+    const id = type === 1 ? 81 : 80;
+    if (type === 3) { await f.db.update(storeProduct).set({ productType: 3 }).where(eq(storeProduct.id, id)); await f.db.update(storeProductAttrValue).set({ productType: 3 }).where(eq(storeProductAttrValue.productId, id)); }
+    await f.withCouponWriter(async writer => { wiring.container = writer.container; const body = await f.body({}, id);
+      const before = await f.product(id), saved = await call('/product/product/' + id, { ...body, coupon_ids: ['9102', 9101, 9101] }); expect(saved.status, saved.msg).toBe(200);
+      const read = await call('/product/product/' + id); expect(read.data.coupon_selection).toEqual({ version: 1, ids: [9101, 9102], entries: [{ id: 9101, title: '本地固定窗口赠券', available: true }, { id: 9102, title: '本地停用赠券', available: true }], consistent: true, truncated: false });
+      const bound = await f.db.select().from(supplierCouponLink).where(eq(supplierCouponLink.productId, id));
+      expect((await call('/product/product/' + id, body)).status).toBe(200); expect(await f.db.select().from(supplierCouponLink).where(eq(supplierCouponLink.productId, id))).toEqual(bound);
+      expect((await call('/product/product/' + id, { ...body, coupon_ids: [] })).status).toBe(200); expect((await call('/product/product/' + id)).data.coupon_selection.ids).toEqual([]);
+      const current = await f.product(id); for (const key of ['giveIntegral', 'labelId', 'commandWord', 'customForm', 'systemFormId', 'isVipProduct', 'isPresaleProduct'] as const) expect(current[key]).toEqual(before[key]);
+      const [rights] = await writer.db.execute(sql`SELECT current_user=session_user AS independent, has_table_privilege(current_user,'store_product_coupon','UPDATE') AS link_update, has_column_privilege(current_user,'store_coupon_issue','coupon_title','UPDATE') AS catalogue_edit`);
+      expect(rights).toEqual({ independent: true, link_update: false, catalogue_edit: false });
+    });
+  });
+  it('pages and searches literal titles under a SELECT-only viewer and rejects hidden query scope', async () => f.withReader(async reader => {
+    wiring.container = reader.container; const before = await f.snapshot(), seq = await f.sequences();
+    const one = await call('/product/coupon/catalog?page=1&limit=2', undefined, 'viewer'); expect(one.status, one.msg).toBe(200); expect(one.data).toMatchObject({ version: 1, count: 3, page: 1, limit: 2 }); expect(one.data.list.map((x: any) => x.id)).toEqual([9104, 9102]);
+    const two = await call('/product/coupon/catalog?page=2&limit=2', undefined, 'viewer'); expect(two.data.list.map((x: any) => x.id)).toEqual([9101]);
+    const literal = await call('/product/coupon/catalog?keyword='+encodeURIComponent('%_'), undefined, 'viewer'); expect(literal.data.list.map((x: any) => x.id)).toEqual([9104]);
+    for (const query of ['supplier_id=8', 'limit=51', 'page=0', 'page=1&page=2', 'is_del=1']) expect((await call('/product/coupon/catalog?'+query, undefined, 'viewer')).status).toBe(400);
+    for (const actor of ['denied', 'anonymous'] as const) expect((await call('/product/coupon/catalog', undefined, actor)).status).not.toBe(200);
+    expect(await f.snapshot()).toEqual(before); expect(await f.sequences()).toEqual(seq);
+    const [rights] = await reader.db.execute(sql`SELECT has_any_column_privilege(current_user,'store_coupon_issue','UPDATE') AS issue_write, has_any_column_privilege(current_user,'store_product_coupon','UPDATE') AS link_write`); expect(rights).toEqual({ issue_write: false, link_write: false });
+  }));
+  it('reads missing, deleted, duplicate and excessive historical links without granting new author authority', async () => f.withCouponWriter(async writer => {
+    wiring.container = writer.container;
+    await f.db.insert(supplierCouponLink).values([{ productId: 80, issueCouponId: 9103, title: '历史删除券' }, { productId: 80, issueCouponId: 99999, title: '历史缺失券' }, { productId: 80, issueCouponId: 99999, title: '重复行' }]);
+    const read = await call('/product/product/80'); expect(read.data.coupon_selection).toMatchObject({ ids: [9103, 99999], consistent: false, truncated: false }); expect(read.data.coupon_selection.entries.every((x: any) => !x.available)).toBe(true);
+    const before = await links(); expect((await call('/product/product/80', await f.body())).status).toBe(200); expect(await links()).toEqual(before);
+    for (const ids of [[9103], [99999]]) { const state = await f.snapshot(); expect((await call('/product/product/80', await f.body({ coupon_ids: ids }))).status).not.toBe(200); expect(await f.snapshot()).toEqual(state); }
+    await f.db.insert(supplierCouponLink).values(Array.from({ length: 101 }, () => ({ productId: 80, issueCouponId: 9101, title: '过多历史行' })));
+    expect((await call('/product/product/80')).data.coupon_selection.truncated).toBe(true);
+    expect((await call('/product/product/80', await f.body({ coupon_ids: [] }))).status).toBe(200); expect(await links()).toEqual([]);
+  }));
+  it('never targets coupon links on omission or undefined, even under executable DML tripwires', async () => f.withCouponWriter(async writer => {
+    wiring.container = writer.container; await f.db.insert(supplierCouponLink).values({ productId: 80, issueCouponId: 9101, title: '保留原行' });
+    await f.exec("CREATE FUNCTION owned_coupon_omit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'coupon DML entered'; END $$; CREATE TRIGGER owned_coupon_omit BEFORE INSERT OR DELETE ON public.store_product_coupon FOR EACH STATEMENT EXECUTE FUNCTION owned_coupon_omit()");
+    await expect(f.db.delete(supplierCouponLink).where(eq(supplierCouponLink.productId, 80))).rejects.toThrow(); const before = await links(), body = await f.body();
+    expect((await call('/product/product/80', body)).status).toBe(200); await new SupplierProductManagementService(writer.container, f.env).saveProduct(7, 80, { ...body, coupon_ids: undefined }); expect(await links()).toEqual(before);
+  }));
+  it('denies malformed, foreign and unauthorized writes without business or sequence changes', async () => f.withCouponWriter(async writer => {
+    wiring.container = writer.container; const body = await f.body({ coupon_ids: [9101] }), before = await f.snapshot(), seq = await f.sequences();
+    for (const actor of ['viewer', 'denied', 'other', 'anonymous'] as const) expect((await call('/product/product/80', body, actor)).status).not.toBe(200);
+    for (const value of [null, false, {}, [0], [-1], ['bad'], [2147483648], Array(101).fill(1)]) expect((await call('/product/product/80', { ...body, coupon_ids: value })).status).toBe(400);
+    expect(await f.snapshot()).toEqual(before); expect(await f.sequences()).toEqual(seq);
+  }));
+  it.each(['skip', 'rewrite', 'issue', 'main', 'actor', 'deferred'] as const)('rolls back %s coupon tampering with executable positive control', async mode => f.withCouponWriter(async writer => {
+    const action = mode === 'skip' ? 'RETURN NULL;' : mode === 'rewrite' ? 'NEW.issue_coupon_id=9102; RETURN NEW;'
+      : mode === 'issue' ? "UPDATE public.store_coupon_issue SET coupon_title='tampered' WHERE id=9101; RETURN NEW;"
+      : mode === 'main' ? 'UPDATE public.store_product SET give_integral=99 WHERE id=80; RETURN NEW;'
+      : mode === 'actor' ? "UPDATE public.system_role SET rules='supplier.product.view' WHERE id=21; RETURN NEW;"
+      : "UPDATE public.store_product_coupon SET title='tampered' WHERE id=NEW.id; RETURN NEW;";
+    const timing = mode === 'deferred' ? 'CREATE CONSTRAINT TRIGGER owned_coupon_tamper AFTER INSERT ON public.store_product_coupon DEFERRABLE INITIALLY DEFERRED'
+      : `CREATE TRIGGER owned_coupon_tamper ${['skip','rewrite'].includes(mode) ? 'BEFORE' : 'AFTER'} INSERT ON public.store_product_coupon`;
+    await f.exec(`CREATE FUNCTION owned_coupon_tamper() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN IF NEW.product_id=80 THEN ${action} END IF; RETURN NEW; END $$; ${timing} FOR EACH ROW EXECUTE FUNCTION owned_coupon_tamper()`);
+    const marker = Error('owned coupon positive rollback');
+    await expect(f.db.transaction(async tx => {
+      const rows = await tx.insert(supplierCouponLink).values({ productId: 80, issueCouponId: 9101, title: '原题' }).returning(); await tx.execute(sql`SET CONSTRAINTS ALL IMMEDIATE`);
+      if (mode === 'skip') expect(rows).toHaveLength(0);
+      else if (mode === 'rewrite') expect(rows[0].issueCouponId).toBe(9102);
+      else if (mode === 'issue') expect((await tx.select().from(supplierCouponIssue).where(eq(supplierCouponIssue.id, 9101)))[0].couponTitle).toBe('tampered');
+      else if (mode === 'main') expect((await tx.select().from(storeProduct).where(eq(storeProduct.id, 80)))[0].giveIntegral).toBe('99.00');
+      else if (mode === 'actor') expect((await tx.select().from(systemRole).where(eq(systemRole.id, 21)))[0].rules).toBe('supplier.product.view');
+      else expect((await tx.select().from(supplierCouponLink).where(eq(supplierCouponLink.id, rows[0].id)))[0].title).toBe('tampered');
+      throw marker;
+    })).rejects.toBe(marker);
+    wiring.container = writer.container; const body = await f.body({ coupon_ids: [9101] }), before = await f.snapshot(); expect((await call('/product/product/80', body)).status).not.toBe(200); expect(await f.snapshot()).toEqual(before);
+  }));
+  it('refuses an actual concurrent issuance writer lock with whole-business rollback', async () => f.withCouponWriter(async writer => f.withPeer!(async peer => {
+    const held = signal(), release = signal(); wiring.container = writer.container;
+    const holding = peer.db.transaction(async tx => { await tx.update(supplierCouponIssue).set({ title: 'locked' }).where(eq(supplierCouponIssue.id, 9101)); held.resolve(); await release.promise; throw Error('owned issue lock rollback'); }).catch(error => expect(error.message).toBe('owned issue lock rollback'));
+    try { await held.promise; const body = await f.body({ coupon_ids: [9101] }), before = await f.snapshot(); expect((await call('/product/product/80', body)).status).not.toBe(200); expect(await f.snapshot()).toEqual(before); }
+    finally { release.resolve(); await holding; }
+  })));
+});
+
+
+import { storeCouponUser as supplierOwnedCoupon, storeCouponIssueUser as supplierRawCoupon,
+  storeOrderProductCouponReward as supplierCouponReward } from '@/models/schema';
+
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier authored coupons actual paid HTTP lifecycle', () => {
+  it.each([0, 1, 3])('grants current product issuance once for fulfillment %i after real payment and durable replay', async productType => {
+    const network = vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('Owned Supplier coupon lifecycle forbids providers'));
+    const full = await refundRuntimeFixture();
+    try {
+      const config: Record<string, string> = { integral_ratio_status: '0', order_give_integral: '0', order_give_exp: '0', member_func_status: '0', brokerage_func_status: '0', store_brokerage_statu: '0', balance_func_status: '1', yue_pay_status: '1' };
+      for (const [menuName, value] of Object.entries(config)) { const changed = await full.db.update(pricingConfig).set({ value }).where(sql`${pricingConfig.menuName}=${menuName} AND ${pricingConfig.isStore}=0`).returning({ id: pricingConfig.id }); if (!changed.length) await full.db.insert(pricingConfig).values({ menuName, value }); }
+      await full.db.update(pricingUser).set({ nowMoney: '100.00' }).where(eq(pricingUser.uid, 11));
+      await full.db.update(pricingSupplier).set({ adminId: 21, isShow: 1, isDel: 0 }).where(eq(pricingSupplier.id, 7));
+      const password = 'local-coupon-supplier-password', reviewPassword = 'local-coupon-review-password';
+      await full.db.insert(systemAdmin).values([{ id: 21, account: 'local-coupon-supplier', pwd: password, adminType: 4, relationId: 7, status: 1, isDel: 0 }, { id: 101, account: 'local-coupon-review', pwd: reviewPassword, adminType: 1, relationId: 0, level: 0, status: 1, isDel: 0 }]);
+      await full.db.insert(pricingCategory).values({ id: 800001, type: 2, relationId: 7, cateName: '本地赠券分类', isShow: 1 });
+      const now = Math.floor(Date.now()/1000);
+      await full.db.insert(supplierCouponIssue).values(Array.from({length:9},(_,i)=>({id:9100+i,title:'实际赠券 '+(9100+i),couponTitle:'实际赠券 '+(9100+i),couponType:0,type:1,couponPrice:'5.00',useMinPrice:'10.00',totalCount:10,remainCount:i===5?0:10,status:i===3?0:1,
+        category:i===2?2:0,day:i===2?7:0,useStartTime:new Date((now-86400)*1000),useEndTime:new Date((now+(i===4?-1:86400))*1000),startTime:i===7?new Date((now+86400)*1000):null})));
+      await full.exec(`SELECT setval(pg_get_serial_sequence('store_product','id'),800010,true); SELECT setval(pg_get_serial_sequence('store_product_attr_value','id'),800010,true); SELECT setval(pg_get_serial_sequence('store_cart','id'),800010,true)`);
+      const queue = { send: vi.fn(async () => {}), sendBatch: vi.fn(async () => ({ successful: 1 })) }, sequence = vi.fn(async () => new Response('supplier_coupons_http_' + productType));
+      const env = { ...full.env, NODE_ENV: 'test', APP_KEY: 'isolated-supplier-coupons-key', UPSTASH_REDIS_URL: '', UPSTASH_REDIS_TOKEN: '', ORDER_QUEUE: queue,
+        SEQUENCE: { idFromName: () => 'owned-supplier-coupons', get: () => ({ fetch: sequence }) }, CONFIG_KV: { ...full.env.CONFIG_KV, get: async (key:string) => key.startsWith('cfg_') && Object.hasOwn(config,key.slice(4)) ? config[key.slice(4)] : (full.env.CONFIG_KV as any).get(key) } } as unknown as Env;
+      const supplierToken = (await createToken(21,'supplier',md5(password),env.APP_KEY)).token, reviewerToken = (await createToken(101,'admin',md5(reviewPassword),env.APP_KEY)).token;
+      const [buyer] = await full.db.select().from(pricingUser).where(eq(pricingUser.uid,11)), [other] = await full.db.select().from(pricingUser).where(eq(pricingUser.uid,22));
+      const buyerToken = (await createToken(11,'api',md5(buyer.pwd),env.APP_KEY)).token, otherToken = (await createToken(22,'api',md5(other.pwd),env.APP_KEY)).token;
+      if (!full.withRuntimeRole) throw Error('Independent owned LOGINs required');
+      await full.withRuntimeRole(appRole => full.withRuntimeRole!(async adminRole => {
+        const [database] = await full.db.execute(sql`SELECT current_database() AS name`), names = { app: appRole.role, admin: adminRole.role, maintenance: 'finance_test', database: String(database.name), pricingOwner: full.pricingOwner };
+        await runRuntimeBusinessCommissioning(full.db,names); expect((await runRoutinePaymentRuntimeInstallation(full.db,names)).after.ready).toBe(true);
+        expect(await auditRuntimeBusinessPrivileges(appRole.db,'app',names)).toMatchObject({ready:true,failures:[]}); expect(await auditRuntimeBusinessPrivileges(adminRole.db,'admin',names)).toMatchObject({ready:true,failures:[]});
+        const container = createContainerFromDb(appRole.db); wiring.container = container; wiring.moderator = createContainerFromDb(adminRole.db);
+        async function request(method:string,path:string,body?:object,token?:string) { const tasks:Promise<unknown>[]=[];const response=await app.request(path,{method,headers:{...(token?{Authorization:'Bearer '+token}:{}),...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})},env,{waitUntil:task=>{tasks.push(task);},passThroughOnException(){},props:{}});await Promise.all(tasks);return response.json<Envelope>(); }
+        async function ok(method:string,path:string,body?:object,token?:string) {const result=await request(method,path,body,token);expect(result.status,result.msg).toBe(200);return result.data;}
+        const body={product_type:productType,store_name:'实际赠券商品 '+productType,cate_id:[800001],slider_image:['/supplier-coupons.png'],spec_type:0,freight:1,is_postage:1,is_sub:[],coupon_ids:[9100],attrs:[{price:'10.00',settle_price:'1.00',vip_price:'0.00',stock:8,...(productType===1?{delivery_mode:'fixed',disk_info:'Supplier coupon fixed delivery'}:{})}]};
+        const made=await ok('POST','/supplierapi/product/product/0',body,supplierToken), id=Number(made.id);
+        expect((await ok('GET','/supplierapi/product/product/'+id,undefined,supplierToken)).coupon_selection.ids).toEqual([9100]);
+        await ok('POST','/adminapi/product/product/set_verify/'+id,{is_verify:1,is_show:1,refusal:'',auto_on_time:''},reviewerToken);
+        const [sku]=await container.db.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.productId,id));
+        const cart=await ok('POST','/api/cart/add',{productId:id,unique:sku.unique,cartNum:3,new:1,type:0},buyerToken), cartIds=[cart.id];
+        if(productType===0) {
+          const sibling=await ok('POST','/supplierapi/product/product/0',{...body,store_name:'同单重复赠券商品',coupon_ids:[9101,9102]},supplierToken);
+          await ok('POST','/adminapi/product/product/set_verify/'+sibling.id,{is_verify:1,is_show:1,refusal:'',auto_on_time:''},reviewerToken);
+          const [siblingSku]=await container.db.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.productId,sibling.id));cartIds.push((await ok('POST','/api/cart/add',{productId:sibling.id,unique:siblingSku.unique,cartNum:1,new:1,type:0},buyerToken)).id);
+        }
+        const selection={cartIds,type:0,shippingType:1,useIntegral:false,...(productType===0?{addressId:11}:{})}, price=productType===0?'40.00':'30.00';
+        const confirmed=await ok('POST','/api/order/confirm',selection,buyerToken);expect(confirmed.priceGroup.pay_price).toBe(price);
+        const createBody={...selection,quoteToken:confirmed.quoteToken}, order=await ok('POST','/api/order/create/'+confirmed.orderKey,createBody,buyerToken);
+        expect((await ok('POST','/api/order/create/'+confirmed.orderKey,createBody,buyerToken)).orderId).toBe(order.orderId);expect(sequence).toHaveBeenCalledTimes(1);
+        const [root]=await container.db.select().from(pricingOrder).where(eq(pricingOrder.orderId,order.orderId));
+        const frozen=await container.db.select().from(purchaseCartInfo).where(eq(purchaseCartInfo.oid,root.id));
+        const read=await ok('GET','/supplierapi/product/product/'+id,undefined,supplierToken);
+        await ok('POST','/supplierapi/product/product/'+id,{...body,attrs:read.attrs,coupon_ids:[9101,9102,9103,9104,9105,9106,9107,9108]},supplierToken);
+        expect(await container.db.select().from(purchaseCartInfo).where(eq(purchaseCartInfo.oid,root.id))).toEqual(frozen);
+        expect((await ok('POST','/api/order/prize/'+order.orderId,{},buyerToken)).coupons).toEqual([]);
+        expect((await ok('POST','/api/order/pay',{uni:order.orderId,paytype:'yue'},buyerToken)).paid).toBe(true);expect((await ok('POST','/api/order/pay',{uni:order.orderId,paytype:'yue'},buyerToken)).paid).toBe(true);
+        expect((await container.db.select().from(pricingUser).where(eq(pricingUser.uid,11)))[0].nowMoney).toBe(productType===0?'60.00':'70.00');
+        expect(await container.db.select().from(supplierCouponReward)).toEqual([]);
+        await full.db.update(supplierCouponIssue).set({isDel:1}).where(eq(supplierCouponIssue.id,9106));
+        const [paid]=await container.db.select().from(purchaseOutbox).where(eq(purchaseOutbox.eventType,'order.paid'));
+        const consumer=new OrderOutboxService(container,env),message={action:'processOrderPaidOutbox' as const,outboxId:paid.id,eventKey:paid.eventKey};expect(await consumer.processMessage(message)).toBe('completed');
+        const owned=await container.db.select().from(supplierOwnedCoupon).where(eq(supplierOwnedCoupon.uid,11)).orderBy(supplierOwnedCoupon.issueCouponId);
+        expect(owned.map(x=>x.issueCouponId)).toEqual([9101,9102,9108]);expect(owned.every(x=>x.receiveSource==='order'&&x.status===0)).toBe(true);
+        expect(owned.find(x=>x.issueCouponId===9102)!.endTime!.getTime()-owned.find(x=>x.issueCouponId===9102)!.startTime!.getTime()).toBe(7*86400*1000);
+        const rewards=await container.db.select().from(supplierCouponReward).orderBy(supplierCouponReward.issueCouponId);expect(rewards).toHaveLength(3);expect(rewards.every(x=>x.orderId===root.id&&x.uid===11)).toBe(true);
+        expect((await container.db.select().from(supplierRawCoupon).where(eq(supplierRawCoupon.uid,11))).map(x=>x.issueCouponId).sort()).toEqual([9101,9108]);
+        const issues=await container.db.select().from(supplierCouponIssue).where(sql`${supplierCouponIssue.id} BETWEEN 9100 AND 9108`).orderBy(supplierCouponIssue.id);
+        expect(issues.map(x=>[x.id,x.remainCount])).toEqual([[9100,10],[9101,9],[9102,9],[9103,10],[9104,10],[9105,0],[9106,10],[9107,10],[9108,9]]);
+        const prize=await ok('POST','/api/order/prize/'+order.orderId,{},buyerToken);expect(prize.coupons.map((x:any)=>x.cid)).toEqual([9101,9102,9108]);
+        expect((await request('POST','/api/order/prize/'+order.orderId,{},otherToken)).status).not.toBe(200);
+        const current=await ok('GET','/supplierapi/product/product/'+id,undefined,supplierToken);await ok('POST','/supplierapi/product/product/'+id,{...body,attrs:current.attrs,coupon_ids:[]},supplierToken);
+        expect(await consumer.processMessage(message)).toBe('already-completed');
+        expect(await container.db.select().from(supplierOwnedCoupon).where(eq(supplierOwnedCoupon.uid,11)).orderBy(supplierOwnedCoupon.issueCouponId)).toEqual(owned);
+        expect(await container.db.select().from(supplierCouponReward).orderBy(supplierCouponReward.issueCouponId)).toEqual(rewards);expect((await ok('POST','/api/order/prize/'+order.orderId,{},buyerToken)).coupons).toEqual(prize.coupons);
+      }));
+      expect(network).not.toHaveBeenCalled();
+    } finally { wiring.container=null; wiring.moderator=null; network.mockRestore(); await full.close(); }
+  },180_000);
+});

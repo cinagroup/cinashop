@@ -176,6 +176,7 @@ function defaultPreviewDetail(id: number): ProductDetail {
   return {
     id: row.id,
     price_selection: { version: 1, is_vip: 0, is_sub: 0 },
+    coupon_selection: { version: 1, ids: [], entries: [], consistent: true, truncated: false },
     integral_selection: { version: 1, give_integral: "0.00" },
     purchase_selection: { version: 1, is_vip_product: 0, is_presale_product: 0, presale_start_time: 0, presale_end_time: 0, presale_day: 0 },
     product_type: row.product_type === 1 || row.product_type === 3 ? row.product_type : 0,
@@ -815,6 +816,11 @@ export async function saveProduct(id: number, data: ProductDetail, signal?: Abor
     const selected = (data as ProductDetail & { is_sub?: number[] }).is_sub;
     const saved = clonePreviewDetail({ ...data, ...(Array.isArray(selected) ? { price_selection: { version: 1 as const, is_vip: selected.includes(0) ? 1 as const : 0 as const, is_sub: selected.includes(1) ? 1 as const : 0 as const } } : {}), id: savedId, is_show: 0, is_verify: 0 });
     const intent = data as ProductDetail & { is_vip_product?: number; is_presale_product?: number; presale_time?: number[]; presale_day?: number };
+    const couponIntent = data as ProductDetail & { coupon_ids?: number[] };
+    saved.coupon_selection = couponIntent.coupon_ids === undefined
+      ? previewProductDetails.get(savedId)?.coupon_selection ?? defaultPreviewDetail(savedId).coupon_selection
+      : { version: 1, ids: [...couponIntent.coupon_ids], entries: couponIntent.coupon_ids.map(id => ({ id, title: id === 1 ? '预览赠送券' : `发行实例 #${id}`, available: true })), consistent: true, truncated: false };
+    Reflect.deleteProperty(saved, 'coupon_ids'); Reflect.deleteProperty(saved, 'coupons');
     const integralIntent = data as ProductDetail & { give_integral?: string };
     saved.integral_selection = integralIntent.give_integral === undefined
       ? previewProductDetails.get(savedId)?.integral_selection ?? defaultPreviewDetail(savedId).integral_selection

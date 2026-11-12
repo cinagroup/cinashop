@@ -1,3 +1,4 @@
+import { supplierProductCouponCatalog } from '@/services/supplier/SupplierProductCoupons';
 import type { Context } from "hono";
 import type { AppVariables, Env } from "@/env";
 import { clearToken } from "@/utils/cache";
@@ -609,7 +610,7 @@ export async function saveProduct(c: SupplierContext) {
   const productId = Number(c.req.param("id"));
   if (!Number.isInteger(productId) || productId < 0) throw new ValidateException("商品ID错误");
   const input = await readBoundedJsonObject(c);
-  const labelActor = ['store_label_id', 'labelIds', 'auto_on_time', 'auto_off_time', 'brand_id', 'ensure_id', 'specs_id', 'specs', 'system_form_id', 'recommend_image', 'is_sub', 'give_integral', 'is_vip_product', 'is_presale_product', 'presale_time', 'presale_day'].some(key => Object.hasOwn(input, key)) ? await categoryActor(c) : undefined;
+  const labelActor = ['store_label_id', 'labelIds', 'auto_on_time', 'auto_off_time', 'brand_id', 'ensure_id', 'specs_id', 'specs', 'system_form_id', 'recommend_image', 'is_sub', 'give_integral', 'coupon_ids', 'is_vip_product', 'is_presale_product', 'presale_time', 'presale_day'].some(key => Object.hasOwn(input, key)) ? await categoryActor(c) : undefined;
   const result = await productManagementService(c).saveProduct(
     supplierId,
     productId,
@@ -622,7 +623,7 @@ export async function saveProduct(c: SupplierContext) {
 export async function createProduct(c: SupplierContext) {
   const { supplierId } = supplierIdentity(c);
   const input = await readBoundedJsonObject(c);
-  const labelActor = ['store_label_id', 'labelIds', 'auto_on_time', 'auto_off_time', 'brand_id', 'ensure_id', 'specs_id', 'specs', 'system_form_id', 'recommend_image', 'is_sub', 'give_integral', 'is_vip_product', 'is_presale_product', 'presale_time', 'presale_day'].some(key => Object.hasOwn(input, key)) ? await categoryActor(c) : undefined;
+  const labelActor = ['store_label_id', 'labelIds', 'auto_on_time', 'auto_off_time', 'brand_id', 'ensure_id', 'specs_id', 'specs', 'system_form_id', 'recommend_image', 'is_sub', 'give_integral', 'coupon_ids', 'is_vip_product', 'is_presale_product', 'presale_time', 'presale_day'].some(key => Object.hasOwn(input, key)) ? await categoryActor(c) : undefined;
   const result = await productManagementService(c).saveProduct(
     supplierId,
     0,
@@ -922,4 +923,8 @@ export async function updateExtractMark(c: SupplierContext) {
   if (Object.keys(supplierSingleQuery(c.req.queries())).length) throw new ValidateException('提现备注不接受查询参数');
   const body = await readRequestJsonObject(c.req.raw, 2048);
   return jsonOk(c, await financeService(c).updateExtractMark(supplierId, id, body, { ...await categoryActor(c), supplierId }), '备注成功');
+}
+
+export async function productCouponCatalog(c: SupplierContext) {
+  return jsonOk(c, await supplierProductCouponCatalog(c.get('container'), supplierIdentity(c).supplierId, new URL(c.req.url).searchParams, await categoryActor(c)));
 }

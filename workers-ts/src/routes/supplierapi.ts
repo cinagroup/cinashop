@@ -50,6 +50,7 @@ supplierapiRoutes.use('/product/product/shipping-template-options', ShippingCrea
 supplierapiRoutes.use('/product/product/shipping-template-options/*', ShippingCreation.privateResponse);
 supplierapiRoutes.use('/product/product/get_template', ShippingCreation.privateResponse);
 supplierapiRoutes.use("/product/product_label", SupplierProductCatalogController.privateResponse);
+supplierapiRoutes.use('/product/coupon/catalog', SupplierLabels.privateResponse);
 supplierapiRoutes.use('/product/all_label', SupplierLabels.privateResponse);
 supplierapiRoutes.use('/product/label/*', SupplierLabels.privateResponse);
 supplierapiRoutes.use("/product/brand/cascader_list", SupplierProductCatalogController.privateResponse);
@@ -229,6 +230,7 @@ supplierapiRoutes.get("/product/category/cascader_list/:type", SupplierCategory.
 supplierapiRoutes.get("/product/category/create", SupplierCategory.createForm);
 supplierapiRoutes.get("/product/category/:id/detail", SupplierCategory.modernDetail);
 supplierapiRoutes.get("/product/get_all_unit", SupplierController.productUnits);
+supplierapiRoutes.get('/product/coupon/catalog', SupplierController.productCouponCatalog);
 supplierapiRoutes.get("/product/all_ensure", SupplierController.productEnsures);
 supplierapiRoutes.get("/product/all_specs", SupplierController.productSpecsAll);
 supplierapiRoutes.get("/product/product_label", SupplierProductCatalogController.labels);
