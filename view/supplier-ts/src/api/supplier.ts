@@ -176,6 +176,7 @@ function defaultPreviewDetail(id: number): ProductDetail {
   return {
     id: row.id,
     price_selection: { version: 1, is_vip: 0, is_sub: 0 },
+    integral_selection: { version: 1, give_integral: "0.00" },
     purchase_selection: { version: 1, is_vip_product: 0, is_presale_product: 0, presale_start_time: 0, presale_end_time: 0, presale_day: 0 },
     product_type: row.product_type === 1 || row.product_type === 3 ? row.product_type : 0,
     store_name: row.store_name,
@@ -814,6 +815,11 @@ export async function saveProduct(id: number, data: ProductDetail, signal?: Abor
     const selected = (data as ProductDetail & { is_sub?: number[] }).is_sub;
     const saved = clonePreviewDetail({ ...data, ...(Array.isArray(selected) ? { price_selection: { version: 1 as const, is_vip: selected.includes(0) ? 1 as const : 0 as const, is_sub: selected.includes(1) ? 1 as const : 0 as const } } : {}), id: savedId, is_show: 0, is_verify: 0 });
     const intent = data as ProductDetail & { is_vip_product?: number; is_presale_product?: number; presale_time?: number[]; presale_day?: number };
+    const integralIntent = data as ProductDetail & { give_integral?: string };
+    saved.integral_selection = integralIntent.give_integral === undefined
+      ? previewProductDetails.get(savedId)?.integral_selection ?? defaultPreviewDetail(savedId).integral_selection
+      : { version: 1, give_integral: integralIntent.give_integral };
+    Reflect.deleteProperty(saved, 'give_integral');
     const prior = previewProductDetails.get(savedId)?.purchase_selection ?? defaultPreviewDetail(savedId).purchase_selection!;
     saved.purchase_selection = { ...prior, is_vip_product: intent.is_vip_product === undefined ? prior.is_vip_product : intent.is_vip_product as 0 | 1,
       is_presale_product: intent.is_presale_product === undefined ? prior.is_presale_product : intent.is_presale_product as 0 | 1,

@@ -628,3 +628,191 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier authore
     } finally { wiring.container = null; wiring.moderator = null; network.mockRestore(); await full.close(); }
   }, 180_000);
 });
+
+
+// Integral author is appended without changing any preceding acceptance cases.
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier product integral author', () => {
+  let f: Awaited<ReturnType<typeof supplierProductRecommendImageFixture>>;
+  beforeEach(async () => { vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('Owned integral author forbids providers'));
+    f = await supplierProductRecommendImageFixture(); wiring.container = f.container; }, 30_000);
+  afterEach(async () => { try { expect(fetch).not.toHaveBeenCalled(); } finally { await f?.close(); wiring.container = null; wiring.moderator = null; vi.restoreAllMocks(); } }, 30_000);
+  async function call(id: number, body?: object, actor: keyof typeof f.tokens = 'manager') {
+    return (await app.request('/supplierapi/product/product/' + id, { method: body ? 'POST' : 'GET',
+      headers: { Authorization: 'Bearer ' + f.tokens[actor], ...(body ? { 'Content-Type': 'application/json' } : {}) },
+      ...(body ? { body: JSON.stringify(body) } : {}) }, f.env)).json<Envelope>();
+  }
+  it.each([0, 1, 3])('authors fractional points, preserves omission and explicitly clears fulfillment type %i', async type => {
+    const id = type === 1 ? 81 : 80;
+    if (type === 3) { await f.db.update(storeProduct).set({ productType: 3 }).where(eq(storeProduct.id, id));
+      await f.db.update(storeProductAttrValue).set({ productType: 3 }).where(eq(storeProductAttrValue.productId, id)); }
+    await f.withWriter(async writer => { wiring.container = writer.container;
+      const before = await f.product(id), relations = (await f.snapshot()).store_product_relation;
+      expect((await call(id, await f.body({ give_integral: '0002.75' }, id))).status).toBe(200);
+      expect(await f.product(id)).toMatchObject({ giveIntegral: '2.75', type: 2, relationId: 7, isShow: 0, isVerify: 0 });
+      expect((await call(id)).data.integral_selection).toEqual({ version: 1, give_integral: '2.75' });
+      await f.exec("CREATE FUNCTION owned_integral_omit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'integral entered SQL target'; END $$; CREATE TRIGGER owned_integral_omit BEFORE UPDATE OF give_integral ON public.store_product FOR EACH ROW EXECUTE FUNCTION owned_integral_omit()");
+      await expect(f.db.update(storeProduct).set({ giveIntegral: '0.00' }).where(eq(storeProduct.id, id))).rejects.toThrow('integral');
+      const body = await f.body({}, id); expect((await call(id, body)).status).toBe(200);
+      await new SupplierProductManagementService(writer.container, f.env).saveProduct(7, id, { ...body, give_integral: undefined });
+      expect((await f.product(id)).giveIntegral).toBe('2.75');
+      await f.exec('DROP TRIGGER owned_integral_omit ON public.store_product');
+      expect((await call(id, { ...body, give_integral: 0 })).status).toBe(200);
+      const current = await f.product(id); expect(current.giveIntegral).toBe('0.00');
+      for (const key of ['labelId', 'commandWord', 'customForm', 'systemFormId', 'isVipProduct', 'isPresaleProduct', 'presaleStartTime', 'presaleEndTime', 'presaleDay'] as const) expect(current[key]).toEqual(before[key]);
+      expect((await f.snapshot()).store_product_relation.filter(row => row.row.type !== 1)).toEqual(relations.filter(row => row.row.type !== 1));
+    });
+  });
+  it('denies malformed, foreign and unauthorized requests before rows or sequences change', async () => f.withWriter(async writer => {
+    wiring.container = writer.container; const body = await f.body({ give_integral: '2.75' }), before = await f.snapshot(), seq = await f.sequences();
+    for (const actor of ['viewer', 'denied', 'other'] as const) expect((await call(80, body, actor)).status).not.toBe(200);
+    expect((await call(82, body)).status).not.toBe(200);
+    for (const value of [null, false, [], {}, '', '-1', '1.001', '10000000000']) expect((await call(80, { ...body, give_integral: value })).status).toBe(400);
+    expect(await f.snapshot()).toEqual(before); expect(await f.sequences()).toEqual(seq);
+  }));
+  it.each(['skip', 'rewrite', 'deferred', 'deferred-owner', 'deferred-review', 'deferred-type', 'revoke'] as const)('rolls back executable %s tampering after an independently verified positive control', async mode => f.withWriter(async writer => {
+    const action = mode === 'skip' ? 'RETURN NULL;' : mode === 'rewrite' ? "NEW.give_integral=99; RETURN NEW;"
+      : mode.startsWith('deferred') ? `IF NEW.give_integral=2.75 AND NEW.relation_id=7 AND NEW.is_show=0 AND NEW.product_type=0 THEN UPDATE public.store_product SET ${mode === 'deferred-owner' ? 'relation_id=8' : mode === 'deferred-review' ? 'is_show=1' : mode === 'deferred-type' ? 'product_type=3' : 'give_integral=99'} WHERE id=80; END IF; RETURN NEW;`
+      : "UPDATE public.system_role SET rules='supplier.product.view' WHERE id=21; RETURN NEW;";
+    const timing = mode.startsWith('deferred') ? 'CREATE CONSTRAINT TRIGGER owned_integral_tamper AFTER UPDATE ON public.store_product DEFERRABLE INITIALLY DEFERRED'
+      : 'CREATE TRIGGER owned_integral_tamper BEFORE UPDATE OF give_integral ON public.store_product';
+    await f.exec(`CREATE FUNCTION owned_integral_tamper() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN IF NEW.id=80 THEN ${action} END IF; RETURN NEW; END $$; ${timing} FOR EACH ROW EXECUTE FUNCTION owned_integral_tamper()`);
+    const marker = Error('owned integral control rollback');
+    await expect(f.db.transaction(async tx => {
+      const changed = await tx.update(storeProduct).set({ giveIntegral: '2.75' }).where(eq(storeProduct.id, 80)).returning();
+      await tx.execute(sql`SET CONSTRAINTS ALL IMMEDIATE`);
+      if (mode === 'skip') expect(changed).toHaveLength(0);
+      else if (mode === 'revoke') expect((await tx.select().from(systemRole).where(eq(systemRole.id, 21)))[0].rules).toBe('supplier.product.view');
+      else { const actual = (await tx.select().from(storeProduct).where(eq(storeProduct.id, 80)))[0];
+        if (mode === 'deferred-owner') expect(actual.relationId).toBe(8);
+        else if (mode === 'deferred-review') expect(actual.isShow).toBe(1);
+        else if (mode === 'deferred-type') expect(actual.productType).toBe(3);
+        else expect(actual.giveIntegral).toBe('99.00'); }
+      throw marker;
+    })).rejects.toBe(marker);
+    wiring.container = writer.container; const body = await f.body({ give_integral: '2.75' }), before = await f.snapshot();
+    expect((await call(80, body)).status).not.toBe(200); expect(await f.snapshot()).toEqual(before);
+  }));
+  it('reads points through a SELECT-only viewer without any business or sequence write', async () => f.withReader(async reader => {
+    await f.db.update(storeProduct).set({ giveIntegral: '2.75' }).where(eq(storeProduct.id, 80));
+    wiring.container = reader.container; const before = await f.snapshot(), seq = await f.sequences();
+    expect((await call(80, undefined, 'viewer')).data.integral_selection).toEqual({ version: 1, give_integral: '2.75' });
+    expect(await f.snapshot()).toEqual(before); expect(await f.sequences()).toEqual(seq);
+    const [rights] = await reader.db.execute(sql`SELECT current_user=session_user AS independent, has_any_column_privilege(current_user,'store_product','UPDATE') AS write`);
+    expect(rights).toEqual({ independent: true, write: false });
+  }));
+  it('combines points with all existing explicit product authors', async () => f.withWriter(async writer => {
+    wiring.container = writer.container;
+    const result = await call(80, await f.body({ give_integral: '2.75', recommend_image: '/api/assets/31', store_label_id: [31], brand_id: [104, 105], ensure_id: [201], specs_id: 301, specs: [{ name: '材质', value: '棉' }], system_form_id: 401,
+      is_vip_product: 1, is_presale_product: 0, is_sub: [] }));
+    expect(result.status, result.msg).toBe(200); expect(await f.product()).toMatchObject({ giveIntegral: '2.75', recommendImage: '/api/assets/31', brandId: 105, ensureId: '201', systemFormId: 401, isVipProduct: 1 });
+  }));
+});
+
+
+import { userBill as integralBill } from '@/models/schema';
+import { applyOrderRefundWithMaterialization, finalizeStoreOrderRefund } from '@/services/order/StoreOrderRefundService';
+
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier authored product integral actual HTTP lifecycle and balance refund', () => {
+  it.each([{ productType: 0, received: true }, { productType: 1, received: true }, { productType: 3, received: true }, { productType: 0, received: false }])
+  ('snapshots fractional points and refunds $productType with received=$received under independent LOGINs', async ({ productType, received }) => {
+    const network = vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('Owned integral lifecycle forbids providers'));
+    const full = await refundRuntimeFixture();
+    try {
+      const config: Record<string, string> = { integral_ratio_status: '0', order_give_integral: '0', order_give_exp: '0', member_func_status: '0',
+        brokerage_func_status: '0', store_brokerage_statu: '0', balance_func_status: '1', yue_pay_status: '1' };
+      for (const [menuName, value] of Object.entries(config)) {
+        const changed = await full.db.update(pricingConfig).set({ value }).where(sql`${pricingConfig.menuName}=${menuName} AND ${pricingConfig.isStore}=0`).returning({ id: pricingConfig.id });
+        if (!changed.length) await full.db.insert(pricingConfig).values({ menuName, value });
+      }
+      await full.db.update(pricingUser).set({ nowMoney: '100.00', integral: 100 }).where(eq(pricingUser.uid, 11));
+      await full.db.update(pricingSupplier).set({ adminId: 21, isShow: 1, isDel: 0 }).where(eq(pricingSupplier.id, 7));
+      const password = 'local-integral-supplier-password', reviewPassword = 'local-integral-review-password';
+      await full.db.insert(systemAdmin).values([{ id: 21, account: 'local-integral-supplier', pwd: password, adminType: 4, relationId: 7, status: 1, isDel: 0 },
+        { id: 101, account: 'local-integral-review', pwd: reviewPassword, adminType: 1, relationId: 0, level: 0, status: 1, isDel: 0 }]);
+      await full.db.insert(pricingCategory).values({ id: 800001, type: 2, relationId: 7, cateName: '本地积分分类', isShow: 1 });
+      await full.exec(`SELECT setval(pg_get_serial_sequence('store_product','id'),800010,true);
+        SELECT setval(pg_get_serial_sequence('store_product_attr_value','id'),800010,true);
+        SELECT setval(pg_get_serial_sequence('store_cart','id'),800010,true)`);
+      const queue = { send: vi.fn(async () => {}), sendBatch: vi.fn(async () => ({ successful: 1 })) };
+      const sequence = vi.fn(async () => new Response('supplier_integral_http_' + productType + '_' + received));
+      const env = { ...full.env, NODE_ENV: 'test', APP_KEY: 'isolated-supplier-integral-key', UPSTASH_REDIS_URL: '', UPSTASH_REDIS_TOKEN: '', ORDER_QUEUE: queue,
+        SEQUENCE: { idFromName: () => 'owned-supplier-integral', get: () => ({ fetch: sequence }) },
+        CONFIG_KV: { ...full.env.CONFIG_KV, get: async (key: string) => key.startsWith('cfg_') && Object.hasOwn(config, key.slice(4)) ? config[key.slice(4)] : (full.env.CONFIG_KV as any).get(key) } } as unknown as Env;
+      const supplierToken = (await createToken(21, 'supplier', md5(password), env.APP_KEY)).token;
+      const reviewerToken = (await createToken(101, 'admin', md5(reviewPassword), env.APP_KEY)).token;
+      const [buyer] = await full.db.select().from(pricingUser).where(eq(pricingUser.uid, 11));
+      const buyerToken = (await createToken(11, 'api', md5(buyer.pwd), env.APP_KEY)).token;
+      if (!full.withRuntimeRole) throw Error('Independent owned LOGINs required');
+      await full.withRuntimeRole(appRole => full.withRuntimeRole!(async adminRole => {
+        const [database] = await full.db.execute(sql`SELECT current_database() AS name`);
+        const names = { app: appRole.role, admin: adminRole.role, maintenance: 'finance_test', database: String(database.name), pricingOwner: full.pricingOwner };
+        await runRuntimeBusinessCommissioning(full.db, names); expect((await runRoutinePaymentRuntimeInstallation(full.db, names)).after.ready).toBe(true);
+        expect(await auditRuntimeBusinessPrivileges(appRole.db, 'app', names)).toMatchObject({ ready: true, failures: [] });
+        expect(await auditRuntimeBusinessPrivileges(adminRole.db, 'admin', names)).toMatchObject({ ready: true, failures: [] });
+        const container = createContainerFromDb(appRole.db); wiring.container = container; wiring.moderator = createContainerFromDb(adminRole.db);
+        async function request(method: string, path: string, body?: object, token?: string) {
+          const background: Promise<unknown>[] = [];
+          const response = await app.request(path, { method, headers: { ...(token ? { Authorization: 'Bearer ' + token } : {}),
+            ...(body ? { 'Content-Type': 'application/json' } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) }, env,
+            { waitUntil: task => { background.push(task); }, passThroughOnException() {}, props: {} });
+          await Promise.all(background); return response.json<Envelope>();
+        }
+        async function ok(method: string, path: string, body?: object, token?: string) {
+          const result = await request(method, path, body, token); expect(result.status, result.msg).toBe(200); return result.data;
+        }
+        const body = { product_type: productType, store_name: '实际赠送积分 ' + productType, cate_id: [800001], slider_image: ['/supplier-integral.png'],
+          spec_type: 0, freight: 1, is_postage: 1, is_support_refund: 1, is_sub: [], give_integral: '2.75',
+          attrs: [{ price: '10.00', settle_price: '1.00', vip_price: '0.00', stock: 5,
+            ...(productType === 1 ? { delivery_mode: 'fixed', disk_info: 'Supplier integral fixed delivery' } : {}) }] };
+        const made = await ok('POST', '/supplierapi/product/product/0', body, supplierToken), id = Number(made.id);
+        const read = await ok('GET', '/supplierapi/product/product/' + id, undefined, supplierToken);
+        expect(read.integral_selection).toEqual({ version: 1, give_integral: '2.75' });
+        await ok('POST', '/adminapi/product/product/set_verify/' + id, { is_verify: 1, is_show: 1, refusal: '', auto_on_time: '' }, reviewerToken);
+        const [sku] = await container.db.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.productId, id));
+        const cart = await ok('POST', '/api/cart/add', { productId: id, unique: sku.unique, cartNum: 3, new: 1, type: 0 }, buyerToken);
+        const selection = { cartIds: [cart.id], type: 0, shippingType: 1, useIntegral: false, ...(productType === 0 ? { addressId: 11 } : {}) };
+        const confirmed = await ok('POST', '/api/order/confirm', selection, buyerToken); expect(confirmed.priceGroup.pay_price).toBe('30.00');
+        const createBody = { ...selection, quoteToken: confirmed.quoteToken };
+        const order = await ok('POST', '/api/order/create/' + confirmed.orderKey, createBody, buyerToken);
+        expect((await ok('POST', '/api/order/create/' + confirmed.orderKey, createBody, buyerToken)).orderId).toBe(order.orderId); expect(sequence).toHaveBeenCalledTimes(1);
+        const [root] = await container.db.select().from(pricingOrder).where(eq(pricingOrder.orderId, order.orderId));
+        expect(root).toMatchObject({ type: 0, productType, payPrice: '30.00', gainIntegral: '8.00', paid: 0 });
+        const current = await ok('GET', '/supplierapi/product/product/' + id, undefined, supplierToken);
+        await ok('POST', '/supplierapi/product/product/' + id, { ...body, give_integral: 0, attrs: current.attrs }, supplierToken);
+        expect((await ok('GET', '/supplierapi/product/product/' + id, undefined, supplierToken)).integral_selection.give_integral).toBe('0.00');
+        expect((await ok('POST', '/api/order/pay', { uni: order.orderId, paytype: 'yue' }, buyerToken)).paid).toBe(true);
+        expect((await ok('POST', '/api/order/pay', { uni: order.orderId, paytype: 'yue' }, buyerToken)).paid).toBe(true);
+        const [paid] = await container.db.select().from(purchaseOutbox).where(eq(purchaseOutbox.eventType, 'order.paid'));
+        const consumer = new OrderOutboxService(container, env), paidMessage = { action: 'processOrderPaidOutbox' as const, outboxId: paid.id, eventKey: paid.eventKey };
+        expect(await consumer.processMessage(paidMessage)).toBe('completed'); expect(await consumer.processMessage(paidMessage)).toBe('already-completed');
+        const leaves = await container.db.select().from(pricingOrder).where(sql`(${pricingOrder.id}=${root.id} OR ${pricingOrder.pid}=${root.id}) AND ${pricingOrder.pid}>=0 AND ${pricingOrder.supplierId}=7`);
+        expect(leaves).toHaveLength(1); const leaf = leaves[0]; expect(leaf).toMatchObject({ type: 0, productType, paid: 1, gainIntegral: '8.00' });
+        const [line] = await container.db.select().from(purchaseCartInfo).where(eq(purchaseCartInfo.oid, leaf.id));
+        expect(JSON.parse(line.cartInfo!).product.giveIntegral).toBe('2.75');
+        const account = async () => (await container.db.select().from(pricingUser).where(eq(pricingUser.uid, 11)))[0];
+        const gifts = () => container.db.select().from(integralBill).where(sql`${integralBill.uid}=11 AND ${integralBill.eventKey}='pay_give_integral'`);
+        expect(await account()).toMatchObject({ nowMoney: '70.00', integral: 100 }); expect(await gifts()).toEqual([]);
+        if (received) {
+          if (productType !== 1) await ok('PUT', '/supplierapi/order/delivery/' + leaf.id,
+            productType === 0 ? { delivery_type: 'express', delivery_name: 'Local', delivery_code: 'local', delivery_id: 'NO-SHIPMENT' }
+              : { delivery_type: 'fictitious', fictitious_content: '本地积分人工交付' }, supplierToken);
+          await ok('POST', '/api/order/take', { order_id: leaf.orderId }, buyerToken);
+          expect(await account()).toMatchObject({ nowMoney: '70.00', integral: 108 });
+          expect(await gifts()).toMatchObject([{ number: '8.00', linkId: String(leaf.id), pm: 1 }]);
+          const stable = await gifts(); expect((await request('POST', '/api/order/take', { order_id: leaf.orderId }, buyerToken)).status).not.toBe(200);
+          expect(await gifts()).toEqual(stable); expect((await account()).integral).toBe(108);
+        }
+        const application = await applyOrderRefundWithMaterialization(container, { uid: 11, orderId: leaf.orderId, applyType: 1,
+          refundReason: 'Owned Supplier integral full return', refundExplain: '', applicationOrderId: 'owned_integral_refund', cartSelections: [{ cartId: Number(line.cartId), cartNum: 3 }] });
+        expect(await finalizeStoreOrderRefund(container, application.refundId, undefined, undefined, env)).toBe('completed');
+        expect(await account()).toMatchObject({ nowMoney: '100.00', integral: 100 });
+        const after = await account(), bills = await container.db.select().from(integralBill).where(eq(integralBill.uid, 11));
+        expect(bills.filter(row => row.eventKey === 'integral_refund').reduce((sum, row) => sum + Number(row.number), 0)).toBe(received ? 8 : 0);
+        expect(await finalizeStoreOrderRefund(container, application.refundId, undefined, undefined, env)).toBe('already-completed');
+        expect(await account()).toEqual(after); expect(await container.db.select().from(integralBill).where(eq(integralBill.uid, 11))).toEqual(bills);
+        expect(JSON.parse((await container.db.select().from(purchaseCartInfo).where(eq(purchaseCartInfo.id, line.id)))[0].cartInfo!).product.giveIntegral).toBe('2.75');
+      }));
+      expect(network).not.toHaveBeenCalled();
+    } finally { wiring.container = null; wiring.moderator = null; network.mockRestore(); await full.close(); }
+  }, 180_000);
+});

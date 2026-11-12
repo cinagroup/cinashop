@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { productIntegralEditor, productIntegralPayload } from '@/utils/productIntegral';
 import { productPurchaseEditor, productPurchasePayload } from '@/utils/productPurchaseOptions';
 import { productPriceSelection, productPriceOptionsPayload } from '@/utils/productPriceOptions';
 import { prepareSupplierProductRuleApplication } from '@/utils/productRules';
@@ -280,10 +281,12 @@ function initialForm(): ProductDetail {
   };
 }
 
+const integral = reactive(productIntegralEditor(undefined, true));
 const purchase = reactive(productPurchaseEditor(undefined, true));
 const form = reactive<ProductDetail>(initialForm());
 const priceOptions = ref<number[]>([]), priceOptionsReady = ref(true);
 function resetProductForm() {
+  Object.assign(integral, productIntegralEditor(undefined, true));
   Object.assign(purchase, productPurchaseEditor(undefined, true));
   priceOptions.value = []; priceOptionsReady.value = true;
   Object.assign(schedule, productScheduleEditor()); productReadReady.value = false; productReadError.value = '';
@@ -314,6 +317,7 @@ function editableSku(sku: ProductSku, productType: ProductDetail['product_type']
 }
 
 function applyProductDetail(detail: ProductDetail) {
+  Object.assign(integral, productIntegralEditor(detail.integral_selection));
   Object.assign(purchase, productPurchaseEditor(detail.purchase_selection));
   const pricing = productPriceSelection(detail.price_selection); priceOptions.value = pricing.selected; priceOptionsReady.value = pricing.ready;
   const brand = productBrandDetail(detail), ensures = productEnsureDetail(detail), parameters = productParameterDetail(detail), systemForm = productSystemFormDetail(detail);
@@ -625,9 +629,10 @@ async function submit() {
       auto_on_time: _autoOn, auto_off_time: _autoOff, brand_id: _originalBrand, brand_selection: _brandSelection, ensure_id: _originalEnsures, ensure_selection: _ensureSelection,
       specs_id: _originalTemplate, specs: _originalParameters, specs_selection: _parameterSelection,
       system_form_id: _originalSystemForm, system_form_selection: _systemFormSelection, recommend_image: _originalRecommendImage, price_selection: _priceSelection, purchase_selection: _purchaseSelection,
+      integral_selection: _integralSelection, give_integral: _giveIntegral,
       is_vip_product: _memberOnly, is_presale_product: _presale, presale_time: _presalePeriod, presale_day: _presaleDays,
-      ...editableForm } = form as ProductDetail & { video_preview_url?: unknown; is_vip_product?: unknown; is_presale_product?: unknown; presale_time?: unknown; presale_day?: unknown };
-    const payload = { ...editableForm, attrs, ...(!copying.value ? { ...productPriceOptionsPayload(priceOptions.value, priceOptionsReady.value), ...productPurchasePayload(purchase) } : {}), ...(labelsChanged.value ? { store_label_id: [...selectedLabelIds.value] } : {}),
+      ...editableForm } = form as ProductDetail & { video_preview_url?: unknown; give_integral?: unknown; is_vip_product?: unknown; is_presale_product?: unknown; presale_time?: unknown; presale_day?: unknown };
+    const payload = { ...editableForm, attrs, ...(!copying.value ? { ...productPriceOptionsPayload(priceOptions.value, priceOptionsReady.value), ...productPurchasePayload(purchase), ...productIntegralPayload(integral) } : {}), ...(labelsChanged.value ? { store_label_id: [...selectedLabelIds.value] } : {}),
       ...(!copying.value ? { ...productRecommendImagePayload(form.recommend_image, recommendImageChanged.value), ...productSchedulePayload(schedule), ...productBrandPayload(selectedBrandPath.value, brandChanged.value), ...productEnsurePayload(selectedEnsureIds.value, ensuresChanged.value), ...productParameterPayload(parameterDraft.value, parametersChanged.value), ...productSystemFormPayload(selectedSystemFormId.value, systemFormChanged.value) } : {}) };
     if (copying.value) {
       if (!copyContext.value || copyContext.value.source_id !== copyEntry.value.source) throw Error('请重新读取复制来源');
@@ -1014,6 +1019,17 @@ onMounted(load);
             <p v-if="!purchase.ready" class="security-note">尚未读取购买资格与预售条件，请重新读取后再调整。</p>
           </template>
           <p v-else class="security-note">复制保留来源的购买资格与预售条件，创建后可在编辑页调整。</p>
+        </article>
+        <article class="surface product-form-card compact-card">
+          <header><h2>商品赠送积分</h2><p>普通订单确认收货后发放，按每条商品的积分乘数量向下取整。</p></header>
+          <template v-if="!copying">
+            <el-form label-position="top" :disabled="!integral.ready || saving || !productReadReady || !canManageProducts || mediaInvalidated || copyBlocked">
+              <el-form-item label="每件赠送积分"><el-input v-model="integral.value" aria-label="每件赠送积分" inputmode="decimal" @input="integral.changed = true" /></el-form-item>
+              <p class="security-note">最多两位小数，填 0 可关闭。预售等活动订单不发放此积分；修改须重新审核，已创建订单保留原积分。</p>
+            </el-form>
+            <p v-if="!integral.ready" class="security-note">尚未读取商品赠送积分，请重新读取后再调整。</p>
+          </template>
+          <p v-else class="security-note">复制保留来源的赠送积分，创建后可在编辑页调整。</p>
         </article>
         <article class="surface product-form-card compact-card">
           <header><h2>销售设置</h2></header>
