@@ -428,3 +428,203 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier authore
     }finally{wiring.container=null;wiring.moderator=null;network.mockRestore();await full.close();}
   },180_000);
 });
+
+// Purchase author is appended without changing any preceding test bytes.
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier purchase qualification and presale author', () => {
+  let f: Awaited<ReturnType<typeof supplierProductRecommendImageFixture>>;
+  beforeEach(async () => { vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('Owned purchase author forbids providers'));
+    f = await supplierProductRecommendImageFixture(); wiring.container = f.container; }, 30_000);
+  afterEach(async () => { try { expect(fetch).not.toHaveBeenCalled(); } finally { await f?.close(); wiring.container = null; wiring.moderator = null; vi.restoreAllMocks(); } }, 30_000);
+  async function call(id: number, body?: object, actor: keyof typeof f.tokens = 'manager') {
+    return (await app.request('/supplierapi/product/product/' + id, { method: body ? 'POST' : 'GET',
+      headers: { Authorization: 'Bearer ' + f.tokens[actor], ...(body ? { 'Content-Type': 'application/json' } : {}) },
+      ...(body ? { body: JSON.stringify(body) } : {}) }, f.env)).json<Envelope>();
+  }
+  it.each([0, 1, 3])('authors and preserves member-only presale terms for fulfillment type %i', async type => {
+    const id = type === 1 ? 81 : 80;
+    if (type === 3) { await f.db.update(storeProduct).set({ productType: 3 }).where(eq(storeProduct.id, id));
+      await f.db.update(storeProductAttrValue).set({ productType: 3 }).where(eq(storeProductAttrValue.productId, id)); }
+    await f.withWriter(async writer => { wiring.container = writer.container; const now = Math.floor(Date.now() / 1000), start = now + 60, end = now + 600;
+      const saved = await call(id, await f.body({ is_vip_product: 1, is_presale_product: 1, presale_time: [start, end], presale_day: 7 }, id));
+      expect(saved.status, saved.msg).toBe(200); expect(await f.product(id)).toMatchObject({ isVipProduct: 1, isPresaleProduct: 1, presaleStartTime: start, presaleEndTime: end, presaleDay: 7, isVerify: 0, isShow: 0 });
+      expect((await call(id)).data.purchase_selection).toEqual({ version: 1, is_vip_product: 1, is_presale_product: 1, presale_start_time: start, presale_end_time: end, presale_day: 7 });
+      expect((await call(id, await f.body({}, id))).status).toBe(200);
+      expect(await f.product(id)).toMatchObject({ isVipProduct: 1, isPresaleProduct: 1, presaleStartTime: start, presaleEndTime: end, presaleDay: 7 });
+      expect((await call(id, await f.body({ is_vip_product: 0, is_presale_product: 0 }, id))).status).toBe(200);
+      expect(await f.product(id)).toMatchObject({ isVipProduct: 0, isPresaleProduct: 0, presaleStartTime: 0, presaleEndTime: 0, presaleDay: 7 });
+    });
+  });
+  it('keeps an already-started window on omission or days-only edits and refuses an explicit stale period', async () => {
+    await f.db.update(storeProduct).set({ isVipProduct: 1, isPresaleProduct: 1, presaleStartTime: 100, presaleEndTime: 200, presaleDay: 7 }).where(eq(storeProduct.id, 80));
+    await f.withWriter(async writer => { wiring.container = writer.container;
+      expect((await call(80, await f.body())).status).toBe(200);
+      expect((await call(80, await f.body({ presale_day: 9 }))).status).toBe(200);
+      expect(await f.product()).toMatchObject({ isVipProduct: 1, presaleStartTime: 100, presaleEndTime: 200, presaleDay: 9 });
+      const before = await f.snapshot(); expect((await call(80, await f.body({ presale_time: [100, 200] }))).status).not.toBe(200); expect(await f.snapshot()).toEqual(before);
+    });
+  });
+  it.each(['member', 'period', 'owner', 'actor'])('rolls back all business rows on deferred %s tampering', async target => {
+    const change = target === 'member' ? 'UPDATE store_product SET is_vip_product=0 WHERE id=NEW.product_id;'
+      : target === 'period' ? 'UPDATE store_product SET presale_day=99 WHERE id=NEW.product_id;'
+      : target === 'owner' ? 'UPDATE store_product SET relation_id=8 WHERE id=NEW.product_id;' : 'UPDATE system_admin SET status=0 WHERE id=21;';
+    await f.exec(`CREATE FUNCTION test_supplier_purchase_drift() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$ BEGIN ${change} RETURN NEW; END $$;
+      CREATE CONSTRAINT TRIGGER test_supplier_purchase_drift AFTER INSERT OR UPDATE ON store_product_description DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION test_supplier_purchase_drift()`);
+    await f.withWriter(async writer => { wiring.container = writer.container; const now = Math.floor(Date.now() / 1000), before = await f.snapshot();
+      const result = await call(80, await f.body({ is_vip_product: 1, is_presale_product: 1, presale_time: [now + 60, now + 600] }));
+      expect(result.status).not.toBe(200); expect(result.msg).toMatch(target === 'actor' ? /权限已变化/ : /保存核对失败/); expect(await f.snapshot()).toEqual(before);
+    });
+  });
+  it('uses the final DB wall clock after a delayed author, rather than its transaction start', async () => {
+    await f.exec(`CREATE FUNCTION test_supplier_purchase_wait() RETURNS trigger LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$ BEGIN PERFORM pg_sleep(3.2); RETURN NEW; END $$;
+      CREATE TRIGGER test_supplier_purchase_wait AFTER INSERT OR UPDATE ON store_product_description FOR EACH ROW EXECUTE FUNCTION test_supplier_purchase_wait()`);
+    await f.withWriter(async writer => { wiring.container = writer.container; const [clock] = await f.db.execute(sql`SELECT floor(extract(epoch FROM clock_timestamp()))::integer AS now`);
+      const before = await f.snapshot(), result = await call(80, await f.body({ is_presale_product: 1, presale_time: [Number(clock.now) + 2, Number(clock.now) + 600] }));
+      expect(result.status).not.toBe(200); expect(result.msg).toMatch(/开始时间不能小于/); expect(await f.snapshot()).toEqual(before);
+    });
+  });
+  it('requires current management authority and rejects malformed or foreign intent before business writes', async () => f.withWriter(async writer => {
+    wiring.container = writer.container; const body = await f.body({ is_vip_product: 1 }), before = await f.snapshot(), sequences = await f.sequences();
+    for (const actor of ['viewer', 'denied', 'other'] as const) expect((await call(80, body, actor)).status).not.toBe(200);
+    expect((await call(82, body)).status).not.toBe(200);
+    expect((await call(80, { ...body, is_vip_product: 2 })).status).not.toBe(200);
+    expect(await f.snapshot()).toEqual(before); expect(await f.sequences()).toEqual(sequences);
+  }));
+});
+
+import { storeOrderCartInfo as purchaseCartInfo, storeOrderOutbox as purchaseOutbox } from '@/models/schema';
+
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier authored paid-member presale actual HTTP lifecycle', () => {
+  it.each([{ productType: 0, presale: true }, { productType: 1, presale: true }, { productType: 3, presale: true }, { productType: 3, presale: false }])('reviews, admits, pays and fulfills $productType with presale=$presale using immutable terms', async ({ productType, presale }) => {
+    const orderType = presale ? 6 : 0;
+    const network = vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('Owned presale lifecycle forbids providers'));
+    const full = await refundRuntimeFixture();
+    try {
+      const config: Record<string, string> = { member_card_status: '1', svip_price_status: '0', integral_ratio_status: '0',
+        brokerage_func_status: '0', store_brokerage_statu: '0', balance_func_status: '1', yue_pay_status: '1' };
+      for (const [menuName, value] of Object.entries(config)) {
+        const updated = await full.db.update(pricingConfig).set({ value }).where(sql`${pricingConfig.menuName}=${menuName} AND ${pricingConfig.isStore}=0`).returning({ id: pricingConfig.id });
+        if (!updated.length) await full.db.insert(pricingConfig).values({ menuName, value });
+      }
+      await full.db.update(pricingUser).set({ nowMoney: '100.00', isEverLevel: 1, isMoneyLevel: 0, overdueTime: 0 }).where(eq(pricingUser.uid, 11));
+      await full.db.update(pricingSupplier).set({ adminId: 21, isShow: 1, isDel: 0 }).where(eq(pricingSupplier.id, 7));
+      const password = 'local-purchase-supplier-password', reviewPassword = 'local-purchase-review-password';
+      await full.db.insert(systemAdmin).values([{ id: 21, account: 'local-presale-supplier', pwd: password, adminType: 4, relationId: 7, status: 1, isDel: 0 },
+        { id: 101, account: 'local-presale-review', pwd: reviewPassword, adminType: 1, relationId: 0, level: 0, status: 1, isDel: 0 }]);
+      await full.db.insert(pricingCategory).values({ id: 800001, type: 2, relationId: 7, cateName: '本地预售分类', isShow: 1 });
+      await full.exec(`SELECT setval(pg_get_serial_sequence('store_product','id'),800010,true);
+        SELECT setval(pg_get_serial_sequence('store_product_attr_value','id'),800010,true);
+        SELECT setval(pg_get_serial_sequence('store_cart','id'),800010,true)`);
+      const queue = { send: vi.fn(async () => {}), sendBatch: vi.fn(async () => ({ successful: 1 })) };
+      const sequence = vi.fn(async () => new Response('supplier_presale_http_' + productType));
+      const env = { ...full.env, NODE_ENV: 'test', APP_KEY: 'isolated-supplier-presale-key', UPSTASH_REDIS_URL: '', UPSTASH_REDIS_TOKEN: '', ORDER_QUEUE: queue,
+        SEQUENCE: { idFromName: () => 'owned-supplier-presale', get: () => ({ fetch: sequence }) },
+        CONFIG_KV: { ...full.env.CONFIG_KV, get: async (key: string) => key.startsWith('cfg_') && Object.hasOwn(config, key.slice(4)) ? config[key.slice(4)] : (full.env.CONFIG_KV as any).get(key) } } as unknown as Env;
+      const supplierToken = (await createToken(21, 'supplier', md5(password), env.APP_KEY)).token;
+      const reviewerToken = (await createToken(101, 'admin', md5(reviewPassword), env.APP_KEY)).token;
+      const [buyer] = await full.db.select().from(pricingUser).where(eq(pricingUser.uid, 11));
+      const [ordinary] = await full.db.select().from(pricingUser).where(eq(pricingUser.uid, 22));
+      const buyerToken = (await createToken(11, 'api', md5(buyer.pwd), env.APP_KEY)).token;
+      const nonmemberToken = (await createToken(22, 'api', md5(ordinary.pwd), env.APP_KEY)).token;
+      if (!full.withRuntimeRole) throw Error('Independent owned LOGINs required');
+      await full.withRuntimeRole(appRole => full.withRuntimeRole!(async adminRole => {
+        const [database] = await full.db.execute(sql`SELECT current_database() AS name`);
+        const names = { app: appRole.role, admin: adminRole.role, maintenance: 'finance_test', database: String(database.name), pricingOwner: full.pricingOwner };
+        await runRuntimeBusinessCommissioning(full.db, names); expect((await runRoutinePaymentRuntimeInstallation(full.db, names)).after.ready).toBe(true);
+        expect(await auditRuntimeBusinessPrivileges(appRole.db, 'app', names)).toMatchObject({ ready: true, failures: [] });
+        const container = createContainerFromDb(appRole.db); wiring.container = container; wiring.moderator = createContainerFromDb(adminRole.db);
+        async function request(method: string, path: string, body?: object, token?: string) {
+          const background: Promise<unknown>[] = [];
+          const response = await app.request(path, { method, headers: { ...(token ? { Authorization: 'Bearer ' + token } : {}),
+            ...(body ? { 'Content-Type': 'application/json' } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) }, env,
+            { waitUntil: task => { background.push(task); }, passThroughOnException() {}, props: {} });
+          await Promise.all(background); return response.json<Envelope>();
+        }
+        async function ok(method: string, path: string, body?: object, token?: string) {
+          const result = await request(method, path, body, token); expect(result.status, result.msg).toBe(200); return result.data;
+        }
+        async function waitUntil(seconds: number) {
+          const deadline = performance.now() + 30_000;
+          while (performance.now() < deadline) {
+            const [clock] = await full.db.execute(sql`SELECT clock_timestamp() >= to_timestamp(${seconds}) AS ready`);
+            if (clock.ready) return;
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
+          throw Error('Owned PostgreSQL clock did not reach presale boundary');
+        }
+        const [clock] = await full.db.execute(sql`SELECT floor(extract(epoch FROM clock_timestamp()))::integer AS now`);
+        const start = Number(clock.now) + 5, end = Number(clock.now) + 20;
+        const body = { product_type: productType, store_name: '实际会员预售 ' + productType, cate_id: [800001], slider_image: ['/supplier-presale.png'],
+          spec_type: 0, freight: 1, is_postage: 1, is_sub: [], is_vip_product: 1, is_presale_product: Number(presale), presale_time: presale ? [start, end] : [], presale_day: 7,
+          attrs: [{ price: '10.00', settle_price: '1.00', vip_price: '0.00', stock: 5,
+            ...(productType === 1 ? { delivery_mode: 'fixed', disk_info: 'Supplier presale fixed delivery' } : {}) }] };
+        const made = await ok('POST', '/supplierapi/product/product/0', body, supplierToken), id = Number(made.id);
+        const read = await ok('GET', '/supplierapi/product/product/' + id, undefined, supplierToken);
+        expect(read.purchase_selection).toMatchObject({ is_vip_product: 1, is_presale_product: Number(presale), presale_start_time: presale ? start : 0, presale_end_time: presale ? end : 0, presale_day: 7 });
+        await ok('POST', '/adminapi/product/product/set_verify/' + id, { is_verify: 1, is_show: 1, refusal: '', auto_on_time: '' }, reviewerToken);
+        if (presale) {
+          for (const token of [undefined, nonmemberToken]) expect((await ok('GET', '/api/presale/list', undefined, token)).list.some((row: any) => row.id === id)).toBe(false);
+          expect((await ok('GET', '/api/presale/list', undefined, buyerToken)).list.some((row: any) => row.id === id)).toBe(true);
+        }
+        expect((await ok('GET', '/api/product/detail/' + id, undefined, buyerToken)).storeInfo.is_vip_product).toBe(1);
+        const [sku] = await container.db.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.productId, id));
+        const add = { productId: id, unique: sku.unique, cartNum: 1, new: 1, type: orderType };
+        if (presale) {
+          const early = await request('POST', '/api/cart/add', add, buyerToken); expect(early.status).not.toBe(200); expect(early.msg).toMatch(/未开始/);
+          await waitUntil(start);
+        }
+        const denied = await request('POST', '/api/cart/add', add, nonmemberToken); expect(denied.status).not.toBe(200); expect(denied.msg).toMatch(/付费会员/);
+        await full.db.update(pricingUser).set({ isEverLevel: 0, isMoneyLevel: 1, overdueTime: Math.floor(Date.now() / 1000) - 1 }).where(eq(pricingUser.uid, 11));
+        expect((await request('POST', '/api/cart/add', add, buyerToken)).status).not.toBe(200);
+        await full.db.update(pricingUser).set({ isEverLevel: 1, isMoneyLevel: 0, overdueTime: 0 }).where(eq(pricingUser.uid, 11));
+        const cart = await ok('POST', '/api/cart/add', add, buyerToken);
+        const selection = { cartIds: [cart.id], type: orderType, shippingType: 1, useIntegral: false, ...(productType === 0 ? { addressId: 11 } : {}) };
+        const confirmed = await ok('POST', '/api/order/confirm', selection, buyerToken); expect(confirmed.priceGroup.pay_price).toBe('10.00');
+        const createBody = { ...selection, quoteToken: confirmed.quoteToken };
+        const order = await ok('POST', '/api/order/create/' + confirmed.orderKey, createBody, buyerToken);
+        expect((await ok('POST', '/api/order/create/' + confirmed.orderKey, createBody, buyerToken)).orderId).toBe(order.orderId); expect(sequence).toHaveBeenCalledTimes(1);
+        const [root] = await container.db.select().from(pricingOrder).where(eq(pricingOrder.orderId, order.orderId));
+        expect(root).toMatchObject({ type: orderType, productType, payPrice: '10.00', paid: 0 });
+        expect((await ok('POST', '/api/order/pay', { uni: order.orderId, paytype: 'yue' }, buyerToken)).paid).toBe(true);
+        expect((await ok('POST', '/api/order/pay', { uni: order.orderId, paytype: 'yue' }, buyerToken)).paid).toBe(true);
+        expect((await container.db.select().from(pricingUser).where(eq(pricingUser.uid, 11)))[0].nowMoney).toBe('90.00');
+        const [paid] = await container.db.select().from(purchaseOutbox).where(eq(purchaseOutbox.eventType, 'order.paid'));
+        const consumer = new OrderOutboxService(container, env);
+        const paidMessage = { action: 'processOrderPaidOutbox' as const, outboxId: paid.id, eventKey: paid.eventKey };
+        expect(await consumer.processMessage(paidMessage)).toBe('completed'); expect(await consumer.processMessage(paidMessage)).toBe('already-completed');
+        const leaves = await container.db.select().from(pricingOrder).where(sql`(${pricingOrder.id}=${root.id} OR ${pricingOrder.pid}=${root.id}) AND ${pricingOrder.pid}>=0 AND ${pricingOrder.supplierId}=7`);
+        expect(leaves).toHaveLength(1); const leaf = leaves[0]; expect(leaf).toMatchObject({ type: orderType, productType, paid: 1, status: 0 });
+        const [line] = await container.db.select().from(purchaseCartInfo).where(eq(purchaseCartInfo.oid, leaf.id));
+        const frozen = JSON.parse(line.cartInfo!);
+        if (presale) expect(frozen.presale).toEqual({ version: 'presale-full-payment-v1', productId: id, startsAt: start, endsAt: end,
+          shippingDaysAfterEnd: 7, paidMemberOnly: true, perOrderLimit: null });
+        else expect(frozen).not.toHaveProperty('presale');
+        const current = await ok('GET', '/supplierapi/product/product/' + id, undefined, supplierToken);
+        await ok('POST', '/supplierapi/product/product/' + id, { ...body, is_vip_product: 0, is_presale_product: 0, presale_time: [], attrs: current.attrs }, supplierToken);
+        expect((await container.db.select().from(purchaseCartInfo).where(eq(purchaseCartInfo.id, line.id)))[0].cartInfo).toBe(line.cartInfo);
+        const delivery = productType === 0 ? { delivery_type: 'express', delivery_name: 'Local', delivery_code: 'local', delivery_id: 'NO-SHIPMENT' }
+          : { delivery_type: 'fictitious', fictitious_content: '本地预售人工交付' };
+        let due: typeof purchaseOutbox.$inferSelect | undefined;
+        if (productType === 1) {
+          [due] = await container.db.select().from(purchaseOutbox).where(eq(purchaseOutbox.eventType, 'order.presale.fulfillment'));
+          expect(due).toMatchObject({ availableTime: end });
+          expect(await consumer.processMessage({ action: 'processPresaleDeliveryOutbox', outboxId: due!.id, eventKey: due!.eventKey })).toBe('deferred');
+        } else if (presale) {
+          const beforeEnd = await request('PUT', '/supplierapi/order/delivery/' + leaf.id, delivery, supplierToken);
+          expect(beforeEnd.status).not.toBe(200); expect(beforeEnd.msg).toMatch(/尚未结束/);
+        }
+        if (presale) await waitUntil(end);
+        if (productType === 1) {
+          const message = { action: 'processPresaleDeliveryOutbox' as const, outboxId: due!.id, eventKey: due!.eventKey };
+          expect(await consumer.processMessage(message)).toBe('completed'); expect(await consumer.processMessage(message)).toBe('already-completed');
+          expect((await container.db.select().from(pricingOrder).where(eq(pricingOrder.id, leaf.id)))[0].virtualInfo).toContain('Supplier presale fixed delivery');
+        } else await ok('PUT', '/supplierapi/order/delivery/' + leaf.id, delivery, supplierToken);
+        await ok('POST', '/api/order/take', { order_id: leaf.orderId }, buyerToken);
+        expect((await container.db.select().from(pricingOrder).where(eq(pricingOrder.id, leaf.id)))[0]).toMatchObject({ status: 2, paid: 1, type: orderType, payPrice: '10.00' });
+        expect((await container.db.select().from(pricingUser).where(eq(pricingUser.uid, 11)))[0].nowMoney).toBe('90.00');
+        await ok('POST', '/adminapi/product/product/set_verify/' + id, { is_verify: 1, is_show: 1, refusal: '', auto_on_time: '' }, reviewerToken);
+        expect((await ok('POST', '/api/cart/add', { ...add, type: 0 }, nonmemberToken)).id).toBeGreaterThan(0);
+      }));
+      expect(network).not.toHaveBeenCalled();
+    } finally { wiring.container = null; wiring.moderator = null; network.mockRestore(); await full.close(); }
+  }, 180_000);
+});

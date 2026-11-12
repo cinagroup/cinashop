@@ -176,6 +176,7 @@ function defaultPreviewDetail(id: number): ProductDetail {
   return {
     id: row.id,
     price_selection: { version: 1, is_vip: 0, is_sub: 0 },
+    purchase_selection: { version: 1, is_vip_product: 0, is_presale_product: 0, presale_start_time: 0, presale_end_time: 0, presale_day: 0 },
     product_type: row.product_type === 1 || row.product_type === 3 ? row.product_type : 0,
     store_name: row.store_name,
     store_info: "",
@@ -812,6 +813,14 @@ export async function saveProduct(id: number, data: ProductDetail, signal?: Abor
     const savedId = id || Math.max(...previewProducts.map((item) => item.id)) + 1;
     const selected = (data as ProductDetail & { is_sub?: number[] }).is_sub;
     const saved = clonePreviewDetail({ ...data, ...(Array.isArray(selected) ? { price_selection: { version: 1 as const, is_vip: selected.includes(0) ? 1 as const : 0 as const, is_sub: selected.includes(1) ? 1 as const : 0 as const } } : {}), id: savedId, is_show: 0, is_verify: 0 });
+    const intent = data as ProductDetail & { is_vip_product?: number; is_presale_product?: number; presale_time?: number[]; presale_day?: number };
+    const prior = previewProductDetails.get(savedId)?.purchase_selection ?? defaultPreviewDetail(savedId).purchase_selection!;
+    saved.purchase_selection = { ...prior, is_vip_product: intent.is_vip_product === undefined ? prior.is_vip_product : intent.is_vip_product as 0 | 1,
+      is_presale_product: intent.is_presale_product === undefined ? prior.is_presale_product : intent.is_presale_product as 0 | 1,
+      presale_start_time: intent.is_presale_product === 0 ? 0 : intent.presale_time?.[0] ?? prior.presale_start_time,
+      presale_end_time: intent.is_presale_product === 0 ? 0 : intent.presale_time?.[1] ?? prior.presale_end_time,
+      presale_day: intent.presale_day ?? prior.presale_day };
+    for (const key of ['is_vip_product', 'is_presale_product', 'presale_time', 'presale_day']) Reflect.deleteProperty(saved, key);
     previewProductDetails.set(savedId, saved);
     const stock = data.attrs.reduce((sum, item) => sum + Number(item.stock), 0);
     const price = data.attrs.reduce((minimum, item) => Math.min(minimum, Number(item.price)), Number.POSITIVE_INFINITY).toFixed(2);

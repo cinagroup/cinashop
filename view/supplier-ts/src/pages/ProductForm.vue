@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { productPurchaseEditor, productPurchasePayload } from '@/utils/productPurchaseOptions';
 import { productPriceSelection, productPriceOptionsPayload } from '@/utils/productPriceOptions';
 import { prepareSupplierProductRuleApplication } from '@/utils/productRules';
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
@@ -279,9 +280,11 @@ function initialForm(): ProductDetail {
   };
 }
 
+const purchase = reactive(productPurchaseEditor(undefined, true));
 const form = reactive<ProductDetail>(initialForm());
 const priceOptions = ref<number[]>([]), priceOptionsReady = ref(true);
 function resetProductForm() {
+  Object.assign(purchase, productPurchaseEditor(undefined, true));
   priceOptions.value = []; priceOptionsReady.value = true;
   Object.assign(schedule, productScheduleEditor()); productReadReady.value = false; productReadError.value = '';
   videoUploaderOpen.value = false; videoPreviewUrl.value = ''; videoGeneration.value++;
@@ -311,6 +314,7 @@ function editableSku(sku: ProductSku, productType: ProductDetail['product_type']
 }
 
 function applyProductDetail(detail: ProductDetail) {
+  Object.assign(purchase, productPurchaseEditor(detail.purchase_selection));
   const pricing = productPriceSelection(detail.price_selection); priceOptions.value = pricing.selected; priceOptionsReady.value = pricing.ready;
   const brand = productBrandDetail(detail), ensures = productEnsureDetail(detail), parameters = productParameterDetail(detail), systemForm = productSystemFormDetail(detail);
   Object.assign(schedule, productScheduleEditor(detail));
@@ -568,6 +572,7 @@ function removeSlider(index: number) {
 }
 
 function validateForm() {
+  if (!copying.value) { try { productPurchasePayload(purchase); } catch (error) { return error instanceof Error ? error.message : "预售条件无效"; } }
   if (!productReadReady.value) return '请先成功读取完整商品资料';
   if (!copying.value) try { productSchedulePayload(schedule); } catch (error) { return error instanceof Error ? error.message : '上下架计划无效'; }
   if (!copying.value && brandChanged.value && selectedBrandPath.value.length && (!brandAvailability.value.ready || !brandAvailability.value.valid)) return '请刷新品牌并重新选择完整品牌路径，或清空品牌选择';
@@ -619,8 +624,10 @@ async function submit() {
     const { media: _preview, store_label_id: _originalLabels, video_preview_url: _videoPreview, retired_attrs: _retired,
       auto_on_time: _autoOn, auto_off_time: _autoOff, brand_id: _originalBrand, brand_selection: _brandSelection, ensure_id: _originalEnsures, ensure_selection: _ensureSelection,
       specs_id: _originalTemplate, specs: _originalParameters, specs_selection: _parameterSelection,
-      system_form_id: _originalSystemForm, system_form_selection: _systemFormSelection, recommend_image: _originalRecommendImage, price_selection: _priceSelection, ...editableForm } = form as ProductDetail & { video_preview_url?: unknown };
-    const payload = { ...editableForm, attrs, ...(!copying.value ? productPriceOptionsPayload(priceOptions.value, priceOptionsReady.value) : {}), ...(labelsChanged.value ? { store_label_id: [...selectedLabelIds.value] } : {}),
+      system_form_id: _originalSystemForm, system_form_selection: _systemFormSelection, recommend_image: _originalRecommendImage, price_selection: _priceSelection, purchase_selection: _purchaseSelection,
+      is_vip_product: _memberOnly, is_presale_product: _presale, presale_time: _presalePeriod, presale_day: _presaleDays,
+      ...editableForm } = form as ProductDetail & { video_preview_url?: unknown; is_vip_product?: unknown; is_presale_product?: unknown; presale_time?: unknown; presale_day?: unknown };
+    const payload = { ...editableForm, attrs, ...(!copying.value ? { ...productPriceOptionsPayload(priceOptions.value, priceOptionsReady.value), ...productPurchasePayload(purchase) } : {}), ...(labelsChanged.value ? { store_label_id: [...selectedLabelIds.value] } : {}),
       ...(!copying.value ? { ...productRecommendImagePayload(form.recommend_image, recommendImageChanged.value), ...productSchedulePayload(schedule), ...productBrandPayload(selectedBrandPath.value, brandChanged.value), ...productEnsurePayload(selectedEnsureIds.value, ensuresChanged.value), ...productParameterPayload(parameterDraft.value, parametersChanged.value), ...productSystemFormPayload(selectedSystemFormId.value, systemFormChanged.value) } : {}) };
     if (copying.value) {
       if (!copyContext.value || copyContext.value.source_id !== copyEntry.value.source) throw Error('请重新读取复制来源');
@@ -985,11 +992,28 @@ onMounted(load);
                 <SupplierProductShippingTemplates :key="formEntry" v-model="form.temp_id" :context="formEntry" :disabled="loading || saving || !productReadReady || mediaInvalidated || copyBlocked" />
               </el-form-item>
             </template>
-            <el-alert v-else :title="isCardProduct ? '自动交付，无需物流和运费' : '人工虚拟交付，无需物流和运费'" type="success" show-icon :closable="false" />
+            <el-alert v-else :title="isCardProduct ? (purchase.presale ? '预售结束后自动交付，无需物流和运费' : '自动交付，无需物流和运费') : '人工虚拟交付，无需物流和运费'" type="success" show-icon :closable="false" />
             <el-form-item><el-checkbox v-model="form.is_support_refund" :true-value="1" :false-value="0">支持退款退货</el-checkbox></el-form-item>
             <el-form-item v-if="!copying" label="服务保障"><SupplierProductEnsurePicker :model-value="selectedEnsureIds" :selection="ensureSelection" :changed="ensuresChanged" :context="formEntry" :disabled="loading || saving || !productReadReady || mediaInvalidated" @update:model-value="changeEnsures" @availability="ensureAvailability = $event" /></el-form-item>
             <p v-else class="brand-copy-note">复制保留来源的服务保障，创建后可在编辑页调整。</p>
           </el-form>
+        </article>
+        <article class="surface product-form-card compact-card">
+          <header><h2>购买资格与预售</h2><p>预售为全款购买，按结束时间安排交付。</p></header>
+          <template v-if="!copying">
+            <el-form label-position="top" :disabled="!purchase.ready || saving || !productReadReady || !canManageProducts || mediaInvalidated || copyBlocked">
+              <el-form-item><el-checkbox v-model="purchase.memberOnly" @change="purchase.memberChanged = true">仅限付费会员购买</el-checkbox></el-form-item>
+              <el-form-item><el-checkbox v-model="purchase.presale" @change="purchase.presaleChanged = true">启用预售</el-checkbox></el-form-item>
+              <template v-if="purchase.presale">
+                <el-form-item label="预售开始（北京时间）"><el-input v-model="purchase.startsAt" type="datetime-local" step="1" aria-label="预售开始（北京时间）" @change="purchase.periodChanged = true" /></el-form-item>
+                <el-form-item label="预售结束（北京时间）"><el-input v-model="purchase.endsAt" type="datetime-local" step="1" aria-label="预售结束（北京时间）" @change="purchase.periodChanged = true" /></el-form-item>
+                <el-form-item label="预售结束后发货天数"><el-input-number v-model="purchase.days" aria-label="预售结束后发货天数" :min="0" :max="2147483647" :precision="0" @change="purchase.daysChanged = true" /></el-form-item>
+                <p class="security-note">发货天数为承诺期限；保存后须重新审核，购买时再次核对资格和时段。</p>
+              </template>
+            </el-form>
+            <p v-if="!purchase.ready" class="security-note">尚未读取购买资格与预售条件，请重新读取后再调整。</p>
+          </template>
+          <p v-else class="security-note">复制保留来源的购买资格与预售条件，创建后可在编辑页调整。</p>
         </article>
         <article class="surface product-form-card compact-card">
           <header><h2>销售设置</h2></header>
