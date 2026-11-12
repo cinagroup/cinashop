@@ -1,3 +1,4 @@
+import { supplierProductPriceOptions, supplierProductPriceAttrs, assertSupplierMemberPrices, assertSupplierProductPriceOptions } from './SupplierProductPriceOptions';
 import { normalizeProductVideoReference, assertProductVideoReference, resolveProductVideoReference } from '@/services/product/ProductVideoPolicy';
 import { parseCanonicalAttachmentId, signAttachmentReferences } from '@/services/system/AttachmentService';
 import {
@@ -435,7 +436,9 @@ export class SupplierProductManagementService {
   }
 
   async saveProduct(supplierId: number, productId: number, rawInput: UnknownRecord, actor?: SupplierProductLabelActor) {
-    const input = normalizeSupplierProductInput(prepareSupplierProductMediaInput(rawInput));
+    const priceOptions = supplierProductPriceOptions(rawInput);
+    const input = normalizeSupplierProductInput(prepareSupplierProductMediaInput(priceOptions?.isSub === 0
+      ? { ...rawInput, attrs: supplierProductPriceAttrs(rawInput.attrs, priceOptions) } : rawInput));
     const labelIds = supplierProductLabelInput(rawInput);
     const brandIds = supplierProductBrandInput(rawInput);
     const ensureIds = supplierProductEnsureInput(rawInput);
@@ -451,7 +454,7 @@ export class SupplierProductManagementService {
       // any product/SKU/bargain lock, so no stale parent or missing category can
       // be committed while classification management is changing the tree.
       await lockSupplierCategoryScope(tx, supplierId);
-      if (labelIds !== undefined || hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined || systemFormId !== undefined || recommendImage !== undefined) {
+      if (labelIds !== undefined || hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined || systemFormId !== undefined || recommendImage !== undefined || priceOptions !== undefined) {
         await tx.execute(sql`SET LOCAL lock_timeout='2s'`);
         await tx.execute(sql`SET LOCAL statement_timeout='10s'`);
         await labelAuthority.assertBindingAuthority(tx, supplierId, actor!, labelPath);
@@ -466,7 +469,7 @@ export class SupplierProductManagementService {
       // Legacy schema only indexed SKU unique; serialize saves so new rows can be checked globally
       // without racing another supplier product save. Historical duplicates remain a migration audit item.
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${PRODUCT_LOCK_NAMESPACE}, 0)`);
-      if ((labelIds !== undefined || hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined || systemFormId !== undefined || recommendImage !== undefined) && productId > 0 && !await tryLockProductWrite(tx, productId)) {
+      if ((labelIds !== undefined || hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined || systemFormId !== undefined || recommendImage !== undefined || priceOptions !== undefined) && productId > 0 && !await tryLockProductWrite(tx, productId)) {
         throw new HttpApiException('商品正在修改，请刷新后重试', 409, 409);
       }
       const existing = productId > 0
@@ -489,6 +492,7 @@ export class SupplierProductManagementService {
       if (existing && existing.productType !== input.productType) {
         throw new ValidateException("商品创建后不能修改履约类型");
       }
+      assertSupplierMemberPrices(input, priceOptions?.isVip ?? existing?.isVip ?? 0);
       let protectedBrandRelations = brandIds !== undefined && existing && ensureIds === undefined && parameters === undefined
         ? await readSupplierBrandProtectedRelations(tx, productId, labelIds !== undefined) : [];
       const admittedEnsures = ensureIds === undefined ? [] : await lockSupplierProductEnsures(tx, supplierId, ensureIds, existing);
@@ -532,6 +536,7 @@ export class SupplierProductManagementService {
         price,
         settlePrice,
         vipPrice,
+        ...(priceOptions ?? {}),
         otPrice,
         deliveryType: input.productType === PHYSICAL_PRODUCT_TYPE ? "1" : "",
         freight: input.freight,
@@ -671,7 +676,7 @@ export class SupplierProductManagementService {
         }
       }
       if (parameters !== undefined) await assertSupplierProductParameterTemplate(tx, parameters.specs_id, admittedParameter);
-      if (labelIds !== undefined || hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined || systemFormId !== undefined || recommendImage !== undefined) await labelAuthority.assertBindingAuthority(tx, supplierId, actor!, labelPath);
+      if (labelIds !== undefined || hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined || systemFormId !== undefined || recommendImage !== undefined || priceOptions !== undefined) await labelAuthority.assertBindingAuthority(tx, supplierId, actor!, labelPath);
       if (hasSchedule) {
         const [read] = await tx.select({ id: storeProduct.id, type: storeProduct.type, relationId: storeProduct.relationId,
           isDel: storeProduct.isDel, isShow: storeProduct.isShow, isVerify: storeProduct.isVerify,
@@ -702,9 +707,14 @@ export class SupplierProductManagementService {
         } catch (error) { if (error instanceof ValidateException) throw recommendationConflict(); throw error; }
         await labelAuthority.assertBindingAuthority(tx, supplierId, actor!, labelPath);
       }
+      if (priceOptions !== undefined) {
+        await tx.execute(sql`SET CONSTRAINTS ALL IMMEDIATE`);
+        await labelAuthority.assertBindingAuthority(tx, supplierId, actor!, labelPath);
+        await assertSupplierProductPriceOptions(tx, supplierId, savedProductId, input, priceOptions);
+      }
       return { id: savedProductId, is_verify: 0, is_show: 0 };
     }).catch((error: unknown) => {
-      if (hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined || systemFormId !== undefined || recommendImage !== undefined) {
+      if (hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined || systemFormId !== undefined || recommendImage !== undefined || priceOptions !== undefined) {
         let cause = error;
         for (let depth = 0; depth < 8 && cause && typeof cause === 'object'; depth++) {
           if ('code' in cause && ['55P03', '40P01', '40001'].includes(String(cause.code))) {
@@ -751,6 +761,7 @@ export class SupplierProductManagementService {
     const detail = {
       id: product.id,
       product_type: product.productType,
+      price_selection: { version: 1 as const, is_vip: product.isVip, is_sub: product.isSub },
       store_name: product.storeName,
       store_info: product.storeInfo,
       keyword: product.keyword,

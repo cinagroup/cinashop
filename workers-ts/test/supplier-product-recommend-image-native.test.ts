@@ -267,3 +267,164 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier ordinar
     }));
   });
 });
+
+// Price switches use the same ordinary App LOGIN, current Supplier JWT and
+// complete author as the preceding publication scenarios. No synthetic auth.
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier member price and independent commission author',()=>{
+  let f: Awaited<ReturnType<typeof supplierProductRecommendImageFixture>>;
+  beforeEach(async()=>{vi.spyOn(globalThis,'fetch').mockRejectedValue(Error('Isolated Supplier pricing forbids providers'));
+    f=await supplierProductRecommendImageFixture();wiring.container=f.container;},30_000);
+  afterEach(async()=>{try{expect(fetch).not.toHaveBeenCalled();}finally{await f?.close();wiring.container=null;wiring.moderator=null;vi.restoreAllMocks();}},30_000);
+  const call=async(id:number,body?:object,actor:keyof typeof f.tokens='manager')=>{
+    const response=await app.request('/supplierapi/product/product/'+id,{method:body?'POST':'GET',headers:{Authorization:'Bearer '+f.tokens[actor],
+      'X-Supplier-Id':'8',...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})},f.env);
+    return response.json<Envelope>();
+  };
+  it('saves and reads both switches, preserves them when omitted and clears disabled commission before validation',async()=>f.withWriter(async runtime=>{
+    wiring.container=runtime.container;const body=await f.body({is_sub:[0,1]}),before=await f.snapshot();
+    const saved=await call(80,body);expect(saved.status,saved.msg).toBe(200);
+    expect(await f.product()).toMatchObject({isVip:1,isSub:1,isShow:0,isVerify:0});
+    const detail=await call(80);expect(detail.status,detail.msg).toBe(200);expect(detail.data.price_selection).toEqual({version:1,is_vip:1,is_sub:1});
+    const skus=await f.rows(),stock=skus.map(s=>({id:s.id,stock:s.stock,sales:s.sales,sumStock:s.sumStock,unique:s.unique}));
+    expect((await call(80,await f.body())).status).toBe(200);expect(await f.product()).toMatchObject({isVip:1,isSub:1});
+    const off=await f.body({is_sub:[]});off.attrs=(off.attrs as any[]).map(s=>({...s,brokerage:'discarded-invalid',brokerage_two:999999}));
+    const cleared=await call(80,off);expect(cleared.status,cleared.msg).toBe(200);
+    expect(await f.product()).toMatchObject({isVip:0,isSub:0});
+    const after=await f.rows();expect(after.map(s=>({id:s.id,stock:s.stock,sales:s.sales,sumStock:s.sumStock,unique:s.unique}))).toEqual(stock);
+    expect(after.filter(s=>s.isRetired===0).every(s=>s.brokerage==='0.00'&&s.brokerageTwo==='0.00')).toBe(true);
+    const current=await f.snapshot();for(const name of ['store_order','store_order_cart_info','system_form_data','store_product_virtual'])expect(current[name],name).toEqual(before[name]);
+  }));
+  it.each([0,1,3])('authors member pricing without enabling independent commission for fulfillment type %i',async type=>{
+    const id=type===1?81:80;if(type===3){await f.db.update(storeProduct).set({productType:3}).where(eq(storeProduct.id,id));
+      await f.db.update(storeProductAttrValue).set({productType:3}).where(eq(storeProductAttrValue.productId,id));}
+    await f.withWriter(async runtime=>{wiring.container=runtime.container;const body=await f.body({is_sub:[0]},id);
+      body.attrs=(body.attrs as any[]).map(s=>({...s,vip_price:'7.50',brokerage:'ignored',brokerage_two:999999}));
+      const result=await call(id,body);expect(result.status,result.msg).toBe(200);
+      expect(await f.product(id)).toMatchObject({productType:type,isVip:1,isSub:0,vipPrice:'7.50'});
+      expect((await call(id)).data.price_selection).toEqual({version:1,is_vip:1,is_sub:0});});
+  });
+  it.each(['flags','sku','actor'])('rolls back the complete product on deferred %s tampering',async target=>{
+    const mutation=target==='flags'?'UPDATE store_product SET is_vip=0 WHERE id=NEW.product_id;':target==='sku'?'UPDATE store_product_attr_value SET brokerage=9 WHERE product_id=NEW.product_id AND is_retired=0;':'UPDATE system_admin SET status=0 WHERE id=21;';
+    await f.exec(`CREATE FUNCTION test_supplier_price_drift() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$ BEGIN ${mutation} RETURN NEW; END $$;
+      CREATE CONSTRAINT TRIGGER test_supplier_price_drift AFTER INSERT OR UPDATE ON store_product_description DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION test_supplier_price_drift()`);
+    await f.withWriter(async runtime=>{wiring.container=runtime.container;const before=await f.snapshot(),result=await call(80,await f.body({is_sub:[0,1]}));
+      expect(result.status).not.toBe(200);expect(result.msg).toMatch(target==='actor'?/权限已变化/:/保存核对失败/);expect(await f.snapshot()).toEqual(before);});
+  });
+  it('requires current management authority and refuses foreign ownership or zero enabled member prices without writes',async()=>f.withWriter(async runtime=>{
+    wiring.container=runtime.container;const body=await f.body({is_sub:[0,1]});
+    for(const actor of ['viewer','denied','other'] as const){const before=await f.snapshot(),result=await call(80,body,actor);expect(result.status).not.toBe(200);expect(await f.snapshot()).toEqual(before);}
+    const before=await f.snapshot();expect((await call(90,body)).status).not.toBe(200);expect(await f.snapshot()).toEqual(before);
+    const invalid={...body,attrs:(body.attrs as any[]).map(s=>({...s,vip_price:'0.00'}))};const rejected=await call(80,invalid);
+    expect(rejected.status).not.toBe(200);expect(rejected.msg).toContain('所有SKU会员价必须大于0');expect(await f.snapshot()).toEqual(before);
+  }));
+  it('creates new complete multi-SKU products with actual authenticated pricing options',async()=>f.withWriter(async runtime=>{
+    wiring.container=runtime.container;const body=await f.body({is_sub:[0,1]});body.attrs=(body.attrs as any[]).map(({id,unique,...sku})=>sku);
+    const result=await call(0,body);expect(result.status,result.msg).toBe(200);const id=Number(result.data.id);expect(id).not.toBe(80);
+    expect(await f.product(id)).toMatchObject({type:2,relationId:7,isVip:1,isSub:1,isShow:0,isVerify:0});
+    expect((await call(id)).data.price_selection).toEqual({version:1,is_vip:1,is_sub:1});
+  }));
+});
+
+import { refundRuntimeFixture } from './helpers/refundRuntimeFixture';
+import { runRuntimeBusinessCommissioning } from '@/migrations/runRuntimeBusinessCommissioning';
+import { runRoutinePaymentRuntimeInstallation } from '@/migrations/routinePaymentRuntime';
+import { auditRuntimeBusinessPrivileges } from '@/migrations/auditRuntimeBusinessPrivileges';
+import { applyStoreOrderBalancePayment } from '@/services/order/StoreOrderPayService';
+import { OrderOutboxService } from '@/services/order/OrderOutboxService';
+import { StoreCartService } from '@/services/order/StoreCartService';
+import { StoreOrderCreateService } from '@/services/order/StoreOrderCreateService';
+import { user as pricingUser, systemSupplier as pricingSupplier, storeProductCategory as pricingCategory,
+  systemConfig as pricingConfig, storeOrder as pricingOrder } from '@/models/schema';
+import type { Env, OrderMessage } from '@/env';
+
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier authored price actual paid and received lifecycle',()=>{
+  it('uses actual Supplier and buyer JWT HTTP, review, isolated balance payment, delivery and receipt to settle exact independent commissions once',async()=>{
+    const network=vi.spyOn(globalThis,'fetch').mockRejectedValue(Error('Supplier price lifecycle forbids external providers'));
+    const full=await refundRuntimeFixture();try{
+      const config:Record<string,string>={member_card_status:'1',svip_price_status:'1',integral_ratio_status:'0',
+        brokerage_func_status:'1',store_brokerage_statu:'1',brokerage_level:'2',brokerage_compute_type:'1',
+        store_brokerage_ratio:'10',store_brokerage_two:'5',division_status:'0'};
+      for(const [menuName,value]of Object.entries(config)){
+        const updated=await full.db.update(pricingConfig).set({value}).where(sql`${pricingConfig.menuName}=${menuName} AND ${pricingConfig.isStore}=0`).returning({id:pricingConfig.id});
+        if(!updated.length)await full.db.insert(pricingConfig).values({menuName,value});
+      }
+      await full.db.update(pricingUser).set({nowMoney:'100.00',isEverLevel:1,spreadUid:22}).where(eq(pricingUser.uid,11));
+      await full.db.update(pricingUser).set({spreadUid:33}).where(eq(pricingUser.uid,22));
+      await full.db.insert(pricingUser).values({uid:33,account:'local-second-referrer',status:1,isPromoter:1,spreadOpen:1});
+      await full.db.update(pricingSupplier).set({adminId:21,isShow:1,isDel:0}).where(eq(pricingSupplier.id,7));
+      const password='local-supplier-pricing-password',reviewPassword='local-product-review-password';
+      await full.db.insert(systemAdmin).values([{id:21,account:'local-price-supplier',pwd:password,adminType:4,relationId:7,status:1,isDel:0},
+        {id:101,account:'local-price-review',pwd:reviewPassword,adminType:1,relationId:0,level:0,status:1,isDel:0}]);
+      await full.db.insert(pricingCategory).values({id:800001,type:2,relationId:7,cateName:'本地供应商分类',isShow:1});
+      await full.exec(`SELECT setval(pg_get_serial_sequence('store_product','id'),800010,true);
+        SELECT setval(pg_get_serial_sequence('store_product_attr_value','id'),800010,true);
+        SELECT setval(pg_get_serial_sequence('store_cart','id'),800010,true)`);
+      const env={...full.env,NODE_ENV:'test',APP_KEY:'isolated-supplier-pricing-key',UPSTASH_REDIS_URL:'',UPSTASH_REDIS_TOKEN:'',
+        CONFIG_KV:{...full.env.CONFIG_KV,get:async(key:string)=>key.startsWith('cfg_')&&Object.hasOwn(config,key.slice(4))?config[key.slice(4)]:(full.env.CONFIG_KV as any).get(key)}} as unknown as Env;
+      const supplierToken=(await createToken(21,'supplier',md5(password),env.APP_KEY)).token;
+      const reviewerToken=(await createToken(101,'admin',md5(reviewPassword),env.APP_KEY)).token;
+      const [buyer]=await full.db.select().from(pricingUser).where(eq(pricingUser.uid,11));
+      const buyerToken=(await createToken(11,'api',md5(buyer.pwd),env.APP_KEY)).token;
+      if(!full.withRuntimeRole)throw Error('Independent owned LOGINs required');
+      await full.withRuntimeRole(appRole=>full.withRuntimeRole!(async adminRole=>{
+        const [database]=await full.db.execute(sql`SELECT current_database() AS name`);
+        const names={app:appRole.role,admin:adminRole.role,maintenance:'finance_test',database:String(database.name),pricingOwner:full.pricingOwner};
+        await runRuntimeBusinessCommissioning(full.db,names);expect((await runRoutinePaymentRuntimeInstallation(full.db,names)).after.ready).toBe(true);
+        expect(await auditRuntimeBusinessPrivileges(appRole.db,'app',names)).toMatchObject({ready:true,failures:[]});
+        const container=createContainerFromDb(appRole.db);wiring.container=container;wiring.moderator=createContainerFromDb(adminRole.db);
+        const request=async(method:string,path:string,body:object|undefined,token:string)=>{
+          const response=await app.request(path,{method,headers:{Authorization:'Bearer '+token,'X-Supplier-Id':'8',
+            ...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})},env);
+          const result=await response.json<Envelope>();expect(result.status,result.msg).toBe(200);return result;
+        };
+        const body={product_type:3,store_name:'实际会员佣金交付',cate_id:[800001],slider_image:['/supplier-price.png'],
+          spec_type:0,is_sub:[0,1],attrs:[{price:'10.00',settle_price:'1.00',vip_price:'7.50',brokerage:'2.00',brokerage_two:'1.00',stock:5}]};
+        const made=await request('POST','/supplierapi/product/product/0',body,supplierToken),id=Number(made.data.id);
+        expect((await container.db.select().from(storeProduct).where(eq(storeProduct.id,id)))[0]).toMatchObject({type:2,relationId:7,isVip:1,isSub:1,isVerify:0,isShow:0});
+        await request('POST','/adminapi/product/product/set_verify/'+id,{is_verify:1,is_show:1,refusal:'',auto_on_time:''},reviewerToken);
+        const detail=await request('GET','/supplierapi/product/product/'+id,undefined,supplierToken);
+        expect(detail.data.price_selection).toEqual({version:1,is_vip:1,is_sub:1});
+        const [sku]=await container.db.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.productId,id));
+        const [nonmember]=await container.db.select().from(pricingUser).where(eq(pricingUser.uid,22));
+        const nonmemberToken=(await createToken(22,'api',md5(nonmember.pwd),env.APP_KEY)).token;
+        const nonmemberCart=await new StoreCartService(container,env).add({uid:22,productId:id,unique:sku.unique,cartNum:1,isNew:1});
+        const ordinary=await request('POST','/api/order/confirm',{cartIds:[nonmemberCart.id],shippingType:1,useIntegral:false},nonmemberToken);
+        expect(ordinary.data.priceGroup.pay_price).toBe('10.00');
+        const cart=await new StoreCartService(container,env).add({uid:11,productId:id,unique:sku.unique,cartNum:1,isNew:1});
+        const selection={cartIds:[cart.id],shippingType:1,useIntegral:false};
+        const confirmed=await request('POST','/api/order/confirm',selection,buyerToken);expect(confirmed.data.priceGroup.pay_price).toBe('7.50');
+        const order=await StoreOrderCreateService.createWithRuntime(container,{CONFIG_KV:env.CONFIG_KV,requireConfirmation:true,requirePurchaseOrigin:true,
+          nextOrderId:async()=> 'supplier_price_lifecycle'}, {...selection,uid:11,key:confirmed.data.orderKey,quoteToken:confirmed.data.quoteToken,userIp:'127.0.0.1'});
+        const [root]=await container.db.select().from(pricingOrder).where(eq(pricingOrder.orderId,order.orderId));
+        expect(root).toMatchObject({payPrice:'7.50',oneBrokerage:'2.00',twoBrokerage:'1.00',spreadUid:22,spreadTwoUid:33});
+        const paid=await applyStoreOrderBalancePayment(container,{uid:11,orderId:order.orderId,routineNotice:env});expect(paid.outcome).toBe('paid');
+        expect((await applyStoreOrderBalancePayment(container,{uid:11,orderId:order.orderId})).outcome).toBe('already-paid');
+        const queue={send:vi.fn(async()=>{}),sendBatch:vi.fn(async()=>({successful:1}))};
+        const consumer=new OrderOutboxService(container,{ORDER_QUEUE:queue as unknown as Queue<OrderMessage>,APP_KEY:env.APP_KEY});
+        const message={action:'processOrderPaidOutbox' as const,outboxId:paid.outbox!.id,eventKey:paid.outbox!.eventKey};
+        expect(await consumer.processMessage(message)).toBe('completed');expect(await consumer.processMessage(message)).toBe('already-completed');
+        const leaves=await container.db.select().from(pricingOrder).where(sql`(${pricingOrder.id}=${root.id} OR ${pricingOrder.pid}=${root.id}) AND ${pricingOrder.pid}>=0 AND ${pricingOrder.supplierId}=7`);
+        expect(leaves).toHaveLength(1);const leaf=leaves[0];expect(leaf).toMatchObject({productType:3,paid:1,status:0,payPrice:'7.50'});
+        await request('PUT','/supplierapi/order/delivery/'+leaf.id,{delivery_type:'fictitious',fictitious_content:'本地会员价格结算交付'},supplierToken);
+        await request('POST','/api/order/take',{order_id:leaf.orderId},buyerToken);
+        const rows=await container.db.execute(sql`SELECT uid,number FROM user_brokerage WHERE link_id=${String(leaf.id)} AND pm=1 ORDER BY uid`);
+        expect(rows).toEqual([{uid:22,number:'2.00'},{uid:33,number:'1.00'}]);
+        await app.request('/api/order/take',{method:'POST',headers:{Authorization:'Bearer '+buyerToken,'Content-Type':'application/json'},body:JSON.stringify({order_id:leaf.orderId})},env);
+        expect(await container.db.execute(sql`SELECT uid,number FROM user_brokerage WHERE link_id=${String(leaf.id)} AND pm=1 ORDER BY uid`)).toEqual(rows);
+        const current=await request('GET','/supplierapi/product/product/'+id,undefined,supplierToken);
+        await request('POST','/supplierapi/product/product/'+id,{...body,is_sub:[],attrs:current.data.attrs},supplierToken);
+        await request('POST','/adminapi/product/product/set_verify/'+id,{is_verify:1,is_show:1,refusal:'',auto_on_time:''},reviewerToken);
+        const freshCart=await new StoreCartService(container,env).add({uid:11,productId:id,unique:sku.unique,cartNum:1,isNew:1});
+        const disabledSelection={cartIds:[freshCart.id],shippingType:1,useIntegral:false};
+        const disabled=await request('POST','/api/order/confirm',disabledSelection,buyerToken);expect(disabled.data.priceGroup.pay_price).toBe('10.00');
+        const normalOrder=await StoreOrderCreateService.createWithRuntime(container,{CONFIG_KV:env.CONFIG_KV,requireConfirmation:true,requirePurchaseOrigin:true,
+          nextOrderId:async()=> 'supplier_default_commission'}, {...disabledSelection,uid:11,key:disabled.data.orderKey,quoteToken:disabled.data.quoteToken,userIp:'127.0.0.1'});
+        expect((await container.db.select().from(pricingOrder).where(eq(pricingOrder.orderId,normalOrder.orderId)))[0]).toMatchObject({paid:0,payPrice:'10.00',oneBrokerage:'1.00',twoBrokerage:'0.50'});
+        expect((await container.db.select().from(pricingOrder).where(eq(pricingOrder.id,root.id)))[0]).toMatchObject({paid:1,payPrice:'7.50',oneBrokerage:'2.00',twoBrokerage:'1.00'});
+        expect(await container.db.execute(sql`SELECT uid,number FROM user_brokerage WHERE link_id=${String(leaf.id)} AND pm=1 ORDER BY uid`)).toEqual(rows);
+        expect((await container.db.select().from(pricingUser).where(eq(pricingUser.uid,11)))[0].nowMoney).toBe('92.50');
+      }));
+      expect(network).not.toHaveBeenCalled();
+    }finally{wiring.container=null;wiring.moderator=null;network.mockRestore();await full.close();}
+  },180_000);
+});

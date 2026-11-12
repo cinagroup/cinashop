@@ -303,6 +303,7 @@ export interface ProductSku {
 }
 
 export interface ProductDetail {
+  price_selection?: import('./utils/productPriceOptions').SupplierProductPriceSelection;
   recommend_image?: string;
   id: number;
   product_type: 0 | 1 | 3;

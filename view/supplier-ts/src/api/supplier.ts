@@ -175,6 +175,7 @@ function defaultPreviewDetail(id: number): ProductDetail {
   const row = previewProducts.find((item) => item.id === id) ?? previewProducts[0];
   return {
     id: row.id,
+    price_selection: { version: 1, is_vip: 0, is_sub: 0 },
     product_type: row.product_type === 1 || row.product_type === 3 ? row.product_type : 0,
     store_name: row.store_name,
     store_info: "",
@@ -809,7 +810,8 @@ export async function saveProduct(id: number, data: ProductDetail, signal?: Abor
   if (signal?.aborted) throw Error('商品保存已取消');
   if (previewMode) {
     const savedId = id || Math.max(...previewProducts.map((item) => item.id)) + 1;
-    const saved = clonePreviewDetail({ ...data, id: savedId, is_show: 0, is_verify: 0 });
+    const selected = (data as ProductDetail & { is_sub?: number[] }).is_sub;
+    const saved = clonePreviewDetail({ ...data, ...(Array.isArray(selected) ? { price_selection: { version: 1 as const, is_vip: selected.includes(0) ? 1 as const : 0 as const, is_sub: selected.includes(1) ? 1 as const : 0 as const } } : {}), id: savedId, is_show: 0, is_verify: 0 });
     previewProductDetails.set(savedId, saved);
     const stock = data.attrs.reduce((sum, item) => sum + Number(item.stock), 0);
     const price = data.attrs.reduce((minimum, item) => Math.min(minimum, Number(item.price)), Number.POSITIVE_INFINITY).toFixed(2);

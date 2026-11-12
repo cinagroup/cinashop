@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { productPriceSelection, productPriceOptionsPayload } from '@/utils/productPriceOptions';
 import { prepareSupplierProductRuleApplication } from '@/utils/productRules';
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -279,7 +280,9 @@ function initialForm(): ProductDetail {
 }
 
 const form = reactive<ProductDetail>(initialForm());
+const priceOptions = ref<number[]>([]), priceOptionsReady = ref(true);
 function resetProductForm() {
+  priceOptions.value = []; priceOptionsReady.value = true;
   Object.assign(schedule, productScheduleEditor()); productReadReady.value = false; productReadError.value = '';
   videoUploaderOpen.value = false; videoPreviewUrl.value = ''; videoGeneration.value++;
   selectedLabelIds.value = []; labelsChanged.value = false;
@@ -308,6 +311,7 @@ function editableSku(sku: ProductSku, productType: ProductDetail['product_type']
 }
 
 function applyProductDetail(detail: ProductDetail) {
+  const pricing = productPriceSelection(detail.price_selection); priceOptions.value = pricing.selected; priceOptionsReady.value = pricing.ready;
   const brand = productBrandDetail(detail), ensures = productEnsureDetail(detail), parameters = productParameterDetail(detail), systemForm = productSystemFormDetail(detail);
   Object.assign(schedule, productScheduleEditor(detail));
   selectedBrandPath.value = brand.path; brandSelection.value = brand.selection; brandChanged.value = false;
@@ -583,7 +587,9 @@ function validateForm() {
   for (const sku of form.attrs) {
     if (!/^\d{1,10}(?:\.\d{1,2})?$/.test(sku.price) || Number(sku.price) <= 0) return `SKU ${sku.suk} 的销售价格式错误`;
     if (!/^\d{1,10}(?:\.\d{1,2})?$/.test(sku.settle_price) || Number(sku.settle_price) <= 0) return `SKU ${sku.suk} 的结算价格式错误`;
-    if (Number(sku.brokerage || 0) + Number(sku.brokerage_two || 0) > Number(sku.price)) return `SKU ${sku.suk} 的佣金之和不能超过销售价`;
+    if ((copying.value || !priceOptionsReady.value || priceOptions.value.includes(1)) && Number(sku.brokerage || 0) + Number(sku.brokerage_two || 0) > Number(sku.price)) return `SKU ${sku.suk} 的佣金之和不能超过销售价`;
+    if (!copying.value && priceOptionsReady.value && priceOptions.value.includes(0)
+      && (!/^\d{1,10}(?:\.\d{1,2})?$/.test(sku.vip_price) || Number(sku.vip_price) <= 0)) return `SKU ${sku.suk} 的会员价必须大于0且最多两位小数`;
     if (isCardProduct.value) {
       if (sku.delivery_mode === "fixed" && !sku.disk_info?.trim()) return `SKU ${sku.suk} 请填写固定交付内容`;
       if (cardBackedSku(sku) && (!sku.id || sku.original_disk_info?.trim()) && sku.stock !== 0) {
@@ -613,8 +619,8 @@ async function submit() {
     const { media: _preview, store_label_id: _originalLabels, video_preview_url: _videoPreview, retired_attrs: _retired,
       auto_on_time: _autoOn, auto_off_time: _autoOff, brand_id: _originalBrand, brand_selection: _brandSelection, ensure_id: _originalEnsures, ensure_selection: _ensureSelection,
       specs_id: _originalTemplate, specs: _originalParameters, specs_selection: _parameterSelection,
-      system_form_id: _originalSystemForm, system_form_selection: _systemFormSelection, recommend_image: _originalRecommendImage, ...editableForm } = form as ProductDetail & { video_preview_url?: unknown };
-    const payload = { ...editableForm, attrs, ...(labelsChanged.value ? { store_label_id: [...selectedLabelIds.value] } : {}),
+      system_form_id: _originalSystemForm, system_form_selection: _systemFormSelection, recommend_image: _originalRecommendImage, price_selection: _priceSelection, ...editableForm } = form as ProductDetail & { video_preview_url?: unknown };
+    const payload = { ...editableForm, attrs, ...(!copying.value ? productPriceOptionsPayload(priceOptions.value, priceOptionsReady.value) : {}), ...(labelsChanged.value ? { store_label_id: [...selectedLabelIds.value] } : {}),
       ...(!copying.value ? { ...productRecommendImagePayload(form.recommend_image, recommendImageChanged.value), ...productSchedulePayload(schedule), ...productBrandPayload(selectedBrandPath.value, brandChanged.value), ...productEnsurePayload(selectedEnsureIds.value, ensuresChanged.value), ...productParameterPayload(parameterDraft.value, parametersChanged.value), ...productSystemFormPayload(selectedSystemFormId.value, systemFormChanged.value) } : {}) };
     if (copying.value) {
       if (!copyContext.value || copyContext.value.source_id !== copyEntry.value.source) throw Error('请重新读取复制来源');
@@ -778,6 +784,16 @@ onMounted(load);
                 </el-radio-group>
                 <p v-if="editing" class="security-note">商品创建后不能修改履约类型。</p>
               </el-form-item>
+
+              <el-form-item v-if="!copying" class="wide" label="价格与佣金">
+                <el-checkbox-group v-model="priceOptions" :disabled="!priceOptionsReady || saving || !productReadReady">
+                  <el-checkbox :value="0">启用会员价</el-checkbox>
+                  <el-checkbox :value="1">独立佣金</el-checkbox>
+                </el-checkbox-group>
+                <p class="security-note">会员价填写在规格表中；关闭独立佣金后，付款按平台分佣规则计算。</p>
+                <p v-if="!priceOptionsReady" class="security-note">尚未读取价格开关，请重新读取后再调整。</p>
+              </el-form-item>
+              <p v-else class="security-note">复制保留来源的会员价和佣金开关，可在创建后的编辑页调整。</p>
               <el-form-item class="wide" label="商品名称" required><el-input v-model="form.store_name" maxlength="256" show-word-limit /></el-form-item>
               <el-form-item class="wide" label="商品简介"><el-input v-model="form.store_info" maxlength="256" show-word-limit /></el-form-item>
               <el-form-item label="商品分类" required>
@@ -894,13 +910,14 @@ onMounted(load);
                   <span v-else class="security-note">保存后前往卡密库存安全导入</span>
                 </template>
               </el-table-column>
+              <el-table-column label="会员价" width="130"><template #default="scope"><el-input v-model="scope.row.vip_price" :disabled="!copying && (!priceOptionsReady || !priceOptions.includes(0))" /></template></el-table-column>
               <el-table-column label="销售价" width="130"><template #default="scope"><el-input v-model="scope.row.price" /></template></el-table-column>
               <el-table-column label="结算价" width="130"><template #default="scope"><el-input v-model="scope.row.settle_price" /></template></el-table-column>
               <el-table-column label="成本价" width="130"><template #default="scope"><el-input v-model="scope.row.cost" /></template></el-table-column>
               <el-table-column label="原价" width="130"><template #default="scope"><el-input v-model="scope.row.ot_price" /></template></el-table-column>
               <el-table-column label="库存" width="145"><template #default="scope"><el-input-number :key="`${scope.row.suk}-${scope.row.delivery_mode ?? 'physical'}`" v-model="scope.row.stock" :disabled="isCardProduct && scope.row.delivery_mode !== 'fixed'" :min="0" :max="2147483647" controls-position="right" /></template></el-table-column>
-              <el-table-column label="一级佣金" width="130"><template #default="scope"><el-input v-model="scope.row.brokerage" /></template></el-table-column>
-              <el-table-column label="二级佣金" width="130"><template #default="scope"><el-input v-model="scope.row.brokerage_two" /></template></el-table-column>
+              <el-table-column label="一级佣金" width="130"><template #default="scope"><el-input v-model="scope.row.brokerage" :disabled="!copying && (!priceOptionsReady || !priceOptions.includes(1))" /></template></el-table-column>
+              <el-table-column label="二级佣金" width="130"><template #default="scope"><el-input v-model="scope.row.brokerage_two" :disabled="!copying && (!priceOptionsReady || !priceOptions.includes(1))" /></template></el-table-column>
               <el-table-column label="SKU编码" width="160"><template #default="scope"><el-input v-model="scope.row.code" maxlength="50" /></template></el-table-column>
               <el-table-column label="SKU条码" width="160"><template #default="scope"><el-input v-model="scope.row.bar_code" :aria-label="`SKU条码 ${scope.row.suk}`" maxlength="50" /></template></el-table-column>
               <el-table-column v-if="isPhysicalProduct" label="重量" width="120"><template #default="scope"><el-input v-model="scope.row.weight" /></template></el-table-column>
