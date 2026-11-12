@@ -1,0 +1,480 @@
+{
+  "schema": "php-ts-out-member-commission/v1",
+  "baseCommit": "9b35f3ffdeca578ae4fc71447ee46a181423b381",
+  "sourceHashes": [
+    {
+      "path": "workers-ts/src/services/out/OutProductService.ts",
+      "sha256": "4df13f43219958db0d9ae2aa55443396a7f81b472c3cefd35c38827fc577067e"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductPriceOptions.ts",
+      "sha256": "4d5f2aac570c7666315c6ad5c8b9da0962bc2b5c82d6343cc3b27c0b2a473083"
+    },
+    {
+      "path": "workers-ts/test/out-product-price-options.test.ts",
+      "sha256": "df33c86423ba509925ad7d2958f05f34487d22ee8b1118af8258fc9b41be49c4"
+    },
+    {
+      "path": "workers-ts/test/product-purchase-admission-postgres.test.ts",
+      "sha256": "664bdf0fe3b0f34a229984f0abf02878d191567c82e93a51c60d48f5c92071ec"
+    },
+    {
+      "path": "workers-ts/test/out-product-migration.test.ts",
+      "sha256": "165665f9f24d778e865f58defa9284f4413a2114772cc61e36af1d877c504aae"
+    },
+    {
+      "path": "workers-ts/test/out-manual-virtual-product.test.ts",
+      "sha256": "eefa2769b3b644beb61498adce75d37734f06a9fac043ec09f48ce8f601add50"
+    },
+    {
+      "path": "workers-ts/test/out-second-card-input.test.ts",
+      "sha256": "c2d2cdf781c8c6a0478588e06de795551b6e1ca3001fb4f9a899afa1f0ddac94"
+    }
+  ],
+  "legacyCommit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "legacySources": [
+    {
+      "path": "app/controller/out/Product.php",
+      "gitBlob": "5a55a3a43001325abfd36cee3c6af3e3b45cac66",
+      "sha256": "a52f6c6392594116e66803572a67e6c15d424fa13eac48df6bc9d7a6ef01c24a",
+      "bytes": 8803
+    },
+    {
+      "path": "app/services/product/product/StoreProductServices.php",
+      "gitBlob": "f8163c25f694dd0ff84486d89926ef004ba9e81e",
+      "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+      "bytes": 136399
+    },
+    {
+      "path": "app/services/product/sku/StoreProductAttrServices.php",
+      "gitBlob": "8a4c405eb7495985b0e6b3b8dddfc1f0c3eb62e4",
+      "sha256": "dae3878db9eb0392b01f52c5db1d8ba1cbf35456a9ddb081150a1955f87b0de9",
+      "bytes": 21089
+    }
+  ],
+  "validation": {
+    "profiles": [
+      {
+        "profile": "unit",
+        "exit": 0,
+        "seconds": 43.78,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "unit-types-shard-1",
+        "exit": 0,
+        "seconds": 179.68,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "unit-types-shard-2",
+        "exit": 0,
+        "seconds": 178.24,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "runtime-types",
+        "exit": 0,
+        "seconds": 150.83,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-author",
+        "exit": 0,
+        "seconds": 445.38,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-member",
+        "exit": 0,
+        "seconds": 44.95,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-brokerage",
+        "exit": 0,
+        "seconds": 83.55,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-checkout",
+        "exit": 0,
+        "seconds": 842.72,
+        "budgetPerGroupSeconds": 600,
+        "groups": 7,
+        "distinctCasesCovered": 71
+      }
+    ],
+    "unitPassed": 231,
+    "unitSkipped": 0,
+    "nativePassed": {
+      "native-author": 65,
+      "native-member": 14,
+      "native-brokerage": 40,
+      "native-checkout": 71
+    },
+    "nativeSkipped": 0,
+    "remainingOwnedFixtures": 0,
+    "typeShards": {
+      "originalRoots": 4342,
+      "commonRoots": 1900,
+      "testRoots": 2442,
+      "shardTestCounts": [
+        1221,
+        1221
+      ],
+      "unionExactlyMatchesOriginal": true,
+      "optionsExactlyMatchOriginal": true
+    },
+    "typeShardConfigs": [
+      {
+        "file": "tsconfig.out-member-commission-shard-1.generated.json",
+        "sha256": "c47c2fdacfab45b1335160d7acbde0b4c671d88906e49820d08ba26cb06b94ba"
+      },
+      {
+        "file": "tsconfig.out-member-commission-shard-2.generated.json",
+        "sha256": "761ddb987c1648184a155c074f1213068fa7dabffdf3f45dc1abcd96fb383c7a"
+      }
+    ],
+    "checkoutPartition": {
+      "source": "workers-ts/test/checkout-out-product-concurrency.test.ts",
+      "sha256": "2bf23233337b397301d0294934e105b0a534d33922752ef143e50f1f79a3d454",
+      "declarations": 52,
+      "cases": 71,
+      "selectorsUnique": true,
+      "groups": [
+        {
+          "index": 1,
+          "expected": 14,
+          "selectors": [
+            "show refuses the cart-to-product inverse wait and preserves checkout",
+            "save refuses a busy product after SKU locks instead of entering the buyer cart cycle",
+            "stock upload refuses a cross-product cycle even when editing different SKUs from the buyer",
+            "rolls back every earlier write on a busy later cart, then reuses the uncommitted key",
+            "releases earlier SKU and advisory locks on a busy later SKU",
+            "final replay-ledger failure rolls back its entire business transaction",
+            "after checkout preserves consumed sales and replays without another write",
+            "preserves the existing Out all-cart/all-relation show policy without touching another product"
+          ],
+          "lines": [
+            91,
+            108,
+            128,
+            154,
+            172,
+            189,
+            200,
+            216
+          ]
+        },
+        {
+          "index": 2,
+          "expected": 14,
+          "selectors": [
+            "concurrent create with the same key commits only one product and one ledger row",
+            "preserves non-lock selection errors rather than translating them into a refresh retry",
+            "stock upload excludes retired SKU inventory from the active product total",
+            "commits a full platform brand path and exact type2 rows with its replay while preserving historical relations and consumed stock",
+            "creates one branded product and one receipt for two concurrent same-key authors",
+            "clears branding only with an explicit new intent and refuses borrowing the original selected-path replay key",
+            "omitted branding preserves even unresolved old metadata without consulting the brand catalog",
+            "rejects a missing, crossed, hidden, deleted or non-root platform brand path"
+          ],
+          "lines": [
+            232,
+            246,
+            253,
+            282,
+            301,
+            316,
+            328,
+            338
+          ]
+        },
+        {
+          "index": 3,
+          "expected": 8,
+          "selectors": [
+            "refuses branding a Supplier-owned product through the platform Out writer without changing any row or receipt",
+            "uses the existing App privilege plan on a genuine restricted LOGIN for branding while brand catalog mutation remains denied",
+            "refuses a busy later brand row without keeping earlier brand/SKU/replay locks and permits the uncommitted key after release",
+            "pins the selected brand rows throughout a real blocked product write",
+            "a final replay failure rolls back the already-authored brand scalars and exact relationship replacement",
+            "rejects a brand trigger rewriting an unrelated row to the same values and rolls everything back",
+            "reads the stored brand path and availability without repairing malformed or newly unavailable history",
+            "reads brand scalars and relationship rows from one real repeatable-read snapshot across a concurrent replacement"
+          ],
+          "lines": [
+            344,
+            350,
+            386,
+            401,
+            417,
+            424,
+            432,
+            446
+          ]
+        },
+        {
+          "index": 4,
+          "expected": 12,
+          "selectors": [
+            "writes brand and ensure selections atomically after real checkout while preserving SKU sales and every unowned relation",
+            "clears only explicitly owned ensures with a fresh key and preserves omitted brand rows and scalars",
+            "omitted ensures preserve unresolved legacy scalars and physical rows without consulting the ensure catalog",
+            "rejects unavailable or foreign ensure selection",
+            "does not treat a malformed stored ensure selection as authority to retain a disabled service",
+            "refuses an ensure edit on a Supplier-owned product",
+            "creates one combined brand and ensure product for two concurrent same-key requests",
+            "rolls back earlier ensure SKU and replay locks on a busy later catalog row and permits the uncommitted key after release"
+          ],
+          "lines": [
+            478,
+            498,
+            510,
+            520,
+            527,
+            536,
+            542,
+            556
+          ]
+        },
+        {
+          "index": 5,
+          "expected": 11,
+          "selectors": [
+            "pins admitted ensure rows throughout the actual ordinary product write",
+            "rolls back the complete combined author when the final receipt interferes with",
+            "rejects an ensure trigger rewriting omitted or already-authored brand columns (combined=",
+            "reads stored ensure consistency separately from availability and retains legitimate Out show states without a write",
+            "uses only the existing App privileges for actual restricted-LOGIN combined brand and ensure writes",
+            "reads ensure scalars and type5 rows from the same snapshot across a real concurrent replacement",
+            "rejects a successful receipt trigger rewriting a protected relationship after the brand author and rolls back the receipt too",
+            "Out coupon replacement preserves stock, reads issuance titles, replays before admission, and clears explicitly"
+          ],
+          "lines": [
+            570,
+            585,
+            596,
+            603,
+            617,
+            651,
+            667,
+            687
+          ]
+        },
+        {
+          "index": 6,
+          "expected": 8,
+          "selectors": [
+            "creates an Out product and coupon links in the same idempotent receipt",
+            "omitted coupons retain exact legacy rows, differ from explicit-clear receipt, and do not consult issuance catalog",
+            "rejects missing or deleted issues atomically and refuses busy coupon and issue locks without waiting",
+            "saves coupon links under the existing restricted App privilege plan",
+            "rolls back selected and omitted coupon changes caused by deferred receipt triggers",
+            "saves and reads independent form snapshot and order template, then replays and clears each separately",
+            "retains omitted historical form bytes without a catalog read and cannot reuse an omission receipt for clearing",
+            "rejects unavailable, malformed and locked order templates without partial writes"
+          ],
+          "lines": [
+            710,
+            724,
+            736,
+            753,
+            780,
+            802,
+            829,
+            844
+          ]
+        },
+        {
+          "index": 7,
+          "expected": 4,
+          "selectors": [
+            "rolls back deferred receipt interference with selected and omitted form state",
+            "rolls back a deferred receipt mutation of the admitted form definition",
+            "validates actual customer checkout against the selected template and keeps historical form data separate",
+            "uses the existing restricted App role for a selected order template and legacy form snapshot"
+          ],
+          "lines": [
+            858,
+            867,
+            877,
+            891
+          ]
+        }
+      ]
+    },
+    "checkoutGroups": [
+      {
+        "index": 1,
+        "passed": 14,
+        "skippedInGroup": 57,
+        "totalInFile": 71,
+        "seconds": 153.48,
+        "budgetSeconds": 600,
+        "log": "native-checkout-group-1.log"
+      },
+      {
+        "index": 2,
+        "passed": 14,
+        "skippedInGroup": 57,
+        "totalInFile": 71,
+        "seconds": 153.82,
+        "budgetSeconds": 600,
+        "log": "native-checkout-group-2.log"
+      },
+      {
+        "index": 3,
+        "passed": 8,
+        "skippedInGroup": 63,
+        "totalInFile": 71,
+        "seconds": 101.06,
+        "budgetSeconds": 600,
+        "log": "native-checkout-group-3.log"
+      },
+      {
+        "index": 4,
+        "passed": 12,
+        "skippedInGroup": 59,
+        "totalInFile": 71,
+        "seconds": 137.96,
+        "budgetSeconds": 600,
+        "log": "native-checkout-group-4.log"
+      },
+      {
+        "index": 5,
+        "passed": 11,
+        "skippedInGroup": 60,
+        "totalInFile": 71,
+        "seconds": 130.01,
+        "budgetSeconds": 600,
+        "log": "native-checkout-group-5.log"
+      },
+      {
+        "index": 6,
+        "passed": 8,
+        "skippedInGroup": 63,
+        "totalInFile": 71,
+        "seconds": 101.67,
+        "budgetSeconds": 600,
+        "log": "native-checkout-group-6.log"
+      },
+      {
+        "index": 7,
+        "passed": 4,
+        "skippedInGroup": 67,
+        "totalInFile": 71,
+        "seconds": 64.72,
+        "budgetSeconds": 600,
+        "log": "native-checkout-group-7.log"
+      }
+    ],
+    "checkoutTimeout": {
+      "profile": "native-checkout",
+      "exit": 1,
+      "seconds": 604.06,
+      "budgetSeconds": 600
+    },
+    "checkoutTimeoutCleanup": {
+      "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-Eu1cPu",
+      "postgresVersion": 16,
+      "stoppedVerified": true,
+      "ownerUid": 1000,
+      "fixtureDatabase": "cinashop_kefu_runner_c3b26273047f4b8ba244625622fdc173",
+      "ownedTemporaryDataRemoved": true,
+      "postgresLogRetained": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-Eu1cPu/postgres.log",
+      "preservedLogSha256": "ee7df0a62fd3ceb1a6ddc8379bb78af2553958fcfc3b56e6f702034fdb55a0e3"
+    },
+    "logHashes": [
+      {
+        "file": "native-author.log",
+        "sha256": "ad6dbbc60553d04c9c81fa0e6a6b1f0511b0aebe6f01181576219793eb4e1886"
+      },
+      {
+        "file": "native-brokerage.log",
+        "sha256": "ed205da722301d9f9511bd702492db08fff746a7d467d61bdbfdfd1620402012"
+      },
+      {
+        "file": "native-checkout-group-1.log",
+        "sha256": "0a8d69aac8aba67501756bb6e0acc41f79d6894e34235e7a470819ebfc8efede"
+      },
+      {
+        "file": "native-checkout-group-2.log",
+        "sha256": "0f3e4cc0363a96153b48ef293d924d8e4432bf63e2cde9040b1253395b926e5a"
+      },
+      {
+        "file": "native-checkout-group-3.log",
+        "sha256": "30a6caa7b8911c80301b4c11db951f19ec10fbd52b3f6e072031fae950fd90f7"
+      },
+      {
+        "file": "native-checkout-group-4.log",
+        "sha256": "2ddf877dbf2aed5a84f7b34b3fc44a54441821f001550ba506081ef6d85caedc"
+      },
+      {
+        "file": "native-checkout-group-5.log",
+        "sha256": "2de445de5e6431420079aec4941fed955aa30b3cf66c8eecce058bf73fb64df8"
+      },
+      {
+        "file": "native-checkout-group-6.log",
+        "sha256": "aa67208189780a4b3eb46ecf433787fb8d5e6c93fc70bdf03128bb99dc948986"
+      },
+      {
+        "file": "native-checkout-group-7.log",
+        "sha256": "9fb046ea506895c96d3ccbc986154697422f3026f62939b6c58b5594369df8d4"
+      },
+      {
+        "file": "native-checkout-timeout.log",
+        "sha256": "0c025ee50af3523ffb8ad23ac74c322797a0df53da616ee0680ab3472a20e7ab"
+      },
+      {
+        "file": "native-member.log",
+        "sha256": "d9ba61b5c2a275abfa19d3665b3c4f21a7a9b8fc9f0f50c92fdd77cbc947a711"
+      },
+      {
+        "file": "previous-ci-shard1.log",
+        "sha256": "edd176aaa503f1feaaf6c5d6a4a98e6e60abfb83035802eb00aee03c20a53921"
+      },
+      {
+        "file": "runtime-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "timeout-postgres.log",
+        "sha256": "ee7df0a62fd3ceb1a6ddc8379bb78af2553958fcfc3b56e6f702034fdb55a0e3"
+      },
+      {
+        "file": "unit-types-shard-1.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "unit-types-shard-2.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "unit.log",
+        "sha256": "7b7a912ac8f1986b041a3eb65df61744d39cc498ac9a0ec3b503bbc0bf197c10"
+      }
+    ]
+  },
+  "testContinuity": {
+    "purchaseOriginalBytesPreserved": true
+  },
+  "previousCi": {
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/43107938956",
+    "status": "completed",
+    "conclusion": "failure",
+    "reason": "Both Worker shards failed before tests because remote legacy PHP commit was not available (not our ref)."
+  },
+  "limitations": [
+    "Out author for product types 1 and 2 remains incomplete",
+    "Existing private-schema mature writeoff fixture fails on the unchanged baseline; see prior batch audit",
+    "No deployment, PHP upload or real external provider"
+  ],
+  "wholeMigrationComplete": false,
+  "generatedAt": "2026-11-12T01:35:29.364698+00:00",
+  "fullFileScanReview": {
+    "findings": 0,
+    "unresolved": 0
+  }
+}

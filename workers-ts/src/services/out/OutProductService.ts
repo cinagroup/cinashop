@@ -22,6 +22,7 @@ import {
   type SupplierProductSku,
 } from "@/services/supplier/SupplierProductManagementService";
 import { outSecondCardConfiguration } from './OutSecondCardInput';
+import { outProductPriceAttrs, outProductPriceOptions } from './OutProductPriceOptions';
 import type { SecondCardSkuConfiguration } from '@/services/product/ProductSkuEditorService';
 import { PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE } from "@/services/product/ProductSkuIdentity";
 import { NotFoundException, ValidateException } from "@/utils/errors";
@@ -75,6 +76,8 @@ interface OutPhysicalProductInput extends Omit<SupplierPhysicalProductInput, "pr
   activity?: string;
   recommendList?: string;
   isVipProduct?: 0 | 1;
+  isVip?: 0 | 1;
+  isSub?: 0 | 1;
   deliveryType: string;
   freight: 1 | 2 | 3;
   isShow: 0 | 1;
@@ -232,6 +235,7 @@ function normalizeOutProductInputInternal(input: UnknownRecord, allowManualVirtu
   const activity = activityInput(input);
   const recommendList = recommendationInput(input);
   const presale = outProductPresaleInput(input);
+  const priceOptions = outProductPriceOptions(input);
   const vipProduct = Object.hasOwn(input, 'is_vip_product') && input.is_vip_product !== undefined
     ? flag(input.is_vip_product === false ? 0 : input.is_vip_product === true ? 1 : input.is_vip_product, '会员专属开关', 0)
     : undefined;
@@ -240,6 +244,7 @@ function normalizeOutProductInputInternal(input: UnknownRecord, allowManualVirtu
   // the base parser and bind the new author intent to an explicit version.
   const baseInput = { ...input };
   delete baseInput.auto_on_time; delete baseInput.auto_off_time;
+  if (priceOptions?.isSub === 0) baseInput.attrs = outProductPriceAttrs(input.attrs, priceOptions);
   const secondCard = allowManualVirtual && Number(input.product_type ?? input.productType ?? 0) === SECOND_CARD_PRODUCT_TYPE;
   if (secondCard) baseInput.product_type = MANUAL_VIRTUAL_PRODUCT_TYPE;
   const base = allowManualVirtual
@@ -274,9 +279,12 @@ function normalizeOutProductInputInternal(input: UnknownRecord, allowManualVirtu
   if (base.cateIds.join(",").length > 64) throw new ValidateException("商品分类编码总长度超限");
   const skus = base.skus.map((sku) => ({
     ...sku,
-    ...(secondCard ? outSecondCardConfiguration(input) : {}),
+    ...(secondCard ? outSecondCardConfiguration({ ...input, attrs: baseInput.attrs }) : {}),
     image: safeAsset(sku.image, "SKU图片", 128),
   }));
+  if (priceOptions?.isVip === 1 && skus.some(sku => moneyCents(sku.vipPrice) <= 0n)) {
+    throw new ValidateException('启用会员价时所有SKU会员价必须大于0');
+  }
   const brandIds = supplierProductBrandInput(input);
   const ensureIds = supplierProductEnsureInput(input);
   const parameters = outProductParameterInput(input);
@@ -298,6 +306,7 @@ function normalizeOutProductInputInternal(input: UnknownRecord, allowManualVirtu
     ...(activity === undefined ? {} : { activity }),
     ...(recommendList === undefined ? {} : { recommendList }),
     ...(vipProduct === undefined ? {} : { isVipProduct: vipProduct }),
+    ...(priceOptions === undefined ? {} : priceOptions),
     ...presale,
     ...(Object.keys(schedule).length ? { scheduleIntentVersion: 1 as const } : {}),
     ...outProductLabelInput(input),
@@ -594,6 +603,7 @@ export class OutProductService {
         : await inventoryLock(() => lockOutProductSystemForm(tx, systemFormId));
       const productValues = {
         ...(input.isVipProduct === undefined ? {} : { isVipProduct: input.isVipProduct }),
+        ...(input.isVip === undefined ? {} : { isVip: input.isVip, isSub: input.isSub }),
         ...(presalePlan.authored ? { isPresaleProduct: presalePlan.isPresaleProduct,
           presaleStartTime: presalePlan.presaleStartTime, presaleEndTime: presalePlan.presaleEndTime,
           presaleDay: presalePlan.presaleDay } : {}),
@@ -680,13 +690,16 @@ export class OutProductService {
       const expectedActivity = input.activity ?? existing?.activity ?? '';
       const expectedRecommendations = input.recommendList ?? existing?.recommendList ?? '';
       const expectedVipProduct = input.isVipProduct ?? existing?.isVipProduct ?? 0;
+      const expectedVip = input.isVip ?? existing?.isVip ?? 0;
+      const expectedSub = input.isSub ?? existing?.isSub ?? 0;
       const assertProductSelections = async () => {
         const [row] = await tx.select({ activity: storeProduct.activity, recommendList: storeProduct.recommendList,
-          isVipProduct: storeProduct.isVipProduct }).from(storeProduct)
+          isVipProduct: storeProduct.isVipProduct, isVip: storeProduct.isVip, isSub: storeProduct.isSub }).from(storeProduct)
           .where(eq(storeProduct.id, savedProductId)).limit(1);
         if (!row || row.activity !== expectedActivity) throw new ValidateException('平台商品活动顺序已变化');
         if (row.recommendList !== expectedRecommendations) throw new ValidateException('平台推荐商品列表已变化');
         if (row.isVipProduct !== expectedVipProduct) throw new ValidateException('平台商品会员专属状态已变化');
+        if (row.isVip !== expectedVip || row.isSub !== expectedSub) throw new ValidateException('平台商品会员价或佣金开关已变化');
       };
       await assertProductSelections();
       if (!couponFence) {
@@ -817,8 +830,22 @@ export class OutProductService {
           .where(and(eq(storeProductAttrResult.productId, savedProductId), eq(storeProductAttrResult.type, PRODUCT_ATTR_TYPE)));
         if (snapshots.length !== 1 || snapshots[0].result !== resultSnapshot) throw new ValidateException('次卡商品规格快照已变化');
       };
+      const assertPriceOptions = async () => {
+        if (input.isVip === undefined) return;
+        const rows = await tx.select({ unique: storeProductAttrValue.unique, suk: storeProductAttrValue.suk,
+          vipPrice: storeProductAttrValue.vipPrice, brokerage: storeProductAttrValue.brokerage,
+          brokerageTwo: storeProductAttrValue.brokerageTwo, isRetired: storeProductAttrValue.isRetired })
+          .from(storeProductAttrValue).where(and(eq(storeProductAttrValue.productId, savedProductId), eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE)));
+        const expected = new Map(resultSkus.map(sku => [sku.unique, sku]));
+        if (rows.length !== expected.size || rows.some(row => {
+          const sku = expected.get(row.unique);
+          return !sku || row.suk !== sku.suk || row.isRetired !== 0 || row.vipPrice !== sku.vipPrice ||
+            row.brokerage !== sku.brokerage || row.brokerageTwo !== sku.brokerageTwo;
+        })) throw new ValidateException('平台商品会员价或佣金规则已变化');
+      };
       await assertManualVirtualState();
       await assertSecondCardState();
+      await assertPriceOptions();
       await updateCartStatus(tx, savedProductId, input.isShow);
       if (relationFence) relationFence.productId = savedProductId;
       const brandProof = brandIds === undefined ? undefined
@@ -845,6 +872,13 @@ export class OutProductService {
       await tx.execute(sql`SET CONSTRAINTS ALL IMMEDIATE`);
       await assertManualVirtualState();
       await assertSecondCardState();
+      await assertPriceOptions();
+      if (input.isVip !== undefined) {
+        const [receipt] = await tx.select().from(outProductWriteReplay).where(and(eq(outProductWriteReplay.outAccountId, account.id),
+          eq(outProductWriteReplay.operation, operation), eq(outProductWriteReplay.requestKey, key))).limit(1);
+        if (!receipt || receipt.productId !== savedProductId || receipt.requestHash !== hash || receipt.resultCount !== 0)
+          throw new ValidateException('平台商品会员价或佣金回执已变化');
+      }
       if (input.productType === SECOND_CARD_PRODUCT_TYPE) {
         const [receipt] = await tx.select().from(outProductWriteReplay).where(and(eq(outProductWriteReplay.outAccountId, account.id),
           eq(outProductWriteReplay.operation, operation), eq(outProductWriteReplay.requestKey, key))).limit(1);
@@ -860,6 +894,7 @@ export class OutProductService {
       await assertOutProductPresaleFuture(tx, presalePlan);
       await assertManualVirtualState();
       await assertSecondCardState();
+      await assertPriceOptions();
       return { id: savedProductId, idempotent: false, stock_preserved: !!existing };
     });
   }

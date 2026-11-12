@@ -1109,3 +1109,142 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Out second-card 
     const [receipt] = await f.db.execute<{ n: number }>(sql`SELECT count(*)::int AS n FROM out_product_write_replay`); expect(receipt.n).toBe(0);
   }, 30_000);
 });
+
+// Out's legacy is_sub array controls member pricing and specified commission independently.
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Out member price and commission actual checkout', () => {
+  let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
+  let owned: Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
+  let network: ReturnType<typeof vi.spyOn>, testEnv: Env, token: string;
+  const body = { product_type: 0, cate_id: [9], store_name: '隔离会员佣金商品', slider_image: ['/price.png'],
+    spec_type: 0, is_show: 1, delivery_type: [1], freight: 1, is_sub: [0, 1],
+    attrs: [{ price: '10.00', vip_price: '7.50', brokerage: '2.00', brokerage_two: '1.00', stock: 5, bar_code: 'PRICE-OUT' }] };
+  const app = (db = f.db) => { const a = new Hono<{ Bindings: Env; Variables: AppVariables }>();
+    a.use('*', async (c, next) => { c.set('container', createContainerFromDb(db)); await next(); });
+    a.onError((e, c) => c.json({ status: 400, msg: e.message, data: null }));
+    a.post('/outapi/product', outAuthMiddleware('POST', '/product'), productCreate);
+    a.put('/outapi/product/:id', outAuthMiddleware('PUT', '/product/{id}'), productUpdate);
+    a.get('/outapi/product/:id', outAuthMiddleware('GET', '/product/{id}'), productInfo); return a; };
+  const call = async (path: string, method: string, data?: object, key = crypto.randomUUID(), db = f.db) => {
+    const response = await app(db).request(path, { method, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', 'Idempotency-Key': key },
+      ...(data ? { body: JSON.stringify(data) } : {}) }, testEnv);
+    return response.json() as Promise<{ status: number; msg: string; data: any }>;
+  };
+  beforeEach(async () => {
+    network = vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('Isolated Out price test forbids external I/O'));
+    f = await createPcCheckoutQuoteFixture([], async () => { owned = await sequenceRunnerDatabase();
+      try { const api = await import('drizzle-kit/api'), schema = await import('@/models/schema');
+        await owned.exec((await api.generateMigration(api.generateDrizzleJson({}), api.generateDrizzleJson(schema))).join('\n'));
+        await completePurchaseOriginEvidenceOrm(owned.db); await completePurchaseCancellationEvidenceOrm(owned.db); return owned;
+      } catch (error) { await owned.close(); throw error; } });
+    await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
+    await f.setConfig({ member_card_status: '1', svip_price_status: '1', brokerage_func_status: '1', store_brokerage_statu: '1',
+      brokerage_level: '2', brokerage_compute_type: '1', store_brokerage_ratio: '10', store_brokerage_two: '5', division_status: '0' });
+    await f.exec(`INSERT INTO store_product_category(id,cate_name,is_show) VALUES (9,'隔离分类',1);
+      INSERT INTO out_interface(id,type,method,url) VALUES (1,1,'POST','/product'),(2,1,'PUT','/product/{id}'),(3,1,'GET','/product/{id}');
+      INSERT INTO out_account(id,appid,appsecret,rules) VALUES (1,'price-local','fixture-price-secret','[1,2,3]');
+      UPDATE "user" SET is_ever_level=1,spread_uid=22 WHERE uid=11;
+      INSERT INTO "user"(uid,account,is_promoter,spread_open,status,spread_uid) VALUES (22,'first',1,1,1,33),(33,'second',1,1,1,0);
+      SELECT setval(pg_get_serial_sequence('store_product','id'),70,true);
+      SELECT setval(pg_get_serial_sequence('store_product_attr_value','id'),1,true);
+      SELECT setval(pg_get_serial_sequence('store_cart','id'),1,true)`);
+    testEnv = { ...f.env, APP_KEY: 'isolated-local-key-not-a-real-credential', TOKEN_BUCKET: { getByName: () => ({ consumeRateLimit: async () =>
+      ({ allowed: true, auditEvent: false, limit: 120, remaining: 119, resetAt: Date.now() + 60000 }) }) } } as unknown as Env;
+    token = (await createToken(1, 'out', md5('fixture-price-secret'), testEnv.APP_KEY)).token;
+  }, 120_000);
+  afterEach(async () => { try { expect(network).not.toHaveBeenCalled(); } finally { network?.mockRestore(); await f?.close(); } }, 60_000);
+  it('authors both options, invalidates a stale member quote and applies actual member price and specified commissions', async () => {
+    const key = crypto.randomUUID(), created = await call('/outapi/product', 'POST', body, key); expect(created.status, created.msg).toBe(200);
+    const id = Number(created.data.id); expect((await call('/outapi/product', 'POST', body, key)).data).toMatchObject({ id, idempotent: true });
+    const [sku] = await f.db.execute<any>(sql`SELECT "unique",stock,vip_price,brokerage,brokerage_two FROM store_product_attr_value WHERE product_id=${id} AND type=0`);
+    expect(sku).toMatchObject({ stock: 5, vip_price: '7.50', brokerage: '2.00', brokerage_two: '1.00' });
+    const detail = await call(`/outapi/product/${id}`, 'GET'); expect(detail.status, detail.msg).toBe(200);
+    expect(detail.data.productInfo.is_sub).toEqual([1, 0]);
+    const cart = await new StoreCartService(f.container, f.env).add({ uid: 11, productId: id, unique: sku.unique, cartNum: 1, isNew: 1, type: 0 });
+    const selection = { cartIds: [cart.id], type: 0, shippingType: 1, addressId: 11, useIntegral: false };
+    const confirm = async () => { const response = await f.app.request('/api/order/confirm', { method: 'POST', headers: { 'content-type': 'application/json', 'x-fixture-user': '11' }, body: JSON.stringify(selection) }, f.env);
+      return response.json() as Promise<{ status: number; msg: string; data: { orderKey: string; quoteToken: string; priceGroup: { pay_price: string } } }>; };
+    const old = await confirm(); expect(old.status, old.msg).toBe(200); expect(old.data.priceGroup.pay_price).toBe('7.50');
+    const edited = { ...body, is_sub: [], attrs: [{ ...body.attrs[0], unique: sku.unique, stock: 999 }] };
+    const disabled = await call(`/outapi/product/${id}`, 'PUT', edited); expect(disabled.status, disabled.msg).toBe(200); expect(disabled.data.stock_preserved).toBe(true);
+    const [zeroed] = await f.db.execute<any>(sql`SELECT p.is_vip,p.is_sub,a.stock,a.brokerage,a.brokerage_two FROM store_product p JOIN store_product_attr_value a ON a.product_id=p.id WHERE p.id=${id} AND a.type=0`);
+    expect(zeroed).toMatchObject({ is_vip: 0, is_sub: 0, stock: 5, brokerage: '0.00', brokerage_two: '0.00' });
+    const before = await f.snapshot();
+    await expect(StoreOrderCreateService.createWithRuntime(f.container, { CONFIG_KV: f.env.CONFIG_KV, requireConfirmation: true, requirePurchaseOrigin: true,
+      nextOrderId: async () => `stale_price_${id}` }, { ...selection, uid: 11, key: old.data.orderKey, quoteToken: old.data.quoteToken, userIp: '127.0.0.1' })).rejects.toThrow('重新确认');
+    expect(await f.snapshot()).toEqual(before);
+    const normal = await confirm(); expect(normal.status, normal.msg).toBe(200); expect(normal.data.priceGroup.pay_price).toBe('10.00');
+    const enabled = await call(`/outapi/product/${id}`, 'PUT', { ...body, attrs: [{ ...body.attrs[0], unique: sku.unique }] }); expect(enabled.status, enabled.msg).toBe(200);
+    const fresh = await confirm(); expect(fresh.status, fresh.msg).toBe(200); expect(fresh.data.priceGroup.pay_price).toBe('7.50');
+    const order = await StoreOrderCreateService.createWithRuntime(f.container, { CONFIG_KV: f.env.CONFIG_KV, requireConfirmation: true, requirePurchaseOrigin: true,
+      nextOrderId: async () => `price_out_${id}` }, { ...selection, uid: 11, key: fresh.data.orderKey, quoteToken: fresh.data.quoteToken, userIp: '127.0.0.1' });
+    const [saved] = await f.db.execute<any>(sql`SELECT paid,pay_price,one_brokerage,two_brokerage,spread_uid,spread_two_uid FROM store_order WHERE order_id=${order.orderId}`);
+    expect(saved).toMatchObject({ paid: 0, pay_price: '7.50', one_brokerage: '2.00', two_brokerage: '1.00', spread_uid: 22, spread_two_uid: 33 });
+  }, 30_000);
+  it('preserves options on omission and rejects conflicting replay and zero member prices', async () => {
+    const key = crypto.randomUUID(), created = await call('/outapi/product', 'POST', body, key); expect(created.status, created.msg).toBe(200); const id = Number(created.data.id);
+    const [sku] = await f.db.execute<any>(sql`SELECT "unique" FROM store_product_attr_value WHERE product_id=${id} AND type=0`);
+    const { is_sub: _omitted, ...withoutOptions } = body;
+    const edited = await call(`/outapi/product/${id}`, 'PUT', { ...withoutOptions, attrs: [{ ...body.attrs[0], unique: sku.unique }] }); expect(edited.status, edited.msg).toBe(200);
+    const [row] = await f.db.execute<any>(sql`SELECT is_vip,is_sub FROM store_product WHERE id=${id}`); expect(row).toEqual({ is_vip: 1, is_sub: 1 });
+    const before = await f.snapshot();
+    expect((await call('/outapi/product', 'POST', { ...body, is_sub: [1] }, key)).status).not.toBe(200);
+    expect((await call(`/outapi/product/${id}`, 'PUT', { ...body, attrs: [{ ...body.attrs[0], unique: sku.unique, vip_price: '0' }] })).status).not.toBe(200);
+    expect(await f.snapshot()).toEqual(before);
+  }, 30_000);
+  it('rolls back author state and receipt if a deferred trigger tampers with SKU commissions', async () => {
+    await f.exec(`CREATE FUNCTION test_out_commission_drift() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN UPDATE store_product_attr_value SET brokerage=9 WHERE product_id=NEW.product_id; RETURN NEW; END $$;
+      CREATE CONSTRAINT TRIGGER test_out_commission_drift AFTER INSERT ON out_product_write_replay DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION test_out_commission_drift()`);
+    const before = await f.snapshot(), result = await call('/outapi/product', 'POST', body);
+    expect(result.status).not.toBe(200); expect(result.msg).toContain('佣金'); expect(await f.snapshot()).toEqual(before);
+    const [receipt] = await f.db.execute<{ n: number }>(sql`SELECT count(*)::int AS n FROM out_product_write_replay`); expect(receipt.n).toBe(0);
+  }, 30_000);
+  it('writes the legacy price switches with the existing restricted application login', async () => {
+    if (!owned.withRuntimeRole) throw Error('Native restricted LOGIN required');
+    await owned.withRuntimeRole(async runtime => {
+      const plan = runtimeBusinessPrivilegePlan('app'), quote = (name: string) => { if (!/^[a-z_][a-z_0-9]*$/.test(name)) throw Error('Invalid identifier'); return `"${name}"`; };
+      const tables = await f.db.execute<{ name: string }>(sql`SELECT relname AS name FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r' ORDER BY relname`);
+      for (const { name } of tables) { const rights = plan.tables[name]; if (!rights) continue;
+        await f.exec(`GRANT ${rights.join(',')} ON public.${quote(name)} TO ${quote(runtime.role)}`);
+        const columns = plan.updateColumns[name]; if (columns?.length) await f.exec(`GRANT UPDATE(${columns.map(quote).join(',')}) ON public.${quote(name)} TO ${quote(runtime.role)}`); }
+      const seqs = await f.db.execute<{ table_name: string; sequence_name: string | null }>(sql`SELECT c.relname AS table_name,pg_get_serial_sequence('public.'||quote_ident(c.relname),a.attname) AS sequence_name FROM pg_class c JOIN pg_attribute a ON a.attrelid=c.oid AND a.attnum>0 AND NOT a.attisdropped WHERE c.relnamespace='public'::regnamespace AND c.relkind='r'`);
+      for (const row of seqs) if (row.sequence_name && plan.tables[row.table_name]?.includes('INSERT')) { const parts = row.sequence_name.split('.');
+        if (parts.length !== 2 || parts[0] !== 'public') throw Error('Unexpected sequence'); await f.exec(`GRANT USAGE ON SEQUENCE public.${quote(parts[1])} TO ${quote(runtime.role)}`); }
+      const saved = await call('/outapi/product', 'POST', body, crypto.randomUUID(), runtime.db); expect(saved.status, saved.msg).toBe(200);
+      const [row] = await f.db.execute<any>(sql`SELECT is_vip,is_sub FROM store_product WHERE id=${Number(saved.data.id)}`); expect(row).toEqual({ is_vip: 1, is_sub: 1 });
+      const [rights] = await runtime.db.execute(sql`SELECT current_user=session_user AS direct_login,has_table_privilege(current_user,'public.system_config','UPDATE') AS config_write`);
+      expect(rights).toEqual({ direct_login: true, config_write: false });
+    });
+  }, 30_000);
+  it.each([3, 4])('authors member price on nonphysical product type %i', async productType => {
+    const attrs = [{ ...body.attrs[0], ...(productType === 4 ? { write_times: 3, write_valid: 2, days: 7 } : {}) }];
+    const created = await call('/outapi/product', 'POST', { ...body, product_type: productType, is_sub: [0], attrs });
+    expect(created.status, created.msg).toBe(200); const id = Number(created.data.id);
+    const [row] = await f.db.execute<any>(sql`SELECT p.product_type,p.is_vip,p.is_sub,a.vip_price,a.brokerage,a.brokerage_two FROM store_product p JOIN store_product_attr_value a ON a.product_id=p.id WHERE p.id=${id} AND a.type=0`);
+    expect(row).toMatchObject({ product_type: productType, is_vip: 1, is_sub: 0, vip_price: '7.50', brokerage: '0.00', brokerage_two: '0.00' });
+    const detail = await call(`/outapi/product/${id}`, 'GET'); expect(detail.status, detail.msg).toBe(200); expect(detail.data.productInfo.is_sub).toEqual([0]);
+  }, 30_000);
+  it.each(['vip_price', 'brokerage'] as const)('rejects a %s edit committed while checkout waits for its SKU', async field => {
+    const created = await call('/outapi/product', 'POST', body); expect(created.status, created.msg).toBe(200); const id = Number(created.data.id);
+    const [sku] = await f.db.execute<any>(sql`SELECT id,"unique" FROM store_product_attr_value WHERE product_id=${id} AND type=0`);
+    const cart = await new StoreCartService(f.container, f.env).add({ uid: 11, productId: id, unique: sku.unique, cartNum: 1, isNew: 1, type: 0 });
+    const selection = { cartIds: [cart.id], type: 0, shippingType: 1, addressId: 11, useIntegral: false };
+    const response = await f.app.request('/api/order/confirm', { method: 'POST', headers: { 'content-type': 'application/json', 'x-fixture-user': '11' }, body: JSON.stringify(selection) }, f.env);
+    const confirmed = await response.json() as { status: number; msg: string; data: { orderKey: string; quoteToken: string } }; expect(confirmed.status, confirmed.msg).toBe(200);
+    if (!owned.withPeer) throw Error('Dedicated PG16 peers required');
+    await owned.withPeer(holder => owned.withPeer!(async buyer => {
+      await holder.exec('BEGIN');
+      if (field === 'vip_price') await holder.db.execute(sql`UPDATE store_product_attr_value SET vip_price='5.00' WHERE id=${Number(sku.id)}`);
+      else await holder.db.execute(sql`UPDATE store_product_attr_value SET brokerage='3.00' WHERE id=${Number(sku.id)}`);
+      const pending = outcome(StoreOrderCreateService.createWithRuntime(createContainerFromDb(buyer.db), { CONFIG_KV: f.env.CONFIG_KV,
+        requireConfirmation: true, requirePurchaseOrigin: true, nextOrderId: async () => `race_price_${id}` },
+        { ...selection, uid: 11, key: confirmed.data.orderKey, quoteToken: confirmed.data.quoteToken, userIp: '127.0.0.1' }));
+      let holding = true;
+      try { await waitForFinanceBlock(f.db, buyer.pid, holder.pid); await holder.exec('COMMIT'); holding = false;
+        const result = await pending; expect(result.ok).toBe(false); if (!result.ok) expect(result.error).toBeInstanceOf(ApiException);
+        const [row] = await f.db.execute<any>(sql`SELECT stock,vip_price,brokerage FROM store_product_attr_value WHERE id=${Number(sku.id)}`);
+        expect(row.stock).toBe(5); expect(row[field]).toBe(field === 'vip_price' ? '5.00' : '3.00');
+        const [orders] = await f.db.execute<{ n: number }>(sql`SELECT count(*)::int AS n FROM store_order WHERE order_id=${`race_price_${id}`}`); expect(orders.n).toBe(0);
+      } finally { if (holding) await holder.exec('ROLLBACK'); await pending; }
+    }));
+  }, 30_000);
+});
