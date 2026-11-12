@@ -464,3 +464,125 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Out card product
     expect(JSON.parse(snapshot.result).value.map((row: any) => ({ suk: row.suk, stock: row.stock }))).toEqual([{ suk: '固定', stock: 3 }, { suk: '卡库', stock: 3 }]);
   }, 40_000);
 });
+
+import { readDetailVideo } from '@/services/product/ProductDetailDesignData';
+
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Out product other settings and actual video policy', () => {
+  let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>, owned: Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
+  let network: ReturnType<typeof vi.spyOn>, env: Env, token: string;
+  const body = { product_type: 0, cate_id: [9], store_name: '隔离其他设置', slider_image: ['/settings.png'],
+    delivery_type: [1], freight: 1, spec_type: 0, is_show: 1, attrs: [{ price: '10.00', stock: 5, bar_code: 'OUT-SETTINGS' }] };
+  const call = async (path: string, method: string, data?: object, key = crypto.randomUUID(), db = f.db) => {
+    const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
+    app.use('*', async (c, next) => { c.set('container', createContainerFromDb(db)); await next(); }); app.onError(errorHandler);
+    app.post('/outapi/product', outAuthMiddleware('POST', '/product'), productCreate);
+    app.put('/outapi/product/:id', outAuthMiddleware('PUT', '/product/{id}'), productUpdate);
+    app.get('/outapi/product/:id', outAuthMiddleware('GET', '/product/{id}'), productInfo);
+    const response = await app.request(path, { method, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', 'Idempotency-Key': key },
+      ...(data ? { body: JSON.stringify(data) } : {}) }, env);
+    return response.json() as Promise<{ status: number; msg: string; data: any }>;
+  };
+  beforeEach(async () => {
+    network = vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('Isolated settings forbid provider HTTP'));
+    f = await createPcCheckoutQuoteFixture([], async () => { owned = await sequenceRunnerDatabase();
+      try { const api = await import('drizzle-kit/api'), schema = await import('@/models/schema');
+        await owned.exec((await api.generateMigration(api.generateDrizzleJson({}), api.generateDrizzleJson(schema))).join('\n'));
+        await completePurchaseOriginEvidenceOrm(owned.db); await completePurchaseCancellationEvidenceOrm(owned.db); return owned;
+      } catch (error) { await owned.close(); throw error; } });
+    await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
+    await f.exec(`INSERT INTO store_product_category(id,cate_name,is_show) VALUES (9,'隔离分类',1);
+      INSERT INTO out_interface(id,type,method,url) VALUES (1,1,'POST','/product'),(2,1,'PUT','/product/{id}'),(3,1,'GET','/product/{id}');
+      INSERT INTO out_account(id,appid,appsecret,rules) VALUES (1,'settings-local','fixture-settings-secret','[1,2,3]');
+      INSERT INTO system_attachment(att_id,type,relation_id,module_type,file_type,image_type,name,att_dir,att_type) VALUES
+      (901,1,0,1,2,8,'attachments/admin/1/settings.mp4','/api/assets/901','video/mp4'),
+      (902,4,44,1,2,8,'attachments/supplier/44/foreign.mp4','/api/assets/902','video/mp4'),
+      (903,1,0,1,1,8,'attachments/admin/1/image.png','/api/assets/903','image/png');
+      SELECT setval(pg_get_serial_sequence('store_product','id'),70,true);
+      SELECT setval(pg_get_serial_sequence('store_product_attr_value','id'),1,true)`);
+    env = { ...f.env, APP_KEY: 'isolated-settings-key-not-real', TOKEN_BUCKET: { getByName: () => ({ consumeRateLimit: async () =>
+      ({ allowed: true, auditEvent: false, limit: 120, remaining: 119, resetAt: Date.now() + 60000 }) }) } } as unknown as Env;
+    token = (await createToken(1, 'out', md5('fixture-settings-secret'), env.APP_KEY)).token;
+  }, 120_000);
+  afterEach(async () => { try { expect(network).not.toHaveBeenCalled(); } finally { network?.mockRestore(); await f?.close(); } }, 60_000);
+  const state = async () => ({ ...await f.snapshot(), receipts: await f.db.execute(sql`SELECT * FROM out_product_write_replay ORDER BY id`),
+    attachments: await f.db.execute(sql`SELECT * FROM system_attachment ORDER BY att_id`) });
+  const row = async (id: number) => (await f.db.select().from(storeProduct).where(eq(storeProduct.id, id)))[0];
+  it('creates, replays, preserves and clears settings while the actual public policy honors the video switch', async () => {
+    const key = crypto.randomUUID(), input = { ...body, mer_use: 1, command_word: ' 隔离复制😀 ', video_open: 0, video_link: '/api/assets/901?expires=1&signature=fixture' };
+    const created = await call('/outapi/product', 'POST', input, key); expect(created.status, created.msg).toBe(200); const id = Number(created.data.id);
+    expect((await call('/outapi/product', 'POST', input, key)).data).toMatchObject({ id, idempotent: true });
+    const saved = await row(id); expect(saved).toMatchObject({ merUse: 1, commandWord: '隔离复制😀', videoOpen: 0, videoLink: '/api/assets/901', stock: 5 });
+    const beforeConflict = await state(), conflict = await call('/outapi/product', 'POST', { ...input, mer_use: 0 }, key);
+    expect(conflict.status).not.toBe(200); expect(conflict.msg).toContain('Idempotency-Key'); expect(await state()).toEqual(beforeConflict);
+    expect(await readDetailVideo(f.db, saved)).toBe('');
+    const detail = await call(`/outapi/product/${id}`, 'GET'); expect(detail.status, detail.msg).toBe(200);
+    expect(detail.data.productInfo).toMatchObject({ mer_use: 1, command_word: '隔离复制😀', video_open: false });
+    const enabled = { ...body, mer_use: 1, command_word: '隔离复制😀', video_open: true, video_link: '/api/assets/901' };
+    const edited = await call(`/outapi/product/${id}`, 'PUT', enabled); expect(edited.status, edited.msg).toBe(200);
+    expect(await readDetailVideo(f.db, await row(id))).toBe('/api/assets/901');
+    const preserved = await call(`/outapi/product/${id}`, 'PUT', { ...body, video_link: '/api/assets/901' }); expect(preserved.status, preserved.msg).toBe(200);
+    expect(await row(id)).toMatchObject({ merUse: 1, commandWord: '隔离复制😀', videoOpen: 1, stock: 5 });
+    const cleared = await call(`/outapi/product/${id}`, 'PUT', { ...body, mer_use: 0, command_word: '', video_open: 0 }); expect(cleared.status, cleared.msg).toBe(200);
+    expect(await row(id)).toMatchObject({ merUse: 0, commandWord: '', videoOpen: 0, videoLink: '', stock: 5 });
+  }, 40_000);
+  it.each([0, 1, 3, 4])('persists settings with fulfillment type %i without changing its SKU or delivery behavior', async type => {
+    const input = { ...body, product_type: type, mer_use: true, command_word: '隔离共同设置', video_open: 0,
+      attrs: [{ ...body.attrs[0], ...(type === 1 ? { disk_info: 'isolated-fixed-content' } : {}), ...(type === 4 ? { write_times: 2, write_valid: 1 } : {}) }] };
+    const result = await call('/outapi/product', 'POST', input); expect(result.status, result.msg).toBe(200); const id = Number(result.data.id);
+    expect(await row(id)).toMatchObject({ productType: type, merUse: 1, commandWord: '隔离共同设置', videoOpen: 0, stock: 5,
+      deliveryType: type === 4 ? '2' : type === 0 ? '1' : '' });
+    const skus = await f.db.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.productId, id));
+    expect(skus).toHaveLength(1); expect(skus[0]).toMatchObject({ productType: type, stock: 5 });
+  }, 30_000);
+  it('rejects foreign, wrong-media and missing private references even for a disabled video without partial writes', async () => {
+    const before = await state();
+    for (const reference of ['/api/assets/902', '/api/assets/903', '/api/assets/999']) {
+      const result = await call('/outapi/product', 'POST', { ...body, video_open: 0, video_link: reference });
+      expect(result.status).not.toBe(200); expect(result.msg).toContain('视频'); expect(await state()).toEqual(before);
+    }
+  }, 40_000);
+  it('rejects new invalid public video references but permits unchanged historical bytes only without explicit video intent', async () => {
+    const made = await call('/outapi/product', 'POST', body); expect(made.status, made.msg).toBe(200); const id = Number(made.data.id);
+    const before = await state(); const failed = await call(`/outapi/product/${id}`, 'PUT', { ...body, video_link: 'https://media.example.test/not-video.jpg' });
+    expect(failed.status).not.toBe(200); expect(await state()).toEqual(before);
+    await f.db.execute(sql`UPDATE store_product SET video_link='https://media.example.test/not-video.jpg' WHERE id=${id}`);
+    const legacy = await call(`/outapi/product/${id}`, 'PUT', { ...body, video_link: 'https://media.example.test/not-video.jpg', command_word: 'repairing-other-fields' });
+    expect(legacy.status, legacy.msg).toBe(200); expect(await readDetailVideo(f.db, await row(id))).toBe('');
+    const saved = await state(), rejected = await call(`/outapi/product/${id}`, 'PUT', { ...body, video_open: 1, video_link: 'https://media.example.test/not-video.jpg' });
+    expect(rejected.status).not.toBe(200); expect(await state()).toEqual(saved);
+  }, 40_000);
+  it.each(['settings', 'asset', 'receipt'])('rolls back the complete author on receipt-triggered %s tampering', async target => {
+    const mutation = target === 'settings' ? "UPDATE store_product SET mer_use=0,command_word='tampered',video_open=1 WHERE id=NEW.product_id;"
+      : target === 'asset' ? "UPDATE system_attachment SET file_type=1 WHERE att_id=901;" : "NEW.request_hash:=repeat('0',64);";
+    const timing = target === 'receipt' ? 'BEFORE INSERT' : 'AFTER INSERT';
+    const makeTrigger = target === 'receipt' ? 'CREATE TRIGGER' : 'CREATE CONSTRAINT TRIGGER';
+    await f.exec(`CREATE FUNCTION test_settings_drift() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN ${mutation} RETURN NEW; END $$;
+      ${makeTrigger} test_settings_drift ${timing} ON out_product_write_replay ${target === 'receipt' ? '' : 'DEFERRABLE INITIALLY DEFERRED'} FOR EACH ROW EXECUTE FUNCTION test_settings_drift()`);
+    const before = await state(), failed = await call('/outapi/product', 'POST', { ...body, mer_use: 1, command_word: 'isolated-original', video_open: 0, video_link: '/api/assets/901' });
+    expect(failed.status).not.toBe(200); expect(await state()).toEqual(before);
+  }, 30_000);
+  it('refuses a real concurrent video metadata deletion and safely retries the same uncommitted request key', async () => {
+    if (!owned.withPeer) throw Error('Dedicated PG16 peers required');
+    const input = { ...body, mer_use: 1, video_open: 1, video_link: '/api/assets/901' }, key = crypto.randomUUID(), before = await state();
+    await owned.withPeer(async peer => { await peer.exec('BEGIN'); await peer.db.execute(sql`DELETE FROM system_attachment WHERE att_id=901`);
+      try { const failed = await call('/outapi/product', 'POST', input, key); expect(failed.status).not.toBe(200); expect(failed.msg).toContain('变化'); }
+      finally { await peer.exec('ROLLBACK'); } });
+    expect(await state()).toEqual(before); const retried = await call('/outapi/product', 'POST', input, key); expect(retried.status, retried.msg).toBe(200);
+    expect((await call('/outapi/product', 'POST', input, key)).data.idempotent).toBe(true);
+  }, 30_000);
+  it('writes platform video settings through the unchanged restricted application LOGIN grants', async () => {
+    if (!owned.withRuntimeRole) throw Error('Native restricted LOGIN required');
+    await owned.withRuntimeRole(async runtime => {
+      const plan = runtimeBusinessPrivilegePlan('app'), quote = (name: string) => { if (!/^[a-z_][a-z_0-9]*$/.test(name)) throw Error('Invalid identifier'); return `"${name}"`; };
+      const tables = await f.db.execute<{ name: string }>(sql`SELECT relname AS name FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r' ORDER BY relname`);
+      for (const { name } of tables) { const rights = plan.tables[name]; if (!rights) continue; await f.exec(`GRANT ${rights.join(',')} ON public.${quote(name)} TO ${quote(runtime.role)}`);
+        const columns = plan.updateColumns[name]; if (columns?.length) await f.exec(`GRANT UPDATE(${columns.map(quote).join(',')}) ON public.${quote(name)} TO ${quote(runtime.role)}`); }
+      const sequences = await f.db.execute<{ table_name: string; sequence_name: string | null }>(sql`SELECT c.relname AS table_name,pg_get_serial_sequence('public.'||quote_ident(c.relname),a.attname) AS sequence_name FROM pg_class c JOIN pg_attribute a ON a.attrelid=c.oid AND a.attnum>0 AND NOT a.attisdropped WHERE c.relnamespace='public'::regnamespace AND c.relkind='r'`);
+      for (const seq of sequences) if (seq.sequence_name && plan.tables[seq.table_name]?.includes('INSERT')) { const parts = seq.sequence_name.split('.'); if (parts.length !== 2 || parts[0] !== 'public') throw Error('Unexpected sequence'); await f.exec(`GRANT USAGE ON SEQUENCE public.${quote(parts[1])} TO ${quote(runtime.role)}`); }
+      const result = await call('/outapi/product', 'POST', { ...body, mer_use: 1, command_word: 'restricted-fixture', video_open: 1, video_link: '/api/assets/901' }, crypto.randomUUID(), runtime.db);
+      expect(result.status, result.msg).toBe(200); expect(await row(Number(result.data.id))).toMatchObject({ merUse: 1, videoOpen: 1, videoLink: '/api/assets/901' });
+      const [rights] = await runtime.db.execute(sql`SELECT current_user=session_user AS direct_login,has_table_privilege(current_user,'public.system_config','UPDATE') AS config_write`);
+      expect(rights).toEqual({ direct_login: true, config_write: false });
+    });
+  }, 30_000);
+});

@@ -27,6 +27,7 @@ import { admitOutCardProduct, finalizeOutCardProduct } from './OutCardProductInv
 import { tryLockVirtualProductInventory } from '@/services/product/VirtualProductInventoryService';
 import { outSecondCardConfiguration } from './OutSecondCardInput';
 import { outProductPriceAttrs, outProductPriceOptions } from './OutProductPriceOptions';
+import { outProductSettingsInput, admitOutProductSettings, type OutProductSettingsInput } from './OutProductSettings';
 import type { SecondCardSkuConfiguration } from '@/services/product/ProductSkuEditorService';
 import { PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE } from "@/services/product/ProductSkuIdentity";
 import { NotFoundException, ValidateException } from "@/utils/errors";
@@ -64,7 +65,7 @@ interface OutAccountIdentity {
   id: number;
 }
 
-interface OutPhysicalProductInput extends Omit<SupplierPhysicalProductInput, "productType" | "skus">, OutProductPresaleInput {
+interface OutPhysicalProductInput extends Omit<SupplierPhysicalProductInput, "productType" | "skus">, OutProductPresaleInput, OutProductSettingsInput {
   productType: 0 | 1 | 3 | 4;
   cardImports?: OutCardImport[];
   skus: Array<SupplierProductSku & Partial<SecondCardSkuConfiguration>>;
@@ -242,6 +243,7 @@ function normalizeOutProductInputInternal(input: UnknownRecord, allowManualVirtu
   const recommendList = recommendationInput(input);
   const presale = outProductPresaleInput(input);
   const priceOptions = outProductPriceOptions(input);
+  const settings = outProductSettingsInput(input);
   const vipProduct = Object.hasOwn(input, 'is_vip_product') && input.is_vip_product !== undefined
     ? flag(input.is_vip_product === false ? 0 : input.is_vip_product === true ? 1 : input.is_vip_product, '会员专属开关', 0)
     : undefined;
@@ -262,6 +264,7 @@ function normalizeOutProductInputInternal(input: UnknownRecord, allowManualVirtu
   const base = allowManualVirtual
     ? normalizeSupplierProductInput(baseInput, { requireSettlePrice: false })
     : normalizeSupplierPhysicalProductInput(baseInput, { requireSettlePrice: false });
+  if (settings.videoOpen === 1 && !base.videoLink) throw new ValidateException('开启商品视频须填写视频地址');
   if (base.productType !== PHYSICAL_PRODUCT_TYPE && base.productType !== MANUAL_VIRTUAL_PRODUCT_TYPE && base.productType !== CARD_PRODUCT_TYPE)
     throw new ValidateException('Out API 当前支持实物、卡密、手工虚拟和次卡商品');
   if (base.productType === MANUAL_VIRTUAL_PRODUCT_TYPE) {
@@ -322,6 +325,7 @@ function normalizeOutProductInputInternal(input: UnknownRecord, allowManualVirtu
     ...(recommendList === undefined ? {} : { recommendList }),
     ...(vipProduct === undefined ? {} : { isVipProduct: vipProduct }),
     ...(priceOptions === undefined ? {} : priceOptions),
+    ...settings,
     ...presale,
     ...(Object.keys(schedule).length ? { scheduleIntentVersion: 1 as const } : {}),
     ...outProductLabelInput(input),
@@ -605,6 +609,7 @@ export class OutProductService {
         : input.skus.reduce((sum, sku) => sum + sku.stock, 0);
       if (!Number.isSafeInteger(stock)) throw new ValidateException("商品总库存超出安全范围");
       const presalePlan = outProductPresalePlan(input, existing);
+      const settingsProof = await inventoryLock(() => admitOutProductSettings(tx, input, existing));
       if ((input.productType === CARD_PRODUCT_TYPE || input.productType === MANUAL_VIRTUAL_PRODUCT_TYPE || input.productType === SECOND_CARD_PRODUCT_TYPE) && presalePlan.isPresaleProduct !== 0)
         throw new ValidateException(input.productType === CARD_PRODUCT_TYPE ? '卡密商品不能设置预售' : input.productType === SECOND_CARD_PRODUCT_TYPE ? '次卡商品不能设置预售' : '手工虚拟商品不能设置预售');
       await assertOutProductPresaleFuture(tx, presalePlan);
@@ -623,6 +628,8 @@ export class OutProductService {
       const admittedForm = systemFormId === undefined ? undefined
         : await inventoryLock(() => lockOutProductSystemForm(tx, systemFormId));
       const productValues = {
+        ...(input.merUse === undefined ? {} : { merUse: input.merUse }),
+        ...(input.commandWord === undefined ? {} : { commandWord: input.commandWord }),
         ...(input.isVipProduct === undefined ? {} : { isVipProduct: input.isVipProduct }),
         ...(input.isVip === undefined ? {} : { isVip: input.isVip, isSub: input.isSub }),
         ...(presalePlan.authored ? { isPresaleProduct: presalePlan.isPresaleProduct,
@@ -671,7 +678,7 @@ export class OutProductService {
         isPostage: input.isPostage,
         giveIntegral: input.giveIntegral,
         cost: minimum(input.skus.map((sku) => sku.cost)),
-        videoOpen: input.videoLink ? 1 : 0,
+        videoOpen: settingsProof.values.videoOpen,
         videoLink: input.videoLink,
         specType: input.specType,
         isSupportRefund: input.isSupportRefund,
@@ -878,6 +885,7 @@ export class OutProductService {
       await assertSecondCardState();
       await cardProof?.assert(resultSnapshot);
       await assertPriceOptions();
+      await inventoryLock(() => settingsProof.assert(savedProductId));
       await updateCartStatus(tx, savedProductId, input.isShow);
       if (relationFence) relationFence.productId = savedProductId;
       const brandProof = brandIds === undefined ? undefined
@@ -906,6 +914,7 @@ export class OutProductService {
       await assertSecondCardState();
       await cardProof?.assert(resultSnapshot);
       await assertPriceOptions();
+      await inventoryLock(() => settingsProof.assert(savedProductId));
       if (input.isVip !== undefined) {
         const [receipt] = await tx.select().from(outProductWriteReplay).where(and(eq(outProductWriteReplay.outAccountId, account.id),
           eq(outProductWriteReplay.operation, operation), eq(outProductWriteReplay.requestKey, key))).limit(1);
@@ -918,6 +927,12 @@ export class OutProductService {
         if (!receipt || receipt.productId !== savedProductId || receipt.requestHash !== hash || receipt.resultCount !== 0)
           throw new ValidateException('虚拟商品写入回执已变化');
       }
+      if (input.merUse !== undefined || input.commandWord !== undefined || input.videoOpen !== undefined) {
+        const [receipt] = await tx.select().from(outProductWriteReplay).where(and(eq(outProductWriteReplay.outAccountId, account.id),
+          eq(outProductWriteReplay.operation, operation), eq(outProductWriteReplay.requestKey, key))).limit(1);
+        if (!receipt || receipt.productId !== savedProductId || receipt.requestHash !== hash || receipt.resultCount !== 0)
+          throw new ValidateException('商品设置写入回执已变化');
+      }
       await inventoryLock(() => assertOutProductRelationFence(tx, relationFence));
       await inventoryLock(() => assertOutProductCoupons(tx, couponProof));
       await inventoryLock(() => assertOutProductForm(tx, formProof));
@@ -929,6 +944,7 @@ export class OutProductService {
       await assertSecondCardState();
       await cardProof?.assert(resultSnapshot);
       await assertPriceOptions();
+      await inventoryLock(() => settingsProof.assert(savedProductId));
       return { id: savedProductId, idempotent: false, stock_preserved: !!existing };
     });
   }
