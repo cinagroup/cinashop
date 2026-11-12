@@ -1,0 +1,1589 @@
+{
+  "schema": "php-ts-supplier-product-user-labels/v1",
+  "baseCommit": "ec39001cb043737a3108e073c0da39e2beb1ad8a",
+  "wholeMigrationComplete": false,
+  "sourceHashes": [
+    {
+      "path": "view/supplier-ts/src/pages/ProductForm.vue",
+      "sha256": "a3a6e3b9a0a9993f9ec0b716da68ae5af879b4bee7fe6bab3a0786a0cd3bc786"
+    },
+    {
+      "path": "view/supplier-ts/src/types.ts",
+      "sha256": "6a16b7751eaba97429ed1af4914233c473dc44547d55b08812e131fcc450e133"
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+      "sha256": "5fdd2d580b21d01faceff01e72863aacd5d2389646bfaa5a85d594a6a83cad9c"
+    },
+    {
+      "path": "workers-ts/src/routes/supplierapi.ts",
+      "sha256": "a4c8b281507572139752a61223b5f5c907e8801463896181a73dac8daff16944"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierPermissionService.ts",
+      "sha256": "b1164745bb1b5d17594fe1cfb764423267522b388e87c348c2baa4d20cdeab12"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductManagementService.ts",
+      "sha256": "97c5642a059c6fc12c5f2e19e74c2ae73fadf33750d96157e97e9a4280a3e6f2"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierProductSchedule.ts",
+      "sha256": "c4166c8802c636953e59fa69d5e816846e5c8573d1ae0b64a2d5fa54afc9d35e"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-recommend-image-native.test.ts",
+      "sha256": "4d0b4705a50a7e600455d7141170f11ff6d96c81258369596f5f09e67acab199"
+    },
+    {
+      "path": "view/supplier-ts/src/api/productUserLabels.ts",
+      "sha256": "b064271700e903158b35f5f2143ca6103bb004e484f41f81e29a388fa962f06c"
+    },
+    {
+      "path": "view/supplier-ts/src/components/SupplierProductUserLabelPicker.vue",
+      "sha256": "9bde76ab63380a0f241dcbc6dac4f17d5712eb92ed9f8ff88512d543a7fdebd4"
+    },
+    {
+      "path": "view/supplier-ts/src/utils/productUserLabels.ts",
+      "sha256": "dabfe91b64ada9180f7f57f273fdb1cb548a6abc87ea6f9800af82e6622fb6de"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductUserLabels.ts",
+      "sha256": "b126f4ff216341ed1fb45f07722b5491ff38b1bec735d7545cd8473ff483abed"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierProductUserLabels.ts",
+      "sha256": "74e129a7e323048098daf1eb9c0eb42010663d2251509031c39ccfe486cb4198"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-user-labels.test.ts",
+      "sha256": "4c797e5b6c7ecff3f8b75d6cadfa20496992a61d9aabf4bc68c9c76204a1cab4"
+    }
+  ],
+  "unchangedDependencies": [
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductIntegral.ts",
+      "sha256": "2b869e9067a8d001bb57f386999fe95311a5144bddc0a79112c080d4801efab6"
+    },
+    {
+      "path": "workers-ts/src/services/activity/ProductCouponService.ts",
+      "sha256": "aec6e37c95104b8865e4c5ae5629eb0beb4bb6520fd36bb6e21896e9c8577a39"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductCouponBindings.ts",
+      "sha256": "8b98bb1101d86421ec1b32010bd197e8da7d6d3d7930567b8df3f6044811d350"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductPurchaseOptions.ts",
+      "sha256": "6c84f76c07342f8fb1e294cbdf831cb05285826cddf1623bc1be6e4ece98fa01"
+    },
+    {
+      "path": "workers-ts/src/services/order/OrderRewardService.ts",
+      "sha256": "3e176eb02577defb6af98eba59995354c38c33013b35ce27f8237d932f1fa785"
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreOrderRefundService.ts",
+      "sha256": "ca2ef3db6b2649a61a31e3c88346984912a41d82ebd898c85f2b69c33537bc3a"
+    },
+    {
+      "path": "workers-ts/src/services/order/OrderSplitFinance.ts",
+      "sha256": "b6422fe5af793b50a6277cfb08d630087900e990f5937bbb7756e5dff2966652"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductPriceOptions.ts",
+      "sha256": "2db2f3c898d7b7dfb9b4301803958a48d88fa0dd7e5cf8350fdf9ce08e7feaf1"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductPresaleBindings.ts",
+      "sha256": "7c2c7cf5c59e11e7b405ba9bfc90ec823e6003db183b834dec72a951eb10d5ee"
+    },
+    {
+      "path": "workers-ts/src/services/order/OrdinaryVipCartAdmission.ts",
+      "sha256": "ebdd82b8cf09a59b9fb23509cd8e16df63d1e066888c11e051c34a25f5125214"
+    },
+    {
+      "path": "workers-ts/src/services/activity/PresaleCartService.ts",
+      "sha256": "edb60abcf3b4ab8a390cdae8fb02e75217fe7f8795800af198953ebe2b446547"
+    },
+    {
+      "path": "workers-ts/src/services/activity/PresalePurchaseSnapshot.ts",
+      "sha256": "c651e8055cdfcb284fa928a92ec16f6be2ab227f2df3a48391f05c41f5e964ca"
+    },
+    {
+      "path": "workers-ts/src/services/activity/PresaleDeliveryResolver.ts",
+      "sha256": "1d8880ff21094bdcddb7fc1637603ec6f93209775c4194d5630219594ed62953"
+    },
+    {
+      "path": "workers-ts/src/services/activity/PresaleFulfillmentSnapshot.ts",
+      "sha256": "7566126df220e97d5313a7252f6224a3ee60fdcab940c0078593ff0944eabeee"
+    },
+    {
+      "path": "workers-ts/src/services/product/PublicCatalogService.ts",
+      "sha256": "702a0b20a7ceac5bd2dd865cae5a4fba72c844e899031a59984b2743f6ab816a"
+    },
+    {
+      "path": "workers-ts/src/services/product/StoreProductService.ts",
+      "sha256": "7dc64077b57923f77e13fd654dbf2147b8387efb89417204424f20115b143fec"
+    },
+    {
+      "path": "workers-ts/src/services/payment/PaymentReadinessService.ts",
+      "sha256": "95657ab6d70b04de94c36de1371f8af844f04b05c122689c1805c2a582756db2"
+    },
+    {
+      "path": "workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+      "sha256": "843cabc2feb45596a80ac6d2f3a703f59fd849a2b38052a50054a8967e3d41d7"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "32c5fff9c6dbfaa30720fbd72dd729a3ea7a1e7fc3a02be5515fb541af55a074"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductService.ts",
+      "sha256": "8de49a1fd429bc48f08b5480ef8ca10a8f30289500c53c6d5fa9b57ff645fd56"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductPriceOptions.ts",
+      "sha256": "4d5f2aac570c7666315c6ad5c8b9da0962bc2b5c82d6343cc3b27c0b2a473083"
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+      "sha256": "2e15fb5be5dcd2a1e953d4c3e8944180a36d0a424ad6dee83a0b73572a1110b3"
+    },
+    {
+      "path": "workers-ts/src/services/order/OrderBrokerageService.ts",
+      "sha256": "aea8513e878d5d362f4fb3db01353bfd5a14894b7a8bda9416765e72c2e21474"
+    },
+    {
+      "path": "workers-ts/src/services/order/OrderOutboxService.ts",
+      "sha256": "4c9751e466a7857e3dfff1b4f618f5e59c3be013fedf42372b180a5bde08687f"
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreOrderPayService.ts",
+      "sha256": "94f7abd31652f77ab9b013c30f87a4bb75477bef6cbf5b45d679f2403c0d5050"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminProductModerationService.ts",
+      "sha256": "55eb1343feaca81e8a8a56e3c0659a693db7fd007289c76c42967f7b72c1b51d"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductSkuEditorService.ts",
+      "sha256": "b05f51653e92daa9e42c8f37e6f03dfbd35b5fe3cf6e5239051465e13d8f8ee4"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductSkuInput.ts",
+      "sha256": "c96247e8ac7befe362e9d2596c2d2a69d9b113930aa6c388ec1a78755ab1f23f"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductCopySource.ts",
+      "sha256": "eee6eccdf9f6a2e1558e03f9536c33539eb3a23824ad6c13024abb10680f09a7"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductCopyOperation.ts",
+      "sha256": "27264aca5cb7b8f6694d513a656a7778b6f70f12330d8cdf6aacb29cba8b6caf"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductCopyService.ts",
+      "sha256": "5d7d23e0578ffdb9c8e43024e4facdd9cfc4f1e8bb9b8e5da5cd7de8e77a5918"
+    },
+    {
+      "path": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+      "sha256": "4044d51930d72620f9d124c375779e37a99fdfb8e8c815cf2cb30420080d4324"
+    },
+    {
+      "path": "workers-ts/test/helpers/refundRuntimeFixture.ts",
+      "sha256": "cee737293c79fc2434f5031163410b684a900b1ce7c59e1e2fa876d3e3173b33"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-copy-native.test.ts",
+      "sha256": "38525e635b7035785c77d80e16f2f6a27353406c895bc9184ac9a43472b3f530"
+    },
+    {
+      "path": ".github/workflows/workers-runtime-linux.yml",
+      "sha256": "94f08a84a76181eb0f0229f0f82d1f731b9c39ebbe09b5ceebb4ae3741d6cac6"
+    },
+    {
+      "path": ".gitleaksignore",
+      "sha256": "1f6204fa08c92058b8a8f3e9b99dfbcb90c4537da28de17fc782e3f8a4c988bb"
+    },
+    {
+      "path": ".gitleaks.toml",
+      "sha256": "8d3f6557cffc5c61bc1ab6a8c5ac26400542f6da5d7c2320306ee17373a14eea"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductLabelBindings.ts",
+      "sha256": "1ad27d8ed1a4823090352e4ade5d90e984dc1a8c71d54dbbd40c2860d026c290"
+    },
+    {
+      "path": "workers-ts/src/services/order/PurchasedProductLabelTaskService.ts",
+      "sha256": "1f994280055af0ada3a1fd3d75f448d6f0f92e82b02b7fbc2e9a89a2c4b9eaef"
+    },
+    {
+      "path": "workers-ts/src/services/order/PurchasedProductLabelGrant.ts",
+      "sha256": "c029eb62b322895aae34ae5b875670c933f1b739ed7a8c0a676eaae79996b480"
+    },
+    {
+      "path": "workers-ts/src/services/order/PurchasedProductLabelSelection.ts",
+      "sha256": "216fe4ab1b0eec09b6272f3e21a20e091b20a8dced85579d739221ff2103789b"
+    },
+    {
+      "path": "workers-ts/src/services/order/PurchasedProductLabelRuntimeDeclaration.ts",
+      "sha256": "49b391b6f79e1b8f14b555fb01524ac09caab532474933678a01e517374cd525"
+    },
+    {
+      "path": "workers-ts/src/migrations/upgradePurchasedProductLabelRuntime.ts",
+      "sha256": "f99d137776cd99b6dabd26004b20489eed2975ef89e536192e8d67651bcc9902"
+    },
+    {
+      "path": "workers-ts/src/migrations/installPurchasedProductLabelStorage.ts",
+      "sha256": "f6f0b3a363080c543d942b32236d6933c3e7113ee223574e41fc17ce68f3b7b6"
+    },
+    {
+      "path": "workers-ts/test/helpers/customerCashierRuntimeHttpFixture.ts",
+      "sha256": "8dfa065fa1010d97866cfdb609b9358484a10a0647f2a6a44b9cbcceda19f6a5"
+    },
+    {
+      "path": "workers-ts/test/helpers/customerOriginalPaymentRuntimeFixture.ts",
+      "sha256": "634e08828173ad3faa941d2abe2ff37d062f9faafd0cb40ceea07553e78df53d"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductBrandBindings.ts",
+      "sha256": "3d228e12a0243064ce58d82501120e0e0d0ae501f8684522deb82a19c91cf7dd"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductEnsureBindings.ts",
+      "sha256": "23b56a05f97e46befb0af9daf879b3eb984dd9b032482dc2bb3bcfe27697567d"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductParameterBindings.ts",
+      "sha256": "217e008dd0143672b22df8406d285c6df1d15e269505497963059c95a5a5eef7"
+    }
+  ],
+  "continuity": {
+    "base": "ec39001cb043737a3108e073c0da39e2beb1ad8a",
+    "originalNativeCases": 102,
+    "originalNativeBytesUnchangedPrefix": true,
+    "originalNativeSha256": "12f46f2e2af9088be9404400e164f807b12ece4d3e77e88be538b563a596856a",
+    "phpFixedRef": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+    "php": [
+      {
+        "path": "app/jobs/order/OrderJob.php",
+        "sha256": "04cb1e12b561bd0a5a973e01cfb15cc2ed7277f595be3e6271bd01732e08421d",
+        "matchesFixedRef": true
+      },
+      {
+        "path": "app/jobs/order/SpliteStoreOrderJob.php",
+        "sha256": "693fc4f7106cf32269ec9a11c3bb8781a9244646fd11364640a8ed6924df6a23",
+        "matchesFixedRef": true
+      },
+      {
+        "path": "app/services/product/product/StoreProductServices.php",
+        "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+        "matchesFixedRef": true
+      },
+      {
+        "path": "view/supplier/src/pages/product/productEdit/index.vue",
+        "sha256": "cad1d45b2e6067d499d857cf51a94071a57f2819fbfbb8d081ef28a381b02001",
+        "matchesFixedRef": true
+      },
+      {
+        "path": "app/services/product/label/StoreProductLabelAuxiliaryServices.php",
+        "sha256": "2b439d30a78ebce37fe6c33ce845020b3a019e16e580514ffa2d9613180fee65",
+        "matchesFixedRef": true
+      }
+    ]
+  },
+  "contract": {
+    "writeField": "label_id",
+    "readField": "user_label_selection",
+    "version": 1,
+    "catalogue": "GET /supplierapi/product/user-label/catalog",
+    "cataloguePermission": "supplier.product.view exact readonly route",
+    "catalogueScope": {
+      "type": 0,
+      "relationId": 0,
+      "status": 1
+    },
+    "supportedSupplierProductTypes": [
+      0,
+      1,
+      3
+    ],
+    "actualCsvCapacity": 64,
+    "inputParserAndAdmissionUnchanged": "OutProductLabelBindings",
+    "omittedUndefinedPreservesType4Rows": true,
+    "explicitEmptyClears": true,
+    "fullProductCatalogType4AndOtherRelationsProof": true,
+    "finalDeferredConstraintsAndActorCheck": true,
+    "originalBrandEnsureParameterGuardsUnchanged": true,
+    "historicalForeignNamesHidden": true,
+    "topLevelLegacyEchoAndReadMetadataStripped": true,
+    "copySchemaAndProductionPrivilegePlanUnchanged": true,
+    "runtimeConfiguredMeans": "trusted declaration exists; does not assert database readiness or receipt",
+    "saveDoesNotEnableRuntime": true
+  },
+  "validation": {
+    "initialProfiles": [
+      {
+        "profile": "frontend-build",
+        "exit": 0,
+        "seconds": 29.5,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "unit",
+        "exit": 0,
+        "seconds": 81.28,
+        "budgetSeconds": 600,
+        "actualFileSetExactlyMatches": true,
+        "passedTests": 977,
+        "files": [
+          "test/supplier-product-purchase-options.test.ts",
+          "test/out-product-presale.test.ts",
+          "test/product-purchase-admission.test.ts",
+          "test/presale-schedule.test.ts",
+          "test/supplier-product-price-options.test.ts",
+          "test/supplier-product-management.test.ts",
+          "test/out-product-price-options.test.ts",
+          "test/out-type2-compat.test.ts",
+          "test/out-card-product-input.test.ts",
+          "test/out-second-card-input.test.ts",
+          "test/out-manual-virtual-product.test.ts",
+          "test/supplier-product-copy-frontend.test.ts",
+          "test/supplier-product-detail-frontend.test.ts",
+          "test/supplier-product-shipping-editor-frontend.test.ts",
+          "test/supplier-product-media-frontend.test.ts",
+          "test/supplier-product-schedule-frontend.test.ts",
+          "test/supplier-product-brand-frontend.test.ts",
+          "test/supplier-product-ensures-frontend.test.ts",
+          "test/supplier-product-parameters-frontend.test.ts",
+          "test/supplier-product-system-form-frontend.test.ts",
+          "test/supplier-product-label-frontend.test.ts",
+          "test/supplier-product-rule-frontend.test.ts",
+          "test/supplier-product-rule-inline-frontend.test.ts",
+          "test/supplier-product-video-upload-frontend.test.ts",
+          "test/supplier-product-unit-frontend.test.ts",
+          "test/supplier-product-recommend-image-frontend.test.ts",
+          "test/supplier-product-label-picker-frontend.test.ts",
+          "test/supplier-sku-batch-frontend.test.ts",
+          "test/order-brokerage.test.ts",
+          "test/order-paid-outbox-queue-consumer.test.ts",
+          "test/supplier-product-integral.test.ts",
+          "test/order-reward.test.ts",
+          "test/supplier-product-coupons.test.ts",
+          "test/out-product-coupons.test.ts",
+          "test/product-coupon-migration.test.ts",
+          "test/supplier-product-category-permission.test.ts",
+          "test/supplier-product-batch-permission.test.ts",
+          "test/supplier-product-user-labels.test.ts",
+          "test/purchased-product-label-codec.test.ts",
+          "test/purchased-product-label-result.test.ts",
+          "test/purchased-product-label-selection.test.ts",
+          "test/purchased-product-label-source.test.ts",
+          "test/purchased-product-label-queue.test.ts",
+          "test/purchased-product-label-runtime.test.ts",
+          "test/purchased-label-operations.test.ts"
+        ]
+      },
+      {
+        "profile": "type-shards-plan",
+        "exit": 0,
+        "seconds": 0.42,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "type-shards-options",
+        "exit": 0,
+        "seconds": 0.38,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "unit-types-shard-1",
+        "exit": 0,
+        "seconds": 182.96,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "unit-types-shard-2",
+        "exit": 0,
+        "seconds": 188.89,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "runtime-types",
+        "exit": 0,
+        "seconds": 121.12,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-supplier-author",
+        "exit": 0,
+        "seconds": 458.46,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-copy",
+        "exit": 0,
+        "seconds": 65.88,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-purchased-author",
+        "exit": 0,
+        "seconds": 171.27,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-out-labels",
+        "exit": 1,
+        "seconds": 605.3,
+        "budgetSeconds": 600
+      }
+    ],
+    "supplement": [
+      {
+        "profile": "native-out-labels-tail",
+        "exit": 0,
+        "seconds": 38.46,
+        "literalCases": [
+          "refuses reusing an omitted-field receipt key for an explicit parameter clear after upgrade",
+          "uses the existing App plan on a genuine independent LOGIN for parameter save and read without changing catalog contents"
+        ],
+        "wholeFile": false
+      },
+      {
+        "profile": "native-promotion-labels",
+        "exit": 0,
+        "seconds": 19.45,
+        "literalCases": [],
+        "wholeFile": true
+      }
+    ],
+    "outFullRerun": {
+      "attempted": true,
+      "baselineWholeFilePassed": 69,
+      "exit": 0,
+      "seconds": 547.16,
+      "budgetSeconds": 600,
+      "runnerUnchanged": true,
+      "wholeFile": true
+    },
+    "passingCompleteNativeFiles": {
+      "native-supplier-author": 119,
+      "native-copy": 27,
+      "native-purchased-author": 17,
+      "native-promotion-labels": 6,
+      "native-out-labels-rerun": 69
+    },
+    "completeNativeTotal": 238,
+    "nativeSkipped": 0,
+    "unitFiles": [
+      "test/supplier-product-purchase-options.test.ts",
+      "test/out-product-presale.test.ts",
+      "test/product-purchase-admission.test.ts",
+      "test/presale-schedule.test.ts",
+      "test/supplier-product-price-options.test.ts",
+      "test/supplier-product-management.test.ts",
+      "test/out-product-price-options.test.ts",
+      "test/out-type2-compat.test.ts",
+      "test/out-card-product-input.test.ts",
+      "test/out-second-card-input.test.ts",
+      "test/out-manual-virtual-product.test.ts",
+      "test/supplier-product-copy-frontend.test.ts",
+      "test/supplier-product-detail-frontend.test.ts",
+      "test/supplier-product-shipping-editor-frontend.test.ts",
+      "test/supplier-product-media-frontend.test.ts",
+      "test/supplier-product-schedule-frontend.test.ts",
+      "test/supplier-product-brand-frontend.test.ts",
+      "test/supplier-product-ensures-frontend.test.ts",
+      "test/supplier-product-parameters-frontend.test.ts",
+      "test/supplier-product-system-form-frontend.test.ts",
+      "test/supplier-product-label-frontend.test.ts",
+      "test/supplier-product-rule-frontend.test.ts",
+      "test/supplier-product-rule-inline-frontend.test.ts",
+      "test/supplier-product-video-upload-frontend.test.ts",
+      "test/supplier-product-unit-frontend.test.ts",
+      "test/supplier-product-recommend-image-frontend.test.ts",
+      "test/supplier-product-label-picker-frontend.test.ts",
+      "test/supplier-sku-batch-frontend.test.ts",
+      "test/order-brokerage.test.ts",
+      "test/order-paid-outbox-queue-consumer.test.ts",
+      "test/supplier-product-integral.test.ts",
+      "test/order-reward.test.ts",
+      "test/supplier-product-coupons.test.ts",
+      "test/out-product-coupons.test.ts",
+      "test/product-coupon-migration.test.ts",
+      "test/supplier-product-category-permission.test.ts",
+      "test/supplier-product-batch-permission.test.ts",
+      "test/supplier-product-user-labels.test.ts",
+      "test/purchased-product-label-codec.test.ts",
+      "test/purchased-product-label-result.test.ts",
+      "test/purchased-product-label-selection.test.ts",
+      "test/purchased-product-label-source.test.ts",
+      "test/purchased-product-label-queue.test.ts",
+      "test/purchased-product-label-runtime.test.ts",
+      "test/purchased-label-operations.test.ts"
+    ],
+    "unitPassed": 977,
+    "unitSkipped": 0,
+    "typeShards": {
+      "originalRoots": 4360,
+      "commonRoots": 1908,
+      "testRoots": 2452,
+      "shardTestCounts": [
+        1226,
+        1226
+      ],
+      "unionExactlyMatchesOriginal": true,
+      "optionsExactlyMatchOriginal": true
+    },
+    "heapMiB": 8192,
+    "serialWrapper": true,
+    "nativeRunnerAllowlistAndBudgetUnchanged": true,
+    "sourceSecretScanFindings": 0,
+    "qa": {
+      "browser": "Codex In-app Browser / Browser plugin",
+      "browserId": "2",
+      "fallback": false,
+      "baseUrl": "http://127.0.0.1:41060",
+      "environment": "local production Supplier Vite bundle with finite synthetic HTTP fixture; backend authentication, paid transition and SQL separately verified in native files",
+      "scenarios": [
+        {
+          "scenario": "desktop",
+          "url": "http://127.0.0.1:41060/products/80/edit?qa=desktop",
+          "title": "CinaShop 供应商中心",
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "checks": {
+            "pageIdentity": true,
+            "notBlank": true,
+            "noFrameworkOverlay": true,
+            "consoleHealth": true,
+            "screenshotEvidence": true,
+            "interactionProof": true
+          },
+          "screenshot": "desktop-final-visible.png"
+        },
+        {
+          "scenario": "mobile",
+          "url": "http://127.0.0.1:41060/products/80/edit?qa=mobile",
+          "title": "CinaShop 供应商中心",
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "checks": {
+            "pageIdentity": true,
+            "notBlank": true,
+            "noFrameworkOverlay": true,
+            "consoleHealth": true,
+            "screenshotEvidence": true,
+            "interactionProof": true
+          },
+          "screenshot": "mobile-final-visible.png"
+        },
+        {
+          "scenario": "unknown",
+          "readMissingGuardVisible": true,
+          "choiceDisabled": true,
+          "actualSavesOmitLabelId": true
+        },
+        {
+          "scenario": "unicode",
+          "databaseTitleCodePoints": 255,
+          "selectionRendered": true,
+          "toggleOffAndOn": true,
+          "savedIdsOnly": [
+            9203
+          ],
+          "screenshot": "unicode-visible.png"
+        }
+      ],
+      "interactions": [
+        "desktop omission preserves legacy selection",
+        "remove legacy invalid tag; search9202; save and fresh read",
+        "clear; save and fresh empty read",
+        "search9225; save and fresh read",
+        "mobile omission, clear, search9202, save and fresh read",
+        "mobile clear saved then fresh read empty",
+        "mobile catalogue second page selection9202 saved",
+        "unknown read metadata keeps editor disabled across two unrelated saves",
+        "255-codepoint Unicode title accepted, deselected, reselected and saved as ID only"
+      ],
+      "corrections": [
+        "Hidden checkbox wait reported deadline despite DOM presence; visible text interaction used after fresh snapshot",
+        "Initial mobile clear was attempted before data hydration settled and did not apply; an attempted save retained legacy61 and was rejected by finite fixture. After fresh snapshot, clear absence was explicitly awaited, then actual save/readback and clear/readback passed. This attempt is preserved in server writes and excluded from successful-save counts",
+        "Two save clicks during loading did not navigate or send requests; subsequent actions waited for loaded DOM and enabled save. No Browser fallback used"
+      ],
+      "consoleWarningsOrErrors": 0
+    },
+    "actualUiWrites": {
+      "desktop": [
+        {
+          "id": 80,
+          "product_type": 0,
+          "store_name": "本地赠送积分商品",
+          "store_info": "商品积分编辑验收",
+          "keyword": "",
+          "unit_name": "件",
+          "bar_code": "",
+          "cate_id": [
+            11
+          ],
+          "slider_image": [
+            "/supplier-price.png"
+          ],
+          "description": "<p>本地受控商品</p>",
+          "spec_type": 0,
+          "items": [
+            {
+              "value": "规格",
+              "detail": [
+                "默认"
+              ]
+            }
+          ],
+          "attrs": [
+            {
+              "id": 8001,
+              "unique": "qared001",
+              "suk": "默认",
+              "detail": {
+                "规格": "默认"
+              },
+              "image": "/supplier-price.png",
+              "price": "10.00",
+              "settle_price": "1.00",
+              "cost": "0.00",
+              "ot_price": "10.00",
+              "vip_price": "7.50",
+              "stock": 5,
+              "bar_code": "SKU",
+              "weight": "0.00",
+              "volume": "0.00",
+              "brokerage": "2.00",
+              "brokerage_two": "1.00",
+              "code": "",
+              "disk_info": ""
+            }
+          ],
+          "freight": 1,
+          "postage": "0.00",
+          "temp_id": 0,
+          "is_postage": 1,
+          "is_support_refund": 1,
+          "is_limit": 0,
+          "limit_type": 0,
+          "limit_num": 0,
+          "sort": 0,
+          "ficti": 0,
+          "video_link": "",
+          "is_show": 0,
+          "is_verify": 0,
+          "is_sub": []
+        },
+        {
+          "id": 80,
+          "product_type": 0,
+          "store_name": "本地赠送积分商品",
+          "store_info": "商品积分编辑验收",
+          "keyword": "",
+          "unit_name": "件",
+          "bar_code": "",
+          "cate_id": [
+            11
+          ],
+          "slider_image": [
+            "/supplier-price.png"
+          ],
+          "description": "<p>本地受控商品</p>",
+          "spec_type": 0,
+          "items": [
+            {
+              "value": "规格",
+              "detail": [
+                "默认"
+              ]
+            }
+          ],
+          "attrs": [
+            {
+              "id": 8001,
+              "unique": "qared001",
+              "suk": "默认",
+              "detail": {
+                "规格": "默认"
+              },
+              "image": "/supplier-price.png",
+              "price": "10.00",
+              "settle_price": "1.00",
+              "cost": "0.00",
+              "ot_price": "10.00",
+              "vip_price": "7.50",
+              "stock": 5,
+              "bar_code": "SKU",
+              "weight": "0.00",
+              "volume": "0.00",
+              "brokerage": "2.00",
+              "brokerage_two": "1.00",
+              "code": "",
+              "disk_info": ""
+            }
+          ],
+          "freight": 1,
+          "postage": "0.00",
+          "temp_id": 0,
+          "is_postage": 1,
+          "is_support_refund": 1,
+          "is_limit": 0,
+          "limit_type": 0,
+          "limit_num": 0,
+          "sort": 0,
+          "ficti": 0,
+          "video_link": "",
+          "is_show": 0,
+          "is_verify": 0,
+          "is_sub": [],
+          "label_id": [
+            9201,
+            9202
+          ]
+        },
+        {
+          "id": 80,
+          "product_type": 0,
+          "store_name": "本地赠送积分商品",
+          "store_info": "商品积分编辑验收",
+          "keyword": "",
+          "unit_name": "件",
+          "bar_code": "",
+          "cate_id": [
+            11
+          ],
+          "slider_image": [
+            "/supplier-price.png"
+          ],
+          "description": "<p>本地受控商品</p>",
+          "spec_type": 0,
+          "items": [
+            {
+              "value": "规格",
+              "detail": [
+                "默认"
+              ]
+            }
+          ],
+          "attrs": [
+            {
+              "id": 8001,
+              "unique": "qared001",
+              "suk": "默认",
+              "detail": {
+                "规格": "默认"
+              },
+              "image": "/supplier-price.png",
+              "price": "10.00",
+              "settle_price": "1.00",
+              "cost": "0.00",
+              "ot_price": "10.00",
+              "vip_price": "7.50",
+              "stock": 5,
+              "bar_code": "SKU",
+              "weight": "0.00",
+              "volume": "0.00",
+              "brokerage": "2.00",
+              "brokerage_two": "1.00",
+              "code": "",
+              "disk_info": ""
+            }
+          ],
+          "freight": 1,
+          "postage": "0.00",
+          "temp_id": 0,
+          "is_postage": 1,
+          "is_support_refund": 1,
+          "is_limit": 0,
+          "limit_type": 0,
+          "limit_num": 0,
+          "sort": 0,
+          "ficti": 0,
+          "video_link": "",
+          "is_show": 0,
+          "is_verify": 0,
+          "is_sub": [],
+          "label_id": []
+        },
+        {
+          "id": 80,
+          "product_type": 0,
+          "store_name": "本地赠送积分商品",
+          "store_info": "商品积分编辑验收",
+          "keyword": "",
+          "unit_name": "件",
+          "bar_code": "",
+          "cate_id": [
+            11
+          ],
+          "slider_image": [
+            "/supplier-price.png"
+          ],
+          "description": "<p>本地受控商品</p>",
+          "spec_type": 0,
+          "items": [
+            {
+              "value": "规格",
+              "detail": [
+                "默认"
+              ]
+            }
+          ],
+          "attrs": [
+            {
+              "id": 8001,
+              "unique": "qared001",
+              "suk": "默认",
+              "detail": {
+                "规格": "默认"
+              },
+              "image": "/supplier-price.png",
+              "price": "10.00",
+              "settle_price": "1.00",
+              "cost": "0.00",
+              "ot_price": "10.00",
+              "vip_price": "7.50",
+              "stock": 5,
+              "bar_code": "SKU",
+              "weight": "0.00",
+              "volume": "0.00",
+              "brokerage": "2.00",
+              "brokerage_two": "1.00",
+              "code": "",
+              "disk_info": ""
+            }
+          ],
+          "freight": 1,
+          "postage": "0.00",
+          "temp_id": 0,
+          "is_postage": 1,
+          "is_support_refund": 1,
+          "is_limit": 0,
+          "limit_type": 0,
+          "limit_num": 0,
+          "sort": 0,
+          "ficti": 0,
+          "video_link": "",
+          "is_show": 0,
+          "is_verify": 0,
+          "is_sub": [],
+          "label_id": [
+            9225
+          ]
+        }
+      ],
+      "mobile": [
+        {
+          "id": 80,
+          "product_type": 0,
+          "store_name": "本地赠送积分商品",
+          "store_info": "商品积分编辑验收",
+          "keyword": "",
+          "unit_name": "件",
+          "bar_code": "",
+          "cate_id": [
+            11
+          ],
+          "slider_image": [
+            "/supplier-price.png"
+          ],
+          "description": "<p>本地受控商品</p>",
+          "spec_type": 0,
+          "items": [
+            {
+              "value": "规格",
+              "detail": [
+                "默认"
+              ]
+            }
+          ],
+          "attrs": [
+            {
+              "id": 8001,
+              "unique": "qared001",
+              "suk": "默认",
+              "detail": {
+                "规格": "默认"
+              },
+              "image": "/supplier-price.png",
+              "price": "10.00",
+              "settle_price": "1.00",
+              "cost": "0.00",
+              "ot_price": "10.00",
+              "vip_price": "7.50",
+              "stock": 5,
+              "bar_code": "SKU",
+              "weight": "0.00",
+              "volume": "0.00",
+              "brokerage": "2.00",
+              "brokerage_two": "1.00",
+              "code": "",
+              "disk_info": ""
+            }
+          ],
+          "freight": 1,
+          "postage": "0.00",
+          "temp_id": 0,
+          "is_postage": 1,
+          "is_support_refund": 1,
+          "is_limit": 0,
+          "limit_type": 0,
+          "limit_num": 0,
+          "sort": 0,
+          "ficti": 0,
+          "video_link": "",
+          "is_show": 0,
+          "is_verify": 0,
+          "is_sub": []
+        },
+        {
+          "id": 80,
+          "product_type": 0,
+          "store_name": "本地赠送积分商品",
+          "store_info": "商品积分编辑验收",
+          "keyword": "",
+          "unit_name": "件",
+          "bar_code": "",
+          "cate_id": [
+            11
+          ],
+          "slider_image": [
+            "/supplier-price.png"
+          ],
+          "description": "<p>本地受控商品</p>",
+          "spec_type": 0,
+          "items": [
+            {
+              "value": "规格",
+              "detail": [
+                "默认"
+              ]
+            }
+          ],
+          "attrs": [
+            {
+              "id": 8001,
+              "unique": "qared001",
+              "suk": "默认",
+              "detail": {
+                "规格": "默认"
+              },
+              "image": "/supplier-price.png",
+              "price": "10.00",
+              "settle_price": "1.00",
+              "cost": "0.00",
+              "ot_price": "10.00",
+              "vip_price": "7.50",
+              "stock": 5,
+              "bar_code": "SKU",
+              "weight": "0.00",
+              "volume": "0.00",
+              "brokerage": "2.00",
+              "brokerage_two": "1.00",
+              "code": "",
+              "disk_info": ""
+            }
+          ],
+          "freight": 1,
+          "postage": "0.00",
+          "temp_id": 0,
+          "is_postage": 1,
+          "is_support_refund": 1,
+          "is_limit": 0,
+          "limit_type": 0,
+          "limit_num": 0,
+          "sort": 0,
+          "ficti": 0,
+          "video_link": "",
+          "is_show": 0,
+          "is_verify": 0,
+          "is_sub": [],
+          "label_id": [
+            9201,
+            61,
+            9202
+          ]
+        },
+        {
+          "id": 80,
+          "product_type": 0,
+          "store_name": "本地赠送积分商品",
+          "store_info": "商品积分编辑验收",
+          "keyword": "",
+          "unit_name": "件",
+          "bar_code": "",
+          "cate_id": [
+            11
+          ],
+          "slider_image": [
+            "/supplier-price.png"
+          ],
+          "description": "<p>本地受控商品</p>",
+          "spec_type": 0,
+          "items": [
+            {
+              "value": "规格",
+              "detail": [
+                "默认"
+              ]
+            }
+          ],
+          "attrs": [
+            {
+              "id": 8001,
+              "unique": "qared001",
+              "suk": "默认",
+              "detail": {
+                "规格": "默认"
+              },
+              "image": "/supplier-price.png",
+              "price": "10.00",
+              "settle_price": "1.00",
+              "cost": "0.00",
+              "ot_price": "10.00",
+              "vip_price": "7.50",
+              "stock": 5,
+              "bar_code": "SKU",
+              "weight": "0.00",
+              "volume": "0.00",
+              "brokerage": "2.00",
+              "brokerage_two": "1.00",
+              "code": "",
+              "disk_info": ""
+            }
+          ],
+          "freight": 1,
+          "postage": "0.00",
+          "temp_id": 0,
+          "is_postage": 1,
+          "is_support_refund": 1,
+          "is_limit": 0,
+          "limit_type": 0,
+          "limit_num": 0,
+          "sort": 0,
+          "ficti": 0,
+          "video_link": "",
+          "is_show": 0,
+          "is_verify": 0,
+          "is_sub": [],
+          "label_id": [
+            9202
+          ]
+        },
+        {
+          "id": 80,
+          "product_type": 0,
+          "store_name": "本地赠送积分商品",
+          "store_info": "商品积分编辑验收",
+          "keyword": "",
+          "unit_name": "件",
+          "bar_code": "",
+          "cate_id": [
+            11
+          ],
+          "slider_image": [
+            "/supplier-price.png"
+          ],
+          "description": "<p>本地受控商品</p>",
+          "spec_type": 0,
+          "items": [
+            {
+              "value": "规格",
+              "detail": [
+                "默认"
+              ]
+            }
+          ],
+          "attrs": [
+            {
+              "id": 8001,
+              "unique": "qared001",
+              "suk": "默认",
+              "detail": {
+                "规格": "默认"
+              },
+              "image": "/supplier-price.png",
+              "price": "10.00",
+              "settle_price": "1.00",
+              "cost": "0.00",
+              "ot_price": "10.00",
+              "vip_price": "7.50",
+              "stock": 5,
+              "bar_code": "SKU",
+              "weight": "0.00",
+              "volume": "0.00",
+              "brokerage": "2.00",
+              "brokerage_two": "1.00",
+              "code": "",
+              "disk_info": ""
+            }
+          ],
+          "freight": 1,
+          "postage": "0.00",
+          "temp_id": 0,
+          "is_postage": 1,
+          "is_support_refund": 1,
+          "is_limit": 0,
+          "limit_type": 0,
+          "limit_num": 0,
+          "sort": 0,
+          "ficti": 0,
+          "video_link": "",
+          "is_show": 0,
+          "is_verify": 0,
+          "is_sub": [],
+          "label_id": []
+        },
+        {
+          "id": 80,
+          "product_type": 0,
+          "store_name": "本地赠送积分商品",
+          "store_info": "商品积分编辑验收",
+          "keyword": "",
+          "unit_name": "件",
+          "bar_code": "",
+          "cate_id": [
+            11
+          ],
+          "slider_image": [
+            "/supplier-price.png"
+          ],
+          "description": "<p>本地受控商品</p>",
+          "spec_type": 0,
+          "items": [
+            {
+              "value": "规格",
+              "detail": [
+                "默认"
+              ]
+            }
+          ],
+          "attrs": [
+            {
+              "id": 8001,
+              "unique": "qared001",
+              "suk": "默认",
+              "detail": {
+                "规格": "默认"
+              },
+              "image": "/supplier-price.png",
+              "price": "10.00",
+              "settle_price": "1.00",
+              "cost": "0.00",
+              "ot_price": "10.00",
+              "vip_price": "7.50",
+              "stock": 5,
+              "bar_code": "SKU",
+              "weight": "0.00",
+              "volume": "0.00",
+              "brokerage": "2.00",
+              "brokerage_two": "1.00",
+              "code": "",
+              "disk_info": ""
+            }
+          ],
+          "freight": 1,
+          "postage": "0.00",
+          "temp_id": 0,
+          "is_postage": 1,
+          "is_support_refund": 1,
+          "is_limit": 0,
+          "limit_type": 0,
+          "limit_num": 0,
+          "sort": 0,
+          "ficti": 0,
+          "video_link": "",
+          "is_show": 0,
+          "is_verify": 0,
+          "is_sub": [],
+          "label_id": [
+            9202
+          ]
+        }
+      ],
+      "unknown": [
+        {
+          "id": 80,
+          "product_type": 0,
+          "store_name": "本地赠送积分商品",
+          "store_info": "商品积分编辑验收",
+          "keyword": "",
+          "unit_name": "件",
+          "bar_code": "",
+          "cate_id": [
+            11
+          ],
+          "slider_image": [
+            "/supplier-price.png"
+          ],
+          "description": "<p>本地受控商品</p>",
+          "spec_type": 0,
+          "items": [
+            {
+              "value": "规格",
+              "detail": [
+                "默认"
+              ]
+            }
+          ],
+          "attrs": [
+            {
+              "id": 8001,
+              "unique": "qared001",
+              "suk": "默认",
+              "detail": {
+                "规格": "默认"
+              },
+              "image": "/supplier-price.png",
+              "price": "10.00",
+              "settle_price": "1.00",
+              "cost": "0.00",
+              "ot_price": "10.00",
+              "vip_price": "7.50",
+              "stock": 5,
+              "bar_code": "SKU",
+              "weight": "0.00",
+              "volume": "0.00",
+              "brokerage": "2.00",
+              "brokerage_two": "1.00",
+              "code": "",
+              "disk_info": ""
+            }
+          ],
+          "freight": 1,
+          "postage": "0.00",
+          "temp_id": 0,
+          "is_postage": 1,
+          "is_support_refund": 1,
+          "is_limit": 0,
+          "limit_type": 0,
+          "limit_num": 0,
+          "sort": 0,
+          "ficti": 0,
+          "video_link": "",
+          "is_show": 0,
+          "is_verify": 0,
+          "is_sub": []
+        },
+        {
+          "id": 80,
+          "product_type": 0,
+          "store_name": "本地赠送积分商品",
+          "store_info": "商品积分编辑验收",
+          "keyword": "",
+          "unit_name": "件",
+          "bar_code": "",
+          "cate_id": [
+            11
+          ],
+          "slider_image": [
+            "/supplier-price.png"
+          ],
+          "description": "<p>本地受控商品</p>",
+          "spec_type": 0,
+          "items": [
+            {
+              "value": "规格",
+              "detail": [
+                "默认"
+              ]
+            }
+          ],
+          "attrs": [
+            {
+              "id": 8001,
+              "unique": "qared001",
+              "suk": "默认",
+              "detail": {
+                "规格": "默认"
+              },
+              "image": "/supplier-price.png",
+              "price": "10.00",
+              "settle_price": "1.00",
+              "cost": "0.00",
+              "ot_price": "10.00",
+              "vip_price": "7.50",
+              "stock": 5,
+              "bar_code": "SKU",
+              "weight": "0.00",
+              "volume": "0.00",
+              "brokerage": "2.00",
+              "brokerage_two": "1.00",
+              "code": "",
+              "disk_info": ""
+            }
+          ],
+          "freight": 1,
+          "postage": "0.00",
+          "temp_id": 0,
+          "is_postage": 1,
+          "is_support_refund": 1,
+          "is_limit": 0,
+          "limit_type": 0,
+          "limit_num": 0,
+          "sort": 0,
+          "ficti": 0,
+          "video_link": "",
+          "is_show": 0,
+          "is_verify": 0,
+          "is_sub": []
+        }
+      ],
+      "unicode": [
+        {
+          "id": 80,
+          "product_type": 0,
+          "store_name": "本地赠送积分商品",
+          "store_info": "商品积分编辑验收",
+          "keyword": "",
+          "unit_name": "件",
+          "bar_code": "",
+          "cate_id": [
+            11
+          ],
+          "slider_image": [
+            "/supplier-price.png"
+          ],
+          "description": "<p>本地受控商品</p>",
+          "spec_type": 0,
+          "items": [
+            {
+              "value": "规格",
+              "detail": [
+                "默认"
+              ]
+            }
+          ],
+          "attrs": [
+            {
+              "id": 8001,
+              "unique": "qared001",
+              "suk": "默认",
+              "detail": {
+                "规格": "默认"
+              },
+              "image": "/supplier-price.png",
+              "price": "10.00",
+              "settle_price": "1.00",
+              "cost": "0.00",
+              "ot_price": "10.00",
+              "vip_price": "7.50",
+              "stock": 5,
+              "bar_code": "SKU",
+              "weight": "0.00",
+              "volume": "0.00",
+              "brokerage": "2.00",
+              "brokerage_two": "1.00",
+              "code": "",
+              "disk_info": ""
+            }
+          ],
+          "freight": 1,
+          "postage": "0.00",
+          "temp_id": 0,
+          "is_postage": 1,
+          "is_support_refund": 1,
+          "is_limit": 0,
+          "limit_type": 0,
+          "limit_num": 0,
+          "sort": 0,
+          "ficti": 0,
+          "video_link": "",
+          "is_show": 0,
+          "is_verify": 0,
+          "is_sub": [],
+          "label_id": [
+            9203
+          ]
+        }
+      ]
+    },
+    "uiSuccessfulWriteCounts": {
+      "desktop": 4,
+      "mobile": 4,
+      "unknown": 2,
+      "unicode": 1
+    },
+    "uiRejectedEarlyHydrationAttempt": {
+      "scenario": "mobile",
+      "index": 1,
+      "labelId": [
+        9201,
+        61,
+        9202
+      ],
+      "excludedFromSuccessfulWrites": true
+    },
+    "screenshots": {
+      "desktop-final-visible.png": "ba9d551694b255c3a3f228c4616ebba780fbb0905b29f907e7e65c22f6b5e0c1",
+      "desktop-initial.png": "f712676c76f8a26636e45f16c556bd14d33812a033e06e739a20797ab9771c22",
+      "desktop-selected.png": "246545658b518074ad04032c447ff1467e67c95117aa7bdb1919f345d33b67bc",
+      "mobile-final-visible.png": "f3279010c66ce3c354dc851f49c4130023b8b9ac4b9a75abfe521b08ae9b13b7",
+      "unicode-visible.png": "0e1e66160ea6dfa53bcb52f1540fe6957179a3515f81d4cf004166b7e7c5254a"
+    },
+    "distManifestSha256": "5b902c5fd534ea1be5b2e7760f40a4a88bafe4e12f202310483468ca1bc5b4e6"
+  },
+  "actualSupplierLifecycles": {
+    "financialStoreId": 0,
+    "fulfillments": [
+      0,
+      1,
+      3
+    ],
+    "quantityEach": 3,
+    "unitPrice": "10.00",
+    "balanceBefore": "100.00",
+    "balanceAfter": "70.00",
+    "realHttp": [
+      "Supplier create/read/save",
+      "Admin moderation",
+      "buyer cart/confirm/create/pay"
+    ],
+    "realServices": [
+      "OrderOutboxService.processMessage",
+      "PurchasedProductLabelTaskService.process"
+    ],
+    "independentFiveRoleDeclarationCommissioned": true,
+    "labelsChangedThroughSupplierHttpAfterPaymentAndTaskCreation": true,
+    "hiddenPendingReviewSourceStillRead": true,
+    "orderCartRowsUnchanged": true,
+    "preexistingExactScopeLabelAddedFalse": true,
+    "retiredSkippedWithReceipt": true,
+    "newExactPlatformRelationAddedOnce": true,
+    "otherUserAndForeignStoreRowsUnchanged": true,
+    "paymentAndCreationReplayIdempotent": true,
+    "immutableSuccessReplayDoesNotRegrantRemovedMembership": true,
+    "actualWorkerQueueSeparatelyVerifiedByUnchanged17CaseNativeFile": true,
+    "publicLoginClaimed": false,
+    "externalFetchCalls": 0,
+    "onlyFiniteLocalInfrastructureAdapters": true
+  },
+  "initialOutTimeout": {
+    "fullFilePassingGate": false,
+    "completedCases": 67,
+    "reason": "unchanged600secondFileBudget",
+    "exitSignal": 143,
+    "originalCleanupWasIncomplete": true,
+    "stoppedOwnedClusterCleanup": {
+      "directory": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-J0clHG",
+      "pgCtlStatusBefore": 3,
+      "removedOnlyOwnedStoppedCluster": true,
+      "originalObservationPreservedIn": "native-out-labels.log"
+    },
+    "laterWholeFilePassRetainsOriginalFailureLog": true,
+    "baselineWholeFilePassed": 69
+  },
+  "sourceProofDebt": {
+    "testFile": "test/supplier-product-label-runtime-source-binding.test.ts",
+    "baseline": "ec39001cb043737a3108e073c0da39e2beb1ad8a",
+    "baselinePassed": 178,
+    "currentPassed": 178,
+    "baselineFailed": 10,
+    "currentFailed": 10,
+    "skipped": 0,
+    "failingFullNamesExactlyMatch": true,
+    "failedCases": [
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance admits the exact new definer only in current shared-shop pricing recognition while isolated scopes and the fixed privilege plan remain frozen",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance keeps all prior frontend public selection binding and privilege plan bytes unchanged for a backend-only closure",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance partitions true8023 before and all controlled changed/additional files with no missing or duplicated image",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance pins complete current and accepted ProductLabel bytes workers-ts/scripts/run-local-finance-postgres.mjs",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance pins complete current and accepted ProductLabel bytes workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance pins complete current and accepted ProductLabel bytes workers-ts/src/migrations/checkoutPricingLock.ts",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance refuses altered current and forged whole-file inverse workers-ts/scripts/run-local-finance-postgres.mjs",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance refuses altered current and forged whole-file inverse workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance rejects nonexact publication bytes and forged bridge hashes while composing each immutable validation layer",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance runs current789 callSites827 variants before keeping every exact report byte and predecessor call object"
+    ],
+    "restoredIgnoredResources": 150,
+    "profiles": [
+      {
+        "profile": "baseline",
+        "exit": 1,
+        "seconds": 41.31
+      },
+      {
+        "profile": "current",
+        "exit": 1,
+        "seconds": 22.39
+      }
+    ],
+    "isPassingGate": false,
+    "isRuntimeAcceptance": false
+  },
+  "carriedRefundMaterializationDebt": {
+    "baseline": {
+      "baseline": "bfd625826923e76b3fc890076750181d8ff4f891",
+      "testFile": "workers-ts/test/refund-order-materialization.test.ts",
+      "baselinePassed": 75,
+      "currentPassed": 75,
+      "baselineFailed": 1,
+      "currentFailed": 1,
+      "skipped": 0,
+      "failingFullNamesExactlyMatch": true,
+      "failedCases": [
+        "test/refund-order-materialization.test.ts > integrates durable v2 finalization with registered evidence but without default route activation"
+      ],
+      "unchangedFiles": {
+        "workers-ts/test/refund-order-materialization.test.ts": "2ddc928e952a11e5d7d38a4e915214175c55cedad5908d04bc1c517444b0bfac",
+        "workers-ts/src/services/order/StoreOrderRefundService.ts": "ca2ef3db6b2649a61a31e3c88346984912a41d82ebd898c85f2b69c33537bc3a"
+      },
+      "passingGate": false,
+      "allRuntimeAcceptanceClaimedGreen": false
+    },
+    "currentTestAndImplementationBytesUnchanged": true,
+    "rerunInThisBatch": false,
+    "passingGate": false
+  },
+  "previousCi": {
+    "runId": 43234376539,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/43234376539",
+    "terminal": true,
+    "workerFailureBeforeTests": "fixed remote PHP ref unavailable",
+    "otherJobsPassed": true
+  },
+  "noDeploy": true,
+  "noPhpUpload": true,
+  "artifactDirectory": "/tmp/php-ts-supplier-product-user-labels-20261112",
+  "createdAt": "2026-11-12T16:27:55.861491+00:00",
+  "logHashes": {
+    "commit.log": "c5ccda6feca97ca2326721ca42180ce03d266ef414e433a8d07c3cd0dcd5a734",
+    "frontend-build.log": "c4df8d4e50e117466cb64c78e17634713d59dbf50f4899950741962b29e92113",
+    "lifecycle-preflight.log": "f20947e2fb023287ca1c421d4e805c614c70bc66d1435180f7d2fbb86a4dc4e7",
+    "native-copy.log": "5d64c7bee8c768d0d1896c217211974ceceb87367a01d0b62dd6e0a26beee757",
+    "native-out-labels-baseline.log": "5912ad8c22020d7ca60a005b438ed8db2325b83b3c9c77f67baeb386c1d5ebf0",
+    "native-out-labels-rerun.log": "debb1dc8682c7590d0cc9090cbbacaa3aa0498e5f25d38e3686ed574912c6397",
+    "native-out-labels-tail.log": "9d6cb8aa80720079636d90ebf01f309b419d8d0fc14241dffc225f0a4267a43a",
+    "native-out-labels.log": "4ed8a8fc5d07829f8466962c31a8b3daa2dfec3a6bb601f9f9390508731fb0aa",
+    "native-preflight-2.log": "52c8f4c1f2631c2685a08601562c76760e3c86a4c0768754479b5becf83922e5",
+    "native-preflight-3.log": "2176a7b5814c6a22b2f42be3d23074480b97bc8336af330833189f069d484e9c",
+    "native-preflight.log": "9d05352cef662ca28194f0414122c6ada4623858fc7549d8b3177b770692dae3",
+    "native-promotion-labels.log": "bed286ea73e11c3880bedd5383f0a6d8f931dbd777cbbb125c8fc3335a64c072",
+    "native-purchased-author.log": "55bea4cf902b42cf058af390c0d0bbc33f295f7196b5bf41640d0631664a6a26",
+    "native-supplier-author.log": "07b622783519bfa3cdb5dd392fff568516966448bceb6bddf0555777db7022b9",
+    "out-rerun-progress.log": "66316b3f14fd076bbd81ba09aeb75b450d31c73e891d4e2a73a7645b26f3db04",
+    "previous-ci-shard1.log": "04d1bfabe5b9203f5d5558e501f856014a15957b9e17bec65bb28c93133b2a2b",
+    "previous-ci-shard2.log": "f2bb207c6a4e547574e140caa5b624bf55bab9faf2587b4963395f670fec3d9f",
+    "runtime-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source-baseline.log": "671f1320600c190729ab34b696dcb6d041ada4c60d66f9f153fdc0ea6ba2e2ad",
+    "source-current.log": "1b2213c30deec7ea10c85677d8faa58a77440dba9158884990c042fd5dd84849",
+    "source-proof-progress.log": "2d8e1a5bb3b01a2d8f7db3d9c7ec22304bc5be28399d9cde6cae6aa938da02b6",
+    "supplement-progress.log": "c095b979df0afdb2619a7080f1b4d601a1731b5bee66b5f8e4e5c1073c717ab4",
+    "type-shards-options.log": "dec5848d4dae25dff1c16c212a56627a9dd583388e28fa8d4d9d2ad84f0b8375",
+    "type-shards-plan.log": "532c58ce68ac89f4f2a4d1a5403270d36b10acf37fd0d009626e0d3db7901040",
+    "ui-server.log": "4c40e445a8fd06394bec3da848a8051e159d316d81f25826ee03faee461cc850",
+    "unit-preflight.log": "def301a1bc91b39389aeefbdba90500361fbb3ec4527bfe8934dc411cca3c726",
+    "unit-types-shard-1.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "unit-types-shard-2.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "unit.log": "afd2f45d6729b9a37711aab3cec7e35b91dea90b4100fbcf4dfcc62ef3624ea0",
+    "validation-progress.log": "57f83992f36baac03edec0662264b24c88406f79f99f134529ed732381eba6d4"
+  }
+}

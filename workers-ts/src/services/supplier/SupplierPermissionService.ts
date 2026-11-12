@@ -198,6 +198,9 @@ export function requiredSupplierPermissions(method: string, routePath: string): 
     if (verb === 'DELETE' && new RegExp(`^product/product/rule/delete/${id}$`).test(route)) return ['supplier.product.manage'];
     return null;
   }
+  if (route === 'product/user-label' || route.startsWith('product/user-label/')) {
+    return readMethod(method) && route === 'product/user-label/catalog' ? ['supplier.product.view'] : null;
+  }
   if (route === 'product/coupon' || route.startsWith('product/coupon/')) {
     return readMethod(method) && route === 'product/coupon/catalog' ? ['supplier.product.view'] : null;
   }

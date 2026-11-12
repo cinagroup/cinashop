@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import SupplierProductUserLabelPicker from '@/components/SupplierProductUserLabelPicker.vue';
+import { productUserLabelEditor, productUserLabelPayload, productUserLabelIds } from '@/utils/productUserLabels';
 import SupplierProductCouponPicker from '@/components/SupplierProductCouponPicker.vue';
 import { productCouponEditor, productCouponPayload, productCouponIds } from '@/utils/productCoupons';
 import { productIntegralEditor, productIntegralPayload } from '@/utils/productIntegral';
@@ -283,6 +285,11 @@ function initialForm(): ProductDetail {
   };
 }
 
+const userLabels = reactive(productUserLabelEditor(undefined, true));
+function changeUserLabels(value:number[]) {
+  if (!userLabels.ready || loading.value || saving.value || !productReadReady.value || mediaInvalidated.value || !mediaSession.isCurrent() || !canManageProducts.value || copying.value) return;
+  userLabels.ids = productUserLabelIds(value); userLabels.changed = true;
+}
 const coupons = reactive(productCouponEditor(undefined, true));
 function changeCoupons(value: number[]) {
   if (!coupons.ready || loading.value || saving.value || !productReadReady.value || mediaInvalidated.value || !mediaSession.isCurrent() || !canManageProducts.value || copying.value) return;
@@ -293,6 +300,7 @@ const purchase = reactive(productPurchaseEditor(undefined, true));
 const form = reactive<ProductDetail>(initialForm());
 const priceOptions = ref<number[]>([]), priceOptionsReady = ref(true);
 function resetProductForm() {
+  Object.assign(userLabels, productUserLabelEditor(undefined, true));
   Object.assign(coupons, productCouponEditor(undefined, true));
   Object.assign(integral, productIntegralEditor(undefined, true));
   Object.assign(purchase, productPurchaseEditor(undefined, true));
@@ -325,6 +333,7 @@ function editableSku(sku: ProductSku, productType: ProductDetail['product_type']
 }
 
 function applyProductDetail(detail: ProductDetail) {
+  Object.assign(userLabels, productUserLabelEditor(detail.user_label_selection));
   Object.assign(coupons, productCouponEditor(detail.coupon_selection));
   Object.assign(integral, productIntegralEditor(detail.integral_selection));
   Object.assign(purchase, productPurchaseEditor(detail.purchase_selection));
@@ -639,10 +648,11 @@ async function submit() {
       specs_id: _originalTemplate, specs: _originalParameters, specs_selection: _parameterSelection,
       system_form_id: _originalSystemForm, system_form_selection: _systemFormSelection, recommend_image: _originalRecommendImage, price_selection: _priceSelection, purchase_selection: _purchaseSelection,
       integral_selection: _integralSelection, give_integral: _giveIntegral,
+      user_label_selection: _userLabelSelection, label_id: _originalUserLabels,
       coupon_selection: _couponSelection, coupon_ids: _couponIds, coupons: _legacyCoupons,
       is_vip_product: _memberOnly, is_presale_product: _presale, presale_time: _presalePeriod, presale_day: _presaleDays,
       ...editableForm } = form as ProductDetail & { video_preview_url?: unknown; coupon_ids?: unknown; coupons?: unknown; give_integral?: unknown; is_vip_product?: unknown; is_presale_product?: unknown; presale_time?: unknown; presale_day?: unknown };
-    const payload = { ...editableForm, attrs, ...(!copying.value ? { ...productPriceOptionsPayload(priceOptions.value, priceOptionsReady.value), ...productPurchasePayload(purchase), ...productIntegralPayload(integral), ...productCouponPayload(coupons) } : {}), ...(labelsChanged.value ? { store_label_id: [...selectedLabelIds.value] } : {}),
+    const payload = { ...editableForm, attrs, ...(!copying.value ? { ...productPriceOptionsPayload(priceOptions.value, priceOptionsReady.value), ...productPurchasePayload(purchase), ...productIntegralPayload(integral), ...productCouponPayload(coupons), ...productUserLabelPayload(userLabels) } : {}), ...(labelsChanged.value ? { store_label_id: [...selectedLabelIds.value] } : {}),
       ...(!copying.value ? { ...productRecommendImagePayload(form.recommend_image, recommendImageChanged.value), ...productSchedulePayload(schedule), ...productBrandPayload(selectedBrandPath.value, brandChanged.value), ...productEnsurePayload(selectedEnsureIds.value, ensuresChanged.value), ...productParameterPayload(parameterDraft.value, parametersChanged.value), ...productSystemFormPayload(selectedSystemFormId.value, systemFormChanged.value) } : {}) };
     if (copying.value) {
       if (!copyContext.value || copyContext.value.source_id !== copyEntry.value.source) throw Error('请重新读取复制来源');
@@ -1029,6 +1039,15 @@ onMounted(load);
             <p v-if="!purchase.ready" class="security-note">尚未读取购买资格与预售条件，请重新读取后再调整。</p>
           </template>
           <p v-else class="security-note">复制保留来源的购买资格与预售条件，创建后可在编辑页调整。</p>
+        </article>
+        <article class="surface product-form-card compact-card">
+          <header><h2>购买用户标签</h2><p>选择有效的平台用户标签，付款后由独立任务添加。</p></header>
+          <template v-if="!copying">
+            <SupplierProductUserLabelPicker :model-value="userLabels.ids" :selection="userLabels.selection" :context="formEntry" :disabled="!userLabels.ready || loading || saving || !productReadReady || !canManageProducts || mediaInvalidated || copyBlocked" @update:model-value="changeUserLabels" />
+            <p v-if="!userLabels.ready" class="security-note">尚未读取购买用户标签，请重新读取后再调整。</p>
+            <p class="security-note">编号总长度最多64字符；未修改时保留原绑定。清空不会移除用户已有标签，保存后须重新审核。</p>
+          </template>
+          <p v-else class="security-note">复制保留来源的购买用户标签，创建后可在编辑页调整。</p>
         </article>
         <article class="surface product-form-card compact-card">
           <header><h2>付款赠送优惠券</h2><p>按付款任务处理时的当前绑定发放，每个订单对同一发行实例赠送一次。</p></header>

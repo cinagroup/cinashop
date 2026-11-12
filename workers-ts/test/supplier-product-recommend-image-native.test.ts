@@ -987,3 +987,149 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier authore
     } finally { wiring.container=null; wiring.moderator=null; network.mockRestore(); await full.close(); }
   },180_000);
 });
+
+import { userLabel as purchasedUserLabel, userLabelRelation as purchasedUserRelation, storeProductRelation as purchasedProductRelation } from '@/models/schema';
+import { supplierProductUserLabelsFixture } from './helpers/supplierProductUserLabels';
+
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier purchased user label author and readonly catalogue', () => {
+  let f: Awaited<ReturnType<typeof supplierProductUserLabelsFixture>>;
+  beforeEach(async () => { vi.spyOn(globalThis,'fetch').mockRejectedValue(Error('Owned user-label test forbids external providers')); f=await supplierProductUserLabelsFixture(); wiring.container=f.container; },30000);
+  afterEach(async()=>{try{expect(fetch).not.toHaveBeenCalled();}finally{await f?.close();wiring.container=null;wiring.moderator=null;vi.restoreAllMocks();}},30000);
+  async function call(path:string,body?:object,actor:keyof typeof f.tokens|'anonymous'='manager') {
+    const response=await app.request('/supplierapi'+path,{method:body?'POST':'GET',headers:{...(actor==='anonymous'?{}:{Authorization:'Bearer '+f.tokens[actor]}),...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})},f.env);
+    expect(response.headers.get('cache-control')).toContain('private, no-store');return response.json<Envelope>();
+  }
+  const links=(id=80)=>f.db.select().from(purchasedProductRelation).where(sql`${purchasedProductRelation.productId}=${id} AND ${purchasedProductRelation.type}=4`).orderBy(purchasedProductRelation.id);
+  it.each([0,1,3])('binds platform user labels without changing display labels, preserves omission and clears fulfillment %i',async type=>f.withUserLabelWriter(async writer=>{
+    wiring.container=writer.container;const id=type===1?81:80;
+    if(type===3){await f.db.update(storeProduct).set({productType:3}).where(eq(storeProduct.id,id));await f.db.update(storeProductAttrValue).set({productType:3}).where(eq(storeProductAttrValue.productId,id));}
+    const body=await f.body({},id),before=await f.product(id);
+    const saved=await call('/product/product/'+id,{...body,label_id:[{id:'9202',name:'forged'},9201]});expect(saved.status,saved.msg).toBe(200);
+    const read=await call('/product/product/'+id);expect(read.data.user_label_selection).toEqual({version:1,ids:[9202,9201],entries:[{id:9202,title:'平台%_客户',available:true},{id:9201,title:'平台购买用户',available:true}],consistent:true,truncated:false});
+    expect((await f.product(id)).storeLabelId).toBe(before.storeLabelId);const bound=await links(id);expect((await call('/product/product/'+id,body)).status).toBe(200);expect(await links(id)).toEqual(bound);
+    expect((await call('/product/product/'+id,{...body,label_id:[]})).status).toBe(200);expect(await links(id)).toEqual([]);expect((await f.product(id)).labelId).toBe('');
+    const [rights]=await writer.db.execute(sql`SELECT current_user=session_user AS independent,has_column_privilege(current_user,'user_label','name','UPDATE') AS catalogue_edit`);expect(rights).toEqual({independent:true,catalogue_edit:false});
+  }));
+  it('filters platform scope and active status using an actual SELECT-only viewer and literal search',async()=>f.withReader(async reader=>{
+    wiring.container=reader.container;const before=await f.snapshot(),seq=await f.sequences();
+    const page=await call('/product/user-label/catalog?limit=1',undefined,'viewer');expect(page.status,page.msg).toBe(200);expect(page.data).toEqual({version:1,list:[{id:9202,title:'平台%_客户'}],count:2,page:1,limit:1,runtime_configured:false});
+    expect((await call('/product/user-label/catalog?keyword=%25_',undefined,'viewer')).data.list.map((x:any)=>x.id)).toEqual([9202]);
+    for(const query of ['supplier_id=7','type=2','status=0','page=0','limit=51','page=1&page=2'])expect((await call('/product/user-label/catalog?'+query,undefined,'viewer')).status).toBe(400);
+    for(const actor of ['denied','anonymous'] as const)expect((await call('/product/user-label/catalog',undefined,actor)).status).not.toBe(200);
+    const [rights]=await reader.db.execute(sql`SELECT has_any_column_privilege(current_user,'user_label','UPDATE') AS write`);expect(rights.write).toBe(false);expect(await f.snapshot()).toEqual(before);expect(await f.sequences()).toEqual(seq);
+  }));
+  it('preserves unsupported legacy IDs and malformed scalar on omission, hides foreign names and allows explicit repair',async()=>f.withUserLabelWriter(async writer=>{
+    wiring.container=writer.container;await f.db.update(storeProduct).set({labelId:'61,9203,9204,99999'}).where(eq(storeProduct.id,80));
+    const read=await call('/product/product/80');expect(read.data.user_label_selection).toMatchObject({ids:[61,9203,9204,99999],consistent:false});expect(read.data.user_label_selection.entries.every((x:any)=>!x.available)).toBe(true);expect(JSON.stringify(read.data.user_label_selection)).not.toContain('外部门店私密');
+    const body=await f.body();expect((await call('/product/product/80',body)).status).toBe(200);expect((await f.product(80)).labelId).toBe('61,9203,9204,99999');
+    for(const id of [61,9203,9204,99999]){const before=await f.snapshot();expect((await call('/product/product/80',{...body,label_id:[id]})).status).not.toBe(200);expect(await f.snapshot()).toEqual(before);}
+    await f.db.update(storeProduct).set({labelId:'bad,01'}).where(eq(storeProduct.id,80));expect((await call('/product/product/80')).data.user_label_selection).toMatchObject({ids:[],consistent:false});
+    expect((await call('/product/product/80',{...body,label_id:[]})).status).toBe(200);expect((await f.product(80)).labelId).toBe('');
+  }));
+  it('does not perform type4 DML on omitted or undefined fields even with executable tripwires',async()=>f.withUserLabelWriter(async writer=>{
+    wiring.container=writer.container;await f.exec("CREATE FUNCTION owned_user_label_omit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF (TG_OP='DELETE' AND OLD.type=4) OR (TG_OP='INSERT' AND NEW.type=4) THEN RAISE EXCEPTION 'type4 DML entered'; END IF; IF TG_OP='DELETE' THEN RETURN OLD; END IF; RETURN NEW; END $$; CREATE TRIGGER owned_user_label_omit BEFORE INSERT OR DELETE ON public.store_product_relation FOR EACH ROW EXECUTE FUNCTION owned_user_label_omit()");
+    await expect(f.db.insert(purchasedProductRelation).values({productId:80,type:4,relationId:9201})).rejects.toThrow();const body=await f.body(),before=await links();
+    expect((await call('/product/product/80',body)).status).toBe(200);await new SupplierProductManagementService(writer.container,f.env).saveProduct(7,80,{...body,label_id:undefined});expect(await links()).toEqual(before);
+  }));
+  it('rejects invalid, foreign and unauthorized author intent before business or sequence changes',async()=>f.withUserLabelWriter(async writer=>{
+    wiring.container=writer.container;const body=await f.body(),before=await f.snapshot(),seq=await f.sequences();
+    for(const actor of ['viewer','denied','other','anonymous'] as const)expect((await call('/product/product/80',{...body,label_id:[9201]},actor)).status).not.toBe(200);
+    for(const label_id of [null,'9201',false,[9201,9201],[0],['01'],[2147483648],Array(101).fill(1),Array.from({length:7},(_,i)=>2147483640+i)])expect((await call('/product/product/80',{...body,label_id})).status).toBe(400);
+    expect(await f.snapshot()).toEqual(before);expect(await f.sequences()).toEqual(seq);
+  }));
+  it('combines user labels with every existing explicit metadata author without weakening protected relations',async()=>f.withUserLabelWriter(async writer=>{
+    wiring.container=writer.container;
+    const result=await call('/product/product/80',await f.body({label_id:[9201],give_integral:'2.75',recommend_image:'/api/assets/31',store_label_id:[31],brand_id:[104,105],ensure_id:[201],specs_id:301,specs:[{name:'材质',value:'棉'}],system_form_id:401,is_vip_product:1,is_presale_product:0,is_sub:[],auto_on_time:Math.floor(Date.now()/1000)+3600}));
+    expect(result.status,result.msg).toBe(200);expect(await f.product()).toMatchObject({labelId:'9201',storeLabelId:'31',giveIntegral:'2.75',recommendImage:'/api/assets/31',brandId:105,ensureId:'201',specsId:301,systemFormId:401,isVipProduct:1});
+    const relations=await f.db.select().from(purchasedProductRelation).where(eq(purchasedProductRelation.productId,80));expect(relations.filter(x=>x.type===4).map(x=>x.relationId)).toEqual([9201]);expect(relations.filter(x=>x.type===3).map(x=>x.relationId)).toEqual([31]);expect(relations.some(x=>x.type===1)).toBe(true);
+  }));
+  it.each(['skip','rewrite','catalogue','main','other-relation','actor','deferred'] as const)('rolls back %s tampering after an executable positive control',async mode=>f.withUserLabelWriter(async writer=>{
+    const action=mode==='skip'?'RETURN NULL;':mode==='rewrite'?'NEW.relation_id=9202; RETURN NEW;':mode==='catalogue'?"UPDATE user_label SET name='tampered' WHERE id=9201; RETURN NEW;":mode==='main'?'UPDATE store_product SET give_integral=99 WHERE id=80; RETURN NEW;':mode==='other-relation'?'DELETE FROM store_product_relation WHERE product_id=80 AND type=1; RETURN NEW;':mode==='actor'?"UPDATE system_role SET rules='supplier.product.view' WHERE id=21; RETURN NEW;":'UPDATE store_product_relation SET relation_pid=99 WHERE id=NEW.id; RETURN NEW;';
+    const timing=mode==='deferred'?'CREATE CONSTRAINT TRIGGER owned_user_tamper AFTER INSERT ON store_product_relation DEFERRABLE INITIALLY DEFERRED':`CREATE TRIGGER owned_user_tamper ${['skip','rewrite'].includes(mode)?'BEFORE':'AFTER'} INSERT ON store_product_relation`;
+    await f.exec(`CREATE FUNCTION owned_user_tamper() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN IF NEW.product_id=80 AND NEW.type=4 THEN ${action} END IF; RETURN NEW; END $$; ${timing} FOR EACH ROW EXECUTE FUNCTION owned_user_tamper()`);
+    const marker=Error('owned positive control rollback');await expect(f.db.transaction(async tx=>{
+      const rows=await tx.insert(purchasedProductRelation).values({productId:80,type:4,relationId:9201}).returning();await tx.execute(sql`SET CONSTRAINTS ALL IMMEDIATE`);
+      if(mode==='skip')expect(rows).toHaveLength(0);else if(mode==='rewrite')expect(rows[0].relationId).toBe(9202);else if(mode==='catalogue')expect((await tx.select().from(purchasedUserLabel).where(eq(purchasedUserLabel.id,9201)))[0].name).toBe('tampered');else if(mode==='main')expect((await tx.select().from(storeProduct).where(eq(storeProduct.id,80)))[0].giveIntegral).toBe('99.00');else if(mode==='other-relation')expect(await tx.select().from(purchasedProductRelation).where(sql`${purchasedProductRelation.productId}=80 AND ${purchasedProductRelation.type}=1`)).toEqual([]);else if(mode==='actor')expect((await tx.select().from(systemRole).where(eq(systemRole.id,21)))[0].rules).toBe('supplier.product.view');else expect((await tx.select().from(purchasedProductRelation).where(eq(purchasedProductRelation.id,rows[0].id)))[0].relationPid).toBe(99);throw marker;
+    })).rejects.toBe(marker);
+    wiring.container=writer.container;const body=await f.body({label_id:[9201]}),before=await f.snapshot(),catalog=await f.db.select().from(purchasedUserLabel);expect((await call('/product/product/80',body)).status).not.toBe(200);expect(await f.snapshot()).toEqual(before);expect(await f.db.select().from(purchasedUserLabel)).toEqual(catalog);
+  }));
+  it('refuses an actual concurrent platform user label writer without partial writes',async()=>f.withUserLabelWriter(async writer=>f.withPeer!(async peer=>{
+    const held=signal(),release=signal();wiring.container=writer.container;
+    const holding=peer.db.transaction(async tx=>{await tx.update(purchasedUserLabel).set({name:'locked'}).where(eq(purchasedUserLabel.id,9201));held.resolve();await release.promise;throw Error('owned label rollback');}).catch(error=>expect(error.message).toBe('owned label rollback'));
+    try{await held.promise;const body=await f.body({label_id:[9201]}),before=await f.snapshot();expect((await call('/product/product/80',body)).status).not.toBe(200);expect(await f.snapshot()).toEqual(before);}finally{release.resolve();await holding;}
+  })));
+});
+
+import { customerCashierRuntimeHttpFixture } from './helpers/customerCashierRuntimeHttpFixture';
+import { installPurchasedProductLabelStorage } from '@/migrations/installPurchasedProductLabelStorage';
+import { upgradePurchasedProductLabelRuntime } from '@/migrations/upgradePurchasedProductLabelRuntime';
+import { capturePurchasedLabelRuntimeDeclaration } from '@/services/order/PurchasedProductLabelRuntimeDeclaration';
+import { PurchasedProductLabelTaskService } from '@/services/order/PurchasedProductLabelTaskService';
+import { capturePurchasedProductLabelMessage } from '@/services/order/PurchasedProductLabelQueue';
+
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier authored purchased user labels actual five-profile paid lifecycle',()=>{
+  it('creates real Supplier orders for all three fulfillments, consumes current config once and preserves immutable replay results',async()=>{
+    const network=vi.spyOn(globalThis,'fetch').mockRejectedValue(Error('Owned Supplier user-label lifecycle forbids providers'));
+    const f=await customerCashierRuntimeHttpFixture();
+    try {
+      const db=f.maintenanceDb,addon={purchasedProductLabels:true} as const;
+      await installPurchasedProductLabelStorage(db,{database:f.target.database,maintenance:f.target.maintenance},addon);
+      const peers=capturePurchasedLabelRuntimeDeclaration({...f.peers,purchasedProductLabels:addon});
+      await upgradePurchasedProductLabelRuntime(db,peers,f.appReaders);
+      const config:Record<string,string>={integral_ratio_status:'0',order_give_integral:'0',order_give_exp:'0',member_func_status:'0',brokerage_func_status:'0',store_brokerage_statu:'0',balance_func_status:'1',yue_pay_status:'1'};
+      for(const [menuName,value] of Object.entries(config)){const rows=await db.update(pricingConfig).set({value}).where(sql`${pricingConfig.menuName}=${menuName} AND ${pricingConfig.isStore}=0`).returning({id:pricingConfig.id});if(!rows.length)await db.insert(pricingConfig).values({menuName,value});}
+      await db.insert(pricingSupplier).values({id:7,adminId:21,isShow:1,isDel:0,supplierName:'Owned Supplier labels'}).onConflictDoUpdate({target:pricingSupplier.id,set:{adminId:21,isShow:1,isDel:0}});
+      const password='owned-user-label-supplier-password';await db.insert(systemAdmin).values({id:21,account:'owned-user-label-supplier',pwd:password,adminType:4,relationId:7,status:1,isDel:0});
+      await db.insert(pricingCategory).values({id:800001,type:2,relationId:7,cateName:'本地购买标签分类',isShow:1});
+      await f.exec("SELECT setval(pg_get_serial_sequence('store_product','id'),800010,true); SELECT setval(pg_get_serial_sequence('store_product_attr_value','id'),800010,true); SELECT setval(pg_get_serial_sequence('store_cart','id'),800010,true)");
+      let counter=0;const sequence=vi.fn(async()=>new Response('supplier_user_labels_http_'+(++counter))),queue={send:vi.fn(async()=>{}),sendBatch:vi.fn(async()=>{})};
+      const env={...f.env,NODE_ENV:'test',PURCHASED_PRODUCT_LABEL_RUNTIME:peers,ORDER_QUEUE:queue,SEQUENCE:{idFromName:()=>({}),get:()=>({fetch:sequence})},CONFIG_KV:{...f.env.CONFIG_KV,get:async(key:string)=>key.startsWith('cfg_')&&Object.hasOwn(config,key.slice(4))?config[key.slice(4)]:(f.env.CONFIG_KV as any).get(key)}} as unknown as Env;
+      const container=createContainerFromDb(f.appRuntime.db);wiring.container=container;wiring.moderator=createContainerFromDb(f.adminRuntime.db);
+      const supplierToken=(await createToken(21,'supplier',md5(password),env.APP_KEY)).token,reviewerToken=await f.bearer(1,'admin','offline-native-admin-password'),buyerToken=await f.bearer(11);
+      async function request(method:string,path:string,body?:object,token=supplierToken,bindings=env){const tasks:Promise<unknown>[]=[];const response=await app.request(path,{method,headers:{Authorization:'Bearer '+token,...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})},bindings,{waitUntil:task=>{tasks.push(task);},passThroughOnException(){},props:{}});await Promise.all(tasks);return response.json<Envelope>();}
+      async function ok(method:string,path:string,body?:object,token=supplierToken,bindings=env){const response=await request(method,path,body,token,bindings);expect(response.status,response.msg).toBe(200);return response.data;}
+      expect((await ok('GET','/supplierapi/product/user-label/catalog')).runtime_configured).toBe(true);
+      for(const productType of [0,1,3]) {
+        const base=9300+productType*10;await db.update(pricingUser).set({nowMoney:'100.00'}).where(eq(pricingUser.uid,11));
+        await db.insert(purchasedUserLabel).values(Array.from({length:4},(_,i)=>({id:base+i,name:'实际购买用户标签 '+(base+i),type:0,relationId:0,status:1})));
+        await db.insert(purchasedUserRelation).values([{uid:11,type:0,relationId:0,labelId:base+1},{uid:22,type:1,relationId:8,labelId:base+3}]);
+        const body={product_type:productType,store_name:'实际用户标签商品 '+productType,cate_id:[800001],slider_image:['/supplier-user-label.png'],spec_type:0,freight:1,is_postage:1,is_sub:[],label_id:[base],attrs:[{price:'10.00',settle_price:'1.00',vip_price:'0.00',stock:8,...(productType===1?{delivery_mode:'fixed',disk_info:'Owned user label fixed delivery'}:{})}]};
+        const made=await ok('POST','/supplierapi/product/product/0',body),id=Number(made.id);
+        expect((await ok('GET','/supplierapi/product/product/'+id)).user_label_selection.ids).toEqual([base]);
+        await ok('POST','/adminapi/product/product/set_verify/'+id,{is_verify:1,is_show:1,refusal:'',auto_on_time:''},reviewerToken);
+        const [sku]=await container.db.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.productId,id));
+        const cart=await ok('POST','/api/cart/add',{productId:id,unique:sku.unique,cartNum:3,new:1,type:0},buyerToken);
+        const selection={cartIds:[cart.id],type:0,shippingType:1,useIntegral:false,...(productType===0?{addressId:11}:{})};
+        const quote=await ok('POST','/api/order/confirm',selection,buyerToken),creation={...selection,quoteToken:quote.quoteToken};expect(quote.priceGroup.pay_price).toBe('30.00');
+        const order=await ok('POST','/api/order/create/'+quote.orderKey,creation,buyerToken);expect((await ok('POST','/api/order/create/'+quote.orderKey,creation,buyerToken)).orderId).toBe(order.orderId);
+        const [root]=await container.db.select().from(pricingOrder).where(eq(pricingOrder.orderId,order.orderId));
+        const frozen=await container.db.select().from(purchaseCartInfo).where(eq(purchaseCartInfo.oid,root.id));
+        expect((await ok('POST','/api/order/pay',{uni:order.orderId,paytype:'yue'},buyerToken)).paid).toBe(true);expect((await ok('POST','/api/order/pay',{uni:order.orderId,paytype:'yue'},buyerToken)).paid).toBe(true);
+        expect((await container.db.select().from(pricingUser).where(eq(pricingUser.uid,11)))[0].nowMoney).toBe('70.00');
+        const [paid]=await container.db.select().from(purchaseOutbox).where(sql`${purchaseOutbox.aggregateId}=${root.id} AND ${purchaseOutbox.eventType}='order.paid'`);
+        const consumer=new OrderOutboxService(container,env),paidMessage={action:'processOrderPaidOutbox' as const,outboxId:paid.id,eventKey:paid.eventKey};expect(await consumer.processMessage(paidMessage)).toBe('completed');
+        const [leaf]=await container.db.select().from(pricingOrder).where(sql`(${pricingOrder.id}=${root.id} OR ${pricingOrder.pid}=${root.id}) AND ${pricingOrder.pid}>=0 AND ${pricingOrder.supplierId}=7`);expect(leaf).toMatchObject({paid:1,supplierId:7,storeId:0,productType});
+        const tasks=await db.execute<{taskId:string;eventKey:string;status:string}>(sql`SELECT i.task_id::text AS "taskId",i.event_key AS "eventKey",s.status FROM purchased_product_label_intent i JOIN purchased_product_label_state s USING(task_id) WHERE i.order_id=${leaf.id}`);expect(tasks).toHaveLength(1);expect(['PENDING','ENQUEUED']).toContain(tasks[0].status);
+        const message=capturePurchasedProductLabelMessage({action:'processPurchasedProductLabels',taskId:tasks[0].taskId,eventKey:tasks[0].eventKey});
+        expect(await db.execute(sql`SELECT * FROM purchased_product_label_result WHERE task_id=${message.taskId}::uuid`)).toEqual([]);
+        const memberships=()=>db.select().from(purchasedUserRelation).where(sql`${purchasedUserRelation.labelId} BETWEEN ${base} AND ${base+3}`).orderBy(purchasedUserRelation.id);
+        expect((await memberships()).filter(x=>x.uid===11).map(x=>x.labelId)).toEqual([base+1]);
+        // Change after both real payment and independent task creation. The
+        // current, now hidden pending-review source still supplies task config.
+        const read=await ok('GET','/supplierapi/product/product/'+id);await ok('POST','/supplierapi/product/product/'+id,{...body,attrs:read.attrs,label_id:[base+1,base+2,base+3]});
+        await db.update(purchasedUserLabel).set({status:0}).where(eq(purchasedUserLabel.id,base+2));
+        const task=new PurchasedProductLabelTaskService(container,env);expect(await task.process(message)).toBe('completed');
+        const [receipt]=await db.execute<{result:any}>(sql`SELECT result FROM purchased_product_label_result WHERE task_id=${message.taskId}::uuid`);
+        expect(receipt.result).toMatchObject({userId:11,financialStoreId:0,products:[{productId:id,found:true,labelIds:[base+1,base+2,base+3].join(',')}],targets:[{labelId:base+1,type:0,relationId:0,added:false},{labelId:base+3,type:0,relationId:0,added:true}],skipped:[{labelId:base+2,reason:'retired'}]});
+        expect((await memberships()).filter(x=>x.uid===11).map(x=>x.labelId).sort()).toEqual([base+1,base+3]);expect((await memberships()).filter(x=>x.uid===22)).toMatchObject([{type:1,relationId:8,labelId:base+3}]);
+        const current=await ok('GET','/supplierapi/product/product/'+id);await ok('POST','/supplierapi/product/product/'+id,{...body,attrs:current.attrs,label_id:[]});
+        expect(await consumer.processMessage(paidMessage)).toBe('already-completed');expect(await task.process(message)).toBe('already-completed');
+        // Receipt-first replay never recreates a manually removed membership.
+        await db.delete(purchasedUserRelation).where(sql`${purchasedUserRelation.uid}=11 AND ${purchasedUserRelation.labelId}=${base+3}`);const stable=await memberships();
+        expect(await task.process(message)).toBe('already-completed');expect(await memberships()).toEqual(stable);expect((await db.execute<{result:any}>(sql`SELECT result FROM purchased_product_label_result WHERE task_id=${message.taskId}::uuid`))[0].result).toEqual(receipt.result);
+        expect(await container.db.select().from(purchaseCartInfo).where(eq(purchaseCartInfo.oid,root.id))).toEqual(frozen);
+      }
+      expect(sequence).toHaveBeenCalledTimes(3);expect(network).not.toHaveBeenCalled();
+    }finally{wiring.container=null;wiring.moderator=null;network.mockRestore();await f.close();}
+  },240000);
+});

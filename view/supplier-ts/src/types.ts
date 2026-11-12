@@ -303,6 +303,8 @@ export interface ProductSku {
 }
 
 export interface ProductDetail {
+  user_label_selection?: import('./utils/productUserLabels').SupplierUserLabelSelection;
+  label_id?: unknown;
   coupon_selection?: import('./utils/productCoupons').SupplierCouponSelection;
   integral_selection?: import('./utils/productIntegral').SupplierProductIntegralSelection;
   purchase_selection?: import('./utils/productPurchaseOptions').SupplierProductPurchaseSelection;
