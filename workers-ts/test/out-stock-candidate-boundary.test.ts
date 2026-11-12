@@ -130,7 +130,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('full-ORM bounded
   }, 20_000);
 
   it.each([
-    { name: 'nonphysical product', product: { productType: 1 }, sku: {} },
+    { name: 'card product with mismatched SKU type', product: { productType: 1 }, sku: {} },
+    { name: 'one-time card stock', product: { productType: 1 }, sku: { productType: 1, diskInfo: '' } },
     { name: 'second-card product with mismatched SKU type', product: { productType: 4 }, sku: {} },
     { name: 'manual product with mismatched SKU type', product: { productType: 3 }, sku: { productType: 0 } },
     { name: 'nonplatform owner', product: { type: 1, relationId: 51 }, sku: {} },
@@ -232,4 +233,234 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('full-ORM bounded
     const before = await state(), result = await request([{ bar_code: 'OUT-A', qty: 6 }]);
     expect(result.status).toBe(400); expect(result.msg).toContain('库存'); expect(await state()).toEqual(before);
   }, 20_000);
+  it('updates fixed-content stock but refuses a barcode shared with a physical product', async () => {
+    await seed(['FIXED', 'CROSS', 'CROSS']);
+    const [base] = await f.db.select().from(storeProduct).where(eq(storeProduct.id, 70));
+    await f.db.insert(storeProduct).values({ ...base, id: 71, spu: 'fixed71', productType: 1, stock: 2, deliveryType: '', freight: 2, tempId: 0, postage: '0.00' });
+    await f.db.update(storeProductAttrValue).set({ productId: 71, productType: 1, diskInfo: 'isolated-fixed' }).where(inArray(storeProductAttrValue.id, [2, 4]));
+    await f.db.update(storeProduct).set({ stock: 9 }).where(eq(storeProduct.id, 70));
+    expect(await request([{ bar_code: 'FIXED', qty: 6 }])).toMatchObject({ status: 200, data: { updated: 1 } });
+    const after = await state(); expect(after.products.find(row => row.id === 71)).toMatchObject({ stock: 7, productType: 1 });
+    const failed = await request([{ bar_code: 'CROSS', qty: 8 }], crypto.randomUUID()); expect(failed.status).toBe(400); expect(failed.msg).toContain('存在重复'); expect(await state()).toEqual(after);
+  }, 20_000);
+});
+
+import { productCreate, productInfo, productUpdate } from '@/controllers/out/OutApiController';
+import { outAuthMiddleware } from '@/middleware/out-auth';
+import { createToken, md5 } from '@/utils/jwt';
+import { StoreCartService } from '@/services/order/StoreCartService';
+import { StoreOrderCreateService } from '@/services/order/StoreOrderCreateService';
+import { deliverPaidVirtualOrders } from '@/services/order/VirtualProductDeliveryService';
+import { runtimeBusinessPrivilegePlan } from '@/migrations/runtimeBusinessPrivilegePlan';
+import type { DbClient } from '@/lib/di';
+import { outcome, waitForFinanceBlock } from './helpers/financePeers';
+import { errorHandler } from '@/middleware/error';
+
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Out card product author and real inventory delivery', () => {
+  let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
+  let owned: Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
+  let network: ReturnType<typeof vi.spyOn>, env: Env, token: string;
+  const first = { key: 'isolated-card-one', value: 'isolated-value-one' };
+  const second = { key: '隔离:卡二😀', value: '隔离内容:二😀' };
+  const third = { key: 'isolated-card-three', value: 'isolated-value-three' };
+  const body = { product_type: 1, cate_id: [9], store_name: '隔离Out卡密', slider_image: ['/card.png'], spec_type: 0, is_show: 1,
+    brand_id: [31], ensure_id: [91], store_label_id: [101], label_id: [201], specs_id: 301, specs: [{ name: '版本', value: '隔离' }],
+    coupon_ids: [], custom_form: [], system_form_id: 0,
+    attrs: [{ price: '10.00', stock: 999, bar_code: 'OUT-CARD', disk_info: '', virtual_list: [first, second, first] }] };
+  const app = (db = f.db) => { const a = new Hono<{ Bindings: Env; Variables: AppVariables }>();
+    a.use('*', async (c, next) => { c.set('container', createContainerFromDb(db)); await next(); });
+    a.onError(errorHandler);
+    a.post('/outapi/product', outAuthMiddleware('POST', '/product'), productCreate);
+    a.put('/outapi/product/stock/upload', outAuthMiddleware('PUT', '/product/stock/upload'), productStockUpload);
+    a.put('/outapi/product/:id', outAuthMiddleware('PUT', '/product/{id}'), productUpdate);
+    a.get('/outapi/product/:id', outAuthMiddleware('GET', '/product/{id}'), productInfo); return a; };
+  const call = async (path: string, method: string, data?: object, key = crypto.randomUUID(), db = f.db) => {
+    const response = await app(db).request(path, { method, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', 'Idempotency-Key': key },
+      ...(data ? { body: JSON.stringify(data) } : {}) }, env);
+    return response.json() as Promise<{ status: number; msg: string; data: any }>;
+  };
+  beforeEach(async () => {
+    network = vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('Isolated card author forbids external providers'));
+    f = await createPcCheckoutQuoteFixture([], async () => { owned = await sequenceRunnerDatabase();
+      try { const api = await import('drizzle-kit/api'), schema = await import('@/models/schema');
+        await owned.exec((await api.generateMigration(api.generateDrizzleJson({}), api.generateDrizzleJson(schema))).join('\n'));
+        await completePurchaseOriginEvidenceOrm(owned.db); await completePurchaseCancellationEvidenceOrm(owned.db); return owned;
+      } catch (error) { await owned.close(); throw error; } });
+    await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
+    await f.exec(`INSERT INTO store_product_category(id,cate_name,is_show) VALUES (9,'隔离分类',1);
+      INSERT INTO store_brand(id,brand_name,is_show) VALUES (31,'隔离品牌',1);
+      INSERT INTO store_product_ensure(id,name,status) VALUES (91,'隔离保障',1);
+      INSERT INTO category(id,"group",name,is_show) VALUES (300,2,'标签组',1),(301,3,'参数模板',1);
+      INSERT INTO store_product_label(id,label_name,label_cate,status,is_show) VALUES (101,'隔离商品标签',300,1,1);
+      INSERT INTO user_label(id,name,status) VALUES (201,'隔离用户标签',1);
+      INSERT INTO out_interface(id,type,method,url) VALUES (1,1,'POST','/product'),(2,1,'PUT','/product/{id}'),
+        (3,1,'GET','/product/{id}'),(4,1,'PUT','/product/stock/upload');
+      INSERT INTO out_account(id,appid,appsecret,rules) VALUES (1,'card-local','fixture-card-secret','[1,2,3,4]');
+      SELECT setval(pg_get_serial_sequence('store_product','id'),70,true);
+      SELECT setval(pg_get_serial_sequence('store_product_attr_value','id'),1,true);
+      SELECT setval(pg_get_serial_sequence('store_cart','id'),1,true)`);
+    env = { ...f.env, APP_KEY: 'isolated-local-key-not-a-real-credential', TOKEN_BUCKET: { getByName: () => ({ consumeRateLimit: async () =>
+      ({ allowed: true, auditEvent: false, limit: 120, remaining: 119, resetAt: Date.now() + 60000 }) }) } } as unknown as Env;
+    token = (await createToken(1, 'out', md5('fixture-card-secret'), env.APP_KEY)).token;
+  }, 120_000);
+  afterEach(async () => { try { expect(network).not.toHaveBeenCalled(); } finally { network?.mockRestore(); await f?.close(); } }, 60_000);
+  const state = async () => ({ ...await f.snapshot(), cards: await f.db.execute(sql`SELECT * FROM store_product_virtual ORDER BY id`),
+    records: await f.db.execute(sql`SELECT * FROM store_product_stock_record ORDER BY id`), receipts: await f.db.execute(sql`SELECT * FROM out_product_write_replay ORDER BY id`) });
+  const checkout = async (id: number, unique: string) => {
+    const cart = await new StoreCartService(f.container, f.env).add({ uid: 11, productId: id, unique, cartNum: 1, isNew: 1, type: 0 });
+    const selection = { cartIds: [cart.id], type: 0, shippingType: 1, useIntegral: false };
+    const response = await f.app.request('/api/order/confirm', { method: 'POST', headers: { 'content-type': 'application/json', 'x-fixture-user': '11' }, body: JSON.stringify(selection) }, f.env);
+    const confirmed = await response.json() as { status: number; msg: string; data: { orderKey: string; quoteToken: string } }; expect(confirmed.status, confirmed.msg).toBe(200);
+    return StoreOrderCreateService.createWithRuntime(f.container, { CONFIG_KV: f.env.CONFIG_KV, requireConfirmation: true, requirePurchaseOrigin: true,
+      nextOrderId: async () => `out_card_${id}` }, { ...selection, uid: 11, key: confirmed.data.orderKey, quoteToken: confirmed.data.quoteToken, userIp: '127.0.0.1' });
+  };
+  const markFixturePaidThenDeliver = async (businessId: string) => {
+    // Explicit test seed: no payment handler/provider is claimed by this test.
+    await f.db.execute(sql`UPDATE store_order SET paid=1 WHERE order_id=${businessId}`);
+    const [row] = await f.db.execute<any>(sql`SELECT id,uid,order_id,paid,status,is_del,is_system_del,product_type FROM store_order WHERE order_id=${businessId}`);
+    return f.db.transaction(tx => deliverPaidVirtualOrders(tx as unknown as DbClient, [{ id: row.id, uid: row.uid, orderId: row.order_id, paid: row.paid,
+      status: row.status, isDel: row.is_del, isSystemDel: row.is_system_del, productType: row.product_type }], Math.floor(Date.now() / 1000)));
+  };
+  it('creates, replays, buys and delivers one-time cards, then imports without duplicating assigned credentials', async () => {
+    const key = crypto.randomUUID(), created = await call('/outapi/product', 'POST', body, key); expect(created.status, created.msg).toBe(200); const id = Number(created.data.id);
+    expect((await call('/outapi/product', 'POST', body, key)).data).toMatchObject({ id, idempotent: true });
+    const [sku] = await f.db.execute<any>(sql`SELECT id,"unique",product_type,stock,sum_stock FROM store_product_attr_value WHERE product_id=${id} AND type=0`);
+    expect(sku).toMatchObject({ product_type: 1, stock: 2, sum_stock: 2 });
+    const links = await f.db.execute<any>(sql`SELECT type,relation_id FROM store_product_relation WHERE product_id=${id} ORDER BY type`);
+    expect(links).toEqual([{ type: 1, relation_id: 9 }, { type: 2, relation_id: 31 }, { type: 3, relation_id: 101 }, { type: 4, relation_id: 201 }, { type: 5, relation_id: 91 }, { type: 6, relation_id: 301 }]);
+    const detail = await call(`/outapi/product/${id}`, 'GET'); expect(detail.status, detail.msg).toBe(200);
+    expect(detail.data.productInfo.attr).toMatchObject({ virtual_list: [], virtual_available: 2, virtual_total: 2 });
+    for (const value of [first.key, first.value, second.key, second.value]) expect(JSON.stringify(detail)).not.toContain(value);
+    const order = await checkout(id, sku.unique), before = await state();
+    const blocked = await call(`/outapi/product/${id}`, 'PUT', { ...body, attrs: [{ ...body.attrs[0], unique: sku.unique }] });
+    expect(blocked.status).not.toBe(200); expect(await state()).toEqual(before);
+    expect(await markFixturePaidThenDeliver(order.orderId)).toEqual({ deliveredOrders: 1, deliveredCards: 1 });
+    const imported = await call(`/outapi/product/${id}`, 'PUT', { ...body, attrs: [{ ...body.attrs[0], unique: sku.unique, virtual_list: [first, second, third] }] });
+    expect(imported.status, imported.msg).toBe(200); expect(imported.data.stock_preserved).toBe(true);
+    const [final] = await f.db.execute<any>(sql`SELECT stock,sum_stock,sales FROM store_product_attr_value WHERE id=${sku.id}`);
+    expect(final).toMatchObject({ stock: 2, sum_stock: 3, sales: 1 });
+    const [counts] = await f.db.execute<any>(sql`SELECT count(*)::int AS total,count(*) FILTER(WHERE uid=0)::int AS available FROM store_product_virtual WHERE product_id=${id}`);
+    expect(counts).toEqual({ total: 3, available: 2 });
+    const after = await state(); const numeric = await call('/outapi/product/stock/upload', 'PUT', { items: [{ bar_code: 'OUT-CARD', qty: 99 }] });
+    expect(numeric.status).not.toBe(200); expect(await state()).toEqual(after);
+  }, 40_000);
+  it('uses ordinary stock for fixed content and delivers the frozen checkout content after an edit', async () => {
+    const input = { ...body, attrs: [{ ...body.attrs[0], stock: 5, disk_info: 'isolated-fixed-one', virtual_list: [] }] };
+    const created = await call('/outapi/product', 'POST', input); expect(created.status, created.msg).toBe(200); const id = Number(created.data.id);
+    const [sku] = await f.db.execute<any>(sql`SELECT "unique" FROM store_product_attr_value WHERE product_id=${id} AND type=0`);
+    const synced = await call('/outapi/product/stock/upload', 'PUT', { items: [{ bar_code: 'OUT-CARD', qty: 7 }] }); expect(synced.status, synced.msg).toBe(200);
+    const order = await checkout(id, sku.unique);
+    const edited = await call(`/outapi/product/${id}`, 'PUT', { ...input, attrs: [{ ...input.attrs[0], unique: sku.unique, disk_info: 'isolated-fixed-two' }] }); expect(edited.status, edited.msg).toBe(200);
+    expect(await markFixturePaidThenDeliver(order.orderId)).toEqual({ deliveredOrders: 1, deliveredCards: 0 });
+    const [saved] = await f.db.execute<any>(sql`SELECT virtual_info FROM store_order WHERE order_id=${order.orderId}`);
+    expect(JSON.parse(saved.virtual_info)).toMatchObject([{ disk_info: 'isolated-fixed-one', product_id: id, sku_unique: sku.unique }]);
+  }, 40_000);
+  it('rolls back imported cards, stock, snapshot and receipt on deferred credential tampering', async () => {
+    await f.exec(`CREATE FUNCTION test_out_card_payload_drift() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN UPDATE store_product_virtual SET card_pwd='tampered-fixture' WHERE product_id=NEW.product_id; RETURN NEW; END $$;
+      CREATE CONSTRAINT TRIGGER test_out_card_payload_drift AFTER INSERT ON out_product_write_replay DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION test_out_card_payload_drift()`);
+    const before = await state(), failed = await call('/outapi/product', 'POST', body); expect(failed.status).not.toBe(200); expect(failed.msg).toContain('变化'); expect(await state()).toEqual(before);
+  }, 30_000);
+  it('rejects unsafe mode changes, changed import replays and conflicting historical stock', async () => {
+    const key = crypto.randomUUID(), created = await call('/outapi/product', 'POST', body, key); expect(created.status, created.msg).toBe(200); const id = Number(created.data.id);
+    const [sku] = await f.db.execute<any>(sql`SELECT id,"unique" FROM store_product_attr_value WHERE product_id=${id} AND type=0`);
+    const before = await state();
+    const mode = await call(`/outapi/product/${id}`, 'PUT', { ...body, attrs: [{ ...body.attrs[0], unique: sku.unique, disk_info: 'fixed-now', virtual_list: [] }] });
+    expect(mode.status).not.toBe(200); expect(mode.msg).toContain('切换');
+    const conflict = await call('/outapi/product', 'POST', { ...body, attrs: [{ ...body.attrs[0], virtual_list: [third] }] }, key);
+    expect(conflict.status).not.toBe(200); expect(conflict.msg).toContain('Idempotency-Key'); expect(await state()).toEqual(before);
+    await f.db.execute(sql`UPDATE store_product_attr_value SET stock=1 WHERE id=${sku.id}`);
+    await f.db.execute(sql`UPDATE store_product SET stock=1 WHERE id=${id}`);
+    const drifted = await state(), failed = await call(`/outapi/product/${id}`, 'PUT', { ...body, attrs: [{ ...body.attrs[0], unique: sku.unique }] });
+    expect(failed.status).not.toBe(200); expect(failed.msg).toContain('变化'); expect(await state()).toEqual(drifted);
+  }, 30_000);
+  it('refuses an independent importer inventory lock and safely reuses the uncommitted request key', async () => {
+    const created = await call('/outapi/product', 'POST', body); expect(created.status, created.msg).toBe(200); const id = Number(created.data.id);
+    const [sku] = await f.db.execute<any>(sql`SELECT "unique" FROM store_product_attr_value WHERE product_id=${id} AND type=0`);
+    const key = crypto.randomUUID(), input = { ...body, attrs: [{ ...body.attrs[0], unique: sku.unique, virtual_list: [third] }] }, before = await state();
+    if (!owned.withPeer) throw Error('Dedicated PG16 peers required');
+    await owned.withPeer(async peer => { await peer.exec('BEGIN'); await peer.db.execute(sql`SELECT pg_advisory_xact_lock(731603,${id}::integer)`);
+      try { const failed = await call(`/outapi/product/${id}`, 'PUT', input, key); expect(failed.status).not.toBe(200); expect(failed.msg).toContain('正在变化'); }
+      finally { await peer.exec('ROLLBACK'); } });
+    expect(await state()).toEqual(before);
+    const retried = await call(`/outapi/product/${id}`, 'PUT', input, key); expect(retried.status, retried.msg).toBe(200);
+    const after = await state(); expect((await call(`/outapi/product/${id}`, 'PUT', input, key)).data.idempotent).toBe(true); expect(await state()).toEqual(after);
+  }, 30_000);
+  it('creates and imports card inventory using the existing restricted application login', async () => {
+    if (!owned.withRuntimeRole) throw Error('Native restricted LOGIN required');
+    await owned.withRuntimeRole(async runtime => {
+      const plan = runtimeBusinessPrivilegePlan('app'), quote = (name: string) => { if (!/^[a-z_][a-z_0-9]*$/.test(name)) throw Error('Invalid identifier'); return `"${name}"`; };
+      const tables = await f.db.execute<{ name: string }>(sql`SELECT relname AS name FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r' ORDER BY relname`);
+      for (const { name } of tables) { const rights = plan.tables[name]; if (!rights) continue; await f.exec(`GRANT ${rights.join(',')} ON public.${quote(name)} TO ${quote(runtime.role)}`);
+        const columns = plan.updateColumns[name]; if (columns?.length) await f.exec(`GRANT UPDATE(${columns.map(quote).join(',')}) ON public.${quote(name)} TO ${quote(runtime.role)}`); }
+      const seqs = await f.db.execute<{ table_name: string; sequence_name: string | null }>(sql`SELECT c.relname AS table_name,pg_get_serial_sequence('public.'||quote_ident(c.relname),a.attname) AS sequence_name FROM pg_class c JOIN pg_attribute a ON a.attrelid=c.oid AND a.attnum>0 AND NOT a.attisdropped WHERE c.relnamespace='public'::regnamespace AND c.relkind='r'`);
+      for (const row of seqs) if (row.sequence_name && plan.tables[row.table_name]?.includes('INSERT')) { const parts = row.sequence_name.split('.'); if (parts.length !== 2 || parts[0] !== 'public') throw Error('Unexpected sequence'); await f.exec(`GRANT USAGE ON SEQUENCE public.${quote(parts[1])} TO ${quote(runtime.role)}`); }
+      const saved = await call('/outapi/product', 'POST', body, crypto.randomUUID(), runtime.db); expect(saved.status, saved.msg).toBe(200);
+      const [row] = await f.db.execute<any>(sql`SELECT product_type,stock FROM store_product WHERE id=${Number(saved.data.id)}`); expect(row).toEqual({ product_type: 1, stock: 2 });
+      const [rights] = await runtime.db.execute(sql`SELECT current_user=session_user AS direct_login,has_table_privilege(current_user,'public.system_config','UPDATE') AS config_write`);
+      expect(rights).toEqual({ direct_login: true, config_write: false });
+    });
+  }, 30_000);
+  it('supports safe empty-inventory mode changes and rolls back fixed-stock card interference', async () => {
+    const emptyFixed = { ...body, attrs: [{ ...body.attrs[0], stock: 0, disk_info: 'empty-fixed', virtual_list: [] }] };
+    const made = await call('/outapi/product', 'POST', emptyFixed); expect(made.status, made.msg).toBe(200); const id = Number(made.data.id);
+    const [sku] = await f.db.execute<any>(sql`SELECT "unique" FROM store_product_attr_value WHERE product_id=${id} AND type=0`);
+    const changed = await call(`/outapi/product/${id}`, 'PUT', { ...body, attrs: [{ ...body.attrs[0], unique: sku.unique, virtual_list: [first] }] }); expect(changed.status, changed.msg).toBe(200);
+    const emptyCards = { ...body, attrs: [{ ...body.attrs[0], bar_code: 'OUT-SWITCH', virtual_list: [] }] };
+    const another = await call('/outapi/product', 'POST', emptyCards); expect(another.status, another.msg).toBe(200); const secondId = Number(another.data.id);
+    const [secondSku] = await f.db.execute<any>(sql`SELECT "unique" FROM store_product_attr_value WHERE product_id=${secondId} AND type=0`);
+    const fixed = await call(`/outapi/product/${secondId}`, 'PUT', { ...emptyCards, attrs: [{ ...emptyCards.attrs[0], unique: secondSku.unique, disk_info: 'switch-fixed' }] }); expect(fixed.status, fixed.msg).toBe(200);
+    await f.exec(`CREATE FUNCTION test_out_fixed_card_drift() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
+      INSERT INTO store_product_virtual(product_id,attr_unique,card_no,card_pwd,card_unique) VALUES (${secondId},'${secondSku.unique}','isolated','fixture',md5('${secondSku.unique},isolated,fixture')); RETURN NEW; END $$;
+      CREATE CONSTRAINT TRIGGER test_out_fixed_card_drift AFTER INSERT ON out_product_write_replay DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION test_out_fixed_card_drift()`);
+    const before = await state(), failed = await call('/outapi/product/stock/upload', 'PUT', { items: [{ bar_code: 'OUT-SWITCH', qty: 5 }] });
+    expect(failed.status).not.toBe(200); expect(failed.msg).toContain('卡密'); expect(await state()).toEqual(before);
+  }, 40_000);
+  it('refuses a card author during a real checkout SKU wait without reversing its lock order', async () => {
+    const created = await call('/outapi/product', 'POST', body); expect(created.status, created.msg).toBe(200); const id = Number(created.data.id);
+    const [sku] = await f.db.execute<any>(sql`SELECT id,"unique" FROM store_product_attr_value WHERE product_id=${id} AND type=0`);
+    const cart = await new StoreCartService(f.container, f.env).add({ uid: 11, productId: id, unique: sku.unique, cartNum: 1, isNew: 1, type: 0 });
+    const selection = { cartIds: [cart.id], type: 0, shippingType: 1, useIntegral: false };
+    const response = await f.app.request('/api/order/confirm', { method: 'POST', headers: { 'content-type': 'application/json', 'x-fixture-user': '11' }, body: JSON.stringify(selection) }, f.env);
+    const confirmed = await response.json() as { status: number; msg: string; data: { orderKey: string; quoteToken: string } }; expect(confirmed.status, confirmed.msg).toBe(200);
+    if (!owned.withPeer) throw Error('Dedicated PG16 peers required');
+    await owned.withPeer(holder => owned.withPeer!(async buyer => {
+      await holder.exec('BEGIN'); await holder.db.execute(sql`SELECT id FROM store_product_attr_value WHERE id=${sku.id} FOR UPDATE`);
+      const pending = outcome(StoreOrderCreateService.createWithRuntime(createContainerFromDb(buyer.db), { CONFIG_KV: f.env.CONFIG_KV,
+        requireConfirmation: true, requirePurchaseOrigin: true, nextOrderId: async () => `out_card_race_${id}` },
+        { ...selection, uid: 11, key: confirmed.data.orderKey, quoteToken: confirmed.data.quoteToken, userIp: '127.0.0.1' }));
+      let holding = true;
+      try { await waitForFinanceBlock(f.db, buyer.pid, holder.pid);
+        const refused = await call(`/outapi/product/${id}`, 'PUT', { ...body, attrs: [{ ...body.attrs[0], unique: sku.unique, virtual_list: [third] }] });
+        expect(refused.status).not.toBe(200); expect(refused.msg).toContain('变化');
+        await holder.exec('COMMIT'); holding = false; const result = await pending; expect(result.ok, result.ok ? '' : result.error.message).toBe(true);
+      } finally { if (holding) await holder.exec('ROLLBACK'); await pending; }
+    }));
+    const [stock] = await f.db.execute<any>(sql`SELECT stock FROM store_product_attr_value WHERE id=${sku.id}`); expect(stock.stock).toBe(1);
+    const [counts] = await f.db.execute<any>(sql`SELECT count(*)::int AS n FROM store_product_virtual WHERE product_id=${id}`); expect(counts.n).toBe(2);
+  }, 40_000);
+  it('hides credential-bearing SQL failures through the production error boundary', async () => {
+    await f.exec(`CREATE FUNCTION test_out_card_insert_failure() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'fixture rejected payload: %',NEW.card_pwd; END $$;
+      CREATE TRIGGER test_out_card_insert_failure BEFORE INSERT ON store_product_virtual FOR EACH ROW EXECUTE FUNCTION test_out_card_insert_failure()`);
+    const before = await state(), result = await call('/outapi/product', 'POST', body);
+    expect(result).toMatchObject({ status: 500, msg: '系统繁忙,请稍后再试', data: null });
+    for (const value of [first.key, first.value, second.key, second.value]) expect(JSON.stringify(result)).not.toContain(value);
+    expect(await state()).toEqual(before);
+  }, 30_000);
+  it('keeps mixed multi-SKU fixed content and card inventory separate during create and edit', async () => {
+    const input = { ...body, spec_type: 1, items: [{ value: '类型', detail: ['固定', '卡库'] }], attrs: [
+      { suk: '固定', detail: { 类型: '固定' }, price: '8.00', stock: 3, disk_info: 'mixed-fixed', virtual_list: [], bar_code: 'MIXED-FIXED' },
+      { suk: '卡库', detail: { 类型: '卡库' }, price: '10.00', stock: 99, disk_info: '', virtual_list: [first, second], bar_code: 'MIXED-CARDS' },
+    ] };
+    const created = await call('/outapi/product', 'POST', input); expect(created.status, created.msg).toBe(200); const id = Number(created.data.id);
+    const rows = await f.db.execute<any>(sql`SELECT suk,"unique",stock,sum_stock,disk_info FROM store_product_attr_value WHERE product_id=${id} AND type=0 ORDER BY id`);
+    expect(rows).toMatchObject([{ suk: '固定', stock: 3, sum_stock: 3, disk_info: 'mixed-fixed' }, { suk: '卡库', stock: 2, sum_stock: 2, disk_info: '' }]);
+    const edited = { ...input, attrs: input.attrs.map((row, index) => ({ ...row, unique: rows[index].unique, stock: 999,
+      virtual_list: index === 1 ? [first, third] : [] })) };
+    const saved = await call(`/outapi/product/${id}`, 'PUT', edited); expect(saved.status, saved.msg).toBe(200);
+    const [product] = await f.db.execute<any>(sql`SELECT stock FROM store_product WHERE id=${id}`); expect(product.stock).toBe(6);
+    const after = await f.db.execute<any>(sql`SELECT suk,stock,sum_stock FROM store_product_attr_value WHERE product_id=${id} AND type=0 ORDER BY id`);
+    expect(after).toEqual([{ suk: '固定', stock: 3, sum_stock: 3 }, { suk: '卡库', stock: 3, sum_stock: 3 }]);
+    const [snapshot] = await f.db.execute<any>(sql`SELECT result FROM store_product_attr_result WHERE product_id=${id} AND type=0`);
+    expect(JSON.parse(snapshot.result).value.map((row: any) => ({ suk: row.suk, stock: row.stock }))).toEqual([{ suk: '固定', stock: 3 }, { suk: '卡库', stock: 3 }]);
+  }, 40_000);
 });

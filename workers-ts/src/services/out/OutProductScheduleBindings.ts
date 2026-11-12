@@ -13,10 +13,10 @@ export function outProductScheduleInput(input: Record<string, unknown>) {
   });
 }
 type Product = typeof storeProduct.$inferSelect;
-export interface OutProductScheduleProof { productId: number; productType: 0 | 3 | 4; autoOnTime: number; autoOffTime: number; isShow: 0 | 1; rowPosition: string }
+export interface OutProductScheduleProof { productId: number; productType: 0 | 1 | 3 | 4; autoOnTime: number; autoOffTime: number; isShow: 0 | 1; rowPosition: string }
 /** Keep the established manual-show clearing rule when off-time is omitted.
  * An explicit off-time is a new schedule and therefore wins that rule. */
-async function selected(tx: DbClient, productId: number, productType: 0 | 3 | 4) {
+async function selected(tx: DbClient, productId: number, productType: 0 | 1 | 3 | 4) {
   const [row] = await tx.select({ autoOnTime: storeProduct.autoOnTime, autoOffTime: storeProduct.autoOffTime,
     isShow: storeProduct.isShow, rowPosition: sql<string>`ctid::text` }).from(storeProduct)
     .where(and(eq(storeProduct.id, productId), eq(storeProduct.type, 0), eq(storeProduct.relationId, 0),
@@ -25,7 +25,7 @@ async function selected(tx: DbClient, productId: number, productType: 0 | 3 | 4)
 }
 export async function outProductScheduleProof(tx: DbClient, productId: number, existing: Product | undefined,
   input: { productType: number; autoOnTime?: number; autoOffTime?: number; isShow: 0 | 1 }): Promise<OutProductScheduleProof> {
-  if (input.productType !== 0 && input.productType !== 3 && input.productType !== 4) throw new ValidateException('平台商品履约类型无效');
+  if (input.productType !== 0 && input.productType !== 1 && input.productType !== 3 && input.productType !== 4) throw new ValidateException('平台商品履约类型无效');
   const autoOnTime = input.autoOnTime ?? existing?.autoOnTime ?? 0;
   const autoOffTime = input.autoOffTime ?? (input.isShow ? 0 : existing?.autoOffTime ?? 0);
   const row = await selected(tx, productId, input.productType);

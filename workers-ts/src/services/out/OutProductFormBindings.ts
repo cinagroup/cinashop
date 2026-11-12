@@ -51,13 +51,13 @@ type Product = typeof storeProduct.$inferSelect;
 type Admitted = Awaited<ReturnType<typeof lockOutProductSystemForm>> | undefined;
 export interface OutProductFormProof {
   productId: number;
-  productType: 0 | 3 | 4;
+  productType: 0 | 1 | 3 | 4;
   customForm: string | null;
   systemFormId: number;
   admitted: Admitted;
   selected: boolean;
 }
-export function outProductFormProof(productId: number, productType: 0 | 3 | 4, existing: Product | undefined, customForm: string | undefined,
+export function outProductFormProof(productId: number, productType: 0 | 1 | 3 | 4, existing: Product | undefined, customForm: string | undefined,
   systemFormId: number | undefined, admitted: Admitted): OutProductFormProof {
   return { productId, productType, customForm: customForm === undefined ? existing?.customForm ?? null : customForm,
     systemFormId: systemFormId === undefined ? existing?.systemFormId ?? 0 : systemFormId,

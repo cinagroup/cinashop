@@ -13,9 +13,9 @@ describe('Out manual virtual product authoring',()=>{
     expect(manual).toMatchObject({productType:3,deliveryType:'',freight:2,tempId:0,postage:'0.00'});
     expect(await outRequestHash(manual)).not.toBe(await outRequestHash(normalizeOutProductInput(base)));
   });
-  it.each([{product_type:1},{product_type:2},{product_type:4},
+  it.each([{product_type:1,attrs:[{price:'10.00',stock:0,virtual_list:[{}]}]},{product_type:2},{product_type:4},
     {product_type:3,is_presale_product:1},
     {product_type:3,attrs:[{price:'10.00',stock:1,disk_info:'content'}]},
     {product_type:3,attrs:[{price:'10.00',stock:1,virtual_list:[{card_no:'fixture'}]}]}])
-    ('rejects unsupported fulfillment intent %j',patch=>{expect(()=>normalizeOutProductInput({...base,...patch})).toThrow();});
+    ('rejects unsupported or malformed fulfillment intent %j',patch=>{expect(()=>normalizeOutProductInput({...base,...patch})).toThrow();});
 });

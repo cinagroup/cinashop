@@ -9,7 +9,7 @@ type Product = typeof storeProduct.$inferSelect;
 type Ensure = typeof storeProductEnsure.$inferSelect;
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 const platform = (row: Ensure) => row.type === 0 && row.relationId === 0;
-const scope = (id: number, productType: 0 | 3 | 4) => and(eq(storeProduct.id, id), eq(storeProduct.type, 0),
+const scope = (id: number, productType: 0 | 1 | 3 | 4) => and(eq(storeProduct.id, id), eq(storeProduct.type, 0),
   eq(storeProduct.relationId, 0), eq(storeProduct.productType, productType), eq(storeProduct.isDel, 0));
 
 export async function outProductEnsureSelection(tx: DbClient, product: Pick<Product, 'id' | 'ensureId'>) {

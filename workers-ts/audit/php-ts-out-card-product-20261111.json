@@ -1,0 +1,251 @@
+{
+  "schema": "php-ts-out-card-product/v1",
+  "baseCommit": "dc5884a190724b385beeec97834594483d4c5e64",
+  "sourceHashes": [
+    {
+      "path": "workers-ts/src/services/out/OutProductBrandBindings.ts",
+      "sha256": "73432f8a7539ebc886a847c4ee92a1e91ae8bd54da9fd4f815c37dc11b97649d"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductEnsureBindings.ts",
+      "sha256": "4dac3dec5b5c59df80738ec0531ea08fbea613ece7537e3e2c2c387bb8801b79"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductFormBindings.ts",
+      "sha256": "6312afecaa5ee5f41d51339c87d2d3c366db0778bc1f721726c65e1d97b9de04"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductLabelBindings.ts",
+      "sha256": "e442355b166dbbc929d566c36fa96982eaa366b13af06b892b04b2a65ee3713f"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductParameterBindings.ts",
+      "sha256": "4f16144cd602e1026c51f14d7e7ca332370026d2c0ddbfa22b5575cd7f5b768f"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductRelationFence.ts",
+      "sha256": "0e3e945076844232c310799596c5c0d382de391dbd677fd8df111219fc0ea09c"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductScheduleBindings.ts",
+      "sha256": "6c293ace2c29941cab106559b70499828c78c251da55414f71150624a71823a8"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductService.ts",
+      "sha256": "63c8597d06dd8babfe4fb3e6b33aa618fa89c2aebb57c7ab7b0b9a24bc367338"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutCardProductInput.ts",
+      "sha256": "2a145151ef76ae86d4f6307186c8c108edb107399fb3070c3e5b6862ca185400"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutCardProductInventory.ts",
+      "sha256": "aa8c6e83973482b7eda67bcc0c3c4be3b410a97da0125c79ed726302d24563e5"
+    },
+    {
+      "path": "workers-ts/test/out-card-product-input.test.ts",
+      "sha256": "4bb3ff4a53be87d87e04b46a27db4fac17b840e771157f7f6dfc28788dcc34f3"
+    },
+    {
+      "path": "workers-ts/test/out-manual-virtual-product.test.ts",
+      "sha256": "f6c0b5015cd5a32c78cdf21ad98926992471ce351b81c53a0e5b8c849978078b"
+    },
+    {
+      "path": "workers-ts/test/out-stock-candidate-boundary.test.ts",
+      "sha256": "77ae59e9ef170080bee169447714978e0f6e4eba074fab0f951769f2cea2bcdb"
+    }
+  ],
+  "unchangedDependencies": [
+    {
+      "path": "workers-ts/src/services/product/VirtualProductInventoryService.ts",
+      "sha256": "83c32c3982e5525623864fbc7445fa369476db54020aee591b31801db8cc89e2"
+    },
+    {
+      "path": "workers-ts/src/services/order/VirtualProductDeliveryService.ts",
+      "sha256": "c9a7ded437f9fb3276bb8d88c96369cd41da1aa73010223cb38459a33d7adb77"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductSkuInput.ts",
+      "sha256": "c96247e8ac7befe362e9d2596c2d2a69d9b113930aa6c388ec1a78755ab1f23f"
+    },
+    {
+      "path": "workers-ts/src/middleware/error.ts",
+      "sha256": "fef114e0a193816b180de5a6a1805c0cf477cab341b5023d53d5786f4e0bd910"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "32c5fff9c6dbfaa30720fbd72dd729a3ea7a1e7fc3a02be5515fb541af55a074"
+    },
+    {
+      "path": "workers-ts/test/product-purchase-admission-postgres.test.ts",
+      "sha256": "664bdf0fe3b0f34a229984f0abf02878d191567c82e93a51c60d48f5c92071ec"
+    }
+  ],
+  "legacyCommit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "legacySources": [
+    {
+      "path": "app/controller/out/Product.php",
+      "gitBlob": "5a55a3a43001325abfd36cee3c6af3e3b45cac66",
+      "sha256": "a52f6c6392594116e66803572a67e6c15d424fa13eac48df6bc9d7a6ef01c24a",
+      "bytes": 8803
+    },
+    {
+      "path": "app/services/product/product/StoreProductServices.php",
+      "gitBlob": "f8163c25f694dd0ff84486d89926ef004ba9e81e",
+      "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+      "bytes": 136399
+    },
+    {
+      "path": "app/services/product/sku/StoreProductAttrServices.php",
+      "gitBlob": "8a4c405eb7495985b0e6b3b8dddfc1f0c3eb62e4",
+      "sha256": "dae3878db9eb0392b01f52c5db1d8ba1cbf35456a9ddb081150a1955f87b0de9",
+      "bytes": 21089
+    },
+    {
+      "path": "app/services/product/sku/StoreProductVirtualServices.php",
+      "gitBlob": "17b37b9c854734bee05a410b2b31886d98e7f364",
+      "sha256": "1a44c129483d02f79b0f70f972fd5954b543eb7afb246a9e083de99e887613a1",
+      "bytes": 3560
+    }
+  ],
+  "validation": {
+    "profiles": [
+      {
+        "profile": "unit",
+        "exit": 0,
+        "seconds": 57.51,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "unit-types-shard-1",
+        "exit": 0,
+        "seconds": 210.93,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "unit-types-shard-2",
+        "exit": 0,
+        "seconds": 198.74,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "runtime-types",
+        "exit": 0,
+        "seconds": 119.8,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-card-stock",
+        "exit": 0,
+        "seconds": 264.72,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-author",
+        "exit": 0,
+        "seconds": 336.55,
+        "budgetSeconds": 600
+      }
+    ],
+    "unitPassed": 260,
+    "unitSkipped": 0,
+    "nativePassed": {
+      "native-card-stock": 31,
+      "native-author": 65
+    },
+    "nativeSkipped": 0,
+    "remainingOwnedFixtures": 0,
+    "typeShards": {
+      "originalRoots": 4345,
+      "commonRoots": 1902,
+      "testRoots": 2443,
+      "shardTestCounts": [
+        1222,
+        1221
+      ],
+      "unionExactlyMatchesOriginal": true,
+      "optionsExactlyMatchOriginal": true
+    },
+    "typeShardConfigs": [
+      {
+        "file": "tsconfig.out-card-product-shard-1.generated.json",
+        "sha256": "2225f606ff534b562f4cf1f8549f64a3213161741297db6c0a753d9827abc1f7"
+      },
+      {
+        "file": "tsconfig.out-card-product-shard-2.generated.json",
+        "sha256": "ebc366ed7c302f290e11610f219ab0199849408fe2404dd6d15457a41d6b0dc2"
+      }
+    ],
+    "logHashes": [
+      {
+        "file": "mixed-preflight.log",
+        "sha256": "0d23c0decdd89113522e593b7a68d81278963b23f0faf7bccaa67633160cfb9f"
+      },
+      {
+        "file": "native-author.log",
+        "sha256": "299ac1bbe98f9fbe74c03d25bcecb9bb91941a39e8c464a1a1a4c9308b400d47"
+      },
+      {
+        "file": "native-card-stock.log",
+        "sha256": "0150d4c178cac7317b60761df551b8917d767272cf9aee07e2db812fe4a2a49e"
+      },
+      {
+        "file": "previous-ci-shard1.log",
+        "sha256": "b8c8a8b50f341196e64abc6060cf3e0369a7b8236370549d73aa288dfb9fd789"
+      },
+      {
+        "file": "runtime-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "source-scan.log",
+        "sha256": "9503f04133412db9ac7aa7f5c330a68594d3773e373067d00267176a82bb14a0"
+      },
+      {
+        "file": "unit-types-shard-1.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "unit-types-shard-2.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "unit.log",
+        "sha256": "92ecab2033479a9da5f3afdc0360fbfffa2ae9934130d9f556a7681ac8ff1b4c"
+      }
+    ]
+  },
+  "testContinuity": {
+    "originalStockAssertionsPreserved": true,
+    "stockOriginalTitleRenamed": "nonphysical product -> card product with mismatched SKU type",
+    "manualType1RejectionReplacedWithMalformedCards": true,
+    "purchaseAndNativeRunnerIdenticalToBase": true
+  },
+  "previousCi": {
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/43135698081",
+    "status": "completed",
+    "conclusion": "failure",
+    "reason": "Worker shards failed before tests because the fixed remote legacy PHP commit was unavailable (not our ref)."
+  },
+  "limitations": [
+    "Out author for product type 2 remains incomplete",
+    "Full author rejects one-time stock/card-count drift, including unpaid reservations, until delivery or cancellation restores the inventory baseline",
+    "Full card and stock-record proof each capped at 10000 rows per product; import capped at 1000 submitted cards per request",
+    "Delivery tests explicitly seed paid state; they do not exercise payment transition/provider calls",
+    "Existing private-schema mature writeoff fixture fails on the unchanged baseline; see prior batch audit",
+    "No deployment, PHP upload or real external provider"
+  ],
+  "wholeMigrationComplete": false,
+  "generatedAt": "2026-11-12T02:30:00.494987+00:00",
+  "fullFileScanReview": {
+    "findings": 1,
+    "reviewedNonSecrets": 1,
+    "unresolved": 0,
+    "rule": "generic-api-key",
+    "path": "workers-ts/test/out-stock-candidate-boundary.test.ts",
+    "line": 31,
+    "baselineContextByteIdentical": true,
+    "contextSha256": "33e888be6446513bd8b9f8cd888734abf292c4ba5d7b0246d6ecfeb08c8a42c7",
+    "reason": "Existing isolated native fixture request-key UUID; unchanged from base; no ignore/config changes"
+  }
+}

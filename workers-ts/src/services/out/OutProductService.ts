@@ -14,6 +14,7 @@ import {
   storeProductDescription,
   storeProductRelation,
   storeProductStockRecord,
+  storeProductVirtual,
 } from "@/models/schema";
 import {
   normalizeSupplierPhysicalProductInput,
@@ -21,6 +22,9 @@ import {
   type SupplierPhysicalProductInput,
   type SupplierProductSku,
 } from "@/services/supplier/SupplierProductManagementService";
+import { outCardProductInput, type OutCardImport } from './OutCardProductInput';
+import { admitOutCardProduct, finalizeOutCardProduct } from './OutCardProductInventory';
+import { tryLockVirtualProductInventory } from '@/services/product/VirtualProductInventoryService';
 import { outSecondCardConfiguration } from './OutSecondCardInput';
 import { outProductPriceAttrs, outProductPriceOptions } from './OutProductPriceOptions';
 import type { SecondCardSkuConfiguration } from '@/services/product/ProductSkuEditorService';
@@ -48,6 +52,7 @@ const PLATFORM_TYPE = 0;
 const PLATFORM_RELATION_ID = 0;
 const PHYSICAL_PRODUCT_TYPE = 0;
 const MANUAL_VIRTUAL_PRODUCT_TYPE = 3;
+const CARD_PRODUCT_TYPE = 1;
 const SECOND_CARD_PRODUCT_TYPE = 4;
 const PRODUCT_ATTR_TYPE = 0;
 const CATEGORY_RELATION_TYPE = 1;
@@ -60,7 +65,8 @@ interface OutAccountIdentity {
 }
 
 interface OutPhysicalProductInput extends Omit<SupplierPhysicalProductInput, "productType" | "skus">, OutProductPresaleInput {
-  productType: 0 | 3 | 4;
+  productType: 0 | 1 | 3 | 4;
+  cardImports?: OutCardImport[];
   skus: Array<SupplierProductSku & Partial<SecondCardSkuConfiguration>>;
   brandIds?: number[];
   ensureIds?: number[];
@@ -245,23 +251,30 @@ function normalizeOutProductInputInternal(input: UnknownRecord, allowManualVirtu
   const baseInput = { ...input };
   delete baseInput.auto_on_time; delete baseInput.auto_off_time;
   if (priceOptions?.isSub === 0) baseInput.attrs = outProductPriceAttrs(input.attrs, priceOptions);
+  const cardType = allowManualVirtual && Number(input.product_type ?? input.productType ?? 0) === CARD_PRODUCT_TYPE;
+  if (cardType) {
+    const values = Array.isArray(baseInput.attrs) ? baseInput.attrs : baseInput.attrs && typeof baseInput.attrs === 'object' ? Object.values(baseInput.attrs as UnknownRecord) : [];
+    baseInput.attrs = values.map(value => value && typeof value === 'object' && !Array.isArray(value)
+      ? { ...value, ...(Array.isArray((value as UnknownRecord).disk_info) && ((value as UnknownRecord).disk_info as unknown[]).length === 0 ? { disk_info: '' } : {}) } : value);
+  }
   const secondCard = allowManualVirtual && Number(input.product_type ?? input.productType ?? 0) === SECOND_CARD_PRODUCT_TYPE;
   if (secondCard) baseInput.product_type = MANUAL_VIRTUAL_PRODUCT_TYPE;
   const base = allowManualVirtual
     ? normalizeSupplierProductInput(baseInput, { requireSettlePrice: false })
     : normalizeSupplierPhysicalProductInput(baseInput, { requireSettlePrice: false });
-  if (base.productType !== PHYSICAL_PRODUCT_TYPE && base.productType !== MANUAL_VIRTUAL_PRODUCT_TYPE)
-    throw new ValidateException('Out API 当前支持实物、手工虚拟和次卡商品');
+  if (base.productType !== PHYSICAL_PRODUCT_TYPE && base.productType !== MANUAL_VIRTUAL_PRODUCT_TYPE && base.productType !== CARD_PRODUCT_TYPE)
+    throw new ValidateException('Out API 当前支持实物、卡密、手工虚拟和次卡商品');
   if (base.productType === MANUAL_VIRTUAL_PRODUCT_TYPE) {
     if (presale.isPresaleProduct === 1) throw new ValidateException(secondCard ? '次卡商品不能设置预售' : '手工虚拟商品不能设置预售');
     const rows = Array.isArray(input.attrs) ? input.attrs : input.attrs && typeof input.attrs === 'object' ? Object.values(input.attrs as UnknownRecord) : [];
     if (rows.some(row => row && typeof row === 'object' && nonEmpty((row as UnknownRecord).virtual_list)))
         throw new ValidateException(secondCard ? '次卡商品不能配置卡密库存' : '手工虚拟商品不能配置卡密库存');
   }
-  const freightValue = secondCard ? 1 : base.productType === MANUAL_VIRTUAL_PRODUCT_TYPE ? 2 : strictInteger(input.freight, "运费类型", 1, 1, 3) as 1 | 2 | 3;
+  if (cardType && presale.isPresaleProduct === 1) throw new ValidateException('卡密商品不能设置预售');
+  const freightValue = secondCard ? 1 : (cardType || base.productType === MANUAL_VIRTUAL_PRODUCT_TYPE) ? 2 : strictInteger(input.freight, "运费类型", 1, 1, 3) as 1 | 2 | 3;
   let postage = base.postage;
   let tempId = base.tempId;
-  if (base.productType === MANUAL_VIRTUAL_PRODUCT_TYPE) {
+  if (cardType || base.productType === MANUAL_VIRTUAL_PRODUCT_TYPE) {
     postage = "0.00";
     tempId = 0;
   } else if (freightValue === 1) {
@@ -277,7 +290,8 @@ function normalizeOutProductInputInternal(input: UnknownRecord, allowManualVirtu
   const sliderImages = base.sliderImages.map((item) => safeAsset(item, "商品轮播图", 256));
   if (JSON.stringify(sliderImages).length > 5000) throw new ValidateException("商品轮播图总长度超限");
   if (base.cateIds.join(",").length > 64) throw new ValidateException("商品分类编码总长度超限");
-  const skus = base.skus.map((sku) => ({
+  const cardInput = cardType ? outCardProductInput(input, base.skus) : undefined;
+  const skus = (cardInput?.skus ?? base.skus).map((sku) => ({
     ...sku,
     ...(secondCard ? outSecondCardConfiguration({ ...input, attrs: baseInput.attrs }) : {}),
     image: safeAsset(sku.image, "SKU图片", 128),
@@ -294,8 +308,9 @@ function normalizeOutProductInputInternal(input: UnknownRecord, allowManualVirtu
   const requestedIsShow = flag(input.is_show, "商品状态", 0);
   return {
     ...base,
-    productType: secondCard ? SECOND_CARD_PRODUCT_TYPE : base.productType as 0 | 3 | 4,
-    ...(secondCard ? { isPostage: 0 } : {}),
+    productType: secondCard ? SECOND_CARD_PRODUCT_TYPE : base.productType as 0 | 1 | 3 | 4,
+    ...(cardInput ? { cardImports: cardInput.cardImports } : {}),
+    ...((secondCard || cardType) ? { isPostage: 0 } : {}),
     ...(brandIds === undefined ? {} : { brandIds }),
     ...(ensureIds === undefined ? {} : { ensureIds }),
     ...(parameters === undefined ? {} : { parameters }),
@@ -315,7 +330,7 @@ function normalizeOutProductInputInternal(input: UnknownRecord, allowManualVirtu
     videoLink: safeAsset(base.videoLink, "商品视频", 500),
     postage,
     tempId,
-    deliveryType: secondCard ? '2' : base.productType === MANUAL_VIRTUAL_PRODUCT_TYPE ? '' : deliveryTypes(input.delivery_type),
+    deliveryType: secondCard ? '2' : (cardType || base.productType === MANUAL_VIRTUAL_PRODUCT_TYPE) ? '' : deliveryTypes(input.delivery_type),
     freight: freightValue,
     isShow: schedule.autoOnTime ? 0 : requestedIsShow,
     sales: strictInteger(input.sales, "销量", 0),
@@ -429,11 +444,12 @@ function skuInsert(
   productId: number,
   fallbackImage: string,
   unique: string,
-  productType: 0 | 3 | 4,
+  productType: 0 | 1 | 3 | 4,
 ) {
   return {
     productId,
     productType,
+    ...(productType === CARD_PRODUCT_TYPE ? { diskInfo: sku.diskInfo } : {}),
     ...(productType === SECOND_CARD_PRODUCT_TYPE ? secondCardFields(sku) : {}),
     suk: sku.suk,
     stock: sku.stock,
@@ -528,6 +544,10 @@ export class OutProductService {
       if (brandIds !== undefined) await inventoryLock(() => lockSupplierProductBrandPath(tx, brandIds));
       await tx.execute(sql`LOCK TABLE "store_product_category" IN SHARE ROW EXCLUSIVE MODE`);
       const categories = await this.categories(tx, input.cateIds);
+      if (input.productType === CARD_PRODUCT_TYPE) {
+        await inventoryLock(() => tx.execute(sql`LOCK TABLE ONLY ${storeProductVirtual} IN SHARE ROW EXCLUSIVE MODE NOWAIT`));
+        if (productId > 0 && !await tryLockVirtualProductInventory(tx, productId)) throw new ValidateException('商品卡密库存正在变化，请刷新后重试');
+      }
 
       let existing: typeof storeProduct.$inferSelect | undefined;
       let currentSkus: Array<typeof storeProductAttrValue.$inferSelect> = [];
@@ -555,7 +575,7 @@ export class OutProductService {
             .for("update", { noWait: true }))
         )[0];
         if (!existing) throw new NotFoundException("商品不存在或不属于平台");
-        if (existing.productType !== PHYSICAL_PRODUCT_TYPE && existing.productType !== MANUAL_VIRTUAL_PRODUCT_TYPE && existing.productType !== SECOND_CARD_PRODUCT_TYPE)
+        if (existing.productType !== PHYSICAL_PRODUCT_TYPE && existing.productType !== CARD_PRODUCT_TYPE && existing.productType !== MANUAL_VIRTUAL_PRODUCT_TYPE && existing.productType !== SECOND_CARD_PRODUCT_TYPE)
           throw new ValidateException("该商品履约类型尚未迁移，不能通过 Out API 编辑");
         if (existing.productType !== input.productType) throw new ValidateException('商品创建后不能修改履约类型');
         if (currentSkus.some((sku) => sku.isRetired === 1)) {
@@ -579,13 +599,14 @@ export class OutProductService {
           throw new ValidateException("SKU唯一标识与当前商品不一致");
         }
       }
-      const stock = existing
+      const cardBaseline = input.productType === CARD_PRODUCT_TYPE ? await admitOutCardProduct(tx, existing, currentSkus, input.skus) : [];
+      let stock = existing
         ? currentSkus.reduce((sum, sku) => sum + sku.stock, 0)
         : input.skus.reduce((sum, sku) => sum + sku.stock, 0);
       if (!Number.isSafeInteger(stock)) throw new ValidateException("商品总库存超出安全范围");
       const presalePlan = outProductPresalePlan(input, existing);
-      if ((input.productType === MANUAL_VIRTUAL_PRODUCT_TYPE || input.productType === SECOND_CARD_PRODUCT_TYPE) && presalePlan.isPresaleProduct !== 0)
-        throw new ValidateException(input.productType === SECOND_CARD_PRODUCT_TYPE ? '次卡商品不能设置预售' : '手工虚拟商品不能设置预售');
+      if ((input.productType === CARD_PRODUCT_TYPE || input.productType === MANUAL_VIRTUAL_PRODUCT_TYPE || input.productType === SECOND_CARD_PRODUCT_TYPE) && presalePlan.isPresaleProduct !== 0)
+        throw new ValidateException(input.productType === CARD_PRODUCT_TYPE ? '卡密商品不能设置预售' : input.productType === SECOND_CARD_PRODUCT_TYPE ? '次卡商品不能设置预售' : '手工虚拟商品不能设置预售');
       await assertOutProductPresaleFuture(tx, presalePlan);
       const minimum = (values: string[]) => values.reduce((left, right) =>
         moneyCents(right) < moneyCents(left) ? right : left
@@ -666,7 +687,7 @@ export class OutProductService {
 
       const relationFence = await inventoryLock(() => captureOutProductRelationFence(tx, existing,
           [1, ...(brandIds === undefined ? [] : [2]), ...(storeLabelIds === undefined ? [] : [3]),
-            ...(userLabelIds === undefined ? [] : [4]), ...(ensureIds === undefined ? [] : [5]), ...(parameters === undefined ? [] : [6])], input.productType as 0 | 3 | 4));
+            ...(userLabelIds === undefined ? [] : [4]), ...(ensureIds === undefined ? [] : [5]), ...(parameters === undefined ? [] : [6])], input.productType as 0 | 1 | 3 | 4));
       let savedProductId = productId;
       let couponFence = existing ? await inventoryLock(() => captureOutProductCoupons(tx, productId)) : undefined;
       if (existing) {
@@ -684,8 +705,10 @@ export class OutProductService {
         savedProductId = rows[0].id;
       }
 
-      const formProof = outProductFormProof(savedProductId, input.productType as 0 | 3 | 4, existing, customForm, systemFormId, admittedForm);
-      const scheduleProof = await inventoryLock(() => outProductScheduleProof(tx, savedProductId, existing, input));
+      if (input.productType === CARD_PRODUCT_TYPE && !existing && !await tryLockVirtualProductInventory(tx, savedProductId))
+        throw new ValidateException('商品卡密库存正在变化，请刷新后重试');
+      const formProof = outProductFormProof(savedProductId, input.productType as 0 | 1 | 3 | 4, existing, customForm, systemFormId, admittedForm);
+      let scheduleProof = await inventoryLock(() => outProductScheduleProof(tx, savedProductId, existing, input));
       await assertOutProductPresale(tx, savedProductId, presalePlan);
       const expectedActivity = input.activity ?? existing?.activity ?? '';
       const expectedRecommendations = input.recommendList ?? existing?.recommendList ?? '';
@@ -753,7 +776,7 @@ export class OutProductService {
             if (!collision[0]) unique = candidate;
           }
           used.add(unique);
-          inserts.push(skuInsert(sku, savedProductId, input.sliderImages[0], unique, input.productType as 0 | 3 | 4));
+          inserts.push(skuInsert(sku, savedProductId, input.sliderImages[0], unique, input.productType as 0 | 1 | 3 | 4));
           resultSkus.push({ ...sku, unique });
         }
         await tx.insert(storeProductAttrValue).values(inserts);
@@ -764,6 +787,7 @@ export class OutProductService {
             .update(storeProductAttrValue)
             .set({
               productType: input.productType,
+              ...(input.productType === CARD_PRODUCT_TYPE ? { diskInfo: sku.diskInfo } : {}),
               ...(input.productType === SECOND_CARD_PRODUCT_TYPE ? secondCardFields(sku) : {}),
               price: sku.price,
               settlePrice: sku.settlePrice,
@@ -790,6 +814,13 @@ export class OutProductService {
         eq(storeProductAttrResult.productId, savedProductId),
         eq(storeProductAttrResult.type, PRODUCT_ATTR_TYPE),
       ));
+      const cardProof = input.productType === CARD_PRODUCT_TYPE
+        ? await finalizeOutCardProduct(tx, savedProductId, cardBaseline, currentSkus, resultSkus, input.cardImports ?? [], input.sliderImages[0], stock, now)
+        : undefined;
+      if (cardProof) {
+        stock = cardProof.stock;
+        if (cardProof.changed) scheduleProof = await inventoryLock(() => outProductScheduleProof(tx, savedProductId, existing, input));
+      }
       const resultSnapshot = JSON.stringify({ attr: input.dimensions, value: resultSkus });
       await tx.insert(storeProductAttrResult).values({
         productId: savedProductId,
@@ -845,6 +876,7 @@ export class OutProductService {
       };
       await assertManualVirtualState();
       await assertSecondCardState();
+      await cardProof?.assert(resultSnapshot);
       await assertPriceOptions();
       await updateCartStatus(tx, savedProductId, input.isShow);
       if (relationFence) relationFence.productId = savedProductId;
@@ -872,6 +904,7 @@ export class OutProductService {
       await tx.execute(sql`SET CONSTRAINTS ALL IMMEDIATE`);
       await assertManualVirtualState();
       await assertSecondCardState();
+      await cardProof?.assert(resultSnapshot);
       await assertPriceOptions();
       if (input.isVip !== undefined) {
         const [receipt] = await tx.select().from(outProductWriteReplay).where(and(eq(outProductWriteReplay.outAccountId, account.id),
@@ -879,11 +912,11 @@ export class OutProductService {
         if (!receipt || receipt.productId !== savedProductId || receipt.requestHash !== hash || receipt.resultCount !== 0)
           throw new ValidateException('平台商品会员价或佣金回执已变化');
       }
-      if (input.productType === SECOND_CARD_PRODUCT_TYPE) {
+      if (input.productType === SECOND_CARD_PRODUCT_TYPE || input.productType === CARD_PRODUCT_TYPE) {
         const [receipt] = await tx.select().from(outProductWriteReplay).where(and(eq(outProductWriteReplay.outAccountId, account.id),
           eq(outProductWriteReplay.operation, operation), eq(outProductWriteReplay.requestKey, key))).limit(1);
         if (!receipt || receipt.productId !== savedProductId || receipt.requestHash !== hash || receipt.resultCount !== 0)
-          throw new ValidateException('次卡商品写入回执已变化');
+          throw new ValidateException('虚拟商品写入回执已变化');
       }
       await inventoryLock(() => assertOutProductRelationFence(tx, relationFence));
       await inventoryLock(() => assertOutProductCoupons(tx, couponProof));
@@ -894,6 +927,7 @@ export class OutProductService {
       await assertOutProductPresaleFuture(tx, presalePlan);
       await assertManualVirtualState();
       await assertSecondCardState();
+      await cardProof?.assert(resultSnapshot);
       await assertPriceOptions();
       return { id: savedProductId, idempotent: false, stock_preserved: !!existing };
     });
@@ -977,8 +1011,9 @@ export class OutProductService {
             eq(storeProductAttrValue.isRetired, 0),
             eq(storeProduct.type, PLATFORM_TYPE),
             eq(storeProduct.relationId, PLATFORM_RELATION_ID),
-            inArray(storeProduct.productType, [PHYSICAL_PRODUCT_TYPE, MANUAL_VIRTUAL_PRODUCT_TYPE, SECOND_CARD_PRODUCT_TYPE]),
+            inArray(storeProduct.productType, [PHYSICAL_PRODUCT_TYPE, CARD_PRODUCT_TYPE, MANUAL_VIRTUAL_PRODUCT_TYPE, SECOND_CARD_PRODUCT_TYPE]),
             sql`(${storeProduct.productType} = ${PHYSICAL_PRODUCT_TYPE} OR ${storeProductAttrValue.productType} = ${storeProduct.productType})`,
+            sql`(${storeProduct.productType} <> ${CARD_PRODUCT_TYPE} OR COALESCE(length(trim(${storeProductAttrValue.diskInfo})),0)>0)`,
             eq(storeProduct.isDel, 0),
           )}
         ) AS matched
@@ -1015,14 +1050,18 @@ export class OutProductService {
       const platformProducts = new Map(products.filter((product) =>
         product.type === PLATFORM_TYPE
         && product.relationId === PLATFORM_RELATION_ID
-        && [PHYSICAL_PRODUCT_TYPE, MANUAL_VIRTUAL_PRODUCT_TYPE, SECOND_CARD_PRODUCT_TYPE].includes(product.productType)
+        && [PHYSICAL_PRODUCT_TYPE, CARD_PRODUCT_TYPE, MANUAL_VIRTUAL_PRODUCT_TYPE, SECOND_CARD_PRODUCT_TYPE].includes(product.productType)
         && product.isDel === 0
       ).map((product) => [product.id, product]));
       const byBarCode = new Map<string, Array<typeof storeProductAttrValue.$inferSelect>>();
+      if (allMatchingSkus.some(sku => platformProducts.get(sku.productId)?.productType === CARD_PRODUCT_TYPE)) {
+        await inventoryLock(() => tx.execute(sql`LOCK TABLE ONLY ${storeProductVirtual} IN SHARE ROW EXCLUSIVE MODE NOWAIT`));
+      }
       for (const sku of allMatchingSkus) {
         const product = platformProducts.get(sku.productId);
         if (!product || sku.type !== PRODUCT_ATTR_TYPE || sku.isRetired !== 0 ||
-          (product.productType !== PHYSICAL_PRODUCT_TYPE && sku.productType !== product.productType)) continue;
+          (product.productType !== PHYSICAL_PRODUCT_TYPE && sku.productType !== product.productType) ||
+          (product.productType === CARD_PRODUCT_TYPE && !sku.diskInfo?.trim())) continue;
         byBarCode.set(sku.barCode, [...(byBarCode.get(sku.barCode) ?? []), sku]);
       }
       for (const item of items) {
@@ -1031,10 +1070,17 @@ export class OutProductService {
         if (matches.length > 1) throw new ValidateException(`属性编码 ${item.barCode} 存在重复，拒绝猜测商品`);
       }
 
+      for (const sku of allMatchingSkus) {
+        if (platformProducts.get(sku.productId)?.productType !== CARD_PRODUCT_TYPE) continue;
+        if (!await tryLockVirtualProductInventory(tx, sku.productId)) throw new ValidateException('商品卡密库存正在变化，请刷新后重试');
+        const [card] = await tx.select({ id: storeProductVirtual.id }).from(storeProductVirtual)
+          .where(and(eq(storeProductVirtual.productId, sku.productId), eq(storeProductVirtual.attrUnique, sku.unique))).limit(1);
+        if (card) throw new ValidateException('固定内容SKU存在历史卡密，不能修改普通库存');
+      }
       const now = Math.floor(Date.now() / 1000);
       const affectedProducts = new Set<number>();
       const manualSkus: Array<{ id: number; productId: number; unique: string; barCode: string; stock: number; sumStock: number; productType: number;
-        cardRules?: { writeTimes: number; writeValid: number; writeDays: number; writeStart: number; writeEnd: number } }> = [];
+        fixedContent?: string; cardRules?: { writeTimes: number; writeValid: number; writeDays: number; writeStart: number; writeEnd: number } }> = [];
       const manualRecords: Array<typeof storeProductStockRecord.$inferSelect> = [];
       const manualTotals = new Map<number, { stock: number; productType: number }>();
       let updated = 0;
@@ -1045,6 +1091,7 @@ export class OutProductService {
         const manual = productType !== PHYSICAL_PRODUCT_TYPE;
         if (manual) manualSkus.push({ id: sku.id, productId: sku.productId, unique: sku.unique, barCode: sku.barCode,
           stock: item.quantity, sumStock: sku.sumStock + Math.max(0, item.quantity - sku.stock), productType,
+          ...(productType === CARD_PRODUCT_TYPE ? { fixedContent: sku.diskInfo ?? '' } : {}),
           ...(productType === SECOND_CARD_PRODUCT_TYPE ? { cardRules: { writeTimes: sku.writeTimes, writeValid: sku.writeValid,
             writeDays: sku.writeDays, writeStart: sku.writeStart, writeEnd: sku.writeEnd } } : {}) });
         if (sku.stock === item.quantity) continue;
@@ -1103,6 +1150,7 @@ export class OutProductService {
           const row = rows.find(value => value.id === expected.id);
           return !row || row.productId !== expected.productId || row.productType !== expected.productType || row.type !== PRODUCT_ATTR_TYPE ||
             row.isRetired !== 0 || row.unique !== expected.unique || row.barCode !== expected.barCode || row.stock !== expected.stock || row.sumStock !== expected.sumStock ||
+            (expected.fixedContent !== undefined && row.diskInfo !== expected.fixedContent) ||
             (expected.cardRules !== undefined && Object.entries(expected.cardRules).some(([key, value]) => row[key as keyof NonNullable<typeof expected.cardRules>] !== value));
         })) throw new ValidateException('手工虚拟商品库存或规格已变化');
         for (const [id, expected] of manualTotals) {
@@ -1113,6 +1161,11 @@ export class OutProductService {
           if (!product || product.type !== PLATFORM_TYPE || product.relationId !== PLATFORM_RELATION_ID || product.productType !== expected.productType ||
             product.isDel !== 0 || product.stock !== expected.stock || product.isSold !== (expected.stock > 0 ? 0 : 1) || Number(total?.stock) !== expected.stock)
             throw new ValidateException('手工虚拟商品总库存已变化');
+        }
+        for (const expected of manualSkus.filter(row => row.fixedContent !== undefined)) {
+          const [card] = await tx.select({ id: storeProductVirtual.id }).from(storeProductVirtual)
+            .where(and(eq(storeProductVirtual.productId, expected.productId), eq(storeProductVirtual.attrUnique, expected.unique))).limit(1);
+          if (card) throw new ValidateException('固定内容SKU的卡密状态已变化');
         }
         if (manualRecords.length) {
           const actual = await tx.select().from(storeProductStockRecord).where(inArray(storeProductStockRecord.id,manualRecords.map(row => row.id))).orderBy(asc(storeProductStockRecord.id));
