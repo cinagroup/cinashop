@@ -461,3 +461,18 @@ it('explicit video removal disables a known switch while preserving an untouched
     expect(payload.video_open).toBe(0);expect(payload.video_link).toBe('');expect(Object.hasOwn(payload,'command_word')).toBe(false);expect(payload.settings_selection).toBeUndefined();
   }finally{f.close();}
 });
+
+
+it('omits ordered recommendation read echoes and malformed historical metadata from unrelated actual form saves', async () => {
+  for (const recommend_list of [[{product_id:'71',image:ticket(71)},{product_id:'71',image:'/71.png'},{product_id:'999',image:''}], 'bad old list']) {
+    const detail = {...product(), recommend_list, recommendation_selection:{version:1,ids:[71,71,999],consistent:Array.isArray(recommend_list)}, recommend:['is_hot']};
+    const f = await mount('Form', config => config.method === 'get' && config.url === '/product/product/5' ? detail : undefined);
+    try {
+      f.view.form.store_name = 'unrelated title'; await f.view.submit();
+      const writes = f.calls.filter(call => call.method === 'post'); expect(writes).toHaveLength(1);
+      const payload=JSON.parse(writes[0].data);expect(payload.store_name).toBe('unrelated title');
+      for(const key of ['recommend_list','recommendation_selection','recommend'])expect(Object.hasOwn(payload,key)).toBe(false);
+      expect(JSON.stringify(payload)).not.toContain('signature=');
+    } finally {f.close();}
+  }
+});

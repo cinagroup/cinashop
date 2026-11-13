@@ -664,6 +664,7 @@ async function submit() {
       system_form_id: _originalSystemForm, system_form_selection: _systemFormSelection, recommend_image: _originalRecommendImage, price_selection: _priceSelection, purchase_selection: _purchaseSelection,
       integral_selection: _integralSelection, give_integral: _giveIntegral,
       settings_selection: _settingsSelection, command_word: _commandWord, video_open: _videoOpen,
+      recommend_list: _recommendationEcho, recommendation_selection: _recommendationSelection, recommend: _legacyRecommend,
       user_label_selection: _userLabelSelection, label_id: _originalUserLabels,
       coupon_selection: _couponSelection, coupon_ids: _couponIds, coupons: _legacyCoupons,
       is_vip_product: _memberOnly, is_presale_product: _presale, presale_time: _presalePeriod, presale_day: _presaleDays,

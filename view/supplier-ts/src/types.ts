@@ -303,6 +303,9 @@ export interface ProductSku {
 }
 
 export interface ProductDetail {
+  recommend_list?: unknown;
+  recommendation_selection?: unknown;
+  recommend?: unknown;
   settings_selection?: import('./utils/productSettings').ProductSettingsSelection;
   command_word?: unknown;
   video_open?: unknown;

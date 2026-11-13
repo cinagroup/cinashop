@@ -1255,3 +1255,125 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier setting
     }finally{wiring.container=null;wiring.moderator=null;network.mockRestore();await f.close();}
   },180000);
 });
+
+
+
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier ordered recommendation references',()=>{
+  let f:Awaited<ReturnType<typeof supplierProductSettingsFixture>>;
+  beforeEach(async()=>{vi.spyOn(globalThis,'fetch').mockRejectedValue(Error('Owned Supplier references forbid providers'));f=await supplierProductSettingsFixture();wiring.container=f.container;},30000);
+  afterEach(async()=>{try{expect(fetch).not.toHaveBeenCalled();}finally{await f?.close();wiring.container=null;wiring.moderator=null;vi.restoreAllMocks();}},30000);
+  async function call(id:number,body?:object,actor:keyof typeof f.tokens|'anonymous'='manager'){
+    const response=await app.request('/supplierapi/product/product/'+id,{method:body?'POST':'GET',headers:{...(actor==='anonymous'?{}:{Authorization:'Bearer '+f.tokens[actor]}),...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})},f.env);
+    expect(response.headers.get('cache-control')).toContain('private, no-store');const result=await response.json<Envelope>();if(result.status===500 || result.status===410000 && actor==='manager')throw Error('Actual recommendation HTTP failed: '+result.msg,{cause:settingsHttpErrors.at(-1)});return result;
+  }
+  it.each([0,1,3])('creates updates preserves and clears ordered duplicate missing and foreign references for fulfillment %i',async type=>f.withSettingsWriter(async writer=>{
+    wiring.container=writer.container;const source=await f.body();const body={...source,product_type:type,attrs:(source.attrs as any[]).map(({unique,id,...sku})=>({...sku,...(type===1?{delivery_mode:'fixed',disk_info:'owned recommendation fixed content'}:{disk_info:''})}))};
+    const created=await call(0,{...body,recommend_list:[' 00081 ',999,90,81],recommend:['is_hot']});expect(created.status,created.msg).toBe(200);const id=Number(created.data.id);
+    let current=await call(id);expect(current.data.recommendation_selection).toEqual({version:1,ids:[81,999,90,81],consistent:true});expect(current.data.recommend_list.map((x:any)=>x.product_id)).toEqual(['81','999','90','81']);
+    const initial=(await f.db.select().from(storeProduct).where(eq(storeProduct.id,id)))[0];expect(initial).toMatchObject({recommendList:'81,999,90,81',isShow:0,isVerify:0,isHot:0});
+    const update={...body,attrs:current.data.attrs};expect((await call(id,{...update,recommend_list:[90,999,90]})).status).toBe(200);
+    expect((await call(id,update)).status).toBe(200);expect((await call(id)).data.recommendation_selection.ids).toEqual([90,999,90]);
+    expect((await call(id,{...update,recommend_list:[]})).status).toBe(200);expect((await call(id)).data.recommend_list).toEqual([]);expect((await call(id)).data.recommendation_selection).toEqual({version:1,ids:[],consistent:true});
+    expect((await call(id,{...update,recommend_list:[999,90,999]})).status).toBe(200);expect((await call(id)).data.recommendation_selection.ids).toEqual([999,90,999]);
+  }));
+  it('never targets recommend_list for omitted or undefined intent with an executable UPDATE OF tripwire',async()=>f.withSettingsWriter(async writer=>{
+    await f.db.update(storeProduct).set({recommendList:'81,999,81'}).where(eq(storeProduct.id,80));wiring.container=writer.container;const body=await f.body();
+    await f.exec("CREATE FUNCTION owned_references_omit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'recommend list UPDATE entered'; END $$;CREATE TRIGGER owned_references_omit BEFORE UPDATE OF recommend_list ON store_product FOR EACH STATEMENT EXECUTE FUNCTION owned_references_omit()");
+    expect((await call(80,body)).status).toBe(200);await new SupplierProductManagementService(writer.container,f.env).saveProduct(7,80,{...body,recommend_list:undefined});
+    await expect(f.db.update(storeProduct).set({recommendList:'81,999,81'}).where(eq(storeProduct.id,80))).rejects.toThrow();expect((await f.product()).recommendList).toBe('81,999,81');
+  }));
+  it('rejects malformed lists and unauthorized source ownership without business or sequence writes',async()=>f.withSettingsWriter(async writer=>{
+    wiring.container=writer.container;const body=await f.body(),before=await f.snapshot(),seq=await f.sequences();
+    for(const recommend_list of [null,false,'81',{},[{}],[0],[-1],[1.5],['1e2'],[2147483648],Array(101).fill(1),Array(24).fill(2147483647)])expect((await call(80,{...body,recommend_list})).status).toBe(400);
+    for(const actor of ['viewer','denied','other','anonymous'] as const)expect((await call(80,{...body,recommend_list:[81]},actor)).status).not.toBe(200);
+    expect((await call(90,{...body,recommend_list:[81]})).status).toBe(404);expect(await f.snapshot()).toEqual(before);expect(await f.sequences()).toEqual(seq);
+  }));
+  it('diagnoses historical malformed storage without blocking omission or explicit clear',async()=>f.withSettingsWriter(async writer=>{
+    await f.db.update(storeProduct).set({recommendList:'81,bad,90'}).where(eq(storeProduct.id,80));wiring.container=writer.container;
+    expect((await call(80)).data).toMatchObject({recommend_list:[],recommendation_selection:{version:1,ids:[],consistent:false}});const body=await f.body();expect((await call(80,body)).status).toBe(200);expect((await f.product()).recommendList).toBe('81,bad,90');
+    expect((await call(80,{...body,recommend_list:[]})).status).toBe(200);expect((await call(80)).data.recommendation_selection).toEqual({version:1,ids:[],consistent:true});
+  }));
+  it('uses a SELECT-only repeatable read and hides private foreign images while preserving reference identity',async()=>{
+    await f.db.update(storeProduct).set({image:'/api/assets/31',recommendList:'81,90,999,81'}).where(eq(storeProduct.id,80));
+    await f.db.update(storeProduct).set({image:'/api/assets/31'}).where(eq(storeProduct.id,81));await f.db.update(storeProduct).set({image:'/api/assets/32',isShow:0,isVerify:0}).where(eq(storeProduct.id,90));
+    await f.withReader(async reader=>{wiring.container=reader.container;const before=await f.snapshot(),seq=await f.sequences();const result=await call(80,undefined,'viewer');expect(result.status,result.msg).toBe(200);
+      expect(result.data.recommend_list.map((x:any)=>x.product_id)).toEqual(['81','90','999','81']);expect(result.data.recommend_list[0].image).toContain('/api/assets/31?');expect(result.data.recommend_list[1].image).toBe('');expect(result.data.recommend_list[2].image).toBe('');expect(result.data.recommend_list[3].image).toBe(result.data.recommend_list[0].image);
+      expect(JSON.stringify(result.data)).not.toContain('attachments/supplier/8/');expect(await f.snapshot()).toEqual(before);expect(await f.sequences()).toEqual(seq);
+      const state=await withTx(reader.container,async tx=>{await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);return tx.execute(sql`SELECT current_user=session_user AS independent,current_setting('transaction_read_only') AS readonly,current_setting('transaction_isolation') AS isolation`);});expect(state[0]).toEqual({independent:true,readonly:'on',isolation:'repeatable read'});
+    });
+    await f.db.update(storeProduct).set({isShow:1,isVerify:1}).where(eq(storeProduct.id,90));await f.withReader(async reader=>{wiring.container=reader.container;expect((await call(80)).data.recommend_list[1].image).toContain('/api/assets/32?');});
+    await f.db.update(storeProduct).set({isDel:1}).where(eq(storeProduct.id,90));await f.withReader(async reader=>{wiring.container=reader.container;expect((await call(80)).data.recommend_list[1].image).toBe('');});
+  });
+  it('combines recommendation references with all existing metadata authors without overwriting their approved values',async()=>f.withSettingsWriter(async writer=>{
+    // Clearing coupon bindings uses the same DELETE grant as the real App profile.
+    await f.exec(`GRANT DELETE ON public.store_product_coupon TO "${writer.role}"`);
+    wiring.container=writer.container;const result=await call(80,await f.body({recommend_list:[81,999,81],command_word:'combined',video_open:0,video_link:'/api/assets/51',give_integral:'2.75',recommend_image:'/api/assets/31',store_label_id:[31],brand_id:[104,105],ensure_id:[201],specs_id:301,specs:[{name:'材质',value:'棉'}],system_form_id:401,is_sub:[],label_id:[],coupon_ids:[]}));
+    expect(result.status,result.msg).toBe(200);expect(await f.product()).toMatchObject({recommendList:'81,999,81',commandWord:'combined',videoOpen:0,videoLink:'/api/assets/51',giveIntegral:'2.75',recommendImage:'/api/assets/31',storeLabelId:'31',brandId:105,ensureId:'201',specsId:301,systemFormId:401,labelId:''});
+  }));
+  it.each(['skip','rewrite','later-main','actor','deferred'] as const)('rolls back %s recommendation tampering after an executable positive control',async mode=>f.withSettingsWriter(async writer=>{
+    const action=mode==='skip'?'RETURN NULL;':mode==='rewrite'?"NEW.recommend_list='999';RETURN NEW;":mode==='later-main'?"UPDATE store_product SET command_word='tampered' WHERE id=80;RETURN NEW;":mode==='actor'?"UPDATE system_role SET rules='supplier.product.view' WHERE id=21;RETURN NEW;":"UPDATE store_product SET recommend_list='999' WHERE id=80;RETURN NEW;";
+    const main=['skip','rewrite','deferred'].includes(mode),when=mode==='deferred'?'CREATE CONSTRAINT TRIGGER owned_refs_tamper AFTER UPDATE ON store_product DEFERRABLE INITIALLY DEFERRED':`CREATE TRIGGER owned_refs_tamper ${main?'BEFORE UPDATE ON store_product':'AFTER INSERT OR UPDATE ON store_product_description'}`;
+    await f.exec(`CREATE FUNCTION owned_refs_tamper() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN IF ${main?"NEW.id=80 AND NEW.recommend_list='81,999,81'":"NEW.product_id=80"} THEN ${action} END IF;RETURN NEW;END $$;${when} FOR EACH ROW EXECUTE FUNCTION owned_refs_tamper()`);
+    const marker=Error('owned references positive rollback');await expect(f.db.transaction(async tx=>{
+      if(main){const rows=await tx.update(storeProduct).set({recommendList:'81,999,81'}).where(eq(storeProduct.id,80)).returning();await tx.execute(sql`SET CONSTRAINTS ALL IMMEDIATE`);if(mode==='skip')expect(rows).toHaveLength(0);else expect((await tx.select().from(storeProduct).where(eq(storeProduct.id,80)))[0].recommendList).toBe('999');}
+      else{await tx.update(storeProductDescription).set({description:'positive'}).where(eq(storeProductDescription.productId,80));if(mode==='later-main')expect((await tx.select().from(storeProduct).where(eq(storeProduct.id,80)))[0].commandWord).toBe('tampered');else expect((await tx.select().from(systemRole).where(eq(systemRole.id,21)))[0].rules).toBe('supplier.product.view');}throw marker;
+    })).rejects.toBe(marker);
+    wiring.container=writer.container;const body=await f.body({recommend_list:[81,999,81]}),before=await f.snapshot();expect((await call(80,body)).status).not.toBe(200);expect(await f.snapshot()).toEqual(before);
+  }));
+});
+
+
+import { systemDise as recommendationDesign } from '@/models/schema';
+import { cloneProductDetailDesign } from '../../view/common/productDetailDesign';
+
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier references actual public recommendation HTTP lifecycle',()=>{
+  it('uses real Supplier create/read/update and moderation while both anonymous consumers apply current visibility sorting fallback and design settings for all fulfillments',async()=>{
+    const network=vi.spyOn(globalThis,'fetch').mockRejectedValue(Error('Owned recommendation public lifecycle forbids providers'));const f=await refundRuntimeFixture();
+    try{
+      await f.db.update(pricingSupplier).set({adminId:21,isShow:1,isDel:0}).where(eq(pricingSupplier.id,7));
+      const password='owned-settings-supplier-password',reviewPassword='owned-settings-review-password';await f.db.insert(systemAdmin).values([{id:21,account:'owned-settings-supplier',pwd:password,adminType:4,relationId:7,status:1,isDel:0},{id:101,account:'owned-settings-review',pwd:reviewPassword,adminType:1,relationId:0,level:0,status:1,isDel:0}]);
+      await f.db.insert(pricingCategory).values({id:800001,type:2,relationId:7,cateName:'本地视频设置分类',isShow:1});
+      await f.exec("SELECT setval(pg_get_serial_sequence('store_product','id'),800010,true);SELECT setval(pg_get_serial_sequence('store_product_attr_value','id'),800010,true)");
+      const env={...f.env,NODE_ENV:'test',APP_KEY:'owned-supplier-recommendation-key',UPSTASH_REDIS_URL:'',UPSTASH_REDIS_TOKEN:''} as unknown as Env;
+      const supplierToken=(await createToken(21,'supplier',md5(password),env.APP_KEY)).token,reviewToken=(await createToken(101,'admin',md5(reviewPassword),env.APP_KEY)).token;
+      if(!f.withRuntimeRole)throw Error('Actual independent runtime LOGINs required');
+      await f.withRuntimeRole(appRole=>f.withRuntimeRole!(async adminRole=>{
+        const [database]=await f.db.execute(sql`SELECT current_database() AS name`),names={app:appRole.role,admin:adminRole.role,maintenance:'finance_test',database:String(database.name),pricingOwner:f.pricingOwner};
+        await runRuntimeBusinessCommissioning(f.db,names);expect((await runRoutinePaymentRuntimeInstallation(f.db,names)).after.ready).toBe(true);
+        expect(await auditRuntimeBusinessPrivileges(appRole.db,'app',names)).toMatchObject({ready:true,failures:[]});expect(await auditRuntimeBusinessPrivileges(adminRole.db,'admin',names)).toMatchObject({ready:true,failures:[]});
+        const container=createContainerFromDb(appRole.db);wiring.container=container;wiring.moderator=createContainerFromDb(adminRole.db);
+        async function request(method:string,path:string,body?:object,token:string|null=supplierToken){const tasks:Promise<unknown>[]=[];const response=await app.request(path,{method,headers:{...(token?{Authorization:'Bearer '+token}:{}),...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})},env,{waitUntil:task=>{tasks.push(task);},passThroughOnException(){},props:{}});await Promise.all(tasks);const result=await response.json<Envelope>();if(result.status===500)throw Error('Actual recommendations HTTP failed',{cause:settingsHttpErrors.at(-1)});return result;}
+        async function ok(method:string,path:string,body?:object,token:string|null=supplierToken){const result=await request(method,path,body,token);expect(result.status,result.msg).toBe(200);return result.data;}
+
+        await f.db.insert(systemAdmin).values([{id:810008,account:'owned-foreign-target-owner',adminType:4,relationId:8},{id:810009,account:'owned-inactive-target-owner',adminType:4,relationId:9}]);
+        await f.db.insert(pricingSupplier).values([{id:8,adminId:810008,isShow:1,isDel:0},{id:9,adminId:810009,isShow:0,isDel:0}]);
+        await f.db.insert(storeProduct).values([
+          {id:810001,type:0,relationId:0,storeName:'public platform target',image:'/platform.png',isShow:1,isVerify:1,sort:10},
+          {id:810002,type:2,relationId:8,storeName:'public foreign target',image:'/foreign.png',isShow:1,isVerify:1,sort:20},
+          {id:810003,type:2,relationId:8,storeName:'hidden foreign target',image:'/hidden.png',isShow:0,isVerify:0,sort:30},
+          {id:810004,type:0,relationId:0,storeName:'member only target',image:'/member.png',isShow:1,isVerify:1,isVipProduct:1,sort:40},
+          {id:810005,type:2,relationId:9,storeName:'inactive owner target',image:'/inactive.png',isShow:1,isVerify:1,sort:50},
+          {id:810006,type:0,relationId:0,storeName:'fallback target',image:'/fallback.png',isShow:1,isVerify:1,isGood:1,sort:999},
+        ]);
+        const design=cloneProductDetailDesign();await f.db.delete(recommendationDesign).where(eq(recommendationDesign.templateName,'product_detail'));
+        await f.db.insert(recommendationDesign).values({id:820001,templateName:'product_detail',type:3,isDel:0,value:JSON.stringify(design)});
+        const refs=[810001,810003,999999,810002,810001,810004,810005];
+        for(const productType of [0,1,3]){
+          const body={product_type:productType,store_name:'实际推荐配置商品 '+productType,cate_id:[800001],slider_image:['/supplier-references.png'],spec_type:0,freight:1,is_postage:1,is_sub:[],recommend_list:refs,attrs:[{price:'10.00',settle_price:'1.00',vip_price:'0.00',stock:8,...(productType===1?{delivery_mode:'fixed',disk_info:'Owned recommendations fixed content'}:{})}]};
+          const made=await ok('POST','/supplierapi/product/product/0',body),id=Number(made.id),path='/supplierapi/product/product/'+id,detailPath='/api/product/detail/'+id,recommendPath='/api/product/detail/recommend/'+id;
+          const review=()=>ok('POST','/adminapi/product/product/set_verify/'+id,{is_verify:1,is_show:1,refusal:'',auto_on_time:''},reviewToken);
+          let current=await ok('GET',path);expect(current.recommendation_selection).toEqual({version:1,ids:refs,consistent:true});expect(current.recommend_list.map((x:any)=>x.product_id)).toEqual(refs.map(String));expect(current.recommend_list[1].image).toBe('');expect(current.recommend_list[2].image).toBe('');expect(current.recommend_list[3].image).toBe('/foreign.png');expect(current.recommend_list[5].image).toBe('');expect(current.recommend_list[6].image).toBe('');
+          expect((await request('GET',detailPath,undefined,null)).status).not.toBe(200);await review();
+          const visible=await ok('GET',detailPath,undefined,null);expect(visible.recommend.map((x:any)=>x.id)).toEqual([810002,810001]);expect((await ok('GET',recommendPath,undefined,null)).map((x:any)=>x.id)).toEqual([810002,810001]);
+          const {recommend_list:_refs,...legacy}=body;await ok('POST',path,{...legacy,attrs:current.attrs,store_name:'无关标题修改 '+productType});
+          expect((await request('GET',detailPath,undefined,null)).status).not.toBe(200);expect((await ok('GET',path)).recommendation_selection.ids).toEqual(refs);await review();expect((await ok('GET',recommendPath,undefined,null)).map((x:any)=>x.id)).toEqual([810002,810001]);
+          await f.db.update(storeProduct).set({isShow:0}).where(eq(storeProduct.id,810002));expect((await ok('GET',recommendPath,undefined,null)).map((x:any)=>x.id)).toEqual([810001]);expect((await ok('GET',path)).recommend_list[3].image).toBe('');await f.db.update(storeProduct).set({isShow:1}).where(eq(storeProduct.id,810002));
+          await f.db.update(recommendationDesign).set({value:JSON.stringify({...design,recommendNum:1})}).where(eq(recommendationDesign.id,820001));expect((await ok('GET',detailPath,undefined,null)).recommend.map((x:any)=>x.id)).toEqual([810002]);expect((await ok('GET',recommendPath,undefined,null)).map((x:any)=>x.id)).toEqual([810002]);
+          await f.db.update(recommendationDesign).set({value:JSON.stringify({...design,showRecommend:0})}).where(eq(recommendationDesign.id,820001));expect((await ok('GET',detailPath,undefined,null)).recommend).toEqual([]);expect(await ok('GET',recommendPath,undefined,null)).toEqual([]);
+          await f.db.update(recommendationDesign).set({value:JSON.stringify(design)}).where(eq(recommendationDesign.id,820001));current=await ok('GET',path);await ok('POST',path,{...legacy,attrs:current.attrs,recommend_list:[]});await review();
+          expect((await ok('GET',path)).recommend_list).toEqual([]);expect((await ok('GET',detailPath,undefined,null)).recommend.map((x:any)=>x.id)).toEqual([810006]);expect((await ok('GET',recommendPath,undefined,null)).map((x:any)=>x.id)).toEqual([810006]);
+        }
+      }));expect(network).not.toHaveBeenCalled();
+    }finally{wiring.container=null;wiring.moderator=null;network.mockRestore();await f.close();}
+  },180000);
+});
