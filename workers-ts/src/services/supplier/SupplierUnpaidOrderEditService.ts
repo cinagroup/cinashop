@@ -1,3 +1,4 @@
+import { readUnpaidOrderEditOperation } from '@/services/order/UnpaidOrderEditOperation';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { withTx, type Container, type DbClient } from '@/lib/di';
@@ -66,9 +67,7 @@ async function previousEditOperation(tx: DbClient, state: State, outboxes: reado
   const payload = parseSupplierOrderPriceRevisionPayload(event.payload);
   if (payload.orderId !== state.order.id || event.eventKey !== `${SUPPLIER_ORDER_PRICE_REVISION_EVENT}:${state.order.id}:${payload.operationId}`)
     throw supplierOrderEditConflict('订单编辑历史引用不一致');
-  const [row] = await tx.execute(sql`SELECT operation_id::text, order_id, supplier_id, state, evidence
-    FROM public.supplier_order_edit_operation_v1 WHERE operation_id=${payload.operationId}::uuid`);
-  if (!row || row.state !== 'committed') throw supplierOrderEditConflict('订单编辑历史回执缺失');
+  const row = await readUnpaidOrderEditOperation(tx, payload.operationId);
   const evidence = row.evidence as Record<string, unknown> | null;
   const source = evidence?.source as Record<string, unknown> | undefined;
   if (row.order_id !== state.order.id || row.supplier_id !== state.order.supplierId || source?.order_id !== state.order.id

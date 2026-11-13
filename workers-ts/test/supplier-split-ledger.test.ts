@@ -1,3 +1,4 @@
+import { preparePriceFixture, priceActor, seedPriceActor } from './helpers/adminOrderPriceFixture';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { createPcCheckoutQuoteFixture } from './helpers/pcCheckoutQuoteFixture';
@@ -14,6 +15,7 @@ import { agentLevel, printDocument, storeCart, storeOrder, storeOrderCartInfo, s
   storeOrderStatus, storeProduct, storeProductAttrValue, storeOrderInvoice, storeOrderRefundPayment,
   storeOrderOutbox, orderWaybillJob, userBrokerage, systemSupplier, supplierFlowingWater, paymentReconciliationCase,
   supplierTransactions, supplierExtract } from '../src/models/schema';
+import { systemAdmin, systemRole } from '../src/models/schema';
 
 let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
 const delivery = { deliveryType: 'express' as const, deliveryName: 'Local ledger test', deliveryCode: 'local',
@@ -49,7 +51,7 @@ const create = async (mixed = false, price?: string) => {
   const result = await StoreOrderCreateService.createWithRuntime(f.container,
     { CONFIG_KV: f.env.CONFIG_KV, nextOrderId: async () => 'supplier_ledger_checkout' },
     { uid: 11, key: 'supplier_ledger', cartIds: mixed ? [1, 2] : [1], addressId: 11, userIp: '127.0.0.1' });
-  if (price !== undefined) await new AdminMobileOrderOperationService(f.container).changePrice(100, { order_id: result.orderId, price });
+  if (price !== undefined) await new AdminMobileOrderOperationService(f.container).changePrice(priceActor(), { order_id: result.orderId, price });
   const [created] = await f.db.update(storeOrder).set({ paid: 1, payType: 'yue', payTime: 100 })
     .where(eq(storeOrder.orderId, result.orderId)).returning();
   // Synthetic paid flag; actual allocation and supplier payment accounting,
@@ -62,12 +64,14 @@ const create = async (mixed = false, price?: string) => {
   return allocated.fulfillmentOrders.find(row => row.supplierId === 7)!;
 };
 beforeEach(async () => {
-  f = await createPcCheckoutQuoteFixture([agentLevel, printDocument, storeOrderCartInfo, storeOrderRefund, storeOrderStatus,
+  f = await createPcCheckoutQuoteFixture([systemAdmin, systemRole, agentLevel, printDocument, storeOrderCartInfo, storeOrderRefund, storeOrderStatus,
     storeOrderInvoice, storeOrderRefundPayment, storeOrderOutbox, orderWaybillJob, userBrokerage, systemSupplier,
     supplierFlowingWater, supplierTransactions, supplierExtract, paymentReconciliationCase]);
   await f.exec('CREATE UNIQUE INDEX supplier_split_event ON store_order_outbox(event_key); CREATE UNIQUE INDEX supplier_split_flow ON supplier_flowing_water(order_id); CREATE UNIQUE INDEX supplier_split_transaction ON supplier_transactions(order_id)');
   await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
   await f.exec(INVOICE_EVIDENCE_SQL);
+  await seedPriceActor(f.db);
+  await preparePriceFixture(f.db);
   await f.db.insert(systemSupplier).values({ id: 7, adminId: 7, supplierName: 'Local supplier' });
   await f.db.update(storeCart).set({ cartNum: 3 }).where(eq(storeCart.id, 1));
   await f.db.update(storeProduct).set({ type: 2, relationId: 7, freight: 2, tempId: 0, postage: '3.00' }).where(eq(storeProduct.id, 70));

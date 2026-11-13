@@ -169,7 +169,7 @@ describe("embedded admin mobile order operation migration", () => {
       expect((await response.json()) as { status: number }).toMatchObject({ status: 200 });
       expect(testContext.header).toHaveBeenCalledWith("Cache-Control", "private, no-store, max-age=0");
     }
-    expect(price).toHaveBeenCalledWith(23, { order_id: "wx1", price: "1.00" });
+    expect(price).toHaveBeenCalledWith({ id: 23, authVersion: "a".repeat(32), expiresAt: 2_000_000_000 }, { order_id: "wx1", price: "1.00" });
     expect(remark).toHaveBeenCalledWith({ id: 24, authVersion: "a".repeat(32), expiresAt: 2_000_000_000 }, { remark: "note", order_id: "wx2" });
     expect(records).toHaveBeenCalledWith("3", { product_type: 0 });
   });
@@ -177,16 +177,18 @@ describe("embedded admin mobile order operation migration", () => {
   it("mounts exact routes with least privilege and hardened PostgreSQL operations", () => {
     const routes = readFileSync("src/routes/v1/index.ts", "utf8");
     const service = readFileSync("src/services/admin/AdminMobileOrderOperationService.ts", "utf8");
-    expect(routes).toContain('post("/admin/order/price", adminAuth, AdminController.adminMobileOrderPrice)');
+    const priceService = readFileSync("src/services/admin/AdminOrderPriceService.ts", "utf8");
+    const authority = readFileSync("src/services/admin/AdminAuthorityWriteService.ts", "utf8");
+    expect(routes).toContain('post("/admin/order/price", AdminCrud.privateAdminOrderRemarkResponse, adminAuth, AdminController.adminMobileOrderPrice)');
     expect(routes).toContain('post("/admin/order/remark", AdminCrud.privateAdminOrderRemarkResponse, adminAuth, AdminController.adminMobileOrderRemark)');
     expect(routes).toContain('post("/admin/order/wirteoff/records/:id", adminAuth, AdminController.adminMobileOrderWriteoffRecords)');
     expect(requiredAdminPermission("POST", "/api/admin/order/price")).toBe("order.manage");
     expect(requiredAdminPermission("POST", "/api/admin/order/remark")).toBe("order.manage");
     expect(requiredAdminPermission("POST", "/api/admin/order/wirteoff/records/3")).toBe("order.view");
-    expect(service).toContain("SET LOCAL lock_timeout = '2s'");
-    expect(service).toContain("SET LOCAL statement_timeout = '5s'");
-    expect(service).toContain("lockOrderSettlement(tx, rootId)");
-    expect(service).toContain('.for("update")');
+    expect(authority).toContain("SET LOCAL lock_timeout='2s'");
+    expect(authority).toContain("SET LOCAL statement_timeout='5s'");
+    expect(priceService).toContain("lockOrderSettlement(tx, rootId)");
+    expect(priceService).toContain(".for('update', { noWait: true })");
     expect(service).toContain("eq(storeOrder.isDel, 0)");
     expect(service).toContain("eq(storeOrder.isSystemDel, 0)");
     expect(service).toContain("eq(storeOrderCartInfo.oid, orderId)");

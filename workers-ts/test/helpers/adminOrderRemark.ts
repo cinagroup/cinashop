@@ -1,7 +1,7 @@
 import { expect, vi } from 'vitest';
 import { sql } from 'drizzle-orm';
 import { createApp } from '@/app';
-import { createContainerFromDb, type Container } from '@/lib/di';
+import { createContainerFromDb, type Container, type DbClient } from '@/lib/di';
 import type { Env } from '@/env';
 import { storeOrder, systemAdmin, systemRole } from '@/models/schema';
 import { createToken } from '@/utils/jwt';
@@ -30,7 +30,8 @@ export interface RemarkScenario {
   snapshot(): Promise<Record<string, unknown>>;
 }
 
-export async function withRemarkScenario(work: (s: RemarkScenario) => Promise<void>) {
+export async function withRemarkScenario(work: (s: RemarkScenario) => Promise<void>,
+  prepare?: (f: Fixture, roles: { app: string; admin: string }, databases: { app: DbClient; admin: DbClient }) => Promise<void>) {
   const network = vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('Owned order remark acceptance forbids providers'));
   let owned: Fixture | undefined;
   try {
@@ -63,6 +64,7 @@ export async function withRemarkScenario(work: (s: RemarkScenario) => Promise<vo
       expect((await runRoutinePaymentRuntimeInstallation(f.db, names)).after.ready).toBe(true);
       expect(await auditRuntimeBusinessPrivileges(appRole.db, 'app', names)).toMatchObject({ ready: true, failures: [] });
       expect(await auditRuntimeBusinessPrivileges(adminRole.db, 'admin', names)).toMatchObject({ ready: true, failures: [] });
+      await prepare?.(f, { app: appRole.role, admin: adminRole.role }, { app: appRole.db, admin: adminRole.db });
       wiring.app = createContainerFromDb(appRole.db); wiring.admin = createContainerFromDb(adminRole.db);
       const request: RemarkScenario['request'] = async (method, path, body, token = tokens.root) => {
         const tasks: Promise<unknown>[] = [];

@@ -1,3 +1,4 @@
+import { preparePriceFixture, priceActor, seedPriceActor } from './helpers/adminOrderPriceFixture';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { createPcCheckoutQuoteFixture } from './helpers/pcCheckoutQuoteFixture';
@@ -15,7 +16,7 @@ import { createContainerFromDb } from '../src/lib/di';
 import { outcome, waitForFinanceBlock, withFinancePeers } from './helpers/financePeers';
 import { agentLevel, printDocument, storeCart, storeOrder, storeOrderCartInfo, storeOrderRefund,
   storeOrderStatus, storeProduct, storeProductAttrValue, storeOrderInvoice, storeOrderRefundPayment,
-  storeOrderOutbox, orderWaybillJob, userBrokerage, systemAdmin, paymentReconciliationCase } from '../src/models/schema';
+  storeOrderOutbox, orderWaybillJob, userBrokerage, systemAdmin, systemRole, paymentReconciliationCase } from '../src/models/schema';
 
 let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
 let applicationNumber = 0;
@@ -23,7 +24,7 @@ const create = async (cartIds = [1, 2], price?: string, useIntegral = false) => 
   const result = await StoreOrderCreateService.createWithRuntime(f.container,
     { CONFIG_KV: f.env.CONFIG_KV, nextOrderId: async () => 'checkout_for_refund_finance' },
     { uid: 11, key: 'refund_line_finance', cartIds, addressId: 11, userIp: '127.0.0.1', useIntegral });
-  if (price !== undefined) await new AdminMobileOrderOperationService(f.container).changePrice(100, { order_id: result.orderId, price });
+  if (price !== undefined) await new AdminMobileOrderOperationService(f.container).changePrice(priceActor(), { order_id: result.orderId, price });
   await f.db.update(storeOrder).set({ paid: 1, payType: 'yue' }).where(eq(storeOrder.orderId, result.orderId));
   return result.orderId;
 };
@@ -39,11 +40,13 @@ const state = async () => ({ ...await f.snapshot(), carts: await f.db.select().f
   payments: await f.db.select().from(storeOrderRefundPayment).orderBy(storeOrderRefundPayment.id) });
 beforeEach(async () => {
   applicationNumber = 0;
-  f = await createPcCheckoutQuoteFixture([agentLevel, printDocument, storeOrderCartInfo, storeOrderRefund, storeOrderStatus,
-    storeOrderInvoice, storeOrderRefundPayment, storeOrderOutbox, orderWaybillJob, userBrokerage, systemAdmin,
+  f = await createPcCheckoutQuoteFixture([systemAdmin, systemRole, agentLevel, printDocument, storeOrderCartInfo, storeOrderRefund, storeOrderStatus,
+    storeOrderInvoice, storeOrderRefundPayment, storeOrderOutbox, orderWaybillJob, userBrokerage,
     paymentReconciliationCase]);
   await f.exec('CREATE UNIQUE INDEX refund_line_fixture_event ON store_order_outbox(event_key)');
   await f.exec(INVOICE_EVIDENCE_SQL);
+  await seedPriceActor(f.db);
+  await preparePriceFixture(f.db);
   await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
   await f.db.update(storeProduct).set({ freight: 2, postage: '3.00' }).where(eq(storeProduct.id, 70));
   await f.db.insert(storeProduct).values({ id: 71, storeName: 'Free freight line', price: '30.00', stock: 8, isShow: 1, freight: 1 });

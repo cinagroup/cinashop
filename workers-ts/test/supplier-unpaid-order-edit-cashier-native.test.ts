@@ -1,3 +1,5 @@
+import { assertUnpaidOrderCashierEditSource } from '@/services/order/UnpaidOrderCashierSource';
+import { installAdminOrderPriceOperation } from '@/migrations/adminOrderPriceOperation';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { asc, eq, sql } from 'drizzle-orm';
 import { getTableConfig } from 'drizzle-orm/pg-core';
@@ -52,7 +54,7 @@ import { customerCashierOrdinaryFixture } from './helpers/customerCashierOrdinar
 import { customerCashierSecondCardFixture } from './helpers/customerCashierSecondCardFixture';
 
 const wiring=vi.hoisted(()=>({open:vi.fn()}));
-vi.mock('@/lib/di',async original=>({...await original<typeof import('@/lib/di')>(),createContainer:wiring.open}));
+vi.mock('@/lib/di',async original=>({...await original<typeof import('@/lib/di')>(),createContainer:wiring.open,createAdminDatabaseSession:()=>({container:wiring.open(),close:async()=>{}})}));
 const app=createApp(),password='owned-cashier-supplier-edit-password';
 type Ordinary=Awaited<ReturnType<typeof customerCashierOrdinaryFixture>>;
 type Second=Awaited<ReturnType<typeof customerCashierSecondCardFixture>>;
@@ -153,12 +155,13 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['ordinary',
       await runProductRecycleEffects(f.maintenanceDb);
       await runProductSaveEffects(f.maintenanceDb);
       const fourteenCheck=await eventDefinition();expect(fourteenCheck).toBe(PRODUCT_SAVE_EFFECTS_CHECK_DEFINITION);
-      await withTx(createContainerFromDb(f.maintenanceDb),async tx=>{await installSupplierOrderEditOperation(tx);await installSupplierOrderPriceRevision(tx);});
+      await withTx(createContainerFromDb(f.maintenanceDb),async tx=>{await installSupplierOrderEditOperation(tx);await installAdminOrderPriceOperation(tx);await installSupplierOrderPriceRevision(tx);});
       const finalCheck=await eventDefinition();expect(finalCheck).toBe(SUPPLIER_ORDER_PRICE_REVISION_CHECK_DEFINITION);
       console.log('SUPPLIER_CASHIER_EDIT_OUTBOX_COMMISSIONED '+JSON.stringify({kind,
         initial:initialCheck,five:fiveCheck,nine:nineCheck,fourteen:fourteenCheck,fifteen:finalCheck}));
       await f.maintenanceDb.insert(systemAdmin).values([21,22,29].map(id=>({id,account:'owned-cashier-edit-'+id,pwd:password,
         adminType:4,relationId:88,roles:id===29?'':String(id),level:id===29?0:1}))).onConflictDoNothing();
+      await f.maintenanceDb.insert(systemAdmin).values({id:101,account:'owned-platform-price-admin',pwd:password,adminType:1,relationId:0,level:0,status:1,isDel:0});
       await f.maintenanceDb.insert(systemRole).values([21,22].map(id=>({id,type:4,relationId:88,rules:'supplier.order.manage'}))).onConflictDoNothing();
       // customerWorkFinancialFixture reuses only the reader's TABLE list; it
       // never runs customerWorkReadFixture's Supplier seed. Commission this
@@ -167,9 +170,9 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['ordinary',
         adminId:29,isShow:1,isDel:0}).returning({id:systemSupplier.id,adminId:systemSupplier.adminId,
           isShow:systemSupplier.isShow,isDel:systemSupplier.isDel});
       expect(suppliers).toEqual([{id:88,adminId:29,isShow:1,isDel:0}]);
-      await f.exec(`GRANT SELECT ON public.supplier_order_edit_operation_v1 TO "${f.role}"`);
+      await f.exec(`GRANT SELECT ON public.supplier_order_edit_operation_v1,public.admin_order_price_operation_v1 TO "${f.role}"`);
       if(financialRole&&financialSecret){
-        await f.exec(`GRANT SELECT ON public.supplier_order_edit_operation_v1,public.cashier_ordinary_draft_v1,public.cashier_ordinary_cart_v1,public.cashier_ordinary_operation_v1,public.cashier_ordinary_origin_v1 TO "${financialRole}"`);
+        await f.exec(`GRANT SELECT ON public.supplier_order_edit_operation_v1,public.admin_order_price_operation_v1,public.cashier_ordinary_draft_v1,public.cashier_ordinary_cart_v1,public.cashier_ordinary_operation_v1,public.cashier_ordinary_origin_v1 TO "${financialRole}"`);
         const url=new URL(f.connectionString);url.username=financialRole;url.password=financialSecret;
         financialClient=postgres(url.href,{max:1,prepare:false,connect_timeout:5,idle_timeout:0,max_lifetime:0,
           connection:{options:'-c search_path=public,pg_temp -c statement_timeout=10000 -c lock_timeout=3000'}});
@@ -195,6 +198,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['ordinary',
     const suppliers=await f.maintenanceDb.select({id:systemSupplier.id,adminId:systemSupplier.adminId,
       isShow:systemSupplier.isShow,isDel:systemSupplier.isDel}).from(systemSupplier).where(eq(systemSupplier.id,88));
     expect(suppliers).toEqual([{id:88,adminId:29,isShow:1,isDel:0}]);
+    await f.exec('ALTER TABLE public.admin_order_price_operation_v1 DISABLE TRIGGER USER; TRUNCATE public.admin_order_price_operation_v1; ALTER TABLE public.admin_order_price_operation_v1 ENABLE TRIGGER USER');
     await f.exec('ALTER TABLE public.supplier_order_edit_operation_v1 DISABLE TRIGGER USER; TRUNCATE public.supplier_order_edit_operation_v1; ALTER TABLE public.supplier_order_edit_operation_v1 ENABLE TRIGGER USER');
     await f.maintenanceDb.update(storeProduct).set({type:2,relationId:88,giveIntegral:'0.00'}).where(eq(storeProduct.id,70));
     await f.maintenanceDb.update(storeProductAttrValue).set({settlePrice:'1.00'}).where(eq(storeProductAttrValue.productId,70));
@@ -219,7 +223,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['ordinary',
       const sequences=await f.maintenanceDb.execute<{name:string;table:string}>(sql`SELECT s.relname AS name,t.relname AS "table" FROM pg_catalog.pg_class s JOIN pg_catalog.pg_depend d ON d.objid=s.oid AND d.deptype IN('a','i') JOIN pg_catalog.pg_class t ON t.oid=d.refobjid WHERE s.relkind='S'`);
       for(const item of sequences)if(plan.tables[item.table]?.includes('INSERT'))await f.exec(`GRANT USAGE ON SEQUENCE public."${item.name}" TO "${role}"`);
       await f.exec(`GRANT SELECT,UPDATE ON public.system_admin,public.system_supplier,public.system_role,public.system_menus,public.store_order,public.store_order_cart_info,public.store_order_refund,public.payment_reconciliation_case TO "${role}"`);
-      await f.exec(`GRANT SELECT,INSERT ON public.supplier_order_edit_operation_v1 TO "${role}"; GRANT SELECT ON public.store_order_promotions TO "${role}"; GRANT UPDATE(id) ON public.store_order_promotions TO "${role}"`);
+      await f.exec(`GRANT SELECT,INSERT ON public.supplier_order_edit_operation_v1 TO "${role}"; GRANT SELECT ON public.admin_order_price_operation_v1 TO "${role}"; GRANT SELECT ON public.store_order_promotions TO "${role}"; GRANT UPDATE(id) ON public.store_order_promotions TO "${role}"`);
       const realm=kind==='ordinary'?['cashier_ordinary_draft_v1','cashier_ordinary_cart_v1','cashier_ordinary_operation_v1','cashier_ordinary_origin_v1']:['cashier_second_card_cart_v1','cashier_second_card_origin_v1','cashier_second_card_payment_v1'];
       for(const table of realm)await f.exec(`GRANT SELECT ON public.${table} TO "${role}"`);
       const url=new URL(f.connectionString);url.username=role;url.password=secret;
@@ -230,6 +234,38 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['ordinary',
       expect(identity).toEqual({direct:true,owner:false});
       return await run(db,new SupplierUnpaidOrderEditService(createContainerFromDb(db),f.env.APP_KEY),role);
     }finally{await client?.end({timeout:5});await f.exec(`DROP OWNED BY "${role}";DROP ROLE "${role}"`);}
+  }
+  async function withPriceAdmin<T>(run:(db:DbClient)=>Promise<T>){
+    const role='cashier_price_admin_'+randomUUID().replaceAll('-',''),secret=randomUUID().replaceAll('-','');let client:ReturnType<typeof postgres>|undefined;
+    await f.exec(`CREATE ROLE "${role}" LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS PASSWORD '${secret}'`);
+    try{
+      await f.exec(`GRANT USAGE ON SCHEMA public TO "${role}"`);
+      const plan=runtimeBusinessPrivilegePlan('admin'),tables=await f.maintenanceDb.execute<{name:string}>(sql`SELECT relname AS name FROM pg_catalog.pg_class WHERE relnamespace='public'::regnamespace AND relkind='r'`);
+      for(const{name}of tables){const rights=plan.tables[name];if(rights?.length)await f.exec(`GRANT ${rights.join(',')} ON public."${name}" TO "${role}"`);
+        const columns=plan.updateColumns[name];if(columns?.length)await f.exec(`GRANT UPDATE(${columns.map(column=>'"'+column+'"').join(',')}) ON public."${name}" TO "${role}"`);}
+      const sequences=await f.maintenanceDb.execute<{name:string;table:string}>(sql`SELECT s.relname AS name,t.relname AS "table" FROM pg_class s JOIN pg_depend d ON d.objid=s.oid AND d.deptype IN('a','i') JOIN pg_class t ON t.oid=d.refobjid WHERE s.relkind='S'`);
+      for(const item of sequences)if(plan.tables[item.table]?.includes('INSERT'))await f.exec(`GRANT USAGE ON SEQUENCE public."${item.name}" TO "${role}"`);
+      await f.exec(`GRANT SELECT,UPDATE ON public.system_admin,public.system_role TO "${role}";
+        GRANT SELECT,INSERT ON public.admin_order_price_operation_v1 TO "${role}";
+        GRANT SELECT ON public.supplier_order_edit_operation_v1 TO "${role}"`);
+      const realm=kind==='ordinary'?['cashier_ordinary_draft_v1','cashier_ordinary_cart_v1','cashier_ordinary_operation_v1','cashier_ordinary_origin_v1']:['cashier_second_card_cart_v1','cashier_second_card_origin_v1','cashier_second_card_payment_v1'];
+      for(const table of realm)await f.exec(`GRANT SELECT ON public.${table} TO "${role}"`);
+      const url=new URL(f.connectionString);url.username=role;url.password=secret;
+      client=postgres(url.href,{max:1,prepare:false,connect_timeout:5,idle_timeout:0,max_lifetime:0,connection:{options:'-c search_path=public,pg_temp -c statement_timeout=10000 -c lock_timeout=3000'}});
+      const db=drizzle(client) as unknown as DbClient;
+      const [identity]=await db.execute(sql`SELECT current_user=session_user AS direct,(SELECT rolsuper OR rolcreatedb OR rolcreaterole OR rolinherit OR rolreplication OR rolbypassrls FROM pg_roles WHERE rolname=current_user) AS owner,
+        has_table_privilege(current_user,'public.store_order_status','UPDATE,DELETE,TRUNCATE') AS audit_mutable,
+        has_table_privilege(current_user,'public.admin_order_price_operation_v1','UPDATE,DELETE,TRUNCATE') AS receipt_mutable`);
+      expect(identity).toEqual({direct:true,owner:false,audit_mutable:false,receipt_mutable:false});
+      return await run(db);
+    }finally{await client?.end({timeout:5});await f.exec(`DROP OWNED BY "${role}";DROP ROLE "${role}"`);}
+  }
+  async function adminPrice(db:DbClient,orderNo:string,price:string){
+    wiring.open.mockImplementation(()=>createContainerFromDb(db));
+    const token=(await createToken(101,'admin',md5(password),f.env.APP_KEY)).token;
+    const response=await app.request('/api/admin/order/price',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({order_id:orderNo,price,admin_id:29,gain_integral:'999'})},f.env);
+    expect(response.headers.get('cache-control')).toContain('no-store');
+    const result=await response.json<Reply<null>>();expect(result.status,result.msg).toBe(200);return result;
   }
   async function http<T>(db:DbClient,method:string,id:number,body?:unknown,operator=21):Promise<Reply<T>>{
     wiring.open.mockImplementation(()=>createContainerFromDb(db));
@@ -317,6 +353,50 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['ordinary',
       expect(await f.db.select().from(userBill).orderBy(asc(userBill.id))).toEqual(bills);expect(await original()).toEqual(beforeOrigin);
     }
   },120000);
+  it.each([false,true])('keeps genuine cashier creation replay and paid consumption after Admin price-only edits; platform=%s',async platform=>{
+    if(platform)await f.maintenanceDb.update(storeProduct).set({type:0,relationId:0}).where(eq(storeProduct.id,70));
+    const created=await f.create(),{order}=created,beforeOrigin=await original(),before=await f.actual(order.id);
+    await withPriceAdmin(async db=>{
+      await adminPrice(db,order.orderId,'12.00');
+      const current=await state(order.id);await adminPrice(db,order.orderId,'12.00');expect(await state(order.id)).toEqual(current);
+      await adminPrice(db,order.orderId,'11.00');
+    });
+    expect((await f.actual(order.id)).carts).toEqual(before.carts);expect(await original()).toEqual(beforeOrigin);
+    if(kind==='ordinary'){
+      const ordinary=f as Ordinary,c=created as Awaited<ReturnType<Ordinary['create']>>;
+      const replay=await ordinary.service.create(f.actor(),c.key,c.intent,c.quote.data.quote_token);expect(replay.replayed).toBe(true);
+    }else{const replay=await (f as Second).create((created as Awaited<ReturnType<Second['create']>>).input);expect(replay.result.orderId).toBe(order.orderId);}
+    if(!platform){
+      await withSupplier(async db=>{await edit(db,order.id,'13.00','9');});
+      const afterGain=(await f.actual(order.id)).carts;
+      await withPriceAdmin(db=>adminPrice(db,order.orderId,'10.00'));
+      expect((await f.actual(order.id)).carts).toEqual(afterGain);
+    }
+    await payAndConsume(order.id);const paid=await f.actual(order.id);
+    expect(paid.order).toMatchObject({paid:1,payPrice:platform?'11.00':'10.00',gainIntegral:platform?'0.00':'9.00'});
+    if(kind==='ordinary')expect((await readCashierOrdinaryPaidOrigin(f.db,paid.order,paid.carts)).origin_hash).toBe(beforeOrigin[0].origin_hash);
+    else{expect((await readCashierSecondCardOrigin(f.db,paid.order,paid.carts))?.origin_hash).toBe(beforeOrigin[0].origin_hash);await redeem(order.id);}
+    expect((await manualRefundPaymentFacts(f.db,paid.order)).origin_hash).toBe(beforeOrigin[0].origin_hash);
+    if(kind==='ordinary'&&!platform)expect((await refundOne(order.id,financialDb??f.db)).partition.remainingOrderId).toBeGreaterThan(0);
+    expect(await original()).toEqual(beforeOrigin);
+  },120000);
+  it('refuses missing Admin receipt SELECT and cross-ledger UUID collisions without changing the genuine purchase',async()=>{
+    const {order}=await f.create();await withPriceAdmin(db=>adminPrice(db,order.orderId,'12.00'));
+    const current=await f.actual(order.id),before=await state(order.id);
+    await f.exec(`REVOKE SELECT ON public.admin_order_price_operation_v1 FROM "${f.role}"`);
+    try{await expect(assertUnpaidOrderCashierEditSource(f.db,current.order,current.carts)).rejects.toMatchObject({httpStatus:503});}
+    finally{await f.exec(`GRANT SELECT ON public.admin_order_price_operation_v1 TO "${f.role}"`);}
+    expect(await state(order.id)).toEqual(before);
+    // Owned maintenance deliberately constructs an impossible duplicate to
+    // prove that a mutable outbox UUID cannot choose one authority realm.
+    await f.maintenanceDb.execute(sql`INSERT INTO public.supplier_order_edit_operation_v1
+      SELECT operation_id,21,supplier_id,order_id,request_hash,state,before_hash,after_hash,
+        jsonb_set(evidence,'{version}','"supplier-unpaid-gain-edit-v1"'::jsonb),result,created_at
+      FROM public.admin_order_price_operation_v1 WHERE order_id=${order.id}`);
+    const collision=await state(order.id);
+    await expect(assertUnpaidOrderCashierEditSource(f.db,current.order,current.carts)).rejects.toThrow('冲突');
+    expect(await state(order.id)).toEqual(collision);
+  },120000);
   it('refuses a missing origin table or removed origin SELECT before an edited root, line or receipt can commit',async()=>{
     const {order}=await f.create(),before=await state(order.id),table=originTable();
     await withSupplier(async(_db,service,role)=>{
@@ -340,7 +420,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['ordinary',
     await f.exec(`REVOKE SELECT ON public.supplier_order_edit_operation_v1 FROM "${f.role}"`);
     try{await expect(loadUnpaidOrderCashierEditProof(f.db,current.order,current.carts,origins,
       kind==='ordinary'?String((origin as {creation_pay_price:string}).creation_pay_price):undefined)).rejects.toMatchObject({httpStatus:503});}
-    finally{await f.exec(`GRANT SELECT ON public.supplier_order_edit_operation_v1 TO "${f.role}"`);}
+    finally{await f.exec(`GRANT SELECT ON public.supplier_order_edit_operation_v1,public.admin_order_price_operation_v1 TO "${f.role}"`);}
     expect(await original()).toEqual([facts]);
   },120000);
   it('refuses a missing protected predecessor before a new edit and rolls back every proposed business effect',async()=>{

@@ -62,6 +62,7 @@ import { ADMIN_STORE_OPERATION_RUNTIME_PRIVILEGES, inspectAdminStoreOperation } 
 import { ADMIN_STAFF_OPERATION_RUNTIME_PRIVILEGES, inspectAdminStaffOperation } from './adminStaffOperation';
 import { ADMIN_DELIVERY_OPERATION_RUNTIME_PRIVILEGES, inspectAdminDeliveryOperation } from './adminDeliveryOperation';
 import { ADMIN_GROUP_OPERATION_RUNTIME_PRIVILEGES, inspectAdminGroupOperation } from './adminGroupOperation';
+import { inspectAdminOrderPriceRuntime, ADMIN_ORDER_PRICE_RUNTIME_PRIVILEGES } from './adminOrderPriceRuntime';
 import { ADMIN_UNIT_OPERATION_RUNTIME_PRIVILEGES, inspectAdminUnitOperation } from './adminUnitOperation';
 import { ADMIN_ENSURE_OPERATION_RUNTIME_PRIVILEGES, inspectAdminEnsureOperation } from './adminEnsureOperation';
 import { ADMIN_RULE_OPERATION_RUNTIME_PRIVILEGES, inspectAdminRuleOperation } from './adminRuleOperation';
@@ -368,6 +369,16 @@ async function inspectRuntimeBusinessProfile(tx:Pick<DbClient,'execute'>,kind:'a
     if (deliveryAddon?.present === true) {
       if (!await inspectAdminDeliveryOperation(tx,names)) failures.push('admin_delivery_operation_catalog');
       else plan.tables.admin_delivery_operation=ADMIN_DELIVERY_OPERATION_RUNTIME_PRIVILEGES[kind];
+    }
+    const [priceAddon] = await tx.execute(sql`SELECT to_regclass('public.admin_order_price_operation_v1') IS NOT NULL
+      OR to_regprocedure('public.admin_order_price_operation_immutable_v1()') IS NOT NULL AS present,
+      to_regclass('public.supplier_order_edit_operation_v1') IS NOT NULL AS supplier`);
+    if (priceAddon?.present === true) {
+      if (!await inspectAdminOrderPriceRuntime(tx,names)) failures.push('admin_order_price_operation_catalog');
+      else {
+        plan.tables.admin_order_price_operation_v1=ADMIN_ORDER_PRICE_RUNTIME_PRIVILEGES[kind];
+        if (priceAddon.supplier === true) plan.tables.supplier_order_edit_operation_v1=['SELECT'];
+      }
     }
     const [groupAddon] = await tx.execute(sql`SELECT to_regclass('public.admin_group_operation') IS NOT NULL
       OR EXISTS(SELECT 1 FROM pg_catalog.pg_proc WHERE pronamespace='public'::regnamespace

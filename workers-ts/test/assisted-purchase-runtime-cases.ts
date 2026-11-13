@@ -1,6 +1,8 @@
+import { preparePriceFixture, priceActor } from './helpers/adminOrderPriceFixture';
+import { runRoutinePaymentRuntimeInstallation } from '@/migrations/routinePaymentRuntime';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hono, type MiddlewareHandler } from 'hono';
-import { createHash } from 'node:crypto';
+import { createHash, generateKeyPairSync } from 'node:crypto';
 import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -56,10 +58,10 @@ describe('assisted member/guest purchase with actual Admin authentication and tw
     vi.spyOn(globalThis,'fetch').mockRejectedValue(Error('External I/O forbidden'));
     f=await refundRuntimeFixture();
     await f.exec(`INSERT INTO system_role(id,role_name,rules,status) VALUES(1,'Local assisted','order.assisted',1),(2,'Local read','order.view',1),
-        (3,'Local user reader','user.view',1);
+        (3,'Local user reader','user.view',1),(4,'Local price manager','order.manage',1);
       INSERT INTO system_admin(id,account,pwd,admin_type,level,roles) VALUES
         (1,'local-actor-a','local-hash',1,1,'1'),(2,'local-actor-b','local-hash',1,1,'1'),(3,'local-read-only','local-hash',1,1,'2'),
-        (4,'local-user-reader','local-hash',1,1,'3');
+        (4,'local-user-reader','local-hash',1,1,'3'),(5,'local-price-manager','local-hash',1,1,'4');
       SELECT setval('public.store_cart_id_seq',(SELECT max(id) FROM public.store_cart));`);
   },60_000);
   afterEach(async()=>{try{expect(fetch).not.toHaveBeenCalled();}finally{vi.restoreAllMocks();await f?.close();}},30_000);
@@ -69,6 +71,7 @@ describe('assisted member/guest purchase with actual Admin authentication and tw
       const [identity]=await f.exec('SELECT current_database() AS database');
       const names={app:app.role,admin:admin.role,maintenance:'finance_test'};
       await runRuntimeBusinessCommissioning(f.db,{...names,database:String(identity.database),pricingOwner:f.pricingOwner});
+      if (phase !== 'form') expect((await runRoutinePaymentRuntimeInstallation(f.db,{...names,database:String(identity.database)})).after.ready).toBe(true);
       for(const [kind,peer] of [['app',app],['admin',admin]] as const)
         expect(await auditRuntimeBusinessPrivileges(peer.db,kind,names)).toMatchObject({ready:true,failures:[]});
       await run(app,admin);
@@ -76,6 +79,15 @@ describe('assisted member/guest purchase with actual Admin authentication and tw
         AND application_name IN ('cinashop_admin','cinashop_api')`);
       expect(sessions.n).toBe(0);
     }));
+  }
+  async function priceProfiles(run:(app:Role,admin:Role)=>Promise<void>){
+    await profiles(async(app,admin)=>{
+      await preparePriceFixture(f.db,admin.role,[app.role]);
+      const names={app:app.role,admin:admin.role,maintenance:'finance_test'};
+      for(const [kind,peer]of [['app',app],['admin',admin]] as const)
+        expect(await auditRuntimeBusinessPrivileges(peer.db,kind,names)).toMatchObject({ready:true,failures:[]});
+      await run(app,admin);
+    });
   }
   async function http(appRole:Role,adminRole:Role){
     let serial=0;
@@ -205,7 +217,7 @@ describe('assisted member/guest purchase with actual Admin authentication and tw
       orderNo,transactionId:`local_${provider}_verified_trade`,
       tradeState:provider==='wechat'?'SUCCESS':'TRADE_SUCCESS',amountCents,currency:'CNY',providerEventTime:1234};
   }
-  async function enableLocalWechatReadiness(){
+  async function enableLocalWechatReadiness(malformed=false){
     // Only maintenance mutates this actual fixture; runtime App/Admin roles keep
     // their commissioned SELECT-only system_config grant.
     await f.db.delete(systemConfig).where(and(eq(systemConfig.isStore,0),eq(systemConfig.menuName,'wechat_appid')));
@@ -216,11 +228,20 @@ describe('assisted member/guest purchase with actual Admin authentication and tw
       cfg_pay_weixin_serial_no:'5157F09EFDC096DE15EBE81A47057A7232F1B8E1',
       cfg_site_url:'https://shop.example.test',cfg_wechat_appid:'stale-official-account',
     };
+    for(const [cacheKey,value]of Object.entries(settings)){
+      const menuName=cacheKey.slice(4);if(menuName==='wechat_appid')continue;
+      await f.db.delete(systemConfig).where(and(eq(systemConfig.isStore,0),eq(systemConfig.menuName,menuName)));
+      await f.db.insert(systemConfig).values({menuName,value:JSON.stringify(value),isStore:0});
+    }
     f.env.CONFIG_KV=({ ...original,
       get:(key:string)=>Object.hasOwn(settings,key)?Promise.resolve(settings[key]):original.get(key),
     } as unknown as Env['CONFIG_KV']);
     Object.assign(f.env,{WECHAT_MCH_PRIVATE_KEY:'-----BEGIN PRIVATE KEY-----\nlocal\n-----END PRIVATE KEY-----',
       WECHAT_API_V3_KEY:'x'.repeat(32),WECHAT_PLATFORM_PUBLIC_KEY:'-----BEGIN PUBLIC KEY-----\nlocal\n-----END PUBLIC KEY-----'});
+    if(!malformed){
+      const keys=generateKeyPairSync('rsa',{modulusLength:2048,publicKeyEncoding:{type:'spki',format:'pem'},privateKeyEncoding:{type:'pkcs8',format:'pem'}});
+      Object.assign(f.env,{WECHAT_MCH_PRIVATE_KEY:keys.privateKey,WECHAT_PLATFORM_PUBLIC_KEY:keys.publicKey});
+    }
   }
 
   const formTemplate = () => [
@@ -825,7 +846,7 @@ describe('assisted member/guest purchase with actual Admin authentication and tw
   },60_000);
 
   it('claims one assisted provider initiation before external I/O and rejects an identical retry',async()=>{
-    await profiles(async(app,admin)=>{
+    await priceProfiles(async(app,admin)=>{
       const client=await http(app,admin),orderNo=await unpaid(client,11),input=await payBody(orderNo,'weixin');
       await enableLocalWechatReadiness();
       let enteredResolve:()=>void=()=>undefined,releaseResolve:()=>void=()=>undefined;
@@ -838,7 +859,7 @@ describe('assisted member/guest purchase with actual Admin authentication and tw
       });
       const first=client.post<{status:string}>('pay/11',input);
       try{
-        await Promise.race([entered,new Promise<never>((_resolve,reject)=>setTimeout(()=>reject(Error('Provider entry timed out')),5000))]);
+        await Promise.race([entered,first.then(reply=>{throw Error('Owned provider did not enter: '+reply.msg);}),new Promise<never>((_resolve,reject)=>setTimeout(()=>reject(Error('Provider entry timed out')),5000))]);
         const [active]=await app.exec(`SELECT count(*)::integer AS n FROM pg_stat_activity WHERE datname=current_database()
           AND application_name IN ('cinashop_api','cinashop_admin') AND xact_start IS NOT NULL`);
         expect(active.n).toBe(0);
@@ -848,7 +869,7 @@ describe('assisted member/guest purchase with actual Admin authentication and tw
       expect(await app.exec('SELECT provider,expected_amount_cents,order_domain,initiated_time FROM payment_reconciliation_case'))
         .toMatchObject([{provider:'wechat',expected_amount_cents:Number(input.expected_pay_price.replace('.','')),
           order_domain:'store_order',initiated_time:expect.any(Number)}]);
-      await expect(new AdminMobileOrderOperationService(createContainerFromDb(admin.db)).changePrice(1,{
+      await expect(new AdminMobileOrderOperationService(createContainerFromDb(admin.db)).changePrice(priceActor(5, 'local-hash'),{
         order_id:orderNo,price:'1.00',
       })).rejects.toThrow('扫码支付已发起，改价前请先人工对账');
       await expect(cancelStoreOrder(createContainerFromDb(app.db),{uid:11,orderId:orderNo}))
@@ -856,26 +877,26 @@ describe('assisted member/guest purchase with actual Admin authentication and tw
       expect((await client.post('pay/11',{...input,paytype:'cash'})).status).toBe(400);
       expect((await client.post('pay/11',input)).status).toBe(400);
       await expect(new StoreOrderPayService(createContainerFromDb(app.db),f.env)
-        .pay(11,orderNo,'weixin','pc')).rejects.toThrow('扫码支付已发起');
+        .pay(11,orderNo,'weixin','pc')).rejects.toThrow('扫码支付已发起，请查询支付状态');
       expect(externalCalls).toBe(1);
     });
   },60_000);
 
   it('rejects malformed merchant signing keys before persisting an assisted provider claim',async()=>{
-    await profiles(async(app,admin)=>{
+    await priceProfiles(async(app,admin)=>{
       const client=await http(app,admin),orderNo=await unpaid(client,11),input=await payBody(orderNo,'weixin');
-      await enableLocalWechatReadiness();
+      await enableLocalWechatReadiness(true);
       const failed=await client.post('pay/11',input);
-      expect(failed.status).toBe(400);
+      expect(failed.status,failed.msg).toBe(400);expect(failed.msg).toBe('The string to be decoded is not correctly encoded.');
       expect(await app.exec('SELECT count(*)::integer AS n FROM payment_reconciliation_case')).toEqual([{n:0}]);
-      expect((await new AdminMobileOrderOperationService(createContainerFromDb(admin.db)).changePrice(1,{
+      expect((await new AdminMobileOrderOperationService(createContainerFromDb(admin.db)).changePrice(priceActor(5, 'local-hash'),{
         order_id:orderNo,price:'1.00',
       })).changed).toBe(true);
     });
   },60_000);
 
   it('keeps callback-first transaction evidence safe from local settlement, repricing and scheduled cancellation',async()=>{
-    await profiles(async(app,admin)=>{
+    await priceProfiles(async(app,admin)=>{
       const client=await http(app,admin),orderNo=await unpaid(client,11),input=await payBody(orderNo);
       const [root]=await app.exec('SELECT id,add_time,pay_price FROM store_order');
       const callback=verifiedCallback('wechat',orderNo,Number(input.expected_pay_price.replace('.','')));
@@ -887,8 +908,8 @@ describe('assisted member/guest purchase with actual Admin authentication and tw
         .toEqual([{initiated_time:0,provider_transaction_id:callback.transactionId}]);
       await expect(new StoreOrderPayService(createContainerFromDb(app.db),f.env).applyPayment({
         orderId:Number(root.id),payType:'offline',
-      })).rejects.toThrow('扫码支付已发起');
-      await expect(new AdminMobileOrderOperationService(createContainerFromDb(admin.db)).changePrice(1,{
+      })).rejects.toThrow('外部支付已发起或存在待核对交易');
+      await expect(new AdminMobileOrderOperationService(createContainerFromDb(admin.db)).changePrice(priceActor(5, 'local-hash'),{
         order_id:orderNo,price:'1.00',
       })).rejects.toThrow('扫码支付已发起');
       await expect(cancelStoreOrder(createContainerFromDb(app.db),{uid:11,orderId:orderNo}))
@@ -908,7 +929,7 @@ describe('assisted member/guest purchase with actual Admin authentication and tw
 
   it.each(['wechat','alipay'] as const)(
     'waits for uncommitted %s callback evidence before repricing or another provider claim',async provider=>{
-    await profiles(async(app,admin)=>{
+    await priceProfiles(async(app,admin)=>{
       const client=await http(app,admin),orderNo=await unpaid(client,11),input=await payBody(orderNo);
       const [order]=await app.exec('SELECT id,pay_price FROM store_order');
       const callback=verifiedCallback(provider,orderNo,Number(input.expected_pay_price.replace('.','')));
@@ -925,7 +946,7 @@ describe('assisted member/guest purchase with actual Admin authentication and tw
           await Promise.race([entered,new Promise<never>((_resolve,reject)=>setTimeout(()=>reject(Error('Callback insert timed out')),5000))]);
           expect(await app.exec('SELECT count(*)::integer AS n FROM payment_reconciliation_case')).toEqual([{n:0}]);
           repricing=new AdminMobileOrderOperationService(createContainerFromDb(admin.db))
-            .changePrice(1,{order_id:orderNo,price:'1.00'});
+            .changePrice(priceActor(5, 'local-hash'),{order_id:orderNo,price:'1.00'});
           expect(await pgHasBlockedSession()).toBe(true);
           releaseResolve();
           expect(await insertion).toMatchObject({duplicate:false,terminalConflict:false});
@@ -949,7 +970,7 @@ describe('assisted member/guest purchase with actual Admin authentication and tw
   },60_000);
 
   it('waits for a local order writer before recording verified callback evidence',async()=>{
-    await profiles(async(app,admin)=>{
+    await priceProfiles(async(app,admin)=>{
       const client=await http(app,admin),orderNo=await unpaid(client,11),input=await payBody(orderNo);
       const callback=verifiedCallback('wechat',orderNo,Number(input.expected_pay_price.replace('.','')));
       let enteredResolve:()=>void=()=>undefined,releaseResolve:()=>void=()=>undefined;
@@ -975,14 +996,14 @@ describe('assisted member/guest purchase with actual Admin authentication and tw
       expect(await app.exec('SELECT paid,pay_price FROM store_order')).toEqual([{paid:0,pay_price:'1.00'}]);
       expect(await app.exec('SELECT provider_transaction_id FROM payment_reconciliation_case'))
         .toEqual([{provider_transaction_id:callback.transactionId}]);
-      await expect(new AdminMobileOrderOperationService(createContainerFromDb(admin.db)).changePrice(1,{
+      await expect(new AdminMobileOrderOperationService(createContainerFromDb(admin.db)).changePrice(priceActor(5, 'local-hash'),{
         order_id:orderNo,price:'2.00',
       })).rejects.toThrow('扫码支付已发起');
     });
   },60_000);
 
   it('releases an uncommitted callback boundary on rollback without leaving payment evidence',async()=>{
-    await profiles(async(app,admin)=>{
+    await priceProfiles(async(app,admin)=>{
       const client=await http(app,admin),orderNo=await unpaid(client,11),input=await payBody(orderNo);
       const callback=verifiedCallback('alipay',orderNo,Number(input.expected_pay_price.replace('.','')));
       await f.withPeer!(async peer=>{
@@ -998,7 +1019,7 @@ describe('assisted member/guest purchase with actual Admin authentication and tw
         try{
           await Promise.race([entered,new Promise<never>((_resolve,reject)=>setTimeout(()=>reject(Error('Callback insert timed out')),5000))]);
           repricing=new AdminMobileOrderOperationService(createContainerFromDb(admin.db))
-            .changePrice(1,{order_id:orderNo,price:'1.00'});
+            .changePrice(priceActor(5, 'local-hash'),{order_id:orderNo,price:'1.00'});
           expect(await pgHasBlockedSession()).toBe(true);
           releaseResolve();await rolledBack;
           expect(await repricing).toMatchObject({changed:true});

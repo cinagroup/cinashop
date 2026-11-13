@@ -1,7 +1,7 @@
 import { and, desc, eq, sql } from 'drizzle-orm';
 import type { DB } from '@/dao/BaseDao';
 import { storeOrderCartInfo, storeOrderOutbox, storeOrderStatus, type storeOrder } from '@/models/schema';
-import { assertSupplierOrderEditOperationReadable } from '@/migrations/supplierOrderEditOperation';
+import { readUnpaidOrderEditOperation } from './UnpaidOrderEditOperation';
 import { outRequestHash } from '@/services/out/OutIdempotency';
 import { ValidateException } from '@/utils/errors';
 import { gainEditSha256, legacyGainIntegralState } from './UnpaidOrderGainIntegralProof';
@@ -36,17 +36,13 @@ function cash(value:unknown,signed=false):string{
 const cents=(value:string)=>BigInt(value.replace('.',''));
 function digest(value:unknown):string{if(typeof value!=='string'||!SHA.test(value))throw invalid();return value;}
 function uuid(value:unknown):string{if(typeof value!=='string'||!UUID.test(value))throw invalid();return value;}
-interface Operation {operation_id:string;actor_id:number;supplier_id:number;order_id:number;state:string;
-  request_hash:string;before_hash:string;after_hash:string;evidence:unknown;result:unknown;created_at:number}
 async function operation(db:DB,id:string,order:CashierEditOrder){
-  const rows=await db.execute(sql`SELECT operation_id::text,actor_id,supplier_id,order_id,state,request_hash,before_hash,after_hash,
-    CASE WHEN octet_length(evidence::text)<=196608 THEN evidence ELSE NULL END AS evidence,result,created_at
-    FROM public.supplier_order_edit_operation_v1 WHERE operation_id=${uuid(id)}::uuid`) as unknown as Operation[];
-  if(rows.length!==1)throw invalid();const row=rows[0],evidence=object(row.evidence),source=object(evidence.source),result=object(row.result);
+  const row=await readUnpaidOrderEditOperation(db,uuid(id));
+  const evidence=object(row.evidence),source=object(evidence.source),result=object(row.result);
   integer(row.actor_id);integer(row.created_at);digest(row.request_hash);digest(row.before_hash);digest(row.after_hash);
   if(row.operation_id!==id||row.order_id!==order.id||row.supplier_id!==order.supplierId||row.state!=='committed'
-    ||evidence.version!=='supplier-unpaid-gain-edit-v1'||evidence.operation_id!==id
-    ||!['checkout','legacy-php'].includes(String(evidence.source_format))
+    ||evidence.operation_id!==id
+    ||(row.kind==='supplier'?!['checkout','legacy-php'].includes(String(evidence.source_format)):evidence.source_format!=='price-only')
     ||source.order_id!==order.id||source.buyer_id!==order.uid||source.supplier_id!==order.supplierId
     ||result.id!==order.id||result.order_id!==order.orderId||result.changed!==true||Object.keys(result).length!==6
     ||!Array.isArray(evidence.lines)||!evidence.lines.length||evidence.lines.length>200)throw invalid();
@@ -97,8 +93,6 @@ export async function loadUnpaidOrderCashierEditProof(db:DB,order:CashierEditOrd
   }
   const same=origin.every(fact=>currentHashes.get(fact.cart_row_id)===fact.snapshot_hash);
   if(same&&(creationPayPrice===undefined?order.changePrice==='0.00':order.payPrice===creationPayPrice&&order.changePrice==='0.00'))return null;
-  integer(order.supplierId);if(rows.some(row=>row.type!==2||row.relationId!==order.supplierId))throw invalid();
-  await assertSupplierOrderEditOperationReadable(db);
   const latest=await latestOperation(db,order),current=await legacyGainIntegralState(order,rows);
   let id=latest.id,expectedStatus:number|null=latest.statusId,expectedState=current.hash;
   let expectedPay=cash(order.payPrice),expectedChange=cash(order.changePrice,true),expectedPoints=points(order.gainIntegral);
@@ -107,6 +101,8 @@ export async function loadUnpaidOrderCashierEditProof(db:DB,order:CashierEditOrd
   for(let depth=0;;depth++){
     if(depth>=1000||seen.has(id))throw invalid();seen.add(id);
     const item=await operation(db,id,order),e=item.evidence,lines=e.lines as unknown[];
+    if(item.row.kind==='supplier'&&(order.supplierId<=0||rows.some(row=>row.type!==2||row.relationId!==order.supplierId)))throw invalid();
+    if(item.row.kind==='admin'&&(e.before_state_sha256!==e.after_state_sha256||points(e.before_total)!==points(e.after_total)))throw invalid();
     if(e.status_id!==expectedStatus||e.after_state_sha256!==expectedState||item.result.pay_price!==expectedPay
       ||item.result.change_price!==expectedChange||points(item.result.gain_integral)!==expectedPoints||lines.length!==rows.length)throw invalid();
     const lineIds=new Set<number>();let beforeTotal=0,afterTotal=0;
@@ -114,6 +110,8 @@ export async function loadUnpaidOrderCashierEditProof(db:DB,order:CashierEditOrd
       if(!row||lineIds.has(row.id)||line.cart_id!==row.cartId||line.product_id!==row.productId||line.quantity!==row.cartNum
         ||line.is_gift!==row.isGift||digest(line.after_sha256)!==expectedRaw.get(row.id)
         ||digest(line.after_origin_hash)!==expectedOrigin.get(row.id))throw invalid();
+      if(item.row.kind==='admin'&&(line.before_sha256!==line.after_sha256||line.before_origin_hash!==line.after_origin_hash
+        ||points(line.before_gain_integral)!==points(line.after_gain_integral)))throw invalid();
       lineIds.add(row.id);beforeTotal+=points(line.before_gain_integral);afterTotal+=points(line.after_gain_integral);
       expectedRaw.set(row.id,digest(line.before_sha256));expectedOrigin.set(row.id,digest(line.before_origin_hash));
     }

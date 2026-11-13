@@ -1,3 +1,4 @@
+import { preparePriceFixture, priceActor, seedPriceActor } from './helpers/adminOrderPriceFixture';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { eq, sql } from 'drizzle-orm';
 import { createPcCheckoutQuoteFixture } from './helpers/pcCheckoutQuoteFixture';
@@ -12,6 +13,7 @@ import { outcome, waitForFinanceBlock, withFinancePeers } from './helpers/financ
 import { agentLevel, printDocument, storeCart, storeOrder, storeOrderCartInfo, storeOrderInvoice, storeOrderOutbox, storeOrderRefund,
   storeOrderStatus, storeProduct, storeProductAttrValue, systemSupplier, orderWaybillJob, user, userBrokerage, supplierFlowingWater, supplierTransactions,
   paymentReconciliationCase } from '../src/models/schema';
+import { systemAdmin, systemRole } from '../src/models/schema';
 
 let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
 const delivery = { deliveryType: 'express' as const, deliveryName: 'Synthetic shipping', deliveryCode: 'local',
@@ -31,7 +33,7 @@ const create = async (cartIds = [1], useIntegral = false, changedPrice?: string)
     { CONFIG_KV: f.env.CONFIG_KV, nextOrderId: async () => 'checkout_for_split' },
     { uid: 11, key: 'line_split', cartIds, addressId: 11, userIp: '127.0.0.1', useIntegral });
   const [saved] = await f.db.select().from(storeOrder).where(eq(storeOrder.orderId, result.orderId));
-  if (changedPrice !== undefined) await new AdminMobileOrderOperationService(f.container).changePrice(100,
+  if (changedPrice !== undefined) await new AdminMobileOrderOperationService(f.container).changePrice(priceActor(),
     { order_id: saved.orderId, price: changedPrice });
   // Synthetic paid admission only; this suite does not test or call a payment provider.
   await f.db.update(storeOrder).set({ paid: 1, payType: 'yue' }).where(eq(storeOrder.id, saved.id));
@@ -58,11 +60,13 @@ const allocate = async (oid: number, db = f.db) => {
   return withTx(createContainerFromDb(db), tx => allocatePaidOrderBySupplier(tx, oid, source.orderId, 100));
 };
 beforeEach(async () => {
-  f = await createPcCheckoutQuoteFixture([agentLevel, printDocument, storeOrderCartInfo, storeOrderInvoice, storeOrderOutbox,
+  f = await createPcCheckoutQuoteFixture([systemAdmin, systemRole, agentLevel, printDocument, storeOrderCartInfo, storeOrderInvoice, storeOrderOutbox,
     storeOrderRefund, storeOrderStatus, systemSupplier, orderWaybillJob, userBrokerage, supplierFlowingWater, supplierTransactions,
     paymentReconciliationCase]);
   await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
   await f.exec(INVOICE_EVIDENCE_SQL);
+  await seedPriceActor(f.db);
+  await preparePriceFixture(f.db);
   await f.exec('CREATE UNIQUE INDEX split_fixture_outbox_event ON store_order_outbox(event_key)');
   await f.exec('CREATE UNIQUE INDEX split_fixture_flow ON supplier_flowing_water(order_id); CREATE UNIQUE INDEX split_fixture_transaction ON supplier_transactions(order_id)');
   vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('External I/O forbidden'));

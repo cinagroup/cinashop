@@ -375,7 +375,7 @@ export async function adminMobileOrderSplitCartInfo(c: C) {
 export async function adminMobileOrderPrice(c: C) {
   privateAdminResponse(c);
   await mobileOrderOperationService(c).changePrice(
-    verifiedAdminId(c),
+    { id: verifiedAdminId(c), authVersion: c.get('socketAuthVersion') ?? '', expiresAt: c.get('socketTokenExp') ?? 0 },
     await readBoundedJsonObject(c.req.raw, 8 * 1024),
   );
   return jsonOk(c, null, "改价成功");

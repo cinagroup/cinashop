@@ -1890,7 +1890,7 @@ v1Routes.post("/admin/order/offline", adminAuth, AdminController.adminMobileOrde
 v1Routes.post("/admin/order/refund", privateRefundOperationResponse, adminAuth, adminRefundMutationUnavailable);
 v1Routes.post("/admin/order/refund_agree/:id", privateRefundOperationResponse, adminAuth, adminRefundMutationUnavailable);
 v1Routes.post("/admin/order/open/refund/:id", privateRefundOperationResponse, adminAuth, adminRefundMutationUnavailable);
-v1Routes.post("/admin/order/price", adminAuth, AdminController.adminMobileOrderPrice);
+v1Routes.post("/admin/order/price", AdminCrud.privateAdminOrderRemarkResponse, adminAuth, AdminController.adminMobileOrderPrice);
 v1Routes.post("/admin/order/remark", AdminCrud.privateAdminOrderRemarkResponse, adminAuth, AdminController.adminMobileOrderRemark);
 v1Routes.post("/admin/order/remark/:orderId", AdminCrud.privateAdminOrderRemarkResponse, adminAuth, AdminController.adminMobileOrderRemark);
 v1Routes.post("/admin/order/wirteoff/records/:id", adminAuth, AdminController.adminMobileOrderWriteoffRecords);

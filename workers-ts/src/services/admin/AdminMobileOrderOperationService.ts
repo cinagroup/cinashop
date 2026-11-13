@@ -1,24 +1,20 @@
+import { AdminOrderPriceService } from "./AdminOrderPriceService";
+export { parseAdminOrderPriceInput, computeAdminOrderPrice, type AdminOrderPriceInput } from "./AdminOrderPriceInput";
 import { AdminOrderRemarkService } from './AdminOrderRemarkService';
 import type { AdminAuthorityActor } from './AdminAuthorityWriteService';
 export { parseAdminOrderRemarkInput, type AdminOrderRemarkInput } from './AdminOrderRemarkInput';
-import { and, asc, desc, eq, sql } from "drizzle-orm";
-import { withTx, type Container } from "@/lib/di";
+import { and, desc, eq, sql } from "drizzle-orm";
+import { type Container } from "@/lib/di";
 import {
   storeOrder,
   storeOrderCartInfo,
-  storeOrderStatus,
   storeOrderWriteoff,
 } from "@/models/schema";
-import { lockOrderSettlement } from "@/services/order/OrderBrokerageService";
-import { hasInitiatedAssistedProviderPayment } from "@/services/payment/AssistedProviderPaymentClaim";
 import {
-  parseAdminOrderNumber,
   parseAdminOrderPrimaryId,
 } from "@/services/admin/AdminMobileOrderReadService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
-const MAX_MONEY_CENTS = 999_999_999_999;
-const MAX_CHANGE_PRICE_CENTS = 99_999_999;
 const MAX_CART_SNAPSHOT_BYTES = 256 * 1024;
 
 function nestedRecord(value: unknown): Record<string, unknown> | null {
@@ -34,84 +30,6 @@ function parseSnapshot(value: string | null): Record<string, unknown> | null {
   } catch {
     return null;
   }
-}
-
-function parseMoneyCents(value: unknown): number {
-  let normalized = "";
-  if (typeof value === "number") {
-    if (!Number.isFinite(value) || value < 0) throw new ValidateException("实际支付金额格式错误");
-    const cents = Math.round(value * 100);
-    if (!Number.isSafeInteger(cents) || Math.abs(value * 100 - cents) > 1e-7) {
-      throw new ValidateException("实际支付金额最多保留两位小数");
-    }
-    normalized = value.toFixed(2);
-  } else if (typeof value === "string") {
-    normalized = value.trim();
-  }
-  if (!/^\d+(?:\.\d{1,2})?$/.test(normalized)) {
-    throw new ValidateException("实际支付金额格式错误");
-  }
-  const [whole, fraction = ""] = normalized.split(".");
-  const cents = Number(whole) * 100 + Number(fraction.padEnd(2, "0"));
-  if (!Number.isSafeInteger(cents) || cents > MAX_MONEY_CENTS) {
-    throw new ValidateException("实际支付金额超出允许范围");
-  }
-  return cents;
-}
-
-function parseSignedMoneyCents(value: string): number {
-  const match = /^(-?)(\d+)(?:\.(\d{1,2}))?$/.exec(value.trim());
-  if (!match) throw new ValidateException("历史改价数据异常，请先人工核对");
-  const cents = Number(match[2]) * 100 + Number((match[3] ?? "").padEnd(2, "0"));
-  const signed = match[1] ? -cents : cents;
-  if (!Number.isSafeInteger(signed) || Math.abs(signed) > MAX_CHANGE_PRICE_CENTS) {
-    throw new ValidateException("历史改价数据异常，请先人工核对");
-  }
-  return signed;
-}
-
-function centsToDecimal(cents: number): string {
-  if (!Number.isSafeInteger(cents) || cents < 0) throw new ValidateException("金额分值错误");
-  return `${Math.floor(cents / 100)}.${String(cents % 100).padStart(2, "0")}`;
-}
-
-function signedCentsToDecimal(cents: number): string {
-  if (!Number.isSafeInteger(cents) || Math.abs(cents) > MAX_CHANGE_PRICE_CENTS) {
-    throw new ValidateException("改价差额超出允许范围");
-  }
-  return cents < 0 ? `-${centsToDecimal(-cents)}` : centsToDecimal(cents);
-}
-
-export interface AdminOrderPriceInput {
-  orderId: string;
-  priceCents: number;
-}
-
-export function parseAdminOrderPriceInput(input: Record<string, unknown>): AdminOrderPriceInput {
-  if (input.price === undefined) throw new ValidateException("请填写实际支付金额");
-  return {
-    orderId: parseAdminOrderNumber(input.order_id),
-    priceCents: parseMoneyCents(input.price),
-  };
-}
-
-export function computeAdminOrderPrice(
-  currentPayPrice: string,
-  currentChangePrice: string,
-  nextPriceCents: number,
-) {
-  const currentPayCents = parseMoneyCents(currentPayPrice);
-  const originalPriceCents = currentPayCents + parseSignedMoneyCents(currentChangePrice);
-  if (!Number.isSafeInteger(originalPriceCents) || originalPriceCents < 0) {
-    throw new ValidateException("历史改价数据异常，请先人工核对");
-  }
-  const payPrice = centsToDecimal(nextPriceCents);
-  const changePrice = signedCentsToDecimal(originalPriceCents - nextPriceCents);
-  return {
-    payPrice,
-    changePrice,
-    changed: payPrice !== currentPayPrice || changePrice !== currentChangePrice,
-  };
 }
 
 export interface AdminWriteoffRecordsInput {
@@ -193,68 +111,8 @@ export function projectAdminWriteoffRecord(
 export class AdminMobileOrderOperationService {
   constructor(private readonly container: Container) {}
 
-  async changePrice(adminId: number, body: Record<string, unknown>) {
-    if (!Number.isSafeInteger(adminId) || adminId <= 0) throw new ValidateException("管理员身份不存在");
-    const input = parseAdminOrderPriceInput(body);
-    return withTx(this.container, async (tx) => {
-      await tx.execute(sql.raw("SET LOCAL lock_timeout = '2s'"));
-      await tx.execute(sql.raw("SET LOCAL statement_timeout = '5s'"));
-      const preliminary = await tx
-        .select({ id: storeOrder.id, pid: storeOrder.pid })
-        .from(storeOrder)
-        .where(and(
-          eq(storeOrder.orderId, input.orderId),
-          eq(storeOrder.isDel, 0),
-          eq(storeOrder.isSystemDel, 0),
-        ))
-        .orderBy(asc(storeOrder.id))
-        .limit(2);
-      if (preliminary.length !== 1) throw new NotFoundException("订单不存在或编号不唯一");
-      const rootId = preliminary[0].pid > 0 ? preliminary[0].pid : preliminary[0].id;
-      await lockOrderSettlement(tx, rootId);
-      const rows = await tx
-        .select({
-          id: storeOrder.id,
-          orderId: storeOrder.orderId,
-          paid: storeOrder.paid,
-          payPrice: storeOrder.payPrice,
-          changePrice: storeOrder.changePrice,
-        })
-        .from(storeOrder)
-        .where(and(
-          eq(storeOrder.id, preliminary[0].id),
-          eq(storeOrder.isDel, 0),
-          eq(storeOrder.isSystemDel, 0),
-        ))
-        .limit(1)
-        .for("update");
-      const order = rows[0];
-      if (!order) throw new NotFoundException("订单不存在");
-      if (order.paid !== 0) throw new ValidateException("订单已支付");
-      if (await hasInitiatedAssistedProviderPayment(tx, order.orderId)) {
-        throw new ValidateException("扫码支付已发起，改价前请先人工对账");
-      }
-      const next = computeAdminOrderPrice(order.payPrice, order.changePrice, input.priceCents);
-      if (!next.changed) return { changed: false };
-      const updated = await tx
-        .update(storeOrder)
-        .set({ payPrice: next.payPrice, changePrice: next.changePrice })
-        .where(and(
-          eq(storeOrder.id, order.id),
-          eq(storeOrder.paid, 0),
-          eq(storeOrder.isDel, 0),
-          eq(storeOrder.isSystemDel, 0),
-        ))
-        .returning({ id: storeOrder.id });
-      if (!updated[0]) throw new ValidateException("订单已被处理，请刷新后重试");
-      await tx.insert(storeOrderStatus).values({
-        oid: order.id,
-        changeType: "admin_order_price",
-        changeMessage: `管理员 ${adminId} 修改订单价格`,
-        changeTime: Math.floor(Date.now() / 1_000),
-      });
-      return { changed: true };
-    });
+  changePrice(actor: AdminAuthorityActor, body: Record<string, unknown>) {
+    return new AdminOrderPriceService(this.container).changePrice(actor, body);
   }
 
   async updateRemark(actor: AdminAuthorityActor, body: Record<string, unknown>) {

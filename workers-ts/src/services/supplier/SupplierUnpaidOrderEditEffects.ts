@@ -1,8 +1,8 @@
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
 import { storeOrder, storeOrderOutbox, storeOrderStatus, systemMessage, systemNotification, type StoreOrderOutbox } from '@/models/schema';
 import { assertSupplierOrderPriceRevisionReady } from '@/migrations/supplierOrderPriceRevision';
-import { assertSupplierOrderEditOperationReadable } from '@/migrations/supplierOrderEditOperation';
+import { readUnpaidOrderEditOperation } from '@/services/order/UnpaidOrderEditOperation';
 import { createImmutableDelivery } from '@/services/order/OrderNotificationOutboxService';
 import type { SupplierOrderEditResult } from './SupplierUnpaidOrderEditOperation';
 import { supplierOrderEditCanonical, supplierOrderEditId, supplierOrderEditOperationId } from './SupplierUnpaidOrderEditInput';
@@ -37,12 +37,10 @@ async function noticeSource(tx: DbClient, event: StoreOrderOutbox) {
   const payload = parseSupplierOrderPriceRevisionPayload(event.payload);
   if (event.eventType !== SUPPLIER_ORDER_PRICE_REVISION_EVENT || event.aggregateType !== 'order' || event.aggregateId !== payload.orderId
     || event.eventKey !== `${SUPPLIER_ORDER_PRICE_REVISION_EVENT}:${payload.orderId}:${payload.operationId}`) throw Error('Order price revision event identity invalid');
-  await assertSupplierOrderEditOperationReadable(tx);
-  const [operation] = await tx.execute(sql`SELECT order_id, supplier_id, state, result, evidence FROM public.supplier_order_edit_operation_v1
-    WHERE operation_id = ${payload.operationId}::uuid`) as unknown as Array<{ order_id: number; supplier_id: number; state: string; result: SupplierOrderEditResult | null; evidence: { status_id?: unknown; version?: unknown; operation_id?: unknown; source?: { order_id?: unknown; supplier_id?: unknown; buyer_id?: unknown } } | null }>;
+  const operation = await readUnpaidOrderEditOperation(tx, payload.operationId);
   if (!operation || operation.state !== 'committed' || operation.order_id !== payload.orderId || !operation.result
     || operation.result.id !== payload.orderId || operation.result.changed !== true) throw Error('Order price revision protected operation missing');
-  if (operation.evidence?.version !== 'supplier-unpaid-gain-edit-v1' || operation.evidence.operation_id !== payload.operationId
+  if (operation.evidence?.version !== (operation.kind === 'supplier' ? 'supplier-unpaid-gain-edit-v1' : 'admin-unpaid-price-v1') || operation.evidence.operation_id !== payload.operationId
     || operation.evidence.source?.order_id !== payload.orderId || operation.evidence.source.supplier_id !== operation.supplier_id
     || !Number.isSafeInteger(operation.evidence.status_id) || Number(operation.evidence?.status_id) <= 0)
     throw Error('Order price revision protected status missing');
@@ -54,7 +52,7 @@ async function noticeSource(tx: DbClient, event: StoreOrderOutbox) {
     || order.payPrice !== operation.result.pay_price || order.changePrice !== operation.result.change_price
     || order.gainIntegral !== operation.result.gain_integral || order.paid !== 0 || order.status !== 0 || order.pid !== 0
     || order.isDel !== 0 || order.isSystemDel !== 0 || order.refundStatus !== 0) return null;
-  return { order, result: operation.result };
+  return { order, result: operation.result as unknown as SupplierOrderEditResult };
 }
 /** Rechecked before an external provider claim as well as when staging. A
  * later edit/payment/cancellation must not send an obsolete payment request. */
