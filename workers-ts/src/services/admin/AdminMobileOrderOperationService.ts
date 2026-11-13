@@ -1,3 +1,6 @@
+import { AdminOrderRemarkService } from './AdminOrderRemarkService';
+import type { AdminAuthorityActor } from './AdminAuthorityWriteService';
+export { parseAdminOrderRemarkInput, type AdminOrderRemarkInput } from './AdminOrderRemarkInput';
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { withTx, type Container } from "@/lib/di";
 import {
@@ -16,7 +19,6 @@ import { NotFoundException, ValidateException } from "@/utils/errors";
 
 const MAX_MONEY_CENTS = 999_999_999_999;
 const MAX_CHANGE_PRICE_CENTS = 99_999_999;
-const MAX_REMARK_LENGTH = 512;
 const MAX_CART_SNAPSHOT_BYTES = 256 * 1024;
 
 function nestedRecord(value: unknown): Record<string, unknown> | null {
@@ -110,20 +112,6 @@ export function computeAdminOrderPrice(
     changePrice,
     changed: payPrice !== currentPayPrice || changePrice !== currentChangePrice,
   };
-}
-
-export interface AdminOrderRemarkInput {
-  orderId: string;
-  remark: string;
-}
-
-export function parseAdminOrderRemarkInput(input: Record<string, unknown>): AdminOrderRemarkInput {
-  const remark = typeof input.remark === "string" ? input.remark.trim() : "";
-  if (!remark) throw new ValidateException("请填写备注内容");
-  if (remark.length > MAX_REMARK_LENGTH) {
-    throw new ValidateException(`备注不能超过${MAX_REMARK_LENGTH}个字符`);
-  }
-  return { orderId: parseAdminOrderNumber(input.order_id), remark };
 }
 
 export interface AdminWriteoffRecordsInput {
@@ -269,43 +257,8 @@ export class AdminMobileOrderOperationService {
     });
   }
 
-  async updateRemark(adminId: number, body: Record<string, unknown>) {
-    if (!Number.isSafeInteger(adminId) || adminId <= 0) throw new ValidateException("管理员身份不存在");
-    const input = parseAdminOrderRemarkInput(body);
-    return withTx(this.container, async (tx) => {
-      await tx.execute(sql.raw("SET LOCAL lock_timeout = '2s'"));
-      await tx.execute(sql.raw("SET LOCAL statement_timeout = '5s'"));
-      const rows = await tx
-        .select({ id: storeOrder.id, remark: storeOrder.remark })
-        .from(storeOrder)
-        .where(and(
-          eq(storeOrder.orderId, input.orderId),
-          eq(storeOrder.isDel, 0),
-          eq(storeOrder.isSystemDel, 0),
-        ))
-        .orderBy(asc(storeOrder.id))
-        .limit(2)
-        .for("update");
-      if (rows.length !== 1) throw new NotFoundException("订单不存在或编号不唯一");
-      if (rows[0].remark === input.remark) return { changed: false };
-      const updated = await tx
-        .update(storeOrder)
-        .set({ remark: input.remark })
-        .where(and(
-          eq(storeOrder.id, rows[0].id),
-          eq(storeOrder.isDel, 0),
-          eq(storeOrder.isSystemDel, 0),
-        ))
-        .returning({ id: storeOrder.id });
-      if (!updated[0]) throw new ValidateException("订单已被处理，请刷新后重试");
-      await tx.insert(storeOrderStatus).values({
-        oid: rows[0].id,
-        changeType: "admin_order_remark",
-        changeMessage: `管理员 ${adminId} 更新订单备注`,
-        changeTime: Math.floor(Date.now() / 1_000),
-      });
-      return { changed: true };
-    });
+  async updateRemark(actor: AdminAuthorityActor, body: Record<string, unknown>) {
+    return new AdminOrderRemarkService(this.container).byNumber(actor, body);
   }
 
   async writeoffRecords(orderIdValue: unknown, body: Record<string, unknown>) {

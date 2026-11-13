@@ -1891,8 +1891,8 @@ v1Routes.post("/admin/order/refund", privateRefundOperationResponse, adminAuth, 
 v1Routes.post("/admin/order/refund_agree/:id", privateRefundOperationResponse, adminAuth, adminRefundMutationUnavailable);
 v1Routes.post("/admin/order/open/refund/:id", privateRefundOperationResponse, adminAuth, adminRefundMutationUnavailable);
 v1Routes.post("/admin/order/price", adminAuth, AdminController.adminMobileOrderPrice);
-v1Routes.post("/admin/order/remark", adminAuth, AdminController.adminMobileOrderRemark);
-v1Routes.post("/admin/order/remark/:orderId", adminAuth, AdminController.adminMobileOrderRemark);
+v1Routes.post("/admin/order/remark", AdminCrud.privateAdminOrderRemarkResponse, adminAuth, AdminController.adminMobileOrderRemark);
+v1Routes.post("/admin/order/remark/:orderId", AdminCrud.privateAdminOrderRemarkResponse, adminAuth, AdminController.adminMobileOrderRemark);
 v1Routes.post("/admin/order/wirteoff/records/:id", adminAuth, AdminController.adminMobileOrderWriteoffRecords);
 v1Routes.post("/admin/order/print/:id", adminAuth, PrintJobController.adminManual);
 v1Routes.post("/admin/order/waybill/:id", adminAuth, WaybillJobController.adminCreate);

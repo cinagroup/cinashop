@@ -387,7 +387,8 @@ export async function adminMobileOrderRemark(c: C) {
   const body = await readBoundedJsonObject(c.req.raw, 8 * 1024);
   const pathOrderId = c.req.param("orderId");
   if (pathOrderId) body.order_id = pathOrderId;
-  await mobileOrderOperationService(c).updateRemark(verifiedAdminId(c), body);
+  await mobileOrderOperationService(c).updateRemark({ id: verifiedAdminId(c),
+    authVersion: c.get('socketAuthVersion') ?? '', expiresAt: c.get('socketTokenExp') ?? 0 }, body);
   return jsonOk(c, null, "备注成功");
 }
 

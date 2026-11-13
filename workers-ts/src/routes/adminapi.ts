@@ -540,7 +540,8 @@ adminapiRoutes.get('/order/scan_detail/:id', AdminOfflineOrder.privateResponse, 
 adminapiRoutes.get("/order/chart", adminAuth, AdminCrud.adminOrderChart);
 adminapiRoutes.get("/order/list", adminAuth, AdminCrud.adminOrderList);
 adminapiRoutes.get("/order/detail/:id", adminAuth, AdminCrud.adminOrderDetail);
-adminapiRoutes.post("/order/remark/:id", adminAuth, AdminCrud.adminOrderRemark);
+adminapiRoutes.post("/order/remark/:id", AdminCrud.privateAdminOrderRemarkResponse, adminAuth, AdminCrud.adminOrderRemark);
+adminapiRoutes.put("/order/remark/:id", AdminCrud.privateAdminOrderRemarkResponse, adminAuth, AdminCrud.adminLegacyOrderRemark);
 adminapiRoutes.post("/order/print/:id", adminAuth, PrintJobController.adminManual);
 adminapiRoutes.post("/order/waybill/:id", adminAuth, WaybillJobController.adminCreate);
 adminapiRoutes.get("/order/delivery/author/catalog", adminAuth, DeliveryAuthor.catalog);

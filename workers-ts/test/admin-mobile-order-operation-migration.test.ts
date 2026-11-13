@@ -38,6 +38,8 @@ function context(options: {
       get: (key: string) => {
         if (key === "container") return {};
         if (key === "adminInfo") return { id: options.adminId ?? 17 };
+        if (key === 'socketAuthVersion') return 'a'.repeat(32);
+        if (key === 'socketTokenExp') return 2_000_000_000;
         return undefined;
       },
       header,
@@ -168,7 +170,7 @@ describe("embedded admin mobile order operation migration", () => {
       expect(testContext.header).toHaveBeenCalledWith("Cache-Control", "private, no-store, max-age=0");
     }
     expect(price).toHaveBeenCalledWith(23, { order_id: "wx1", price: "1.00" });
-    expect(remark).toHaveBeenCalledWith(24, { remark: "note", order_id: "wx2" });
+    expect(remark).toHaveBeenCalledWith({ id: 24, authVersion: "a".repeat(32), expiresAt: 2_000_000_000 }, { remark: "note", order_id: "wx2" });
     expect(records).toHaveBeenCalledWith("3", { product_type: 0 });
   });
 
@@ -176,7 +178,7 @@ describe("embedded admin mobile order operation migration", () => {
     const routes = readFileSync("src/routes/v1/index.ts", "utf8");
     const service = readFileSync("src/services/admin/AdminMobileOrderOperationService.ts", "utf8");
     expect(routes).toContain('post("/admin/order/price", adminAuth, AdminController.adminMobileOrderPrice)');
-    expect(routes).toContain('post("/admin/order/remark", adminAuth, AdminController.adminMobileOrderRemark)');
+    expect(routes).toContain('post("/admin/order/remark", AdminCrud.privateAdminOrderRemarkResponse, adminAuth, AdminController.adminMobileOrderRemark)');
     expect(routes).toContain('post("/admin/order/wirteoff/records/:id", adminAuth, AdminController.adminMobileOrderWriteoffRecords)');
     expect(requiredAdminPermission("POST", "/api/admin/order/price")).toBe("order.manage");
     expect(requiredAdminPermission("POST", "/api/admin/order/remark")).toBe("order.manage");

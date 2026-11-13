@@ -1,3 +1,4 @@
+import { AdminOrderRemarkService } from '@/services/admin/AdminOrderRemarkService';
 import { isWechatOpenConfigKey } from '../../../../../view/common/wechatOpen';
 import { isWechatAppConfigKey } from '../../../../../view/common/wechatApp';
 import { isPcBaseConfigKey } from '../../../../../view/common/pcBase';
@@ -396,16 +397,27 @@ export async function adminOrderDetail(c: C) {
   return jsonOk(c, await new AdminOrderReadService(c.get('container')).detail(orderId));
 }
 
-/** POST /api/admin/order/remark/:orderId — 订单备注 */
+/** Private responses also cover authentication and permission refusals. */
+export async function privateAdminOrderRemarkResponse(c: C, next: () => Promise<void>) {
+  privateNoStore(c); await next();
+}
+
+/** Modern desktop POST uses the order number, including numeric numbers. */
 export async function adminOrderRemark(c: C) {
-  const orderId = c.req.param("orderId") ?? "";
-  const body = (await c.req.json().catch(() => ({}))) as { remark?: string };
-  const container = c.get("container");
-  const order = await container.storeOrderDao.findByOrderId(orderId);
-  if (!order) return jsonFail(c, "订单不存在");
-  await container.storeOrderDao.update(order.id, { remark: body.remark ?? "" });
-  await container.storeOrderStatusDao.log(order.id, "remark", `管理员备注: ${body.remark ?? ""}`);
-  return jsonOk(c, null, "备注成功");
+  privateNoStore(c);
+  const body = await readBoundedJsonObject(c.req.raw, 8 * 1024);
+  await new AdminOrderRemarkService(c.get('container')).byNumber(systemAuthorityActor(c), {
+    ...body, order_id: c.req.param('orderId') ?? c.req.param('id') ?? '',
+  });
+  return jsonOk(c, null, '备注成功');
+}
+
+/** PHP PUT uses the internal primary ID; it never guesses an order number. */
+export async function adminLegacyOrderRemark(c: C) {
+  privateNoStore(c);
+  await new AdminOrderRemarkService(c.get('container')).byPrimaryId(systemAuthorityActor(c), c.req.param('id'),
+    await readBoundedJsonObject(c.req.raw, 8 * 1024));
+  return jsonOk(c, null, '备注成功');
 }
 
 /** POST /api/admin/order/delivery/:orderId — 发货 */
