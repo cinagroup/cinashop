@@ -303,6 +303,8 @@ export interface ProductSku {
 }
 
 export interface ProductDetail {
+  code_selection?: import('./utils/productCode').ProductCodeSelection;
+  code?: unknown;
   recommend_list?: unknown;
   recommendation_selection?: unknown;
   recommend?: unknown;

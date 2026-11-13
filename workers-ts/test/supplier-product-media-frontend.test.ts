@@ -476,3 +476,28 @@ it('omits ordered recommendation read echoes and malformed historical metadata f
     } finally {f.close();}
   }
 });
+
+it('edits only deliberate product code intent and strips the forged legacy code and read metadata from actual form saves', async()=>{
+  const detail={...product(),code:'forged raw echo',code_selection:{version:1,code:'ERP-OLD',erp_open:false}};
+  for(const code of [undefined,' 编码-🛍 ','']){
+    const f=await mount('Form',c=>c.method==='get'&&c.url==='/product/product/5'?detail:undefined);
+    try{expect(f.view.productCode.code).toBe('ERP-OLD');if(code!==undefined)f.view.changeProductCode(code);await f.view.submit();const writes=f.calls.filter(c=>c.method==='post');expect(writes).toHaveLength(1);const payload=JSON.parse(writes[0].data);
+      if(code===undefined)expect(Object.hasOwn(payload,'code')).toBe(false);else expect(payload.code).toBe(code.trim());
+      expect(payload.code_selection).toBeUndefined();expect(payload.attrs[0].code).toBe('');expect(payload.bar_code).toBe(detail.bar_code);
+    }finally{f.close();}
+  }
+});
+it('requires product and each SKU code for a known ERP-enabled physical form and keeps invalid code drafts unsent',async()=>{
+  const f=await mount('Form',c=>c.method==='get'&&c.url==='/product/product/5'?{...product(),code_selection:{version:1,code:'',erp_open:true}}:undefined);
+  try{
+    await f.view.submit();expect(f.calls.filter(c=>c.method==='post')).toHaveLength(0);f.view.changeProductCode('ERP-P');await f.view.submit();expect(f.calls.filter(c=>c.method==='post')).toHaveLength(0);
+    f.view.form.attrs[0].code='ERP-SKU';f.view.changeProductCode('码🛍'.repeat(25)+'x');await f.view.submit();expect(f.calls.filter(c=>c.method==='post')).toHaveLength(0);
+    f.view.changeProductCode('码🛍'.repeat(25));await f.view.submit();const payload=JSON.parse(f.calls.find(c=>c.method==='post').data);expect(payload.code).toBe('码🛍'.repeat(25));expect(payload.attrs[0].code).toBe('ERP-SKU');
+  }finally{f.close();}
+});
+it('disables unknown product code metadata and clears known code drafts on actual permission ABA',async()=>{
+  let f=await mount('Form',c=>c.method==='get'&&c.url==='/product/product/5'?{...product(),code:'must not resend'}:undefined);
+  try{expect(f.view.productCode.ready).toBe(false);f.view.changeProductCode('forged');await f.view.submit();const payload=JSON.parse(f.calls.find(c=>c.method==='post').data);expect(Object.hasOwn(payload,'code')).toBe(false);expect(payload.code_selection).toBeUndefined();}finally{f.close();}
+  f=await mount('Form',c=>c.method==='get'&&c.url==='/product/product/5'?{...product(),code_selection:{version:1,code:'ERP-OLD',erp_open:false}}:undefined);
+  try{f.view.changeProductCode('private code');localStorage.setItem('supplier-permissions','[]');windowSurface.dispatchEvent(new Event('supplier-session-changed'));localStorage.setItem('supplier-permissions','["supplier.product.manage","supplier.attachment.view"]');windowSurface.dispatchEvent(new Event('supplier-session-changed'));expect(f.view.productCode.code).toBe('');await f.view.submit();expect(f.calls.filter(c=>c.method==='post')).toHaveLength(0);}finally{f.close();}
+});

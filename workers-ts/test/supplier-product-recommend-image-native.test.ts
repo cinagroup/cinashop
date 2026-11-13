@@ -1377,3 +1377,127 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier referen
     }finally{wiring.container=null;wiring.moderator=null;network.mockRestore();await f.close();}
   },180000);
 });
+
+import { systemConfig as codeConfig } from '@/models/schema';
+import { ERP_CONFIG_LOCK } from '@/services/erp/ErpConnectionPolicy';
+
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier product code and ERP save qualification',()=>{
+  let f:Awaited<ReturnType<typeof supplierProductSettingsFixture>>;
+  beforeEach(async()=>{vi.spyOn(globalThis,'fetch').mockRejectedValue(Error('Owned product code forbids ERP provider calls'));f=await supplierProductSettingsFixture();wiring.container=f.container;},30000);
+  afterEach(async()=>{try{expect(fetch).not.toHaveBeenCalled();}finally{await f?.close();wiring.container=null;wiring.moderator=null;vi.restoreAllMocks();}},30000);
+  async function call(id:number,body?:object,actor:keyof typeof f.tokens|'anonymous'='manager'){
+    const response=await app.request('/supplierapi/product/product/'+id,{method:body?'POST':'GET',headers:{...(actor==='anonymous'?{}:{Authorization:'Bearer '+f.tokens[actor]}),...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})},f.env);
+    expect(response.headers.get('cache-control')).toContain('private, no-store');const result=await response.json<Envelope>();if(result.status===500 || result.status===410000 && actor==='manager')throw Error('Actual code HTTP failed: '+result.msg,{cause:settingsHttpErrors.at(-1)});return result;
+  }
+  const erp=async(value:string)=>{await f.db.delete(codeConfig).where(eq(codeConfig.menuName,'erp_open'));await f.db.insert(codeConfig).values({menuName:'erp_open',value,isStore:0});};
+  const skuCodes=async()=>{const body=await f.body();return {...body,attrs:(body.attrs as any[]).map((sku,index)=>({...sku,code:'ERP-SKU-'+index}))};};
+  it.each([0,1,3])('creates reads updates and clears only the main product code for fulfillment %i',async type=>f.withSettingsWriter(async writer=>{
+    wiring.container=writer.container;const source=await f.body(),body={...source,product_type:type,bar_code:'TOP-BARCODE',attrs:(source.attrs as any[]).map(({id,unique,...sku},index)=>({...sku,code:'SKU-'+index,...(type===1?{delivery_mode:'fixed',disk_info:'owned code fixed content'}:{disk_info:''})}))},code='码🛍'.repeat(25);
+    const result=await call(0,{...body,code:' '+code+' '});expect(result.status,result.msg).toBe(200);const id=Number(result.data.id);let detail=await call(id);expect(detail.data.code_selection).toEqual({version:1,code,erp_open:false});expect(detail.data).not.toHaveProperty('code');
+    const initial=(await f.db.select().from(storeProduct).where(eq(storeProduct.id,id)))[0];expect(initial).toMatchObject({code,barCode:'TOP-BARCODE',isShow:0,isVerify:0});const update={...body,attrs:detail.data.attrs};
+    expect((await call(id,update)).status).toBe(200);expect((await call(id)).data.code_selection.code).toBe(code);expect((await call(id,{...update,code:'ERP-NEW'})).status).toBe(200);expect((await call(id)).data.code_selection.code).toBe('ERP-NEW');
+    expect((await call(id,{...update,code:''})).status).toBe(200);detail=await call(id);expect(detail.data.code_selection.code).toBe('');expect(detail.data.bar_code).toBe('TOP-BARCODE');expect(detail.data.attrs.map((sku:any)=>sku.code)).toEqual(body.attrs.map(sku=>sku.code));expect((await f.db.select().from(storeProduct).where(eq(storeProduct.id,id)))[0].spu).toBe(initial.spu);
+  }));
+  it('projects exact code and ERP state through a SELECT-only independent viewer without permitting configuration edits',async()=>{
+    await erp('"1"');await f.db.update(storeProduct).set({code:'ERP-PRODUCT'}).where(eq(storeProduct.id,80));await f.withReader(async reader=>{
+      wiring.container=reader.container;const before=await f.snapshot(),seq=await f.sequences();expect((await call(80,undefined,'viewer')).data.code_selection).toEqual({version:1,code:'ERP-PRODUCT',erp_open:true});
+      const [rights]=await reader.db.execute(sql`SELECT current_user=session_user AS independent,has_table_privilege(current_user,'system_config','UPDATE') AS config_edit`);expect(rights).toEqual({independent:true,config_edit:false});expect(await f.snapshot()).toEqual(before);expect(await f.sequences()).toEqual(seq);
+    });
+  });
+  it('rejects malformed explicit main codes and unauthorized ownership without business or sequence writes',async()=>f.withSettingsWriter(async writer=>{
+    wiring.container=writer.container;const body=await f.body(),before=await f.snapshot(),seq=await f.sequences();
+    for(const code of [null,0,false,{},[],'x'.repeat(51),'bad\ncode','\u0000','\ud800'])expect((await call(80,{...body,code})).status).toBe(400);
+    for(const actor of ['viewer','denied','other','anonymous'] as const)expect((await call(80,{...body,code:'ERP'},actor)).status).not.toBe(200);expect((await call(90,{...body,code:'ERP'})).status).toBe(404);expect(await f.snapshot()).toEqual(before);expect(await f.sequences()).toEqual(seq);
+  }));
+  it.each([false,true])('does not target code on omission or undefined with an executable UPDATE OF tripwire and ERP=%j',async enabled=>f.withSettingsWriter(async writer=>{
+    if(enabled)await erp('true');await f.db.update(storeProduct).set({code:'ERP-EXISTING'}).where(eq(storeProduct.id,80));wiring.container=writer.container;const body=await skuCodes();
+    await f.exec("CREATE FUNCTION owned_code_omit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'main code UPDATE entered';END $$;CREATE TRIGGER owned_code_omit BEFORE UPDATE OF code ON store_product FOR EACH STATEMENT EXECUTE FUNCTION owned_code_omit()");
+    const result=await call(80,body);expect(result.status,result.msg).toBe(200);
+    await new SupplierProductManagementService(writer.container,f.env).saveProduct(7,80,{...body,code:undefined},{id:21,authVersion:md5(supplierProductSchedulePassword),expiresAt:Math.floor(Date.now()/1000)+600});
+    await expect(f.db.update(storeProduct).set({code:'ERP-EXISTING'}).where(eq(storeProduct.id,80))).rejects.toThrow();expect((await f.product()).code).toBe('ERP-EXISTING');
+  }));
+  it('requires main and every active SKU code while ERP is enabled, including legacy requests omitting the new field',async()=>f.withSettingsWriter(async writer=>{
+    await erp('1');wiring.container=writer.container;const original=await f.body(),body={...original,attrs:(original.attrs as any[]).map((sku,index)=>({...sku,...(index===0?{code:''}:{})}))},before=await f.snapshot(),seq=await f.sequences();expect((await call(80,body)).status).toBe(400);expect((await call(80,{...body,code:'ERP-P'})).status).toBe(400);expect(await f.snapshot()).toEqual(before);expect(await f.sequences()).toEqual(seq);
+    const coded=await skuCodes();const good=await call(80,{...coded,code:'ERP-P'});expect(good.status,good.msg).toBe(200);expect((await call(80)).data.code_selection).toEqual({version:1,code:'ERP-P',erp_open:true});
+    expect((await call(80,coded)).status).toBe(200);const stable=await f.snapshot();expect((await call(80,{...coded,code:''})).status).toBe(400);expect(await f.snapshot()).toEqual(stable);
+  }));
+  it('retains malformed historical code while ERP is off and permits explicit repair or clear',async()=>f.withSettingsWriter(async writer=>{
+    await f.db.update(storeProduct).set({code:'old\ncode'}).where(eq(storeProduct.id,80));wiring.container=writer.container;expect((await call(80)).data.code_selection.code).toBe('old\ncode');const body=await f.body();expect((await call(80,body)).status).toBe(200);expect((await f.product()).code).toBe('old\ncode');
+    expect((await call(80,{...body,code:''})).status).toBe(200);expect((await f.product()).code).toBe('');await erp('1');const coded=await skuCodes();expect((await call(80,{...coded,code:'ERP-REPAIRED'})).status).toBe(200);
+  }));
+  it('does not apply physical ERP code requirements to card or manual virtual products',async()=>f.withSettingsWriter(async writer=>{
+    await erp('true');wiring.container=writer.container;const card=await f.body({},81);expect((await call(81,{...card,code:''})).status).toBe(200);
+    await f.db.update(storeProduct).set({productType:3}).where(eq(storeProduct.id,80));await f.db.update(storeProductAttrValue).set({productType:3}).where(eq(storeProductAttrValue.productId,80));expect((await call(80,await f.body({code:''}))).status).toBe(200);
+  }));
+  it('reports malformed or duplicate global ERP policy as unknown and refuses physical saves without guessing off',async()=>f.withSettingsWriter(async writer=>{
+    wiring.container=writer.container;const body=await skuCodes();await erp('unexpected');expect((await call(80)).data.code_selection.erp_open).toBeNull();let before=await f.snapshot(),seq=await f.sequences();expect((await call(80,{...body,code:'ERP'})).status).toBe(400);expect(await f.snapshot()).toEqual(before);expect(await f.sequences()).toEqual(seq);
+    await erp('0');await f.db.insert(codeConfig).values({menuName:'erp_open',value:'1',isStore:0});expect((await call(80)).data.code_selection.erp_open).toBeNull();before=await f.snapshot();expect((await call(80,{...body,code:'ERP'})).status).toBe(400);expect(await f.snapshot()).toEqual(before);
+    const card=await f.body({},81);expect((await call(81,{...card,code:'CARD'})).status).toBe(200);
+  }));
+  it('ignores another configuration realm and does not mask a real ERP policy SELECT denial',async()=>{
+    await f.db.insert(codeConfig).values({menuName:'erp_open',value:'1',isStore:7});await f.withReader(async reader=>{wiring.container=reader.container;expect((await call(80)).data.code_selection.erp_open).toBe(false);
+      await f.exec(`REVOKE SELECT ON system_config FROM "${reader.role}"`);const before=await f.snapshot();await expect(call(80)).rejects.toThrow('Actual code HTTP failed');let cause:unknown=settingsHttpErrors.at(-1);let denied=false;for(let i=0;i<8&&cause&&typeof cause==='object';i++){if('code'in cause&&cause.code==='42501')denied=true;cause='cause'in cause?cause.cause:undefined;}expect(denied).toBe(true);expect(await f.snapshot()).toEqual(before);
+    });
+  });
+  it('refuses a concurrent cooperating ERP configuration writer before business writes',async()=>f.withSettingsWriter(async writer=>f.withPeer!(async peer=>{
+    wiring.container=writer.container;const held=signal(),release=signal();const holding=peer.db.transaction(async tx=>{await tx.execute(sql`SELECT pg_advisory_xact_lock(${ERP_CONFIG_LOCK},0)`);held.resolve();await release.promise;}).catch(error=>{throw error;});
+    try{await held.promise;const before=await f.snapshot(),seq=await f.sequences();expect((await call(80,await f.body({code:'ERP'}))).status).toBe(409);expect(await f.snapshot()).toEqual(before);expect(await f.sequences()).toEqual(seq);}finally{release.resolve();await holding;}
+  })));
+  it.each(['skip','rewrite','later-main','deferred-main','deferred-sku','actor','later-sku'] as const)('rolls back %s code tampering after an executable positive control',async mode=>f.withSettingsWriter(async writer=>{
+    const main=['skip','rewrite','deferred-main','deferred-sku'].includes(mode),sku=mode==='later-sku';
+    const action=mode==='skip'?'RETURN NULL;':mode==='rewrite'?"NEW.code='tampered';RETURN NEW;":mode==='deferred-main'?"UPDATE store_product SET code='tampered' WHERE id=80;RETURN NEW;":mode==='deferred-sku'?"UPDATE store_product_attr_value SET price=99 WHERE product_id=80;RETURN NEW;":mode==='actor'?"UPDATE system_role SET rules='supplier.product.view' WHERE id=21;RETURN NEW;":sku?"UPDATE store_product_attr_value SET price=99 WHERE product_id=80;RETURN NEW;":"UPDATE store_product SET command_word='tampered' WHERE id=80;RETURN NEW;";
+    const when=['deferred-main','deferred-sku'].includes(mode)?'CREATE CONSTRAINT TRIGGER owned_code_tamper AFTER UPDATE ON store_product DEFERRABLE INITIALLY DEFERRED':`CREATE TRIGGER owned_code_tamper ${main?'BEFORE UPDATE ON store_product':sku?'AFTER UPDATE OF store_label_id ON store_product':'AFTER INSERT OR UPDATE ON store_product_description'}`;
+    await f.exec(`CREATE FUNCTION owned_code_tamper() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN IF ${main?"NEW.id=80 AND NEW.code='DESIRED'":sku?'NEW.id=80':'NEW.product_id=80'} THEN ${action} END IF;RETURN NEW;END $$;${when} FOR EACH ROW EXECUTE FUNCTION owned_code_tamper()`);
+    const marker=Error('owned code positive rollback');await expect(f.db.transaction(async tx=>{
+      if(main){const rows=await tx.update(storeProduct).set({code:'DESIRED'}).where(eq(storeProduct.id,80)).returning();await tx.execute(sql`SET CONSTRAINTS ALL IMMEDIATE`);if(mode==='skip')expect(rows).toHaveLength(0);else if(mode==='deferred-sku')expect((await tx.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.productId,80)))[0].price).toBe('99.00');else expect((await tx.select().from(storeProduct).where(eq(storeProduct.id,80)))[0].code).toBe('tampered');}
+      else if(sku){await tx.update(storeProduct).set({storeLabelId:'31'}).where(eq(storeProduct.id,80));expect((await tx.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.productId,80)))[0].price).toBe('99.00');}
+      else{await tx.update(storeProductDescription).set({description:'positive'}).where(eq(storeProductDescription.productId,80));if(mode==='actor')expect((await tx.select().from(systemRole).where(eq(systemRole.id,21)))[0].rules).toBe('supplier.product.view');else expect((await tx.select().from(storeProduct).where(eq(storeProduct.id,80)))[0].commandWord).toBe('tampered');}throw marker;
+    })).rejects.toBe(marker);
+    wiring.container=writer.container;const before=await f.snapshot();const result=await call(80,await f.body({code:'DESIRED',...(sku?{store_label_id:[31]}:{})}));expect(result.status).not.toBe(200);expect(await f.snapshot()).toEqual(before);
+  }));
+  it('rolls back a late ERP enable after an executable positive control even when the main code was omitted',async()=>f.withSettingsWriter(async writer=>{
+    await f.exec("CREATE FUNCTION owned_code_config() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN IF NEW.product_id=80 THEN INSERT INTO system_config(menu_name,value,is_store) VALUES('erp_open','1',0);END IF;RETURN NEW;END $$;CREATE TRIGGER owned_code_config AFTER INSERT OR UPDATE ON store_product_description FOR EACH ROW EXECUTE FUNCTION owned_code_config()");
+    const marker=Error('owned config positive rollback');await expect(f.db.transaction(async tx=>{await tx.update(storeProductDescription).set({description:'positive'}).where(eq(storeProductDescription.productId,80));expect((await tx.select().from(codeConfig).where(eq(codeConfig.menuName,'erp_open')))[0].value).toBe('1');throw marker;})).rejects.toBe(marker);
+    wiring.container=writer.container;const before=await f.snapshot(),result=await call(80,await f.body());expect(result.status).toBe(409);expect(await f.snapshot()).toEqual(before);
+  }));
+});
+
+
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier product code actual registered runtime HTTP',()=>{
+  it('uses actual independent App and Admin LOGIN profiles to author preserve qualify and publish product code for every Supplier fulfillment',async()=>{
+    const network=vi.spyOn(globalThis,'fetch').mockRejectedValue(Error('Owned code lifecycle forbids ERP providers'));const f=await refundRuntimeFixture();
+    try{
+      await f.db.update(pricingSupplier).set({adminId:21,isShow:1,isDel:0}).where(eq(pricingSupplier.id,7));
+      const password='owned-settings-supplier-password',reviewPassword='owned-settings-review-password';await f.db.insert(systemAdmin).values([{id:21,account:'owned-settings-supplier',pwd:password,adminType:4,relationId:7,status:1,isDel:0},{id:101,account:'owned-settings-review',pwd:reviewPassword,adminType:1,relationId:0,level:0,status:1,isDel:0}]);
+      await f.db.insert(pricingCategory).values({id:800001,type:2,relationId:7,cateName:'本地视频设置分类',isShow:1});
+      await f.exec("SELECT setval(pg_get_serial_sequence('store_product','id'),800010,true);SELECT setval(pg_get_serial_sequence('store_product_attr_value','id'),800010,true)");
+      const env={...f.env,NODE_ENV:'test',APP_KEY:'owned-supplier-code-key',UPSTASH_REDIS_URL:'',UPSTASH_REDIS_TOKEN:''} as unknown as Env;
+      const supplierToken=(await createToken(21,'supplier',md5(password),env.APP_KEY)).token,reviewToken=(await createToken(101,'admin',md5(reviewPassword),env.APP_KEY)).token;
+      if(!f.withRuntimeRole)throw Error('Actual independent runtime LOGINs required');
+      await f.withRuntimeRole(appRole=>f.withRuntimeRole!(async adminRole=>{
+        const [database]=await f.db.execute(sql`SELECT current_database() AS name`),names={app:appRole.role,admin:adminRole.role,maintenance:'finance_test',database:String(database.name),pricingOwner:f.pricingOwner};
+        await runRuntimeBusinessCommissioning(f.db,names);expect((await runRoutinePaymentRuntimeInstallation(f.db,names)).after.ready).toBe(true);
+        expect(await auditRuntimeBusinessPrivileges(appRole.db,'app',names)).toMatchObject({ready:true,failures:[]});expect(await auditRuntimeBusinessPrivileges(adminRole.db,'admin',names)).toMatchObject({ready:true,failures:[]});
+        const container=createContainerFromDb(appRole.db);wiring.container=container;wiring.moderator=createContainerFromDb(adminRole.db);
+        async function request(method:string,path:string,body?:object,token:string|null=supplierToken){const tasks:Promise<unknown>[]=[];const response=await app.request(path,{method,headers:{...(token?{Authorization:'Bearer '+token}:{}),...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})},env,{waitUntil:task=>{tasks.push(task);},passThroughOnException(){},props:{}});await Promise.all(tasks);const result=await response.json<Envelope>();if(result.status===500)throw Error('Actual code HTTP failed',{cause:settingsHttpErrors.at(-1)});return result;}
+        async function ok(method:string,path:string,body?:object,token:string|null=supplierToken){const result=await request(method,path,body,token);expect(result.status,result.msg).toBe(200);return result.data;}
+
+        await f.db.delete(codeConfig).where(sql`${codeConfig.menuName}='erp_open' AND ${codeConfig.isStore}=0`);await f.db.insert(codeConfig).values({menuName:'erp_open',value:'1',isStore:0});
+        const [rights]=await appRole.db.execute(sql`SELECT current_user=session_user AS independent,has_table_privilege(current_user,'system_config','UPDATE') AS config_edit`);expect(rights).toEqual({independent:true,config_edit:false});
+        for(const productType of [0,1,3]){
+          const body={product_type:productType,store_name:'实际商品编码 '+productType,cate_id:[800001],slider_image:['/supplier-code.png'],spec_type:0,freight:1,is_postage:1,is_sub:[],code:productType===0?'INITIAL-CODE-0':'',attrs:[{code:'OWNED-SKU-CODE-'+productType,price:'10.00',settle_price:'1.00',vip_price:'0.00',stock:8,...(productType===1?{delivery_mode:'fixed',disk_info:'Owned code fixed content'}:{})}]};
+          if(productType===0){expect((await request('POST','/supplierapi/product/product/0',{...body,code:''})).status).toBe(400);expect((await request('POST','/supplierapi/product/product/0',{...body,attrs:[{...body.attrs[0],code:''}]})).status).toBe(400);}
+          const made=await ok('POST','/supplierapi/product/product/0',body),id=Number(made.id),path='/supplierapi/product/product/'+id,publicPath='/api/product/detail/'+id;
+          const review=()=>ok('POST','/adminapi/product/product/set_verify/'+id,{is_verify:1,is_show:1,refusal:'',auto_on_time:''},reviewToken);
+          let detail=await ok('GET',path);expect(detail.code_selection).toEqual({version:1,code:body.code,erp_open:true});expect(detail).not.toHaveProperty('code');const {code:_code,...legacyBody}=body;
+          await ok('POST',path,{...legacyBody,attrs:detail.attrs,store_name:'无关名称修改 '+productType});expect((await ok('GET',path)).code_selection.code).toBe(body.code);
+          const finalCode='FINAL-CODE-'+productType;await ok('POST',path,{...legacyBody,attrs:detail.attrs,code:finalCode});expect((await request('GET',publicPath,undefined,null)).status).not.toBe(200);await review();
+          const visible=await ok('GET',publicPath,undefined,null);expect(visible).not.toHaveProperty('code_selection');expect(JSON.stringify(visible)).not.toContain(finalCode);expect(JSON.stringify(visible)).not.toContain('OWNED-SKU-CODE-'+productType);expect((await ok('GET',path)).code_selection.code).toBe(finalCode);
+          const [row]=await f.db.select().from(storeProduct).where(eq(storeProduct.id,id));expect(row).toMatchObject({code:finalCode,isShow:1,isVerify:1});detail=await ok('GET',path);
+          if(productType===0){const before=await f.db.select().from(storeProduct).where(eq(storeProduct.id,id)),skus=await f.db.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.productId,id));expect((await request('POST',path,{...legacyBody,attrs:detail.attrs,code:''})).status).toBe(400);expect(await f.db.select().from(storeProduct).where(eq(storeProduct.id,id))).toEqual(before);expect(await f.db.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.productId,id))).toEqual(skus);}
+          else{await ok('POST',path,{...legacyBody,attrs:detail.attrs,code:''});expect((await ok('GET',path)).code_selection.code).toBe('');}
+        }
+      }));expect(network).not.toHaveBeenCalled();
+    }finally{wiring.container=null;wiring.moderator=null;network.mockRestore();await f.close();}
+  },180000);
+});

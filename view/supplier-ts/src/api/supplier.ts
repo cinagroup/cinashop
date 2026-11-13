@@ -1,3 +1,4 @@
+import { productCodeValue } from '@/utils/productCode';
 import { ApiError, apiRequest } from "./http";
 import { parseSupplierRefundDetail } from '@/utils/refundDetail';
 import { parsePickingSheets } from '@/utils/pickingSheet';
@@ -168,7 +169,9 @@ const previewProductDetails = new Map<number, ProductDetail>([
 ]);
 
 function clonePreviewDetail(detail: ProductDetail): ProductDetail {
-  return JSON.parse(JSON.stringify(detail)) as ProductDetail;
+  const copy = JSON.parse(JSON.stringify(detail)) as ProductDetail;
+  copy.code_selection ??= { version: 1, code: typeof copy.code === 'string' ? copy.code : '', erp_open: false };
+  return copy;
 }
 
 function defaultPreviewDetail(id: number): ProductDetail {
@@ -815,6 +818,9 @@ export async function saveProduct(id: number, data: ProductDetail, signal?: Abor
     const savedId = id || Math.max(...previewProducts.map((item) => item.id)) + 1;
     const selected = (data as ProductDetail & { is_sub?: number[] }).is_sub;
     const saved = clonePreviewDetail({ ...data, ...(Array.isArray(selected) ? { price_selection: { version: 1 as const, is_vip: selected.includes(0) ? 1 as const : 0 as const, is_sub: selected.includes(1) ? 1 as const : 0 as const } } : {}), id: savedId, is_show: 0, is_verify: 0 });
+    const previousCodeDetail = previewProductDetails.get(savedId), previousCode = previousCodeDetail?.code_selection?.code ?? (typeof previousCodeDetail?.code === 'string' ? previousCodeDetail.code : '');
+    saved.code_selection = { version: 1, code: Object.hasOwn(data, 'code') && data.code !== undefined ? productCodeValue(data.code) : previousCode, erp_open: false };
+    Reflect.deleteProperty(saved, 'code');
     const intent = data as ProductDetail & { is_vip_product?: number; is_presale_product?: number; presale_time?: number[]; presale_day?: number };
     const couponIntent = data as ProductDetail & { coupon_ids?: number[] };
     saved.coupon_selection = couponIntent.coupon_ids === undefined

@@ -55,7 +55,7 @@ export async function supplierProductScheduleFixture() {
     if (first.id !== 80 || second.id !== 81 || foreign.id !== 90) throw Error('Owned schedule product IDs changed');
     const now = Math.floor(Date.now() / 1000), initialOn = now + 3600, initialOff = now + 7200;
     await f.exec(`UPDATE public.store_product SET auto_on_time=${initialOn},auto_off_time=${initialOff},is_verify=1 WHERE id=80`);
-    const readNames = ['system_store', 'system_admin', 'system_supplier', 'system_role', 'system_menus', 'store_product', 'store_product_attr',
+    const readNames = ['system_config', 'system_store', 'system_admin', 'system_supplier', 'system_role', 'system_menus', 'store_product', 'store_product_attr',
       'store_product_attr_value', 'store_product_relation', 'store_product_description', 'system_attachment', 'store_product_category', 'store_coupon_issue', 'store_product_coupon', 'user_label'];
     const withReader = <T>(work: (runtime: SupplierProductScheduleRuntime) => Promise<T>) => f.withRuntimeRole!(async peer => {
       await f.exec(`GRANT SELECT ON ${readNames.map(name => 'public."' + name + '"').join(',')} TO "${peer.role}"`);

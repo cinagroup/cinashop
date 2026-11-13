@@ -612,7 +612,7 @@ export async function saveProduct(c: SupplierContext) {
   const productId = Number(c.req.param("id"));
   if (!Number.isInteger(productId) || productId < 0) throw new ValidateException("商品ID错误");
   const input = await readBoundedJsonObject(c);
-  const labelActor = ['recommend_list', 'command_word', 'video_open', 'store_label_id', 'label_id', 'labelIds', 'auto_on_time', 'auto_off_time', 'brand_id', 'ensure_id', 'specs_id', 'specs', 'system_form_id', 'recommend_image', 'is_sub', 'give_integral', 'coupon_ids', 'is_vip_product', 'is_presale_product', 'presale_time', 'presale_day'].some(key => Object.hasOwn(input, key)) ? await categoryActor(c) : undefined;
+  const labelActor = await categoryActor(c);
   const result = await productManagementService(c).saveProduct(
     supplierId,
     productId,
@@ -625,7 +625,7 @@ export async function saveProduct(c: SupplierContext) {
 export async function createProduct(c: SupplierContext) {
   const { supplierId } = supplierIdentity(c);
   const input = await readBoundedJsonObject(c);
-  const labelActor = ['recommend_list', 'command_word', 'video_open', 'store_label_id', 'label_id', 'labelIds', 'auto_on_time', 'auto_off_time', 'brand_id', 'ensure_id', 'specs_id', 'specs', 'system_form_id', 'recommend_image', 'is_sub', 'give_integral', 'coupon_ids', 'is_vip_product', 'is_presale_product', 'presale_time', 'presale_day'].some(key => Object.hasOwn(input, key)) ? await categoryActor(c) : undefined;
+  const labelActor = await categoryActor(c);
   const result = await productManagementService(c).saveProduct(
     supplierId,
     0,

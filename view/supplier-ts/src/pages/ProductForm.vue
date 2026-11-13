@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { productCodeEditor, productCodePayload, productCodeValue } from '@/utils/productCode';
 import { productSettingsEditor, productSettingsPayload } from '@/utils/productSettings';
 import SupplierProductUserLabelPicker from '@/components/SupplierProductUserLabelPicker.vue';
 import { productUserLabelEditor, productUserLabelPayload, productUserLabelIds } from '@/utils/productUserLabels';
@@ -286,6 +287,12 @@ function initialForm(): ProductDetail {
   };
 }
 
+const productCode = reactive(productCodeEditor(undefined, true));
+const codeDisabled = computed(() => !productCode.ready || loading.value || saving.value || !productReadReady.value || mediaInvalidated.value || !canManageProducts.value || copying.value);
+function changeProductCode(value: string) {
+  if (codeDisabled.value || !mediaSession.isCurrent()) return;
+  productCode.code = value; productCode.changed = true;
+}
 const settings = reactive(productSettingsEditor(undefined, true));
 const settingsDisabled = computed(() => !settings.ready || loading.value || saving.value || !productReadReady.value || mediaInvalidated.value || !canManageProducts.value || copying.value);
 function changeCommandWord(value:string) {
@@ -311,6 +318,7 @@ const purchase = reactive(productPurchaseEditor(undefined, true));
 const form = reactive<ProductDetail>(initialForm());
 const priceOptions = ref<number[]>([]), priceOptionsReady = ref(true);
 function resetProductForm() {
+  Object.assign(productCode, productCodeEditor(undefined, true));
   Object.assign(settings, productSettingsEditor(undefined, true));
   Object.assign(userLabels, productUserLabelEditor(undefined, true));
   Object.assign(coupons, productCouponEditor(undefined, true));
@@ -345,6 +353,7 @@ function editableSku(sku: ProductSku, productType: ProductDetail['product_type']
 }
 
 function applyProductDetail(detail: ProductDetail) {
+  Object.assign(productCode, productCodeEditor(detail.code_selection));
   Object.assign(settings, productSettingsEditor(detail.settings_selection));
   Object.assign(userLabels, productUserLabelEditor(detail.user_label_selection));
   Object.assign(coupons, productCouponEditor(detail.coupon_selection));
@@ -658,7 +667,11 @@ async function submit() {
       ...sku,
       disk_info: form.product_type === 1 && delivery_mode === "fixed" ? sku.disk_info?.trim() ?? "" : "",
     }));
-    const { media: _preview, store_label_id: _originalLabels, video_preview_url: _videoPreview, retired_attrs: _retired,
+    if (!copying.value && productCode.ready && productCode.erpOpen === true && form.product_type === 0) {
+      if (!productCodeValue(productCode.code)) throw Error('开启ERP时须填写商品编码');
+      if (attrs.some(sku => !sku.code?.trim())) throw Error('开启ERP时每个SKU均须填写编码');
+    }
+    const { code: _legacyProductCode, code_selection: _codeSelection, media: _preview, store_label_id: _originalLabels, video_preview_url: _videoPreview, retired_attrs: _retired,
       auto_on_time: _autoOn, auto_off_time: _autoOff, brand_id: _originalBrand, brand_selection: _brandSelection, ensure_id: _originalEnsures, ensure_selection: _ensureSelection,
       specs_id: _originalTemplate, specs: _originalParameters, specs_selection: _parameterSelection,
       system_form_id: _originalSystemForm, system_form_selection: _systemFormSelection, recommend_image: _originalRecommendImage, price_selection: _priceSelection, purchase_selection: _purchaseSelection,
@@ -669,7 +682,7 @@ async function submit() {
       coupon_selection: _couponSelection, coupon_ids: _couponIds, coupons: _legacyCoupons,
       is_vip_product: _memberOnly, is_presale_product: _presale, presale_time: _presalePeriod, presale_day: _presaleDays,
       ...editableForm } = form as ProductDetail & { video_preview_url?: unknown; coupon_ids?: unknown; coupons?: unknown; give_integral?: unknown; is_vip_product?: unknown; is_presale_product?: unknown; presale_time?: unknown; presale_day?: unknown };
-    const payload = { ...editableForm, attrs, ...(!copying.value ? { ...productPriceOptionsPayload(priceOptions.value, priceOptionsReady.value), ...productPurchasePayload(purchase), ...productIntegralPayload(integral), ...productCouponPayload(coupons), ...productUserLabelPayload(userLabels), ...productSettingsPayload(settings) } : {}), ...(labelsChanged.value ? { store_label_id: [...selectedLabelIds.value] } : {}),
+    const payload = { ...editableForm, attrs, ...(!copying.value ? { ...productCodePayload(productCode), ...productPriceOptionsPayload(priceOptions.value, priceOptionsReady.value), ...productPurchasePayload(purchase), ...productIntegralPayload(integral), ...productCouponPayload(coupons), ...productUserLabelPayload(userLabels), ...productSettingsPayload(settings) } : {}), ...(labelsChanged.value ? { store_label_id: [...selectedLabelIds.value] } : {}),
       ...(!copying.value ? { ...productRecommendImagePayload(form.recommend_image, recommendImageChanged.value), ...productSchedulePayload(schedule), ...productBrandPayload(selectedBrandPath.value, brandChanged.value), ...productEnsurePayload(selectedEnsureIds.value, ensuresChanged.value), ...productParameterPayload(parameterDraft.value, parametersChanged.value), ...productSystemFormPayload(selectedSystemFormId.value, systemFormChanged.value) } : {}) };
     if (copying.value) {
       if (!copyContext.value || copyContext.value.source_id !== copyEntry.value.source) throw Error('请重新读取复制来源');
@@ -854,6 +867,14 @@ onMounted(load);
               <el-form-item class="wide" label="商品标签"><SupplierProductLabelPicker :model-value="selectedLabelIds" :context="copyEntry.source || productId" :disabled="loading || saving || copyBlocked || !canManageProducts" @update:model-value="selectedLabelIds = $event; labelsChanged = true" @availability="labelAvailability = $event" /></el-form-item>
               <el-form-item label="搜索关键词"><el-input v-model="form.keyword" maxlength="256" placeholder="多个关键词可用逗号分隔" /></el-form-item>
               <el-form-item label="商品条码"><el-input v-model="form.bar_code" maxlength="15" /></el-form-item>
+              <el-form-item v-if="!copying" label="商品编码">
+                <el-input :model-value="productCode.code" aria-label="商品编码" :disabled="codeDisabled" @update:model-value="changeProductCode" />
+                <p class="security-note">{{ [...productCode.code].length }} / 50。ERP启用时，实物商品及每个SKU均须填写编码。</p>
+                <p v-if="!productCode.ready" class="security-note">尚未读取商品编码，请重新读取后再调整。</p>
+                <p v-else-if="productCode.erpOpen === true && form.product_type === 0" class="security-note">ERP已启用，请同时核对规格表中的SKU编码。</p>
+                <p v-else-if="productCode.erpOpen === null" class="security-note">ERP开关状态待核对，保存时由服务器检查。</p>
+              </el-form-item>
+              <p v-else class="security-note">复制保留来源商品编码，创建后可在编辑页调整。</p>
             </div>
           </el-form>
         </article>

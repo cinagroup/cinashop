@@ -75,7 +75,8 @@ export async function saveProductCopy(pending: PendingProductCopy, copy: Product
   if (!previewMode) return parseProductCopyReceipt(await apiRequest({ method: 'POST', url: `/product/product/copy/${pending.source_id}`,
     data: { operation_id: pending.operation_id, copy_token: copy.token, product } }), pending);
   const previous = previewReceipts.get(pending.operation_id); if (previous) return parseProductCopyReceipt(previous, pending);
-  const saved = await saveProduct(0, product);
+  const source = await getProductCopySeed(pending.source_id, pending.supplier_id);
+  const saved = await saveProduct(0, { ...product, code: source.product.code_selection?.code ?? '' });
   const receipt: ProductCopyReceipt = { ...pending, state: 'committed', result: { id: saved.id, is_show: 0, is_verify: 0 } };
   previewReceipts.set(pending.operation_id, receipt); return receipt;
 }
