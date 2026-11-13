@@ -83,6 +83,8 @@
         </el-descriptions>
       </el-card>
 
+      <AdminOrderHistory class="section" :id="order.id" :order-no="order.orderId" />
+
       <!-- 商品列表 -->
       <el-card class="section" shadow="never">
         <template #header>{{ order.pid === -1 ? '原支付单商品历史' : '当前订单商品明细' }}</template>
@@ -152,6 +154,7 @@ import { ref, computed, watch, onBeforeUnmount } from "vue";
 import { useRoute, onBeforeRouteLeave } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import AdminOrderEditDialog from '@/components/AdminOrderEditDialog.vue';
+import AdminOrderHistory from '@/components/AdminOrderHistory.vue';
 import {
   apiAdminOrderDetail,
   apiAdminWriteoff,

@@ -7,6 +7,7 @@ import type { AdminUser } from "@/types/admin";
 import { orderNumber, parseAdminOrderList, parseAdminOrderDetail, parseAdminOrderChart, type AdminOrderQuery } from '@/utils/orderRead';
 import { sendOrderRequest } from '@/utils/orderRequest';
 import { parseAdminOrderEditForm, type AdminOrderEditForm } from '@/utils/orderEdit';
+import { parseAdminOrderHistory, type AdminOrderHistoryQuery } from '@/utils/orderHistory';
 
 // ─── 订单管理 ───────────────────────────────────────────────
 export async function apiAdminOrderChart(signal?: AbortSignal) {
@@ -22,6 +23,13 @@ export async function apiAdminOrderList(params: AdminOrderQuery, signal?: AbortS
 export async function apiAdminOrderDetail(orderId: string, signal?: AbortSignal) {
   orderNumber(orderId);
   return parseAdminOrderDetail(await sendOrderRequest(`/order/detail/${orderId}`, 'get', undefined, undefined, signal), orderId);
+}
+
+export async function apiAdminOrderHistory(id: number, orderNo: string, query: AdminOrderHistoryQuery, signal?: AbortSignal) {
+  if (!Number.isSafeInteger(id) || id <= 0 || id > 2_147_483_647) throw Error('订单主键无效');
+  orderNumber(orderNo);
+  return parseAdminOrderHistory(await sendOrderRequest(`/order/history/${id}`, 'get', undefined,
+    { order_id: orderNo, ...query }, signal), id, orderNo, query);
 }
 
 export function apiAdminOrderRemark(orderId: string, remark: string): Promise<null> {

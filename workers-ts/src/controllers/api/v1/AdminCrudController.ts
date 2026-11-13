@@ -1,4 +1,5 @@
 import { AdminOrderEditService } from '@/services/admin/AdminOrderEditService';
+import { AdminOrderHistoryService } from '@/services/admin/AdminOrderHistoryService';
 import { AdminOrderRemarkService } from '@/services/admin/AdminOrderRemarkService';
 import { isWechatOpenConfigKey } from '../../../../../view/common/wechatOpen';
 import { isWechatAppConfigKey } from '../../../../../view/common/wechatApp';
@@ -429,6 +430,16 @@ export async function adminLegacyOrderUpdate(c: C) {
   await new AdminOrderEditService(c.get('container'), c.env.APP_KEY).save(c.req.param('id'),
     await readBoundedJsonObject(c.req.raw, 4096), systemAuthorityActor(c));
   return jsonOk(c, null, '修改成功');
+}
+
+export async function adminLegacyOrderStatus(c: C) {
+  return jsonOk(c, await new AdminOrderHistoryService(c.get('container'), c.env.APP_KEY)
+    .legacy(c.req.param('id'), systemAuthorityActor(c)));
+}
+export async function adminOrderHistory(c: C) {
+  if (Object.values(c.req.queries()).some(values => values.length !== 1)) throw new ValidateException('订单记录查询参数重复');
+  return jsonOk(c, await new AdminOrderHistoryService(c.get('container'), c.env.APP_KEY)
+    .page(c.req.param('id'), c.req.query(), systemAuthorityActor(c)));
 }
 
 /** POST /api/admin/order/delivery/:orderId — 发货 */

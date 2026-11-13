@@ -1858,6 +1858,8 @@ v1Routes.get("/admin/order/chart", adminAuth, AdminCrud.adminOrderChart);
 v1Routes.get("/admin/order/list", adminAuth, AdminCrud.adminOrderList);
 v1Routes.get("/admin/order/detail/:orderId", adminAuth, AdminCrud.adminOrderDetail);
 v1Routes.get("/admin/order/edit/:id", AdminCrud.privateAdminOrderRemarkResponse, adminAuth, AdminCrud.adminLegacyOrderEdit);
+v1Routes.get('/admin/order/status/:id', AdminCrud.privateAdminOrderRemarkResponse, adminAuth, AdminCrud.adminLegacyOrderStatus);
+v1Routes.get('/admin/order/history/:id', AdminCrud.privateAdminOrderRemarkResponse, adminAuth, AdminCrud.adminOrderHistory);
 v1Routes.put("/admin/order/update/:id", AdminCrud.privateAdminOrderRemarkResponse, adminAuth, AdminCrud.adminLegacyOrderUpdate);
 v1Routes.get("/admin/order/cart/:uid", adminAuth, AdminController.adminAssistedCartList);
 v1Routes.post("/admin/order/cart/add/:uid", adminAuth, AdminController.adminAssistedCartAdd);

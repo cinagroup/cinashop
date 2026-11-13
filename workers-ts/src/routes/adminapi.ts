@@ -541,6 +541,8 @@ adminapiRoutes.get("/order/chart", adminAuth, AdminCrud.adminOrderChart);
 adminapiRoutes.get("/order/list", adminAuth, AdminCrud.adminOrderList);
 adminapiRoutes.get("/order/detail/:id", adminAuth, AdminCrud.adminOrderDetail);
 adminapiRoutes.get("/order/edit/:id", AdminCrud.privateAdminOrderRemarkResponse, adminAuth, AdminCrud.adminLegacyOrderEdit);
+adminapiRoutes.get('/order/status/:id', AdminCrud.privateAdminOrderRemarkResponse, adminAuth, AdminCrud.adminLegacyOrderStatus);
+adminapiRoutes.get('/order/history/:id', AdminCrud.privateAdminOrderRemarkResponse, adminAuth, AdminCrud.adminOrderHistory);
 adminapiRoutes.put("/order/update/:id", AdminCrud.privateAdminOrderRemarkResponse, adminAuth, AdminCrud.adminLegacyOrderUpdate);
 adminapiRoutes.post("/order/remark/:id", AdminCrud.privateAdminOrderRemarkResponse, adminAuth, AdminCrud.adminOrderRemark);
 adminapiRoutes.put("/order/remark/:id", AdminCrud.privateAdminOrderRemarkResponse, adminAuth, AdminCrud.adminLegacyOrderRemark);
