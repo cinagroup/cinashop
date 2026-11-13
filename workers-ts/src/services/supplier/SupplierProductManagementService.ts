@@ -1,3 +1,4 @@
+import { productCreationDefaults } from '@/services/product/ProductCreationDefaults';
 import { supplierProductCodeInput, readSupplierProductCode, lockSupplierProductCodePolicy, supplierProductCodePlan } from './SupplierProductCode';
 import { productRecommendationInput } from '@/services/product/ProductRecommendationInput';
 import { readSupplierProductRecommendations, assertSupplierProductRecommendations } from './SupplierProductRecommendations';
@@ -550,10 +551,10 @@ export class SupplierProductManagementService {
       const now = Math.floor(Date.now() / 1000);
       // Internal SPU is generated only on creation. Historical values, including
       // empty or nonnumeric legacy values, remain server-owned on every edit.
-      const expectedSpu = existing?.spu ?? [...crypto.getRandomValues(new Uint8Array(13))]
-        .map(value => value % 10).join('');
+      const creationState = existing ? { star: existing.star, spu: existing.spu } : productCreationDefaults();
+      const expectedSpu = creationState.spu;
       const productValues = {
-        ...(existing ? {} : { spu: expectedSpu }),
+        ...(existing ? {} : creationState),
         productType: input.productType,
         type: SUPPLIER_TYPE,
         relationId: supplierId,
@@ -819,7 +820,7 @@ export class SupplierProductManagementService {
       // Check after every requested author and deferred trigger, so a successful
       // ordinary save cannot return with a rewritten generated/preserved SPU.
       await tx.execute(sql`SET CONSTRAINTS ALL IMMEDIATE`);
-      const [spuRow] = await tx.select({ id: storeProduct.id, spu: storeProduct.spu,
+      const [spuRow] = await tx.select({ id: storeProduct.id, spu: storeProduct.spu, star: storeProduct.star,
         type: storeProduct.type, relationId: storeProduct.relationId, productType: storeProduct.productType,
         isDel: storeProduct.isDel, isShow: storeProduct.isShow, isVerify: storeProduct.isVerify })
         .from(storeProduct).where(eq(storeProduct.id, savedProductId)).limit(1);
@@ -827,6 +828,9 @@ export class SupplierProductManagementService {
         || spuRow.relationId !== supplierId || spuRow.productType !== input.productType
         || spuRow.isDel !== 0 || spuRow.isShow !== 0 || spuRow.isVerify !== 0) {
         throw new HttpApiException('商品内部 SPU 保存核对失败，请刷新后重试', 409, 409);
+      }
+      if (spuRow.star !== creationState.star) {
+        throw new HttpApiException('商品评分保存核对失败，请刷新后重试', 409, 409);
       }
       return { id: savedProductId, is_verify: 0, is_show: 0 };
     }).catch((error: unknown) => {

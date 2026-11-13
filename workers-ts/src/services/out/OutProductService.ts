@@ -1,3 +1,4 @@
+import { productCreationDefaults } from '@/services/product/ProductCreationDefaults';
 import { productRecommendationInput as recommendationInput } from '@/services/product/ProductRecommendationInput';
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import type { Container, DbClient } from "@/lib/di";
@@ -31,7 +32,7 @@ import { outProductPriceAttrs, outProductPriceOptions } from './OutProductPriceO
 import { outProductSettingsInput, admitOutProductSettings, type OutProductSettingsInput } from './OutProductSettings';
 import type { SecondCardSkuConfiguration } from '@/services/product/ProductSkuEditorService';
 import { PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE } from "@/services/product/ProductSkuIdentity";
-import { NotFoundException, ValidateException } from "@/utils/errors";
+import { HttpApiException, NotFoundException, ValidateException } from "@/utils/errors";
 import { normalizeOutRequestKey, outRequestHash } from "@/services/out/OutIdempotency";
 import { supplierProductBrandInput, lockSupplierProductBrandPath } from '@/services/supplier/SupplierProductBrandBindings';
 import { assertOutProductBrandBindings, replaceOutProductBrandBindings } from './OutProductBrandBindings';
@@ -612,6 +613,7 @@ export class OutProductService {
         : await inventoryLock(() => lockOutProductParameterTemplate(tx, parameters.specs_id));
       const admittedForm = systemFormId === undefined ? undefined
         : await inventoryLock(() => lockOutProductSystemForm(tx, systemFormId));
+      const creationState = existing ? { star: existing.star, spu: existing.spu } : productCreationDefaults();
       const productValues = {
         ...(input.merUse === undefined ? {} : { merUse: input.merUse }),
         ...(input.commandWord === undefined ? {} : { commandWord: input.commandWord }),
@@ -691,7 +693,8 @@ export class OutProductService {
             ...productValues,
             addTime: now,
             isDel: 0,
-            spu: generateOpaque(13),
+            spu: creationState.spu,
+            star: creationState.star,
           })
           .returning({ id: storeProduct.id });
         savedProductId = rows[0].id;
@@ -708,9 +711,11 @@ export class OutProductService {
       const expectedVip = input.isVip ?? existing?.isVip ?? 0;
       const expectedSub = input.isSub ?? existing?.isSub ?? 0;
       const assertProductSelections = async () => {
-        const [row] = await tx.select({ activity: storeProduct.activity, recommendList: storeProduct.recommendList,
+        const [row] = await tx.select({ star: storeProduct.star, spu: storeProduct.spu, activity: storeProduct.activity, recommendList: storeProduct.recommendList,
           isVipProduct: storeProduct.isVipProduct, isVip: storeProduct.isVip, isSub: storeProduct.isSub }).from(storeProduct)
           .where(eq(storeProduct.id, savedProductId)).limit(1);
+        if (row && (row.star !== creationState.star || row.spu !== creationState.spu))
+          throw new HttpApiException('商品初始信息保存核对失败，请刷新后重试', 409, 409);
         if (!row || row.activity !== expectedActivity) throw new ValidateException('平台商品活动顺序已变化');
         if (row.recommendList !== expectedRecommendations) throw new ValidateException('平台推荐商品列表已变化');
         if (row.isVipProduct !== expectedVipProduct) throw new ValidateException('平台商品会员专属状态已变化');

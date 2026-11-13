@@ -1,3 +1,4 @@
+import { productCreationDefaults } from './ProductCreationDefaults';
 import { and, asc, desc, eq, inArray, or, sql } from "drizzle-orm";
 import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
@@ -770,6 +771,7 @@ export class ProductAssociationService {
       } : {}),
     };
 
+    const creationState = !existing && !context.legacy ? productCreationDefaults() : undefined;
     let savedProductId = productId;
     if (existing) {
       const updated = await tx.update(storeProduct).set(values).where(and(
@@ -791,7 +793,7 @@ export class ProductAssociationService {
           star: context.legacy.creation.star,
           spu: context.legacy.creation.spu,
           codePath: '',
-        } : {}),
+        } : creationState ? { ...creationState, codePath: '' } : {}),
       }).returning({ id: storeProduct.id });
       if (!inserted[0]) throw new Error("商品创建后未返回ID");
       savedProductId = inserted[0].id;
@@ -833,6 +835,21 @@ export class ProductAssociationService {
       }, skuPayload, now);
     }
     if (context.audit === 'primitive') await writeAudit(tx, actor, existing ? "update" : "create", savedProductId, now);
+    if (!context.legacy) {
+      // The mature legacy caller owns its full-row proof. The primitive API
+      // settles its own audit/SKU triggers before preserving creation metadata.
+      await tx.execute(sql`SET CONSTRAINTS ALL IMMEDIATE`);
+      const [finalProduct] = await tx.select({ star: storeProduct.star, spu: storeProduct.spu,
+        type: storeProduct.type, relationId: storeProduct.relationId, productType: storeProduct.productType,
+        isDel: storeProduct.isDel }).from(storeProduct).where(eq(storeProduct.id, savedProductId)).limit(1);
+      const expected = existing ?? creationState;
+      if (!finalProduct || !expected || finalProduct.star !== expected.star || finalProduct.spu !== expected.spu
+        || finalProduct.type !== owner.type || finalProduct.relationId !== owner.relationId
+        || finalProduct.productType !== productType || finalProduct.isDel !== 0) {
+        throw new HttpApiException('商品初始信息保存核对失败，请刷新后重试', 409, 409);
+      }
+    }
+
     return {
       id: savedProductId,
       associations_verified: associations !== null,
