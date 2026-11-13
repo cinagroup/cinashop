@@ -548,7 +548,12 @@ export class SupplierProductManagementService {
       const otPrice = minMoney(input.skus.map((sku) => sku.otPrice));
       const vipPrice = minMoney(input.skus.map((sku) => sku.vipPrice));
       const now = Math.floor(Date.now() / 1000);
+      // Internal SPU is generated only on creation. Historical values, including
+      // empty or nonnumeric legacy values, remain server-owned on every edit.
+      const expectedSpu = existing?.spu ?? [...crypto.getRandomValues(new Uint8Array(13))]
+        .map(value => value % 10).join('');
       const productValues = {
+        ...(existing ? {} : { spu: expectedSpu }),
         productType: input.productType,
         type: SUPPLIER_TYPE,
         relationId: supplierId,
@@ -810,6 +815,18 @@ export class SupplierProductManagementService {
         if (hasCode && !settingsMain) throw new HttpApiException('商品编码主记录核对失败', 409, 409);
         await codePlan.assert(tx, supplierId, savedProductId, hasCode ? settingsMain : undefined);
         if (hasCode) await labelAuthority.assertBindingAuthority(tx, supplierId, actor!, labelPath);
+      }
+      // Check after every requested author and deferred trigger, so a successful
+      // ordinary save cannot return with a rewritten generated/preserved SPU.
+      await tx.execute(sql`SET CONSTRAINTS ALL IMMEDIATE`);
+      const [spuRow] = await tx.select({ id: storeProduct.id, spu: storeProduct.spu,
+        type: storeProduct.type, relationId: storeProduct.relationId, productType: storeProduct.productType,
+        isDel: storeProduct.isDel, isShow: storeProduct.isShow, isVerify: storeProduct.isVerify })
+        .from(storeProduct).where(eq(storeProduct.id, savedProductId)).limit(1);
+      if (!spuRow || spuRow.spu !== expectedSpu || spuRow.type !== SUPPLIER_TYPE
+        || spuRow.relationId !== supplierId || spuRow.productType !== input.productType
+        || spuRow.isDel !== 0 || spuRow.isShow !== 0 || spuRow.isVerify !== 0) {
+        throw new HttpApiException('商品内部 SPU 保存核对失败，请刷新后重试', 409, 409);
       }
       return { id: savedProductId, is_verify: 0, is_show: 0 };
     }).catch((error: unknown) => {
