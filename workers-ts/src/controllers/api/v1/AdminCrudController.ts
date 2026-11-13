@@ -1,3 +1,4 @@
+import { AdminOrderEditService } from '@/services/admin/AdminOrderEditService';
 import { AdminOrderRemarkService } from '@/services/admin/AdminOrderRemarkService';
 import { isWechatOpenConfigKey } from '../../../../../view/common/wechatOpen';
 import { isWechatAppConfigKey } from '../../../../../view/common/wechatApp';
@@ -418,6 +419,16 @@ export async function adminLegacyOrderRemark(c: C) {
   await new AdminOrderRemarkService(c.get('container')).byPrimaryId(systemAuthorityActor(c), c.req.param('id'),
     await readBoundedJsonObject(c.req.raw, 8 * 1024));
   return jsonOk(c, null, '备注成功');
+}
+
+/** PHP desktop uses the internal primary ID and the original six fields. */
+export async function adminLegacyOrderEdit(c: C) {
+  return jsonOk(c, await new AdminOrderEditService(c.get('container'), c.env.APP_KEY).form(c.req.param('id'), systemAuthorityActor(c)));
+}
+export async function adminLegacyOrderUpdate(c: C) {
+  await new AdminOrderEditService(c.get('container'), c.env.APP_KEY).save(c.req.param('id'),
+    await readBoundedJsonObject(c.req.raw, 4096), systemAuthorityActor(c));
+  return jsonOk(c, null, '修改成功');
 }
 
 /** POST /api/admin/order/delivery/:orderId — 发货 */

@@ -40,7 +40,7 @@ async function noticeSource(tx: DbClient, event: StoreOrderOutbox) {
   const operation = await readUnpaidOrderEditOperation(tx, payload.operationId);
   if (!operation || operation.state !== 'committed' || operation.order_id !== payload.orderId || !operation.result
     || operation.result.id !== payload.orderId || operation.result.changed !== true) throw Error('Order price revision protected operation missing');
-  if (operation.evidence?.version !== (operation.kind === 'supplier' ? 'supplier-unpaid-gain-edit-v1' : 'admin-unpaid-price-v1') || operation.evidence.operation_id !== payload.operationId
+  if (operation.evidence?.version !== (operation.kind === 'supplier' ? 'supplier-unpaid-gain-edit-v1' : operation.kind === 'admin' ? 'admin-unpaid-price-v1' : 'admin-unpaid-gain-edit-v1') || operation.evidence.operation_id !== payload.operationId
     || operation.evidence.source?.order_id !== payload.orderId || operation.evidence.source.supplier_id !== operation.supplier_id
     || !Number.isSafeInteger(operation.evidence.status_id) || Number(operation.evidence?.status_id) <= 0)
     throw Error('Order price revision protected status missing');

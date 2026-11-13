@@ -1857,6 +1857,8 @@ v1Routes.delete("/admin/product/words/:id", adminAuth, AdminProductWords.remove)
 v1Routes.get("/admin/order/chart", adminAuth, AdminCrud.adminOrderChart);
 v1Routes.get("/admin/order/list", adminAuth, AdminCrud.adminOrderList);
 v1Routes.get("/admin/order/detail/:orderId", adminAuth, AdminCrud.adminOrderDetail);
+v1Routes.get("/admin/order/edit/:id", AdminCrud.privateAdminOrderRemarkResponse, adminAuth, AdminCrud.adminLegacyOrderEdit);
+v1Routes.put("/admin/order/update/:id", AdminCrud.privateAdminOrderRemarkResponse, adminAuth, AdminCrud.adminLegacyOrderUpdate);
 v1Routes.get("/admin/order/cart/:uid", adminAuth, AdminController.adminAssistedCartList);
 v1Routes.post("/admin/order/cart/add/:uid", adminAuth, AdminController.adminAssistedCartAdd);
 v1Routes.delete("/admin/order/cart/del/:uid", adminAuth, AdminController.adminAssistedCartDel);

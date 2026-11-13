@@ -6,6 +6,7 @@ import request, { getData } from "@/utils/request";
 import type { AdminUser } from "@/types/admin";
 import { orderNumber, parseAdminOrderList, parseAdminOrderDetail, parseAdminOrderChart, type AdminOrderQuery } from '@/utils/orderRead';
 import { sendOrderRequest } from '@/utils/orderRequest';
+import { parseAdminOrderEditForm, type AdminOrderEditForm } from '@/utils/orderEdit';
 
 // ─── 订单管理 ───────────────────────────────────────────────
 export async function apiAdminOrderChart(signal?: AbortSignal) {
@@ -25,6 +26,16 @@ export async function apiAdminOrderDetail(orderId: string, signal?: AbortSignal)
 
 export function apiAdminOrderRemark(orderId: string, remark: string): Promise<null> {
   return getData(request.post(`/order/remark/${orderId}`, { remark }));
+}
+
+export async function apiAdminOrderEdit(id: number, orderNo: string, signal?: AbortSignal) {
+  if (!Number.isSafeInteger(id) || id <= 0 || id > 2_147_483_647) throw Error('订单主键无效');
+  return parseAdminOrderEditForm(await sendOrderRequest(`/order/edit/${id}`, 'get', undefined, undefined, signal), id, orderNumber(orderNo));
+}
+export async function apiAdminOrderUpdate(id: number, form: AdminOrderEditForm, signal?: AbortSignal) {
+  if (!Number.isSafeInteger(id) || id <= 0 || id > 2_147_483_647) throw Error('订单主键无效');
+  const result = await sendOrderRequest(`/order/update/${id}`, 'put', { ...form.values, revision: form.revision }, undefined, signal);
+  if (result !== null) throw Error('订单修改回执无效，请重新载入核对');
 }
 
 export function apiAdminOrderDelivery(

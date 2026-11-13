@@ -1,3 +1,4 @@
+import { ROUTINE_PAYMENT_ATTEMPT_SQL } from '@/migrations/routinePaymentAttempt';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { asc, eq, sql } from 'drizzle-orm';
 import { withTx } from '../src/lib/di';
@@ -37,6 +38,9 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('protected edited
   }, 30_000);
 
   async function install(runtime: Runtime) {
+    // Explicit storage-only prerequisite for real local balance payment.
+    await f.exec(ROUTINE_PAYMENT_ATTEMPT_SQL);
+    await f.exec(`GRANT SELECT ON public.routine_payment_attempt TO "${runtime.role}"`);
     await f.db.transaction(async tx => {
       await installSupplierOrderEditOperation(tx,runtime.role);
       await installLegacyOrderGainPartition(tx,runtime.role);

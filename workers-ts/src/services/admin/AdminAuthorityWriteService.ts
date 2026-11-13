@@ -101,9 +101,8 @@ async function validateRoleRulesBeforeResolution(tx: DbClient, roleIds: number[]
   for (const row of rows) boundedRuleSource(row.rules);
 }
 
-/** Called only after acquireAdminAuthorityWriteBarrier by write consumers. */
-export async function loadAdminAuthorityLiveActor(tx: DbClient, actor: AdminAuthorityActor,
-  requiredCapability: string): Promise<AdminAuthorityLiveActor> {
+async function loadAdminAuthorityActor(tx: DbClient, actor: AdminAuthorityActor,
+  requiredCapability: string, lockForDecision: boolean): Promise<AdminAuthorityLiveActor> {
   assertAdminAuthoritySession(actor);
   const [live] = await tx.select().from(systemAdmin).where(eq(systemAdmin.id, actor.id)).limit(1);
   if (!live || live.adminType !== 1 || live.relationId !== 0 || live.status !== 1 || live.isDel !== 0
@@ -117,7 +116,7 @@ export async function loadAdminAuthorityLiveActor(tx: DbClient, actor: AdminAuth
   const roleIds = parseAdminAuthorityRoleIds(live.roles);
   await validateRoleRulesBeforeResolution(tx, roleIds);
   const permissions = new AdminPermissionService(createContainerFromDb(tx));
-  const assignment = await permissions.resolveRoleAssignment(live.roles, true);
+  const assignment = await permissions.resolveRoleAssignment(live.roles, lockForDecision);
   const keys = live.level === 0 ? await permissions.resolveAdminPermissionKeys(live) : assignment.keys;
   if (live.level !== 0 && !hasAdminPermission(keys, requiredCapability)) {
     throw new AuthException('管理员权限已变化', ApiErrorCode.ERR_AUTH);
@@ -129,6 +128,22 @@ export async function loadAdminAuthorityLiveActor(tx: DbClient, actor: AdminAuth
   assertAdminAuthoritySession(actor);
   return { id: live.id, level: live.level, roles: live.roles, roleIds, divisionId: live.divisionId,
     keys, legacyRuleIds: assignment.legacyRuleIds };
+}
+
+/** Called only after acquireAdminAuthorityWriteBarrier by write consumers. */
+export function loadAdminAuthorityLiveActor(tx: DbClient, actor: AdminAuthorityActor,
+  requiredCapability: string): Promise<AdminAuthorityLiveActor> {
+  return loadAdminAuthorityActor(tx, actor, requiredCapability, true);
+}
+
+/** Snapshot authorization is restricted to a real read-only repeatable-read
+ * transaction. It cannot replace the live locked decision for a mutation. */
+export async function loadAdminAuthorityReadActor(tx: DbClient, actor: AdminAuthorityActor,
+  requiredCapability: string): Promise<AdminAuthorityLiveActor> {
+  const [mode] = await tx.execute(sql`SELECT current_setting('transaction_read_only')='on'
+    AND current_setting('transaction_isolation')='repeatable read' AS ready`);
+  if (mode?.ready !== true) throw new ServiceUnavailableException('管理员读取需要一致的只读事务');
+  return loadAdminAuthorityActor(tx, actor, requiredCapability, false);
 }
 
 export async function withAdminAuthorityWriteTx<T>(container: Container, actor: AdminAuthorityActor,

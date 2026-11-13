@@ -1,7 +1,8 @@
 import { asc, eq, sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
 import { storeOrder, storeOrderCartInfo, storeOrderRefundSplit } from '@/models/schema';
-import { assertSupplierOrderEditOperationReadable } from '@/migrations/supplierOrderEditOperation';
+import { readUnpaidOrderGainEditOperation } from './UnpaidOrderEditOperation';
+import { assertAdminOrderGainPartitionReady } from '@/migrations/adminOrderGainPartition';
 import { assertLegacyOrderGainPartitionReady } from '@/migrations/legacyOrderGainPartition';
 import { ValidateException } from '@/utils/errors';
 import { planOrderFinancialSplit } from './OrderSplitFinance';
@@ -27,7 +28,7 @@ interface LineState {
 interface State { order_id: number; buyer_id: number; supplier_id: number; lines: LineState[] }
 interface Reference { kind: 'operation' | 'partition'; id: string; hash: string }
 interface ProofData {
-  operationId: string; originalOrderId: number; supplierId: number; buyerId: number;
+  realm: 'supplier' | 'admin'; operationId: string; originalOrderId: number; supplierId: number; buyerId: number;
   reference: Reference; bindings: Map<string, number>; durable: boolean;
 }
 const proofs = new WeakMap<object, ProofData>();
@@ -90,14 +91,22 @@ function key(row: Cart): string {
 function marker(info: Record<string, unknown>): string | null {
   if (!Object.hasOwn(info, LEGACY_GAIN_EDIT_MARKER)) return null;
   const item = object(info[LEGACY_GAIN_EDIT_MARKER]);
-  if (Object.keys(item).sort().join(',') !== 'operation_id,version' || item.version !== 'supplier-unpaid-gain-edit-v1'
+  if (Object.keys(item).sort().join(',') !== 'operation_id,version' || !['supplier-unpaid-gain-edit-v1','admin-unpaid-gain-edit-v1'].includes(String(item.version))
     || typeof item.operation_id !== 'string' || !UUID.test(item.operation_id)) throw invalid();
   return item.operation_id;
 }
+function markerRealm(info: Record<string, unknown>): 'supplier' | 'admin' {
+  marker(info);
+  return object(info[LEGACY_GAIN_EDIT_MARKER]).version === 'admin-unpaid-gain-edit-v1' ? 'admin' : 'supplier';
+}
+const partitionTable = (realm: 'supplier' | 'admin') => realm === 'supplier' ? 'public.legacy_order_gain_partition_v1' : 'public.admin_order_gain_partition_v1';
+const partitionVersion = (realm: 'supplier' | 'admin') => realm === 'supplier' ? 'legacy-order-gain-partition-v1' : 'admin-order-gain-partition-v1';
+const partitionReady = (tx: DbClient, realm: 'supplier' | 'admin', mode: 'read' | 'write' = 'write') => realm === 'supplier'
+  ? assertLegacyOrderGainPartitionReady(tx, mode) : assertAdminOrderGainPartitionReady(tx, mode);
 function mint(data: Omit<ProofData, 'bindings'>, rows: readonly Cart[]): LegacyGainIntegralProof {
   const value = Object.freeze({}) as LegacyGainIntegralProof;
   proofs.set(value, { ...data, bindings: new Map(rows.map(row => {
-    const info = parse(row.cartInfo); if (marker(info) !== data.operationId) throw invalid();
+    const info = parse(row.cartInfo); if (marker(info) !== data.operationId || markerRealm(info) !== data.realm) throw invalid();
     return [key(row), whole(info.gain_integral)];
   })) });
   return value;
@@ -106,7 +115,7 @@ export function legacyGainIntegralForLine(proof: LegacyGainIntegralProof | null 
   const info = parse(row.cartInfo);
   if (!marker(info)) return undefined;
   const data = proof && proofs.get(proof), result = data?.bindings.get(key(row));
-  if (!data || data.operationId !== marker(info) || result === undefined) throw invalid();
+  if (!data || data.operationId !== marker(info) || data.realm !== markerRealm(info) || result === undefined) throw invalid();
   return result;
 }
 export function hasLegacyGainIntegralMarker(rows: readonly Pick<Cart, 'cartInfo'>[]): boolean {
@@ -130,9 +139,9 @@ export async function legacyGainIntegralState(order: Pick<Order, 'id' | 'uid' | 
 
 /** Internal transition capability, not durable SQL authority. Only used after
  * the editor's complete BEFORE proof and for its exact proposed AFTER rows. */
-export function plannedLegacyGainIntegralProof(order: Order, rows: readonly Cart[], operationId: string): LegacyGainIntegralProof {
-  if (!UUID.test(operationId) || order.supplierId <= 0) throw invalid();
-  return mint({ operationId, originalOrderId: order.id, supplierId: order.supplierId, buyerId: order.uid,
+export function plannedLegacyGainIntegralProof(order: Order, rows: readonly Cart[], operationId: string, realm: 'supplier' | 'admin' = 'supplier'): LegacyGainIntegralProof {
+  if (!UUID.test(operationId) || !['supplier','admin'].includes(realm) || order.supplierId < (realm === 'supplier' ? 1 : 0)) throw invalid();
+  return mint({ realm, operationId, originalOrderId: order.id, supplierId: order.supplierId, buyerId: order.uid,
     reference: { kind: 'operation', id: operationId, hash: '' }, durable: false }, rows);
 }
 /** Called only by the reconciled pure financial partition. No SQL authority is
@@ -144,10 +153,6 @@ export function partitionLegacyGainIntegralProof(proof: LegacyGainIntegralProof 
   return rows.length ? mint({ ...data, durable: false }, rows) : null;
 }
 
-interface Operation {
-  operation_id: string; supplier_id: number; order_id: number; state: string;
-  before_hash: string; after_hash: string; evidence: unknown; result: unknown;
-}
 interface Partition {
   partition_id: string; operation_id: string; source_order_id: number; child_order_id: number;
   buyer_id: number; supplier_id: number; source_hash: string; child_hash: string; evidence: unknown;
@@ -167,20 +172,20 @@ export async function loadUnpaidOrderGainIntegralProof(tx: DbClient, order: Orde
   const ids = rows.map(row => marker(parse(row.cartInfo)));
   const operationId = ids[0];
   if (!operationId || ids.some(id => id !== operationId)) throw invalid();
-  await assertSupplierOrderEditOperationReadable(tx);
-  const [operation] = await tx.execute(sql`SELECT operation_id::text,supplier_id,order_id,state,before_hash,after_hash,
-    CASE WHEN octet_length(evidence::text)<=196608 THEN evidence ELSE NULL END AS evidence,result
-    FROM public.supplier_order_edit_operation_v1 WHERE operation_id=${operationId}::uuid`) as unknown as Operation[];
+  const realm = markerRealm(parse(rows[0].cartInfo));
+  if (rows.some(row => markerRealm(parse(row.cartInfo)) !== realm)) throw invalid();
+  const operation = await readUnpaidOrderGainEditOperation(tx, operationId);
+  if (operation.kind !== (realm === 'supplier' ? 'supplier' : 'admin-edit')) throw invalid();
   if (!operation || operation.state !== 'committed' || operation.operation_id !== operationId
     || !SHA.test(operation.before_hash) || !SHA.test(operation.after_hash)) throw invalid();
   const evidence = object(operation.evidence), source = object(evidence.source), result = object(operation.result);
-  if (evidence.version !== 'supplier-unpaid-gain-edit-v1' || evidence.operation_id !== operationId
+  if (evidence.version !== (realm === 'supplier' ? 'supplier-unpaid-gain-edit-v1' : 'admin-unpaid-gain-edit-v1') || evidence.operation_id !== operationId
     || evidence.source_format !== 'legacy-php' || source.order_id !== operation.order_id
     || source.supplier_id !== operation.supplier_id || source.buyer_id !== order.uid
     || !SHA.test(String(evidence.after_state_sha256)) || result.id !== operation.order_id
     || !Array.isArray(evidence.lines) || !evidence.lines.length || evidence.lines.length > 200
     || whole(result.gain_integral)!==whole(evidence.after_total)) throw invalid();
-  positive(operation.supplier_id); positive(operation.order_id);
+  positive(operation.supplier_id, realm === 'admin'); positive(operation.order_id);
   const current = await legacyGainIntegralState(order, rows);
   if (current.hash === evidence.after_state_sha256 && order.id === operation.order_id) {
     for (const row of rows) {
@@ -192,18 +197,18 @@ export async function loadUnpaidOrderGainIntegralProof(tx: DbClient, order: Orde
         || whole(line.after_gain_integral) !== whole(parse(row.cartInfo).gain_integral)) throw invalid();
     }
     if (evidence.lines.length !== rows.length) throw invalid();
-    return mint({ operationId, originalOrderId: operation.order_id, supplierId: operation.supplier_id,
+    return mint({ realm, operationId, originalOrderId: operation.order_id, supplierId: operation.supplier_id,
       buyerId: order.uid, reference: { kind: 'operation', id: operationId, hash: current.hash }, durable: true }, rows);
   }
-  await assertLegacyOrderGainPartitionReady(tx, 'read');
+  await partitionReady(tx, realm, 'read');
   const records = await tx.execute(sql`SELECT partition_id::text,operation_id::text,source_order_id,child_order_id,
     buyer_id,supplier_id,source_hash,child_hash,CASE WHEN octet_length(evidence::text)<=196608 THEN evidence ELSE NULL END AS evidence
-    FROM public.legacy_order_gain_partition_v1 WHERE child_order_id=${order.id} AND child_hash=${current.hash} LIMIT 2`) as unknown as Partition[];
+    FROM ${sql.raw(partitionTable(realm))} WHERE child_order_id=${order.id} AND child_hash=${current.hash} LIMIT 2`) as unknown as Partition[];
   if (records.length !== 1) throw invalid();
   const leaf = records[0], body = object(leaf.evidence);
   if (leaf.operation_id !== operationId || leaf.child_order_id !== order.id || leaf.buyer_id !== order.uid
     || leaf.supplier_id !== operation.supplier_id || leaf.child_hash !== current.hash
-    || body.version !== 'legacy-order-gain-partition-v1'
+    || body.version !== partitionVersion(realm)
     || canonicalJson(body.child) !== canonicalJson(current.state)) throw invalid();
   if(Object.keys(body).sort().join(',')!=='amounts,child,mappings,role,selection,source,source_reference,version'
     || !['selected','remaining'].includes(String(body.role)) || !Array.isArray(body.selection)
@@ -241,12 +246,12 @@ export async function loadUnpaidOrderGainIntegralProof(tx: DbClient, order: Orde
     }
     const [parent] = await tx.execute(sql`SELECT partition_id::text,operation_id::text,source_order_id,child_order_id,
       buyer_id,supplier_id,source_hash,child_hash,jsonb_build_object('source_reference',evidence->'source_reference') AS evidence
-      FROM public.legacy_order_gain_partition_v1 WHERE partition_id=${ref.id}::uuid`) as unknown as Partition[];
+      FROM ${sql.raw(partitionTable(realm))} WHERE partition_id=${ref.id}::uuid`) as unknown as Partition[];
     if (!parent || parent.operation_id !== operationId || parent.child_order_id !== child.source_order_id
       || parent.buyer_id !== order.uid || parent.supplier_id !== operation.supplier_id || parent.child_hash !== ref.hash) throw invalid();
     child = parent; ref = reference(object(parent.evidence).source_reference);
   }
-  return mint({ operationId, originalOrderId: operation.order_id, supplierId: operation.supplier_id,
+  return mint({ realm, operationId, originalOrderId: operation.order_id, supplierId: operation.supplier_id,
     buyerId: order.uid, reference: { kind: 'partition', id: leaf.partition_id, hash: current.hash }, durable: true }, rows);
 }
 
@@ -271,7 +276,8 @@ export async function recordLegacyGainIntegralPartitions(tx: DbClient, sourceOrd
   const plan = planOrderFinancialSplit({ ...sourceOrder, refundPrice: '0.00', backIntegral: '0.00' },
     sourceRows.map(row => ({ ...row, refundNum: 0, splitStatus: 0, splitSurplusNum: row.cartNum })), selection, proof);
   if (!plan) throw invalid();
-  await assertLegacyOrderGainPartitionReady(tx);
+  const realm = data.realm;
+  await partitionReady(tx, realm);
   for (const child of children) {
     const [order] = await tx.select().from(storeOrder).where(eq(storeOrder.id, child.orderId)).limit(1);
     if (!order || order.uid !== sourceOrder.uid) throw invalid();
@@ -317,15 +323,15 @@ export async function recordLegacyGainIntegralPartitions(tx: DbClient, sourceOrd
         refund_order_generation: parse(row.cartInfo).refund_order_generation });
       if (JSON.stringify(parse(row.cartInfo)) !== JSON.stringify(expected)) throw invalid();
     }
-    const existing = await tx.execute(sql`SELECT partition_id FROM public.legacy_order_gain_partition_v1
+    const existing = await tx.execute(sql`SELECT partition_id FROM ${sql.raw(partitionTable(realm))}
       WHERE child_order_id=${order.id} AND child_hash=${current.hash} LIMIT 1`);
     if (existing.length) { await loadUnpaidOrderGainIntegralProof(tx, order, rows); continue; }
-    const id = crypto.randomUUID(), evidence = { version: 'legacy-order-gain-partition-v1', source_reference: data.reference,
+    const id = crypto.randomUUID(), evidence = { version: partitionVersion(realm), source_reference: data.reference,
       source: original.state, child: current.state, selection: [...selection].map(([cart_id, cart_num]) => ({ cart_id, cart_num })),
       role: child.role, amounts, mappings: child.rows.map(({sourceRowId,rowId,cartId,quantity})=>({sourceRowId,rowId,cartId,quantity})) };
     const expected={partition_id:id,operation_id:data.operationId,source_order_id:sourceOrder.id,child_order_id:order.id,
       buyer_id:order.uid,supplier_id:data.supplierId,kind,source_hash:original.hash,child_hash:current.hash,evidence,created_at:positive(now)};
-    const [record] = await tx.execute(sql`INSERT INTO public.legacy_order_gain_partition_v1
+    const [record] = await tx.execute(sql`INSERT INTO ${sql.raw(partitionTable(realm))}
       (partition_id,operation_id,source_order_id,child_order_id,buyer_id,supplier_id,kind,source_hash,child_hash,evidence,created_at)
       VALUES(${id}::uuid,${data.operationId}::uuid,${sourceOrder.id},${order.id},${order.uid},${data.supplierId},${kind},
         ${original.hash},${current.hash},${JSON.stringify(evidence)}::jsonb,${expected.created_at})
@@ -333,7 +339,7 @@ export async function recordLegacyGainIntegralPartitions(tx: DbClient, sourceOrd
         kind,source_hash,child_hash,evidence,created_at`);
     if (canonicalJson(record)!==canonicalJson(expected)) throw invalid();
     const [readback]=await tx.execute(sql`SELECT partition_id::text,operation_id::text,source_order_id,child_order_id,buyer_id,supplier_id,
-      kind,source_hash,child_hash,evidence,created_at FROM public.legacy_order_gain_partition_v1 WHERE partition_id=${id}::uuid`);
+      kind,source_hash,child_hash,evidence,created_at FROM ${sql.raw(partitionTable(realm))} WHERE partition_id=${id}::uuid`);
     if(canonicalJson(readback)!==canonicalJson(expected))throw invalid();
     await loadUnpaidOrderGainIntegralProof(tx, order, rows);
   }

@@ -42,7 +42,7 @@ async function operation(db:DB,id:string,order:CashierEditOrder){
   integer(row.actor_id);integer(row.created_at);digest(row.request_hash);digest(row.before_hash);digest(row.after_hash);
   if(row.operation_id!==id||row.order_id!==order.id||row.supplier_id!==order.supplierId||row.state!=='committed'
     ||evidence.operation_id!==id
-    ||(row.kind==='supplier'?!['checkout','legacy-php'].includes(String(evidence.source_format)):evidence.source_format!=='price-only')
+    ||(row.kind==='admin'?evidence.source_format!=='price-only':!(row.kind==='supplier'?['checkout','legacy-php']:['checkout','legacy-php','price-only']).includes(String(evidence.source_format)))
     ||source.order_id!==order.id||source.buyer_id!==order.uid||source.supplier_id!==order.supplierId
     ||result.id!==order.id||result.order_id!==order.orderId||result.changed!==true||Object.keys(result).length!==6
     ||!Array.isArray(evidence.lines)||!evidence.lines.length||evidence.lines.length>200)throw invalid();
@@ -102,7 +102,7 @@ export async function loadUnpaidOrderCashierEditProof(db:DB,order:CashierEditOrd
     if(depth>=1000||seen.has(id))throw invalid();seen.add(id);
     const item=await operation(db,id,order),e=item.evidence,lines=e.lines as unknown[];
     if(item.row.kind==='supplier'&&(order.supplierId<=0||rows.some(row=>row.type!==2||row.relationId!==order.supplierId)))throw invalid();
-    if(item.row.kind==='admin'&&(e.before_state_sha256!==e.after_state_sha256||points(e.before_total)!==points(e.after_total)))throw invalid();
+    if((item.row.kind==='admin'||e.source_format==='price-only')&&(e.before_state_sha256!==e.after_state_sha256||points(e.before_total)!==points(e.after_total)))throw invalid();
     if(e.status_id!==expectedStatus||e.after_state_sha256!==expectedState||item.result.pay_price!==expectedPay
       ||item.result.change_price!==expectedChange||points(item.result.gain_integral)!==expectedPoints||lines.length!==rows.length)throw invalid();
     const lineIds=new Set<number>();let beforeTotal=0,afterTotal=0;
@@ -110,7 +110,7 @@ export async function loadUnpaidOrderCashierEditProof(db:DB,order:CashierEditOrd
       if(!row||lineIds.has(row.id)||line.cart_id!==row.cartId||line.product_id!==row.productId||line.quantity!==row.cartNum
         ||line.is_gift!==row.isGift||digest(line.after_sha256)!==expectedRaw.get(row.id)
         ||digest(line.after_origin_hash)!==expectedOrigin.get(row.id))throw invalid();
-      if(item.row.kind==='admin'&&(line.before_sha256!==line.after_sha256||line.before_origin_hash!==line.after_origin_hash
+      if((item.row.kind==='admin'||e.source_format==='price-only')&&(line.before_sha256!==line.after_sha256||line.before_origin_hash!==line.after_origin_hash
         ||points(line.before_gain_integral)!==points(line.after_gain_integral)))throw invalid();
       lineIds.add(row.id);beforeTotal+=points(line.before_gain_integral);afterTotal+=points(line.after_gain_integral);
       expectedRaw.set(row.id,digest(line.before_sha256));expectedOrigin.set(row.id,digest(line.before_origin_hash));

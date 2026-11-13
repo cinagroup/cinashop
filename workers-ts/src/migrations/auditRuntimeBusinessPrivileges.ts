@@ -63,6 +63,7 @@ import { ADMIN_STAFF_OPERATION_RUNTIME_PRIVILEGES, inspectAdminStaffOperation } 
 import { ADMIN_DELIVERY_OPERATION_RUNTIME_PRIVILEGES, inspectAdminDeliveryOperation } from './adminDeliveryOperation';
 import { ADMIN_GROUP_OPERATION_RUNTIME_PRIVILEGES, inspectAdminGroupOperation } from './adminGroupOperation';
 import { inspectAdminOrderPriceRuntime, ADMIN_ORDER_PRICE_RUNTIME_PRIVILEGES } from './adminOrderPriceRuntime';
+import { inspectAdminOrderEditRuntime, ADMIN_ORDER_EDIT_RUNTIME_PRIVILEGES, ADMIN_ORDER_GAIN_RUNTIME_PRIVILEGES } from './adminOrderEditRuntime';
 import { ADMIN_UNIT_OPERATION_RUNTIME_PRIVILEGES, inspectAdminUnitOperation } from './adminUnitOperation';
 import { ADMIN_ENSURE_OPERATION_RUNTIME_PRIVILEGES, inspectAdminEnsureOperation } from './adminEnsureOperation';
 import { ADMIN_RULE_OPERATION_RUNTIME_PRIVILEGES, inspectAdminRuleOperation } from './adminRuleOperation';
@@ -378,6 +379,19 @@ async function inspectRuntimeBusinessProfile(tx:Pick<DbClient,'execute'>,kind:'a
       else {
         plan.tables.admin_order_price_operation_v1=ADMIN_ORDER_PRICE_RUNTIME_PRIVILEGES[kind];
         if (priceAddon.supplier === true) plan.tables.supplier_order_edit_operation_v1=['SELECT'];
+      }
+    }
+    const [editAddon] = await tx.execute(sql`SELECT to_regclass('public.admin_order_edit_operation_v1') IS NOT NULL
+      OR to_regprocedure('public.admin_order_edit_operation_immutable_v1()') IS NOT NULL
+      OR to_regclass('public.admin_order_gain_partition_v1') IS NOT NULL
+      OR to_regprocedure('public.admin_order_gain_partition_immutable_v1()') IS NOT NULL AS present,
+      to_regclass('public.supplier_order_edit_operation_v1') IS NOT NULL AS supplier`);
+    if (editAddon?.present === true) {
+      if (!await inspectAdminOrderEditRuntime(tx,names)) failures.push('admin_order_edit_operation_catalog');
+      else {
+        plan.tables.admin_order_edit_operation_v1=ADMIN_ORDER_EDIT_RUNTIME_PRIVILEGES[kind];
+        plan.tables.admin_order_gain_partition_v1=ADMIN_ORDER_GAIN_RUNTIME_PRIVILEGES;
+        if (editAddon.supplier === true) plan.tables.supplier_order_edit_operation_v1=['SELECT'];
       }
     }
     const [groupAddon] = await tx.execute(sql`SELECT to_regclass('public.admin_group_operation') IS NOT NULL

@@ -5,7 +5,7 @@ import { AdminResponseError } from './request';
 
 // Never let a queued request adopt a later account through the global interceptor.
 export const orderRequest = axios.create({ baseURL: '/adminapi', timeout: 30000 });
-export async function sendOrderRequest<T = unknown>(url: string, method: 'get' | 'post', data?: unknown, params?: unknown, signal?: AbortSignal): Promise<T> {
+export async function sendOrderRequest<T = unknown>(url: string, method: 'get' | 'post' | 'put', data?: unknown, params?: unknown, signal?: AbortSignal): Promise<T> {
   const token = getToken(), scope = createAdminSessionScope();
   const abort = () => scope.dispose();
   signal?.addEventListener('abort', abort, { once: true });

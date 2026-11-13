@@ -2,6 +2,7 @@
   <div class="order-detail-page">
     <div class="page-head">
       <h2>订单详情</h2>
+      <el-button v-if="order && permitted('order.manage') && order.paid === 0 && order.pid === 0 && order.status === 0 && order.refundStatus === 0 && order.refundType === 0" @click="editVisible = true">修改订单</el-button>
       <el-button v-if="order && permitted('order.view')" @click="$router.push({ path: '/order/fulfillment-assignment', query: { order_id: String(order.id) } })">门店履约分配</el-button>
       <el-button v-if="order && canRefund" @click="$router.push({ path: '/refund', query: { creationOrderId: String(order.id) } })">{{ order.pid === -1 ? '查看退款 / 恢复原请求' : '主动退款 / 恢复原请求' }}</el-button>
       <el-button v-if="sessionValid" :disabled="loading" @click="loadOrder">刷新</el-button>
@@ -112,6 +113,7 @@
     </template>
     <el-empty v-else-if="!loading" description="订单不存在" />
 
+    <AdminOrderEditDialog v-if="order" v-model:visible="editVisible" :id="order.id" :order-no="order.orderId" @updated="loadOrder" />
     <el-dialog v-model="writeoffVisible" title="确认订单核销" width="min(720px, 94vw)" destroy-on-close>
       <template v-if="writeoffPreview">
         <el-descriptions :column="descriptionColumns === 1 ? 1 : 2" border class="writeoff-summary">
@@ -149,6 +151,7 @@
 import { ref, computed, watch, onBeforeUnmount } from "vue";
 import { useRoute, onBeforeRouteLeave } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
+import AdminOrderEditDialog from '@/components/AdminOrderEditDialog.vue';
 import {
   apiAdminOrderDetail,
   apiAdminWriteoff,
@@ -161,6 +164,7 @@ import { adminOrderStatus, isCurrentFulfillment, type AdminOrderDetail } from '@
 
 const route = useRoute();
 const order = ref<AdminOrderDetail | null>(null);
+const editVisible = ref(false);
 const loading = ref(true);
 const readError = ref('');
 const sessionValid = ref(true);
@@ -195,6 +199,7 @@ function resetWriteoff() {
   writeoffQuantities.value = {}; writeoffLoading.value = false; previewCode = '';
 }
 function reset() {
+  editVisible.value = false;
   epoch++; readController?.abort(); order.value = null; loading.value = false;
   resetWriteoff(); writeoffCode.value = '';
 }

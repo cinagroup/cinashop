@@ -177,4 +177,16 @@ describe('unpaid order effective gift integral editing', () => {
     expect(() => planOrderFinancialSplit({ ...order, gainIntegral: plan.gainIntegral }, afterRows(rows, plan),
       new Map(rows.map(row => [row.cartId, row.cartNum])))).toThrow('受保护来源');
   });
+  it('uses distinct Admin provenance for raw platform purchases without weakening Supplier identity', async()=>{
+    const {order,rows}=fixture();order.supplierId=0;
+    for(const row of rows){row.type=0;row.relationId=0;const info=JSON.parse(row.cartInfo!),product=info.product,sku=info.sku;
+      delete info.financial_version;delete info.product;delete info.sku;
+      info.productInfo={id:row.productId,store_name:product.storeName,give_integral:product.giveIntegral,attrInfo:sku};row.cartInfo=JSON.stringify(info);}
+    await expect(planUnpaidOrderGainIntegralEdit(order,rows,{operationId,gainIntegral:10})).rejects.toThrow();
+    const plan=await planUnpaidOrderGainIntegralEdit(order,rows,{operationId,gainIntegral:10,realm:'admin'});
+    expect(plan.evidence).toMatchObject({version:'admin-unpaid-gain-edit-v1',source:{supplier_id:0},source_format:'legacy-php'});
+    for(const line of plan.lines)expect(JSON.parse(line.afterCartInfo).unpaid_gain_integral_edit).toEqual({version:'admin-unpaid-gain-edit-v1',operation_id:operationId});
+    expect(()=>planOrderFinancialSplit({...order,gainIntegral:plan.gainIntegral},afterRows(rows,plan),new Map(rows.map(row=>[row.cartId,row.cartNum])))).toThrow('受保护来源');
+  });
+
 });

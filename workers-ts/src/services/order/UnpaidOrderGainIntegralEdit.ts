@@ -15,6 +15,8 @@ const invalid = () => new ValidateException('待付款订单赠送积分或行�
 export interface UnpaidOrderGainIntegralEditInput {
   operationId: string;
   gainIntegral: number;
+  /** Server-selected provenance, never read from the HTTP body. */
+  realm?: 'supplier' | 'admin';
 }
 export interface UnpaidOrderGainIntegralEditLine {
   rowId: number;
@@ -25,7 +27,7 @@ export interface UnpaidOrderGainIntegralEditLine {
   afterGainIntegral: number;
 }
 export interface UnpaidOrderGainIntegralEditEvidence {
-  version: 'supplier-unpaid-gain-edit-v1';
+  version: 'supplier-unpaid-gain-edit-v1' | 'admin-unpaid-gain-edit-v1';
   operation_id: string;
   policy: typeof UNPAID_GAIN_EDIT_POLICY;
   weight_basis: 'purchase-gift' | 'quantity';
@@ -111,6 +113,9 @@ export async function planUnpaidOrderGainIntegralEdit(
     || order.paid !== 0 || order.status !== 0 || order.pid !== 0 || order.isDel !== 0 || order.isSystemDel !== 0
     || !rows.length || rows.length > 200) throw invalid();
   positive(order.id);
+  const realm = input.realm ?? 'supplier';
+  if (!['supplier', 'admin'].includes(realm)) throw invalid();
+  const version = realm === 'supplier' ? 'supplier-unpaid-gain-edit-v1' : 'admin-unpaid-gain-edit-v1';
   const sorted = [...rows].sort((a, b) => a.id - b.id);
   if (new Set(sorted.map(row => positive(row.id))).size !== sorted.length
     || sorted.reduce((bytes, row) => bytes + new TextEncoder().encode(row.cartInfo ?? '').length, 0) > 8_388_608) throw invalid();
@@ -143,13 +148,13 @@ export async function planUnpaidOrderGainIntegralEdit(
     const afterGainIntegral = Number(allocated);
     return { rowId: row.id, cartId: row.cartId, beforeCartInfo: row.cartInfo!,
       afterCartInfo: changed ? JSON.stringify({ ...original[index], gain_integral: String(afterGainIntegral),
-        ...(legacy ? { [LEGACY_GAIN_EDIT_MARKER]: { version: 'supplier-unpaid-gain-edit-v1', operation_id: input.operationId } } : {}) }) : row.cartInfo!,
+        ...(legacy ? { [LEGACY_GAIN_EDIT_MARKER]: { version, operation_id: input.operationId } } : {}) }) : row.cartInfo!,
       beforeGainIntegral, afterGainIntegral };
   });
   if (remaining !== 0n) throw invalid();
   const gainIntegral = `${input.gainIntegral}.00`;
   const afterRows = sorted.map((row, index) => ({ ...row, cartInfo: lines[index].afterCartInfo }));
-  const afterProof = legacy && changed ? plannedLegacyGainIntegralProof(order, afterRows, input.operationId) : proof;
+  const afterProof = legacy && changed ? plannedLegacyGainIntegralProof(order, afterRows, input.operationId, realm) : proof;
   const after = planOrderFinancialSplit({ ...order, gainIntegral }, afterRows, selection,afterProof);
   if (!after || modern && after.legacyPhpProjection !== null || legacy && after.legacyPhpProjection !== 'original-purchase'
     || after.selected.gainIntegral !== gainIntegral) throw invalid();
@@ -161,7 +166,7 @@ export async function planUnpaidOrderGainIntegralEdit(
     before_sha256: await sha256(line.beforeCartInfo), after_sha256: await sha256(line.afterCartInfo),
     before_origin_hash: await outRequestHash(line.beforeCartInfo), after_origin_hash: await outRequestHash(line.afterCartInfo),
   })));
-  return { gainIntegral, lines, evidence: { version: 'supplier-unpaid-gain-edit-v1', operation_id: input.operationId,
+  return { gainIntegral, lines, evidence: { version, operation_id: input.operationId,
     policy: UNPAID_GAIN_EDIT_POLICY, weight_basis: weightBasis, before_total: beforeTotal,
     after_total: input.gainIntegral, changed, source_format: modern ? 'checkout' : 'legacy-php',
     source: { order_id: order.id, buyer_id: order.uid, supplier_id: order.supplierId },

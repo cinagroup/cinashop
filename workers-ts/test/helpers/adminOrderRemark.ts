@@ -24,6 +24,7 @@ type Role = 'root' | 'manager' | 'viewer' | 'disabled' | 'supplier';
 type Envelope = { status: number; msg: string; data: any; headers: Headers; httpStatus: number };
 export interface RemarkScenario {
   f: Fixture;
+  fetch(request: Request): Promise<Response>;
   token(role?: Role): string;
   request(method: string, path: string, body?: unknown, token?: string | null): Promise<Envelope>;
   seed(id?: number, orderId?: string): Promise<void>;
@@ -81,7 +82,11 @@ export async function withRemarkScenario(work: (s: RemarkScenario) => Promise<vo
           result[table] = await f.exec('SELECT to_jsonb(t) AS row FROM public.' + table + ' t ORDER BY to_jsonb(t)::text');
         return result;
       };
-      await work({ f, request, snapshot, token: (role = 'root') => tokens[role],
+      await work({ f, request, snapshot, fetch: async request => {
+        const tasks: Promise<unknown>[] = [];
+        const response = await app.fetch(request, env, { waitUntil: task => { tasks.push(task); }, passThroughOnException() {}, props: {} });
+        await Promise.all(tasks); return response;
+      }, token: (role = 'root') => tokens[role],
         seed: async (id = 820001, orderId = 'owned-remark-order') => {
           // Unpaid test configuration, not a manufactured payment or fulfillment.
           await f.db.insert(storeOrder).values({ id, orderId, uid: 11, paid: 0, status: 0, pid: 0,
