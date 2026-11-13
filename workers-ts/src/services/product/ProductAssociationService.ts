@@ -1,3 +1,5 @@
+import { productCodeInput } from './ProductCodeInput';
+import { lockProductErpCodePolicy, productErpCodePlan } from './ProductErpCodePolicy';
 import { productCreationDefaults } from './ProductCreationDefaults';
 import { and, asc, desc, eq, inArray, or, sql } from "drizzle-orm";
 import type { Container, DbClient } from "@/lib/di";
@@ -660,6 +662,11 @@ export class ProductAssociationService {
       "cate_id", "brand_id", "store_label_id", "ensure_id", "specs_id", "specs",
     ].some((key) => Object.prototype.hasOwnProperty.call(body, key));
     const owner = context.legacy?.owner ?? { type: existing?.type ?? 0, relationId: existing?.relationId ?? 0 };
+    const codeIntent = context.legacy ? undefined : productCodeInput(body);
+    const expectedCode = codeIntent ?? existing?.code ?? '';
+    const codePolicy = !context.legacy && productType === 0 ? await lockProductErpCodePolicy(tx) : undefined;
+    const codePlan = await productErpCodePlan(tx, { productId, code: expectedCode, owner,
+      skus: skuPayload?.skus, policy: codePolicy });
     if (context.legacy) {
       integerValue(owner.type, '商品归属类型', 0, 0, 2);
       integerValue(owner.relationId, '商品归属ID', 0);
@@ -715,6 +722,7 @@ export class ProductAssociationService {
 
     const values = {
       ...legacyMainValues(context.legacy?.mainValues),
+      ...(codeIntent === undefined ? {} : { code: codeIntent }),
       storeName,
       storeInfo: textValue(body.store_info, "商品简介", 256, existing?.storeInfo ?? ""),
       image: textValue(body.image, "商品主图", 256, existing?.image ?? ""),
@@ -834,14 +842,16 @@ export class ProductAssociationService {
         relationId: owner.relationId,
       }, skuPayload, now);
     }
+    await codePlan.capture(tx, savedProductId);
     if (context.audit === 'primitive') await writeAudit(tx, actor, existing ? "update" : "create", savedProductId, now);
     if (!context.legacy) {
       // The mature legacy caller owns its full-row proof. The primitive API
       // settles its own audit/SKU triggers before preserving creation metadata.
       await tx.execute(sql`SET CONSTRAINTS ALL IMMEDIATE`);
-      const [finalProduct] = await tx.select({ star: storeProduct.star, spu: storeProduct.spu,
+      const [finalProduct] = await tx.select({ code: storeProduct.code, star: storeProduct.star, spu: storeProduct.spu,
         type: storeProduct.type, relationId: storeProduct.relationId, productType: storeProduct.productType,
         isDel: storeProduct.isDel }).from(storeProduct).where(eq(storeProduct.id, savedProductId)).limit(1);
+      if (finalProduct && finalProduct.code !== expectedCode) throw new HttpApiException('商品编码保存核对失败，请刷新后重试', 409, 409);
       const expected = existing ?? creationState;
       if (!finalProduct || !expected || finalProduct.star !== expected.star || finalProduct.spu !== expected.spu
         || finalProduct.type !== owner.type || finalProduct.relationId !== owner.relationId
@@ -850,6 +860,7 @@ export class ProductAssociationService {
       }
     }
 
+    await codePlan.assert(tx, savedProductId);
     return {
       id: savedProductId,
       associations_verified: associations !== null,

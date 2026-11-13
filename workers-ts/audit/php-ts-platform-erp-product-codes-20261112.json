@@ -1,0 +1,785 @@
+{
+  "batch": "php-ts-platform-erp-product-codes-20261112",
+  "baseCommit": "32ce5027d06f6e1960ae6400b9b1f04aa88f72b4",
+  "evidenceRoot": "/tmp/php-ts-platform-erp-product-codes-20261112",
+  "wholeMigrationComplete": false,
+  "phpReference": {
+    "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+    "files": [
+      {
+        "path": "app/services/product/product/StoreProductServices.php",
+        "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+        "matchesFixedRef": true
+      },
+      {
+        "path": "app/controller/out/Product.php",
+        "sha256": "a52f6c6392594116e66803572a67e6c15d424fa13eac48df6bc9d7a6ef01c24a",
+        "matchesFixedRef": true
+      },
+      {
+        "path": "app/controller/admin/v1/product/StoreProduct.php",
+        "sha256": "c25566e19ed22fdec15380467996f821f4f57a38ea915a39599404e962c6ba60",
+        "matchesFixedRef": true
+      },
+      {
+        "path": "app/controller/supplier/product/StoreProduct.php",
+        "sha256": "f277e42009e9a4250c15e9731f8d54b47f502f36ce5a8e6fd8d62a37e1fb93c1",
+        "matchesFixedRef": true
+      }
+    ]
+  },
+  "sourceHashes": [
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "f3262a1935443b5707c2be44870398387a6ee3f0890df800048182a5eeed3716"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminLegacyProductInput.ts",
+      "sha256": "a6e4fe9f18fdee382759fc40de16d0640e7e8a98d3c9a0e5b797b0a152e91279"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductService.ts",
+      "sha256": "ec308945d8e6718571358e4401c451e07c542ed194349097349eeff5da501be8"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductAssociationService.ts",
+      "sha256": "ef040354f38ba2e5d8d2a1030d6060e04c2b72d363fc3809c6d532a1c11ec994"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductCodeInput.ts",
+      "sha256": "e06287b83e24f2fb1ee3ccc57bbf7e4fae1df4d8b773c1b29c159b586d446d52"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductErpCodePolicy.ts",
+      "sha256": "74720794cd9516eddd03c8fdf250ce92827a70731468ea17bbd80b443b667231"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductCode.ts",
+      "sha256": "578aedb0ddd3fcb515112d836a9e972e9b2a1d08f4d18b3fc6b8c4613f34326e"
+    },
+    {
+      "path": "workers-ts/test/admin-legacy-product-input.test.ts",
+      "sha256": "c58de15515c9cb90e7d6d1c40d00dc303da104b3efb7e9b31d829150777e8045"
+    },
+    {
+      "path": "workers-ts/test/helpers/productErpCode.ts",
+      "sha256": "78e325bbf345d6df8305343191bc2d0be78fc200b5e96bf171c3fc1bba7fb12e"
+    },
+    {
+      "path": "workers-ts/test/product-association-transaction.test.ts",
+      "sha256": "a39eeca51c7fdfc3514d053a7653fb949737c8fd08b556c9062c84770647759e"
+    },
+    {
+      "path": "workers-ts/test/product-erp-code-native.test.ts",
+      "sha256": "26592e91dac3942f65ad350f867b93fff1b3be0fc63a9f4c055d1938714c6ee0"
+    },
+    {
+      "path": "workers-ts/test/product-erp-code.test.ts",
+      "sha256": "574e610b64a12f422a8afe5b37c2b396cd92c1649e5673862f7cd8bc149255ef"
+    }
+  ],
+  "deliverySourceHashes": [
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "f3262a1935443b5707c2be44870398387a6ee3f0890df800048182a5eeed3716"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminLegacyProductInput.ts",
+      "sha256": "a6e4fe9f18fdee382759fc40de16d0640e7e8a98d3c9a0e5b797b0a152e91279"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutProductService.ts",
+      "sha256": "ec308945d8e6718571358e4401c451e07c542ed194349097349eeff5da501be8"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductAssociationService.ts",
+      "sha256": "ef040354f38ba2e5d8d2a1030d6060e04c2b72d363fc3809c6d532a1c11ec994"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductCodeInput.ts",
+      "sha256": "e06287b83e24f2fb1ee3ccc57bbf7e4fae1df4d8b773c1b29c159b586d446d52"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductErpCodePolicy.ts",
+      "sha256": "74720794cd9516eddd03c8fdf250ce92827a70731468ea17bbd80b443b667231"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductCode.ts",
+      "sha256": "578aedb0ddd3fcb515112d836a9e972e9b2a1d08f4d18b3fc6b8c4613f34326e"
+    },
+    {
+      "path": "workers-ts/test/admin-legacy-product-input.test.ts",
+      "sha256": "c58de15515c9cb90e7d6d1c40d00dc303da104b3efb7e9b31d829150777e8045"
+    },
+    {
+      "path": "workers-ts/test/helpers/productErpCode.ts",
+      "sha256": "b6b4a05bb4ae0c55067426ce07d9b58dbdbdc86e64f7d943cd0038f956aa5d6d"
+    },
+    {
+      "path": "workers-ts/test/product-association-transaction.test.ts",
+      "sha256": "a39eeca51c7fdfc3514d053a7653fb949737c8fd08b556c9062c84770647759e"
+    },
+    {
+      "path": "workers-ts/test/product-erp-code-native.test.ts",
+      "sha256": "26592e91dac3942f65ad350f867b93fff1b3be0fc63a9f4c055d1938714c6ee0"
+    },
+    {
+      "path": "workers-ts/test/product-erp-code.test.ts",
+      "sha256": "574e610b64a12f422a8afe5b37c2b396cd92c1649e5673862f7cd8bc149255ef"
+    }
+  ],
+  "postValidationFormatting": {
+    "path": "workers-ts/test/helpers/productErpCode.ts",
+    "validatedSha256": "78e325bbf345d6df8305343191bc2d0be78fc200b5e96bf171c3fc1bba7fb12e",
+    "deliverySha256": "b6b4a05bb4ae0c55067426ce07d9b58dbdbdc86e64f7d943cd0038f956aa5d6d",
+    "operation": "remove exactly one final LF after an existing LF",
+    "exactInverseVerified": true,
+    "executableBytesChanged": false
+  },
+  "unchangedDependencyHashes": [
+    {
+      "path": ".github/workflows/workers-runtime-linux.yml",
+      "sha256": "94f08a84a76181eb0f0229f0f82d1f731b9c39ebbe09b5ceebb4ae3741d6cac6"
+    },
+    {
+      "path": ".gitleaks.toml",
+      "sha256": "8d3f6557cffc5c61bc1ab6a8c5ac26400542f6da5d7c2320306ee17373a14eea"
+    },
+    {
+      "path": ".gitleaksignore",
+      "sha256": "1f6204fa08c92058b8a8f3e9b99dfbcb90c4537da28de17fc782e3f8a4c988bb"
+    },
+    {
+      "path": "view/common/productCode.ts",
+      "sha256": "487f35855f5539e29b8827ec8b67c1578662ae57a9b0c3014cab731f3d60f43c"
+    },
+    {
+      "path": "workers-ts/package-lock.json",
+      "sha256": "09276cd1ded84d790f76630d43ececa4225de6bd02981b4c6e32d6874c2b4b6a"
+    },
+    {
+      "path": "workers-ts/package.json",
+      "sha256": "50fcc5b21ab0a2330841880e37751af3bb09d991005400c9046b9f579f640923"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+      "sha256": "1644287beed0a972fcc75015e87cb16973039490bce45f6f1c8ee9d55c52ac4f"
+    },
+    {
+      "path": "workers-ts/src/controllers/out/OutApiController.ts",
+      "sha256": "ef0d403d9891fa4821a7c7c61e1213da78faf05b0afb5ee53005c2445df7164e"
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+      "sha256": "51db4cc8687d1ea9df2a5ce4e0fac498a76b817f402afed465370884bd81d117"
+    },
+    {
+      "path": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+      "sha256": "4044d51930d72620f9d124c375779e37a99fdfb8e8c815cf2cb30420080d4324"
+    },
+    {
+      "path": "workers-ts/src/models/schema/product.ts",
+      "sha256": "2f43140480f12dc77c91c21721d1f5e948e3de673f37b35d1ea6ac8c6222e25a"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminLegacyProductSaveService.ts",
+      "sha256": "b6f61a28d6f9f7c8f780f57536f3295e573310bd2bb881d31ccc54cf6f667806"
+    },
+    {
+      "path": "workers-ts/src/services/erp/ErpConnectionPolicy.ts",
+      "sha256": "6ac4890639e16a6800e6a6cc35754e786b6e9e7b6dc7d3508da5e046cf33f8a6"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutIdempotency.ts",
+      "sha256": "08e91eeefe399d2f09d77ed31c8485cf5e7b2085c9ed19ee24bf4f4effbcfac8"
+    },
+    {
+      "path": "workers-ts/src/services/product/OrdinaryProductReadData.ts",
+      "sha256": "5ddd84f330ec7879a13d51393896ed1e24f35f43955b16d42b1996efa33fb98f"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductCreationDefaults.ts",
+      "sha256": "d0e3ac8d0850ea34c416dbde638849b8c9c8d2d3b86b5ddfa61c19a5d8f79de3"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductDetailDesignData.ts",
+      "sha256": "01578562cb6eadf15e94deb9068a203a6510459b1ed113a25773a9f4621d59a4"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductSkuEditorService.ts",
+      "sha256": "b05f51653e92daa9e42c8f37e6f03dfbd35b5fe3cf6e5239051465e13d8f8ee4"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductSkuInput.ts",
+      "sha256": "c96247e8ac7befe362e9d2596c2d2a69d9b113930aa6c388ec1a78755ab1f23f"
+    },
+    {
+      "path": "workers-ts/src/services/product/PublicCatalogService.ts",
+      "sha256": "702a0b20a7ceac5bd2dd865cae5a4fba72c844e899031a59984b2743f6ab816a"
+    },
+    {
+      "path": "workers-ts/src/services/product/ReplyService.ts",
+      "sha256": "dd3a2454ee833f583d7580bfa423388cbf0fb90a5b88a3b8ae9c9ebc59c183db"
+    },
+    {
+      "path": "workers-ts/src/services/product/StoreProductService.ts",
+      "sha256": "7dc64077b57923f77e13fd654dbf2147b8387efb89417204424f20115b143fec"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductCopyService.ts",
+      "sha256": "5d7d23e0578ffdb9c8e43024e4facdd9cfc4f1e8bb9b8e5da5cd7de8e77a5918"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductCopySource.ts",
+      "sha256": "eee6eccdf9f6a2e1558e03f9536c33539eb3a23824ad6c13024abb10680f09a7"
+    },
+    {
+      "path": "workers-ts/test/admin-product-editor-native.test.ts",
+      "sha256": "439638ed82ad5cb64c272fe461f05a612ef9eb20c6f68bdec8116fe0e6eec910"
+    },
+    {
+      "path": "workers-ts/test/helpers/refundRuntimeFixture.ts",
+      "sha256": "cee737293c79fc2434f5031163410b684a900b1ce7c59e1e2fa876d3e3173b33"
+    },
+    {
+      "path": "workers-ts/test/out-stock-candidate-boundary.test.ts",
+      "sha256": "f012d2b2a07942ddbeaea9c6ca597c372bf3780b56afae0a19fdace5588b165e"
+    },
+    {
+      "path": "workers-ts/test/product-creation-defaults-native.test.ts",
+      "sha256": "8bfc5f04d8ee77934aae3bc9c1c723efc99e39760deed49b5a1266e49c28d632"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-copy-native.test.ts",
+      "sha256": "38525e635b7035785c77d80e16f2f6a27353406c895bc9184ac9a43472b3f530"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-recommend-image-native.test.ts",
+      "sha256": "8b482fa45f743b656d5f521620842f03c1c072995998489967f56b23f85f5ecb"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-spu-native.test.ts",
+      "sha256": "5c16beb5ab46106cb322b3977a1e3ad54fec8caf9aa6fd2ed84c135059a663e4"
+    },
+    {
+      "path": "workers-ts/tsconfig.json",
+      "sha256": "8f6d36740c91218ae3856c55d26a91ed4dc8944db602e69aec5f043c67fa50df"
+    },
+    {
+      "path": "workers-ts/tsconfig.runtime-test.json",
+      "sha256": "12965a90180c0eba6a02d1193b1cf6921d9fa98c719e99bf431ca55cb195ce02"
+    },
+    {
+      "path": "workers-ts/vitest.config.ts",
+      "sha256": "d02332818aefb724c00e07e60f4ad77580d94fab97e7bc7426ac75c7d36f4690"
+    },
+    {
+      "path": "workers-ts/vitest.worker.config.ts",
+      "sha256": "1e29a052a926da8f2db8d10b6c46a57c91d289c083670b0061fcc36bd2008467"
+    }
+  ],
+  "behavior": {
+    "physicalErpMainAndActiveSkuCodeRequired": true,
+    "phpStringZeroRejected": true,
+    "modernOptionalMainCodeAuthoring": true,
+    "modernOmittedCodeColumnAndSkuBytesPreserved": true,
+    "storedSkuHistoryBound": 1000,
+    "outFullFormOmissionAndCommittedReplayPreserved": true,
+    "erpCredentialsOrProviderActivation": false,
+    "matureAdminCoordinatorUnchanged": true,
+    "supplierFullMainProofPreserved": true,
+    "schemaOrFrontendChanged": false,
+    "historyBackfilled": false
+  },
+  "validation": {
+    "native": {
+      "erp": {
+        "files": [
+          "test/product-erp-code-native.test.ts"
+        ],
+        "passed": 27,
+        "failed": 0,
+        "skipped": 0,
+        "remainingFixtures": 0,
+        "stopped": true
+      },
+      "defaults": {
+        "files": [
+          "test/product-creation-defaults-native.test.ts"
+        ],
+        "passed": 35,
+        "failed": 0,
+        "skipped": 0,
+        "remainingFixtures": 0,
+        "stopped": true
+      },
+      "supplier": {
+        "files": [
+          "test/supplier-product-recommend-image-native.test.ts"
+        ],
+        "passed": 172,
+        "failed": 0,
+        "skipped": 0,
+        "remainingFixtures": 0,
+        "stopped": true
+      },
+      "spu": {
+        "files": [
+          "test/supplier-product-spu-native.test.ts"
+        ],
+        "passed": 16,
+        "failed": 0,
+        "skipped": 0,
+        "remainingFixtures": 0,
+        "stopped": true
+      },
+      "out": {
+        "files": [
+          "test/out-stock-candidate-boundary.test.ts"
+        ],
+        "passed": 49,
+        "failed": 0,
+        "skipped": 0,
+        "remainingFixtures": 0,
+        "stopped": true
+      },
+      "admin": {
+        "files": [
+          "test/admin-product-editor-native.test.ts"
+        ],
+        "passed": 17,
+        "failed": 0,
+        "skipped": 0,
+        "remainingFixtures": 0,
+        "stopped": true
+      },
+      "copy": {
+        "files": [
+          "test/supplier-product-copy-native.test.ts"
+        ],
+        "passed": 27,
+        "failed": 0,
+        "skipped": 0,
+        "remainingFixtures": 0,
+        "stopped": true
+      }
+    },
+    "nativePassed": 343,
+    "unitFiles": [
+      "test/admin-legacy-product-input.test.ts",
+      "test/admin-product-editor.test.ts",
+      "test/local-finance-postgres-runner.test.ts",
+      "test/order-brokerage.test.ts",
+      "test/order-paid-outbox-queue-consumer.test.ts",
+      "test/order-reward.test.ts",
+      "test/out-card-product-input.test.ts",
+      "test/out-manual-virtual-product.test.ts",
+      "test/out-product-coupons.test.ts",
+      "test/out-product-presale.test.ts",
+      "test/out-product-price-options.test.ts",
+      "test/out-product-recommendations.test.ts",
+      "test/out-product-settings.test.ts",
+      "test/out-second-card-input.test.ts",
+      "test/out-type2-compat.test.ts",
+      "test/presale-schedule.test.ts",
+      "test/product-association-migration.test.ts",
+      "test/product-association-transaction.test.ts",
+      "test/product-coupon-migration.test.ts",
+      "test/product-erp-code.test.ts",
+      "test/product-purchase-admission.test.ts",
+      "test/product-sku-editor-migration.test.ts",
+      "test/purchased-label-operations.test.ts",
+      "test/purchased-product-label-codec.test.ts",
+      "test/purchased-product-label-queue.test.ts",
+      "test/purchased-product-label-result.test.ts",
+      "test/purchased-product-label-runtime.test.ts",
+      "test/purchased-product-label-selection.test.ts",
+      "test/purchased-product-label-source.test.ts",
+      "test/supplier-product-batch-permission.test.ts",
+      "test/supplier-product-brand-frontend.test.ts",
+      "test/supplier-product-category-permission.test.ts",
+      "test/supplier-product-code-preview.test.ts",
+      "test/supplier-product-code.test.ts",
+      "test/supplier-product-copy-frontend.test.ts",
+      "test/supplier-product-coupons.test.ts",
+      "test/supplier-product-detail-frontend.test.ts",
+      "test/supplier-product-ensures-frontend.test.ts",
+      "test/supplier-product-integral.test.ts",
+      "test/supplier-product-label-frontend.test.ts",
+      "test/supplier-product-label-picker-frontend.test.ts",
+      "test/supplier-product-management.test.ts",
+      "test/supplier-product-media-frontend.test.ts",
+      "test/supplier-product-parameters-frontend.test.ts",
+      "test/supplier-product-price-options.test.ts",
+      "test/supplier-product-purchase-options.test.ts",
+      "test/supplier-product-recommend-image-frontend.test.ts",
+      "test/supplier-product-recommendations.test.ts",
+      "test/supplier-product-rule-frontend.test.ts",
+      "test/supplier-product-rule-inline-frontend.test.ts",
+      "test/supplier-product-schedule-frontend.test.ts",
+      "test/supplier-product-settings.test.ts",
+      "test/supplier-product-shipping-editor-frontend.test.ts",
+      "test/supplier-product-system-form-frontend.test.ts",
+      "test/supplier-product-unit-frontend.test.ts",
+      "test/supplier-product-user-labels.test.ts",
+      "test/supplier-product-video-upload-frontend.test.ts",
+      "test/supplier-sku-batch-frontend.test.ts"
+    ],
+    "unitPassed": 1908,
+    "unitFailed": 0,
+    "unitSkipped": 0,
+    "workerCompiler": {
+      "originalRoots": 4378,
+      "commonRoots": 1915,
+      "testRoots": 2463,
+      "shardTestCounts": [
+        1232,
+        1231
+      ],
+      "unionExactlyMatchesOriginal": true,
+      "optionsExactlyMatchOriginal": true
+    },
+    "runtimeTypesPassed": true,
+    "workerd": {
+      "files": [
+        "test/runtime/admin-branding-pages-proxy.test.ts",
+        "test/runtime/admin-mobile-product-body.test.ts",
+        "test/runtime/checkout-scenario-maintenance.test.ts",
+        "test/runtime/community-upload-rate.test.ts",
+        "test/runtime/kefu-mobile-notification-protocol-runtime.test.ts",
+        "test/runtime/offline-payment-contract.test.ts",
+        "test/runtime/offline-payment-provider.test.ts",
+        "test/runtime/offline-payment-return.test.ts",
+        "test/runtime/orphan-test-cleanup-worker.test.ts",
+        "test/runtime/paid-runtime-audit-worker.test.ts",
+        "test/runtime/pink-recovery-queue-runtime.test.ts",
+        "test/runtime/product-auto-shelf-queue-runtime.test.ts",
+        "test/runtime/product-recycle-effects-queue-runtime.test.ts",
+        "test/runtime/product-save-effects-queue-runtime.test.ts",
+        "test/runtime/product-video-compose.test.ts",
+        "test/runtime/product-video-gc-queue-runtime.test.ts",
+        "test/runtime/release-protocol-schema-worker.test.ts",
+        "test/runtime/response-cache.test.ts",
+        "test/runtime/runtime-business-worker.test.ts",
+        "test/runtime/runtime-role-provision-worker.test.ts",
+        "test/runtime/staff-notification-proxy-runtime.test.ts",
+        "test/runtime/staff-notification-runtime.test.ts",
+        "test/runtime/supplier-cash-proof-runtime.test.ts",
+        "test/runtime/supplier-proactive-refund-planning.test.ts",
+        "test/runtime/supplier-product-video-compose.test.ts",
+        "test/runtime/test-release-core-schema-migration-worker.test.ts",
+        "test/runtime/test-release-schema-migration-worker.test.ts",
+        "test/runtime/withdrawal-effects-migration-worker.test.ts",
+        "test/runtime/withdrawal-replay-migration-worker.test.ts",
+        "test/runtime/worker-runtime.test.ts"
+      ],
+      "passed": 410,
+      "failed": 0,
+      "skipped": 0,
+      "remainingFixtures": 0,
+      "stopped": true
+    },
+    "productionAuditFindings": 0,
+    "historicalSourceProof": {
+      "testFile": "test/supplier-product-label-runtime-source-binding.test.ts",
+      "baseline": "32ce5027d06f6e1960ae6400b9b1f04aa88f72b4",
+      "baselinePassed": 178,
+      "currentPassed": 178,
+      "baselineFailed": 10,
+      "currentFailed": 10,
+      "skipped": 0,
+      "failingFullNamesExactlyMatch": true,
+      "failedCases": [
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance admits the exact new definer only in current shared-shop pricing recognition while isolated scopes and the fixed privilege plan remain frozen",
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance keeps all prior frontend public selection binding and privilege plan bytes unchanged for a backend-only closure",
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance partitions true8023 before and all controlled changed/additional files with no missing or duplicated image",
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance pins complete current and accepted ProductLabel bytes workers-ts/scripts/run-local-finance-postgres.mjs",
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance pins complete current and accepted ProductLabel bytes workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance pins complete current and accepted ProductLabel bytes workers-ts/src/migrations/checkoutPricingLock.ts",
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance refuses altered current and forged whole-file inverse workers-ts/scripts/run-local-finance-postgres.mjs",
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance refuses altered current and forged whole-file inverse workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance rejects nonexact publication bytes and forged bridge hashes while composing each immutable validation layer",
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance runs current789 callSites827 variants before keeping every exact report byte and predecessor call object"
+      ],
+      "restoredIgnoredResources": 150,
+      "profiles": [
+        {
+          "profile": "baseline",
+          "exit": 1,
+          "seconds": 44.02
+        },
+        {
+          "profile": "current",
+          "exit": 1,
+          "seconds": 24.65
+        }
+      ],
+      "isPassingGate": false,
+      "isRuntimeAcceptance": false
+    },
+    "frozenThroughoutFormalCommands": true,
+    "commands": [
+      {
+        "name": "unit",
+        "exitCode": 0,
+        "durationSeconds": 149.45,
+        "passed": 1908,
+        "files": 58
+      },
+      {
+        "name": "source-proof",
+        "exitCode": 0,
+        "durationSeconds": 69.05
+      },
+      {
+        "name": "native-erp",
+        "exitCode": 0,
+        "durationSeconds": 382.99
+      },
+      {
+        "name": "native-defaults",
+        "exitCode": 0,
+        "durationSeconds": 487.21
+      },
+      {
+        "name": "type-partition",
+        "exitCode": 0,
+        "durationSeconds": 0.46
+      },
+      {
+        "name": "type-options",
+        "exitCode": 0,
+        "durationSeconds": 0.36
+      },
+      {
+        "name": "worker-types-1",
+        "exitCode": 0,
+        "durationSeconds": 206.98
+      },
+      {
+        "name": "worker-types-2",
+        "exitCode": 0,
+        "durationSeconds": 207.04
+      },
+      {
+        "name": "runtime-types",
+        "exitCode": 0,
+        "durationSeconds": 138.38
+      },
+      {
+        "name": "native-supplier",
+        "exitCode": 0,
+        "durationSeconds": 597.55
+      },
+      {
+        "name": "native-spu",
+        "exitCode": 0,
+        "durationSeconds": 56.1
+      },
+      {
+        "name": "native-out",
+        "exitCode": 0,
+        "durationSeconds": 496.7
+      },
+      {
+        "name": "native-admin",
+        "exitCode": 0,
+        "durationSeconds": 44.79
+      },
+      {
+        "name": "native-copy",
+        "exitCode": 0,
+        "durationSeconds": 69.19
+      },
+      {
+        "name": "workerd-runtime",
+        "exitCode": 0,
+        "durationSeconds": 202.79
+      },
+      {
+        "name": "audit-production",
+        "exitCode": 0,
+        "durationSeconds": 5.45
+      }
+    ],
+    "initialCounterexamples": 4
+  },
+  "preservedAttempts": {
+    "baselineActualHttp200Expected400": 4,
+    "firstFullNativePassed": 24,
+    "firstFullNativeFixtureErrors": 2,
+    "fixtureSpuTextShortenedToRealColumnSize": true,
+    "productionSourcesUnchangedAfterPreflight": true,
+    "primitiveDoubleUsesRealMainDefaultsAndExplicitEmptyConfigSelection": true
+  },
+  "invariants": {
+    "nativeRunnerInverseExactlyMatchesBase": true,
+    "deadlinesAndPrivilegesUnchanged": true,
+    "legacyPhpRefUnchanged": true,
+    "secretIgnoresUnchanged": true,
+    "unchangedIgnoredResources": 150,
+    "noPhpUpload": true,
+    "noDeploy": true,
+    "noLiveProviderCalls": true,
+    "noManufacturedPayment": true
+  },
+  "priorCI": {
+    "runId": 43372023815,
+    "terminalJobs": 13,
+    "passed": 10,
+    "failedBeforeUnitTestsAtFixedPhpCheckout": 2,
+    "failedAggregate": 1
+  },
+  "carriedDebts": [
+    "Fixed legacy PHP commit cannot be fetched by Worker CI before unit execution",
+    "Historical source-binding 10 unchanged failures, not a passing gate",
+    "Old refund materialization literal and private-schema writeoff failures outside scope"
+  ],
+  "artifactHashes": [
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/delivery-source.json",
+      "sha256": "8f57d89925ad24561b8206237d986def0b8da4d37bdab4f1e3e8288e05a15efe"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/eof-formatting.json",
+      "sha256": "3c371e20f2a03c2fcee37e8d5b8e57c6a8880bc14b14bdf941cc1456d08f3b77"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/delivery-staging-failure.log",
+      "sha256": "e588e04fc882bc8142a64a7f07388713084d6e9bdef13a962321fd5b8c2d7e2a"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/source.json",
+      "sha256": "0e0044a941d2e2bb633c47767b15d5d67f8e052ed6733f80eacc23658d48c6df"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/dependencies.json",
+      "sha256": "905bb2804a182fa6fe86227a2b489005f5d00a8dedac28848c6921862807d154"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/php-reference.json",
+      "sha256": "491d944ccf5b105a70751d7349a19949ab8d5713b7fc68494f0808b93fd79468"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/baseline-admission.log",
+      "sha256": "b02d2be0e89d4dcee44cca9e7548eb4575dcdc5379c7066c4673cc68ca8948de"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/preflight-unit.log",
+      "sha256": "bff2eb7b6ad60d840a38b6656f675a96c0e28b8a10565a7f758fd7dc07fcd8fc"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/preflight-native.log",
+      "sha256": "7445cc368674cea150bf06ef301362586cd4ef88976c87b257bb623cd9e85f40"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/preflight-native-test.ts",
+      "sha256": "fd71d6182f5720c8190da147d88c214367f335615852713d4b3fcbc7f5b45d39"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/preflight-source.json",
+      "sha256": "a64939874800434856310ff26fe7418a4d72b2306ad65d28b4999b9a902b108d"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/source-proof-comparison.json",
+      "sha256": "2cf985d755a808617451f60eb244d18c7d4fe07b8361d52d44b46c87a48d27eb"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/unit-files.json",
+      "sha256": "e543d25d880774034ce52e8f9beb7cb78fcf9a2497371cc148592dfd0c4b6334"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/unit.json",
+      "sha256": "84a83789fb7e06032660329f1988663b3604a54025212edb7309546c845348c4"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/results.json",
+      "sha256": "380a6f51630368f44256fd0253465db91e6be69cd31b678de049a75143c7e78d"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/type-shards.json",
+      "sha256": "3a67df6bd91df462654288931a8b60bb5ef56d0e2edae710a94ea7e2cb235545"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/restored-resources.json",
+      "sha256": "2805035753af768b74ac4b987581644a085a6b857765a6c19ac0a2a6cd8fdd57"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/source-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/previous-ci-jobs.json",
+      "sha256": "456415c0af2892979efc0b769a7c6e0f1e4700b7126b2b0e1fd29c83c13e2d74"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/previous-ci-shard1.log",
+      "sha256": "6d141fd81d16f9dff576a7f42b7313b8ca9cbb5b9376f9e35c165055127ebb4a"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/previous-ci-shard2.log",
+      "sha256": "1fb33144dbbcdada6f32c3d8b7c788d069fa109606035c36454eef25c9aee188"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/previous-ci-runtime.log",
+      "sha256": "2d342a42fc76ba005b90b84b99780671b3dd72db1104d8124a710a77e1cf0c00"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/validate.py",
+      "sha256": "dee165e0a081c85038f95d8262cf3af6b52c803b799ec5d6e90aaab0720f48a9"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/source-proof.py",
+      "sha256": "bfbfd714dacdcd6f01febd22d3d4a5f2a6dd8f288b9f70889f08979277f526be"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/type-shards.cjs",
+      "sha256": "c5316384d157d874e2933af6a68d560d83226e6beb4a3eed888895533ae25482"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/check-options.cjs",
+      "sha256": "67765c8e48dab264861c7e1c8bba01675ba79dc96bf5dd55bdfe93b44d3e55d7"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/validation.log",
+      "sha256": "5dcbc47aaf6059850439d950f7df770d7c1820a8a5433b91d06177d1453cc606"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/native-erp.log",
+      "sha256": "7d70156c7f6e783924f14fe2c2e39b29a999461a379653a8aa19a38b2acee26b"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/native-defaults.log",
+      "sha256": "8097837d72c7720b99a0e047a114d19dd484eaeedf48859776c0c33c01ae9823"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/native-supplier.log",
+      "sha256": "6700afa89e9d2f0e73e859bd5899c3a07c6d4a8dc0f2231c012ae7805398787d"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/native-spu.log",
+      "sha256": "b4f52ce167fbc35fbb0b953ad51b3f110daae188d64e4667d023cd40b5773d2e"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/native-out.log",
+      "sha256": "0881d44371854059794a2f31fb92c6ca5a767b5e25703537bee5c975eac443db"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/native-admin.log",
+      "sha256": "78397285ff294a59a3f83e3c737243d8a9345a249f9273e1d42ce85bfa689058"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/native-copy.log",
+      "sha256": "7d93e67d970b9189b7963e5e6deb895dd9479c91e415579bea9d00b3fa7140eb"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/workerd-runtime.log",
+      "sha256": "677977f86b34bc40bbe2bc4142af446bbaae3280a7b2567ca1c935b687fdd964"
+    },
+    {
+      "path": "/tmp/php-ts-platform-erp-product-codes-20261112/audit-production.log",
+      "sha256": "4ca0bc8f609b8cd4e43a18d0faebf8f0b05d91b15ee6386fb48a789c00393192"
+    }
+  ],
+  "createdAt": "2026-11-13T07:42:58.171185+00:00"
+}

@@ -1,3 +1,4 @@
+import { productErpCodePresent } from '@/services/product/ProductCodeInput';
 import type { storeProduct } from '@/models/schema';
 import { normalizeProductSkuEditorPayload, type ProductSkuEditorPayload } from '@/services/product/ProductSkuEditorService';
 import { normalizeVirtualCardImport, type VirtualCardImportRow } from '@/services/product/VirtualProductInventoryService';
@@ -257,7 +258,7 @@ export function normalizeAdminLegacyProductInput(value: unknown, options: AdminL
   const skuPayload = normalizeProductSkuEditorPayload({ spec_type: specType, items: dimensions, attrs: skuRows }, productType);
   if (skuPayload.skus.reduce((sum, sku) => sum + sku.stock, 0) > MAX_INTEGER) throw new ValidateException('商品总库存超出存储范围');
   const code = text(source.code, '商品编码', 50);
-  if (options.erpOpen && productType === 0 && (!code || skuRows.some(sku => !sku.code))) throw new ValidateException('开启ERP时商品及每个SKU均须填写商品编码');
+  if (options.erpOpen && productType === 0 && (!productErpCodePresent(code) || skuRows.some(sku => !productErpCodePresent(sku.code)))) throw new ValidateException('开启ERP时商品及每个SKU均须填写商品编码');
   const isPresale = flag(source.is_presale_product, '预售开关');
   const presalePeriod = array(source.presale_time, '预售时间', 2);
   let presaleStart = 0, presaleEnd = 0;

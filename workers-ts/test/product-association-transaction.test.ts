@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SQL } from 'drizzle-orm';
 import { PgDialect } from 'drizzle-orm/pg-core';
 import type { Container, DbClient } from '../src/lib/di';
-import { storeProduct, storeProductCategory, storeProductRelation, systemLog } from '../src/models/schema';
+import { storeProduct, storeProductCategory, storeProductRelation, systemConfig, systemLog } from '../src/models/schema';
 import {
   ProductAssociationService,
   type ProductLegacyMainValues,
@@ -26,7 +26,7 @@ const dialect = new PgDialect();
 type Product = typeof storeProduct.$inferSelect;
 type Relation = typeof storeProductRelation.$inferSelect;
 const product = (changes: Partial<Product> = {}): Product => ({
-  id: 10, pid: 0, type: 0, relationId: 0, productType: 0, storeName: 'old', storeInfo: '', image: '',
+  code: '', star: '3.0', spu: '', id: 10, pid: 0, type: 0, relationId: 0, productType: 0, storeName: 'old', storeInfo: '', image: '',
   price: '2.00', otPrice: '3.00', vipPrice: '0.00', stock: 2, keyword: '', unitName: '件', sort: 0,
   isShow: 0, isVip: 0, isSupportRefund: 1, isDel: 0, isVerify: 0, cateId: '', brandId: 0, brandCom: '',
   storeLabelId: '', ensureId: '', specsId: 0, specs: '', sales: 77, ficti: 15, labelId: 'old-user-label',
@@ -74,6 +74,7 @@ function fixture(initial: Product | null = product(), rows: Relation[] = []) {
         return query(() => {
           if (table === storeProduct) return saved ? [structuredClone(saved)] : [];
           if (table === storeProductRelation) return structuredClone(relations).sort((a, b) => a.id - b.id);
+          if (table === systemConfig) return [];
           if (table === storeProductCategory) return [{ id: 11, pid: 7 }];
           throw new Error('Unexpected primitive selection');
         }).table(table);

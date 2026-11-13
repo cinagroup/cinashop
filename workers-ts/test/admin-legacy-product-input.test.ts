@@ -175,7 +175,7 @@ describe('Complete bounded old Admin product body adapter', () => {
       expect(() => normalizeAdminLegacyProductInput(body({ video_link: reference }), { controlledVideo: true, siteUrl: 'https://shop.example' })).toThrow();
   });
   it('validates ERP main and SKU codes independently only when the transaction supplies its current ERP setting', () => {
-    for (const changes of [{ code: '' }, { attrs: [sku({ code: '' })] }]) {
+    for (const changes of [{ code: '' }, { attrs: [sku({ code: '' })] }, { code: '0' }, { attrs: [sku({ code: '0' })] }]) {
       expect(() => normalizeAdminLegacyProductInput(body(changes), { erpOpen: true })).toThrow();
       expect(() => normalize(changes)).not.toThrow();
     }

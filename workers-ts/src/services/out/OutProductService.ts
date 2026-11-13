@@ -1,3 +1,4 @@
+import { lockProductErpCodePolicy, productErpCodePlan } from '@/services/product/ProductErpCodePolicy';
 import { productCreationDefaults } from '@/services/product/ProductCreationDefaults';
 import { productRecommendationInput as recommendationInput } from '@/services/product/ProductRecommendationInput';
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
@@ -526,6 +527,9 @@ export class OutProductService {
       if (replay) {
         return { id: replay.productId, idempotent: true, stock_preserved: productId > 0 };
       }
+      const codePolicy = input.productType === PHYSICAL_PRODUCT_TYPE ? await lockProductErpCodePolicy(tx) : undefined;
+      const codePlan = await productErpCodePlan(tx, { productId, code: input.code,
+        owner: { type: PLATFORM_TYPE, relationId: PLATFORM_RELATION_ID }, skus: input.skus, policy: codePolicy });
       if (productId > 0) {
         await boundBargainSourceProductChange(tx);
         await lockBargainSourceProductChange(tx, productId);
@@ -711,11 +715,12 @@ export class OutProductService {
       const expectedVip = input.isVip ?? existing?.isVip ?? 0;
       const expectedSub = input.isSub ?? existing?.isSub ?? 0;
       const assertProductSelections = async () => {
-        const [row] = await tx.select({ star: storeProduct.star, spu: storeProduct.spu, activity: storeProduct.activity, recommendList: storeProduct.recommendList,
+        const [row] = await tx.select({ code: storeProduct.code, star: storeProduct.star, spu: storeProduct.spu, activity: storeProduct.activity, recommendList: storeProduct.recommendList,
           isVipProduct: storeProduct.isVipProduct, isVip: storeProduct.isVip, isSub: storeProduct.isSub }).from(storeProduct)
           .where(eq(storeProduct.id, savedProductId)).limit(1);
         if (row && (row.star !== creationState.star || row.spu !== creationState.spu))
           throw new HttpApiException('商品初始信息保存核对失败，请刷新后重试', 409, 409);
+        if (row && row.code !== input.code) throw new HttpApiException('商品编码保存核对失败，请刷新后重试', 409, 409);
         if (!row || row.activity !== expectedActivity) throw new ValidateException('平台商品活动顺序已变化');
         if (row.recommendList !== expectedRecommendations) throw new ValidateException('平台推荐商品列表已变化');
         if (row.isVipProduct !== expectedVipProduct) throw new ValidateException('平台商品会员专属状态已变化');
@@ -818,6 +823,7 @@ export class OutProductService {
         stock = cardProof.stock;
         if (cardProof.changed) scheduleProof = await inventoryLock(() => outProductScheduleProof(tx, savedProductId, existing, input));
       }
+      await codePlan.capture(tx, savedProductId);
       const resultSnapshot = JSON.stringify({ attr: input.dimensions, value: resultSkus });
       await tx.insert(storeProductAttrResult).values({
         productId: savedProductId,
@@ -935,6 +941,7 @@ export class OutProductService {
       await cardProof?.assert(resultSnapshot);
       await assertPriceOptions();
       await inventoryLock(() => settingsProof.assert(savedProductId));
+      await codePlan.assert(tx, savedProductId);
       return { id: savedProductId, idempotent: false, stock_preserved: !!existing };
     });
   }
