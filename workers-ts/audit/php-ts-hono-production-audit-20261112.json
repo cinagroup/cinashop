@@ -1,0 +1,305 @@
+{
+  "batch": "php-ts-hono-production-audit-20261112",
+  "baseCommit": "582b6e12bed72d33632e233e2859e488131430ff",
+  "completeMigration": false,
+  "evidenceRoot": "/tmp/php-ts-hono-production-audit-20261112",
+  "scope": "Worker Hono production dependency audit repair",
+  "dependency": {
+    "name": "hono",
+    "before": "4.13.13",
+    "after": "4.13.18",
+    "changedLockEntries": [
+      "",
+      "node_modules/hono"
+    ],
+    "otherLockedPackagesIdentical": true
+  },
+  "trigger": {
+    "runId": 43344207610,
+    "jobId": 131619485134,
+    "stage": "Audit production dependencies",
+    "vulnerableProductionPackageCount": 1,
+    "advisoryCount": 3
+  },
+  "officialSources": {
+    "advisories": [
+      {
+        "id": "GHSA-4m76-xfj5-7975",
+        "url": "https://github.com/honojs/hono/security/advisories/GHSA-4m76-xfj5-7975",
+        "affected": "<4.13.16",
+        "patched": "4.13.16"
+      },
+      {
+        "id": "GHSA-h7mg-cq63-vhpq",
+        "url": "https://github.com/honojs/hono/security/advisories/GHSA-h7mg-cq63-vhpq",
+        "affected": ">=4.1.4 <=4.13.15",
+        "patched": "4.13.16"
+      },
+      {
+        "id": "GHSA-3gg2-335m-rxc6",
+        "url": "https://github.com/honojs/hono/security/advisories/GHSA-3gg2-335m-rxc6",
+        "affected": ">=3.12.0 <=4.13.15",
+        "patched": "4.13.16"
+      }
+    ],
+    "selectedRelease": {
+      "url": "https://github.com/honojs/hono/releases/tag/v4.13.18",
+      "version": "4.13.18",
+      "reason": "Includes subsequent validator, bodyLimit, custom-getPath mount and allowPercentInPath static fixes documented by the maintainer."
+    },
+    "retrieval": "Firecrawl live maxAge=0 official maintainer pages, 2026-11-13 UTC"
+  },
+  "sourceHashes": [
+    {
+      "path": "workers-ts/package.json",
+      "sha256": "50fcc5b21ab0a2330841880e37751af3bb09d991005400c9046b9f579f640923"
+    },
+    {
+      "path": "workers-ts/package-lock.json",
+      "sha256": "09276cd1ded84d790f76630d43ececa4225de6bd02981b4c6e32d6874c2b4b6a"
+    },
+    {
+      "path": "workers-ts/test/hono-routing-patch.test.ts",
+      "sha256": "b74832d130fe3e0bf37621e29f9872dd64e46c50b313e289a604618450e78d56"
+    }
+  ],
+  "validation": {
+    "oldVersion": {
+      "version": "4.13.13",
+      "passed": 0,
+      "expectedFailures": 8,
+      "skipped": 0
+    },
+    "patchedVersion": {
+      "version": "4.13.18",
+      "passedRoutingCases": 8
+    },
+    "productionAuditFindings": 0,
+    "unit": {
+      "files": [
+        "test/hono-routing-patch.test.ts",
+        "test/hono-security-patch.test.ts",
+        "test/admin-runtime-auth.test.ts",
+        "test/manager-runtime-auth.test.ts",
+        "test/customer-financial-runtime-auth.test.ts",
+        "test/customer-cashier-runtime-auth.test.ts",
+        "test/supplier-product-batch-permission.test.ts",
+        "test/supplier-product-category-permission.test.ts",
+        "test/supplier-rbac-migration.test.ts",
+        "test/supplier-operations-migration.test.ts",
+        "test/kefu-core-migration.test.ts"
+      ],
+      "passed": 199,
+      "failed": 0,
+      "skipped": 0
+    },
+    "workerTypeRoots": {
+      "originalRoots": 4370,
+      "commonRoots": 1912,
+      "testRoots": 2458,
+      "shardTestCounts": [
+        1229,
+        1229
+      ],
+      "unionExactlyMatchesOriginal": true,
+      "optionsExactlyMatchOriginal": true
+    },
+    "runtimeTypesPassed": true,
+    "runtime": {
+      "files": [
+        "test/runtime/admin-branding-pages-proxy.test.ts",
+        "test/runtime/admin-mobile-product-body.test.ts",
+        "test/runtime/checkout-scenario-maintenance.test.ts",
+        "test/runtime/community-upload-rate.test.ts",
+        "test/runtime/kefu-mobile-notification-protocol-runtime.test.ts",
+        "test/runtime/offline-payment-contract.test.ts",
+        "test/runtime/offline-payment-provider.test.ts",
+        "test/runtime/offline-payment-return.test.ts",
+        "test/runtime/orphan-test-cleanup-worker.test.ts",
+        "test/runtime/paid-runtime-audit-worker.test.ts",
+        "test/runtime/pink-recovery-queue-runtime.test.ts",
+        "test/runtime/product-auto-shelf-queue-runtime.test.ts",
+        "test/runtime/product-recycle-effects-queue-runtime.test.ts",
+        "test/runtime/product-save-effects-queue-runtime.test.ts",
+        "test/runtime/product-video-compose.test.ts",
+        "test/runtime/product-video-gc-queue-runtime.test.ts",
+        "test/runtime/release-protocol-schema-worker.test.ts",
+        "test/runtime/response-cache.test.ts",
+        "test/runtime/runtime-business-worker.test.ts",
+        "test/runtime/runtime-role-provision-worker.test.ts",
+        "test/runtime/staff-notification-proxy-runtime.test.ts",
+        "test/runtime/staff-notification-runtime.test.ts",
+        "test/runtime/supplier-cash-proof-runtime.test.ts",
+        "test/runtime/supplier-proactive-refund-planning.test.ts",
+        "test/runtime/supplier-product-video-compose.test.ts",
+        "test/runtime/test-release-core-schema-migration-worker.test.ts",
+        "test/runtime/test-release-schema-migration-worker.test.ts",
+        "test/runtime/withdrawal-effects-migration-worker.test.ts",
+        "test/runtime/withdrawal-replay-migration-worker.test.ts",
+        "test/runtime/worker-runtime.test.ts"
+      ],
+      "passed": 410,
+      "failed": 0,
+      "skipped": 0,
+      "postgresVersion": "160014",
+      "testSuperuser": false,
+      "remainingFixtures": 0,
+      "stopped": true
+    },
+    "commands": [
+      {
+        "name": "baseline-routing",
+        "exitCode": 1,
+        "durationSeconds": 9.88
+      },
+      {
+        "name": "npm-ci-final",
+        "exitCode": 0,
+        "durationSeconds": 6.9
+      },
+      {
+        "name": "audit-production-final",
+        "exitCode": 0,
+        "durationSeconds": 2.56
+      },
+      {
+        "name": "unit-final",
+        "exitCode": 0,
+        "durationSeconds": 40.1
+      },
+      {
+        "name": "type-root-partition",
+        "exitCode": 0,
+        "durationSeconds": 0.4
+      },
+      {
+        "name": "type-options",
+        "exitCode": 0,
+        "durationSeconds": 0.35
+      },
+      {
+        "name": "worker-types-1",
+        "exitCode": 0,
+        "durationSeconds": 198.86
+      },
+      {
+        "name": "worker-types-2",
+        "exitCode": 0,
+        "durationSeconds": 206.34
+      },
+      {
+        "name": "runtime-types",
+        "exitCode": 0,
+        "durationSeconds": 140.89
+      },
+      {
+        "name": "workerd-runtime",
+        "exitCode": 0,
+        "durationSeconds": 238.2
+      }
+    ],
+    "sourceFrozenThroughoutFormalRun": true
+  },
+  "preservedAttempts": {
+    "initialMountExpectationCorrections": 2,
+    "initialUnitPassed": 197,
+    "initialUnitFailed": 2,
+    "initialShippingSkippedNotCredited": 549,
+    "prematureOldInstallContrastRejectedByExpectedFailureGuard": true
+  },
+  "invariants": {
+    "auditGateUnchanged": true,
+    "testRunnerUnchanged": true,
+    "workflowUnchanged": true,
+    "legacyPhpRefUnchanged": true,
+    "productionRoutesUnchanged": true,
+    "secretIgnoresUnchanged": true,
+    "noDeploy": true,
+    "noPhpUpload": true,
+    "noLiveProviderCalls": true
+  },
+  "carriedDebts": [
+    "Both Worker CI unit shards cannot check out fixed legacy PHP ref 8ed2a5b139f9170dd11b0dff91803f2fd59e40a5 before tests",
+    "Product-label historical source proof remains 178 passed / 10 known failures at the product-code batch; not rerun here",
+    "Refund literal source assertion remains carried baseline debt; unchanged and not rerun here"
+  ],
+  "artifactHashes": [
+    {
+      "path": "/tmp/php-ts-hono-production-audit-20261112/source.json",
+      "sha256": "72dfa37e47139b1b7a99b9a6d2a777798f03cf3e1b243a0708264c65ee945d3b"
+    },
+    {
+      "path": "/tmp/php-ts-hono-production-audit-20261112/lock-delta.json",
+      "sha256": "334403154fedb07ee0bea090cbf4acfe3834507263fb039974a8679f1025c9b1"
+    },
+    {
+      "path": "/tmp/php-ts-hono-production-audit-20261112/official-sources.json",
+      "sha256": "959b731979e04adb58f7a035113c17c4ec6d8d0da90eec15f07a977edf1eae29"
+    },
+    {
+      "path": "/tmp/php-ts-hono-production-audit-20261112/results.json",
+      "sha256": "b915e368dd25f21959c4af239ea6c10b0fb24e3fae87e641efc8d0861e2b34aa"
+    },
+    {
+      "path": "/tmp/php-ts-hono-production-audit-20261112/unit-files.json",
+      "sha256": "6aef2876add0d857c3964a857752628cbd1ba7af0d5cb988dbcfd34b495899ce"
+    },
+    {
+      "path": "/tmp/php-ts-hono-production-audit-20261112/unit.json",
+      "sha256": "65fb1d1ca3deff39d56424f1dd544cb7eec5be4bb5c0a837d115f017be87fc74"
+    },
+    {
+      "path": "/tmp/php-ts-hono-production-audit-20261112/baseline-routing.json",
+      "sha256": "3e888e4b29983961eff53576696118ff08cec1535c45cf689f82216c168d2f27"
+    },
+    {
+      "path": "/tmp/php-ts-hono-production-audit-20261112/type-shards.json",
+      "sha256": "bb7a693ea9f056c9053fb222ed5bb81e4782b527fc429bb3ef9fe21d58939d82"
+    },
+    {
+      "path": "/tmp/php-ts-hono-production-audit-20261112/audit-production-final.log",
+      "sha256": "4ca0bc8f609b8cd4e43a18d0faebf8f0b05d91b15ee6386fb48a789c00393192"
+    },
+    {
+      "path": "/tmp/php-ts-hono-production-audit-20261112/workerd-runtime.log",
+      "sha256": "cc51f7b473eb4cce39e6b48227be0598519699d6dc5675413226d77db5dfdb32"
+    },
+    {
+      "path": "/tmp/php-ts-hono-production-audit-20261112/ci-before-runtime.log",
+      "sha256": "4a877bbfd06e3dbe50521afdf44be521d631a1146f4d48504595e1aceea867d4"
+    },
+    {
+      "path": "/tmp/php-ts-hono-production-audit-20261112/preflight-unit.json",
+      "sha256": "38d368b06e8f94590eae0a47a8d9d2162ac84d8bc4953bd1260531765bc8ab37"
+    },
+    {
+      "path": "/tmp/php-ts-hono-production-audit-20261112/preflight-source.json",
+      "sha256": "f2cf2b06fa20ac70d32b01d490723f4748495b4bb29b4a54d82811e354a5a86b"
+    },
+    {
+      "path": "/tmp/php-ts-hono-production-audit-20261112/preflight-patched-routing.json",
+      "sha256": "d94de72a86107378d6372f5e78f9d733cdf5068b65a6de6f9907152e260f074c"
+    },
+    {
+      "path": "/tmp/php-ts-hono-production-audit-20261112/preflight-version-guard.log",
+      "sha256": "43e773abf9106310ebf40972e782ce1542bb2b45935d8b01286c92f9fe227be5"
+    },
+    {
+      "path": "/tmp/php-ts-hono-production-audit-20261112/source-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-hono-production-audit-20261112/validate.py",
+      "sha256": "8c24be0b02894c42b19b1c7676f91e354cd1c044e740433417c223a089fa5cf6"
+    },
+    {
+      "path": "/tmp/php-ts-hono-production-audit-20261112/type-shards.cjs",
+      "sha256": "af8022698bca34aaae156009f852aa22fdfc780c900e2f32c7b7d9d483a0c8ea"
+    },
+    {
+      "path": "/tmp/php-ts-hono-production-audit-20261112/check-options.cjs",
+      "sha256": "8bad2a03073db7ec60bedfc184bd32d43dda36f44379de455f2bfd7537d588f3"
+    }
+  ],
+  "createdAt": "2026-11-13T01:50:16.937332+00:00"
+}
