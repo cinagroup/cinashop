@@ -1,0 +1,781 @@
+{
+  "batch": "php-ts-admin-legacy-order-remarks-20261113",
+  "baseCommit": "4c0ebe7b4ad8de71c8c480c5ba0e833f2a29de0a",
+  "evidenceRoot": "/tmp/php-ts-admin-legacy-order-remarks-20261113",
+  "wholeMigrationComplete": false,
+  "phpReference": {
+    "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+    "files": [
+      {
+        "path": "app/common/controller/Order.php",
+        "sha256": "367b4863ca48847a7f30500c7120fb0808e51b726cefb79fb25c581936ee123d",
+        "matchesFixedRef": true
+      },
+      {
+        "path": "app/controller/admin/v1/order/StoreOrder.php",
+        "sha256": "485e6e34683d2c6410d38c20a21144ffb7c308f19ed368ed31309412170de692",
+        "matchesFixedRef": true
+      },
+      {
+        "path": "route/admin.php",
+        "sha256": "8350eca9e328ed615cea117089589274d7e262324b979af588a714415f522652",
+        "matchesFixedRef": true
+      },
+      {
+        "path": "view/admin/src/api/order.js",
+        "sha256": "840da69ab157925b165b2f184eee632bf5376a254c3e0745ba538121037b38b3",
+        "matchesFixedRef": true
+      },
+      {
+        "path": "app/model/order/StoreOrder.php",
+        "sha256": "23f3a80f464cded2ba769de8def897ae143978d4376c7702c8793b23e4c3d8ab",
+        "matchesFixedRef": true
+      },
+      {
+        "path": "app/dao/order/StoreOrderDao.php",
+        "sha256": "b9a69a31b55ff6b10e6bf0c3a80762f089d6daaaf3cef4a79bdfa0aee3213503",
+        "matchesFixedRef": true
+      },
+      {
+        "path": "app/services/order/StoreOrderServices.php",
+        "sha256": "6a6b960eecccdfbd6007248f14b4e83cedf4388df8c1018e0420abbe7b7e8c5c",
+        "matchesFixedRef": true
+      },
+      {
+        "path": "app/dao/BaseDao.php",
+        "sha256": "43fd77897402aed4ccf5f3504251df696ccc8ab4a1decdc6c1054ecb208ea603",
+        "matchesFixedRef": true
+      },
+      {
+        "path": "app/services/BaseServices.php",
+        "sha256": "c56396bf827787d5ab8d80bfa70687697582abfe3b3cd1c6ce43867b7b80b7e9",
+        "matchesFixedRef": true
+      },
+      {
+        "path": "crmeb/basic/BaseModel.php",
+        "sha256": "d09d99c98900f9e9f2ed2bf328d6d879592656cbf358f19208bcf9eee086748a",
+        "matchesFixedRef": true
+      },
+      {
+        "path": "crmeb/traits/ModelTrait.php",
+        "sha256": "0b821909ee4b6bcffd51834f7b213e46ad001e64215d73dd27d951637cbb1fe6",
+        "matchesFixedRef": true
+      },
+      {
+        "path": "view/admin/src/pages/order/orderList/handle/orderRemark.vue",
+        "sha256": "00e52ff87454afa1d4c78c9b7187ceee754188f19d4b7d9cbbd8561261036732",
+        "matchesFixedRef": true
+      }
+    ]
+  },
+  "phpContractEvidenceKind": "fixed source dispatch/model/client chain; no live PHP database execution",
+  "sourceHashes": [
+    {
+      "path": "workers-ts/src/services/admin/AdminOrderRemarkInput.ts",
+      "sha256": "44b4712331955f047eaaff8e13123464a2d542682e9af7e2a4e96878169e2975"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminOrderRemarkService.ts",
+      "sha256": "d1942b85344b521e1f1c1bb0da2d8d47b669be94640b086806aab417a03dddda"
+    },
+    {
+      "path": "workers-ts/test/admin-order-remark-native.test.ts",
+      "sha256": "dd2b746b478f618c97dea56edf81fc8c51423bea70b9bbf826d16192b780fbd5"
+    },
+    {
+      "path": "workers-ts/test/admin-order-remark.test.ts",
+      "sha256": "9e8874485eb01cd9ca4fb76848efeb0fa7f28e12788168407d44e96c7ca81a10"
+    }
+  ],
+  "unchangedDependencyHashes": [
+    {
+      "path": ".github/workflows/workers-runtime-linux.yml",
+      "sha256": "94f08a84a76181eb0f0229f0f82d1f731b9c39ebbe09b5ceebb4ae3741d6cac6"
+    },
+    {
+      "path": ".gitleaks.toml",
+      "sha256": "8d3f6557cffc5c61bc1ab6a8c5ac26400542f6da5d7c2320306ee17373a14eea"
+    },
+    {
+      "path": ".gitleaksignore",
+      "sha256": "1f6204fa08c92058b8a8f3e9b99dfbcb90c4537da28de17fc782e3f8a4c988bb"
+    },
+    {
+      "path": "view/admin-ts/src/api/order.ts",
+      "sha256": "1922b81c8d082feb45a4dd6a08c93219a2f14cbcbf48e21f22550ae4e10f888b"
+    },
+    {
+      "path": "view/admin-ts/src/pages/order/OrderDetail.vue",
+      "sha256": "702217e0edf36d4485a42fbbd1f2c9db2c7a3f12533bc487482b393a2770cef2"
+    },
+    {
+      "path": "view/admin-ts/src/pages/order/OrderList.vue",
+      "sha256": "1590a692503c4981ce93e8f57b57d13240eda59c5a435162eeb07a5e7619b3fb"
+    },
+    {
+      "path": "view/common/productCode.ts",
+      "sha256": "487f35855f5539e29b8827ec8b67c1578662ae57a9b0c3014cab731f3d60f43c"
+    },
+    {
+      "path": "workers-ts/package-lock.json",
+      "sha256": "09276cd1ded84d790f76630d43ececa4225de6bd02981b4c6e32d6874c2b4b6a"
+    },
+    {
+      "path": "workers-ts/package.json",
+      "sha256": "50fcc5b21ab0a2330841880e37751af3bb09d991005400c9046b9f579f640923"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "67aa725c61e94e0ce9c6bdd931246295977f7fa3b1c8132f71d04313bf365f3e"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminController.ts",
+      "sha256": "a581524c0bc081509eb4be485de7cf797f009e81c239a05e2e4c2511d70f0821"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+      "sha256": "990b85b678adf87bb408a5775f517295ffbda4394c66d908df538a444a329001"
+    },
+    {
+      "path": "workers-ts/src/controllers/out/OutApiController.ts",
+      "sha256": "ef0d403d9891fa4821a7c7c61e1213da78faf05b0afb5ee53005c2445df7164e"
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+      "sha256": "51db4cc8687d1ea9df2a5ce4e0fac498a76b817f402afed465370884bd81d117"
+    },
+    {
+      "path": "workers-ts/src/env.ts",
+      "sha256": "54975ca2085286a95ea1fc2d15b408f935285c89ba29deb1775b4e95b096e5b9"
+    },
+    {
+      "path": "workers-ts/src/lib/di.ts",
+      "sha256": "e1c2a0257d9512ce79876ccf7678c3caeb463d3b95dbcc0fe1da507e7ac99b84"
+    },
+    {
+      "path": "workers-ts/src/middleware/admin-auth.ts",
+      "sha256": "3206787605b76b0afedf7696fcf3d38f3d581d48a90ab97094e4987261ce21af"
+    },
+    {
+      "path": "workers-ts/src/middleware/admin-runtime-auth.ts",
+      "sha256": "578e045846088e6f9185e27d02529df2bdc062fcfe4696f68a0761c4a2d487f2"
+    },
+    {
+      "path": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+      "sha256": "4044d51930d72620f9d124c375779e37a99fdfb8e8c815cf2cb30420080d4324"
+    },
+    {
+      "path": "workers-ts/src/models/schema/admin.ts",
+      "sha256": "b4139db55ee5928309df53fafac9c07deabc77ee876c205a1a05b620e420bfbe"
+    },
+    {
+      "path": "workers-ts/src/models/schema/order.ts",
+      "sha256": "8564b8508b477c797a94e8040c887e1ec9fd1be240d87c5bfe04c769ff322e14"
+    },
+    {
+      "path": "workers-ts/src/models/schema/order_refund.ts",
+      "sha256": "33ebea3ed464fec8cf0e5d9a808d0e2dc50132dba39118ae1f25031c47eeda7a"
+    },
+    {
+      "path": "workers-ts/src/models/schema/product.ts",
+      "sha256": "2f43140480f12dc77c91c21721d1f5e948e3de673f37b35d1ea6ac8c6222e25a"
+    },
+    {
+      "path": "workers-ts/src/routes/adminapi.ts",
+      "sha256": "ba18b62edea3af87eba153056d03118aa7a7925c56d1c37c047d5ab4acfa3f70"
+    },
+    {
+      "path": "workers-ts/src/routes/v1/index.ts",
+      "sha256": "50ac6d78f326e3142049f754b98e80ae6410cccffb37a6fd4121c09a419152c5"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminAuthorityWriteService.ts",
+      "sha256": "290335b5ee34c8fc521bb12506c042078c20bdf68d39d5e14a51c32c44a63f74"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminLegacyProductSaveService.ts",
+      "sha256": "b6f61a28d6f9f7c8f780f57536f3295e573310bd2bb881d31ccc54cf6f667806"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminLegacyRoleDeletionProof.ts",
+      "sha256": "19b291e7b961bf620ad0b9c57b468d1e5d71ad241554f6cc6ab71eb5a8a30fb2"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminMobileOrderOperationService.ts",
+      "sha256": "1ffb8343529552e1a955656dba58ab33b6b93d37415ab07f3018bd450bc7ef56"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminMobileOrderReadService.ts",
+      "sha256": "dd403b0d96f1e82f1f8b04625ad59986eff7f468be61c8ff1c91ac38c15e60a2"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminOrderReadService.ts",
+      "sha256": "9dc4e91ad949b83863b3f2250c2733bea3ce768d5c7afb65cfbca9493d3b99ad"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminPermissionService.ts",
+      "sha256": "52df31b2aaf02c53fd9a46339ca58484556c355c330b879a7b27ff04e5b791e6"
+    },
+    {
+      "path": "workers-ts/src/services/erp/ErpConnectionPolicy.ts",
+      "sha256": "6ac4890639e16a6800e6a6cc35754e786b6e9e7b6dc7d3508da5e046cf33f8a6"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutIdempotency.ts",
+      "sha256": "08e91eeefe399d2f09d77ed31c8485cf5e7b2085c9ed19ee24bf4f4effbcfac8"
+    },
+    {
+      "path": "workers-ts/src/services/product/OrdinaryProductReadData.ts",
+      "sha256": "5ddd84f330ec7879a13d51393896ed1e24f35f43955b16d42b1996efa33fb98f"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductCreationDefaults.ts",
+      "sha256": "d0e3ac8d0850ea34c416dbde638849b8c9c8d2d3b86b5ddfa61c19a5d8f79de3"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductDetailDesignData.ts",
+      "sha256": "01578562cb6eadf15e94deb9068a203a6510459b1ed113a25773a9f4621d59a4"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductSkuEditorService.ts",
+      "sha256": "b05f51653e92daa9e42c8f37e6f03dfbd35b5fe3cf6e5239051465e13d8f8ee4"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductSkuInput.ts",
+      "sha256": "c96247e8ac7befe362e9d2596c2d2a69d9b113930aa6c388ec1a78755ab1f23f"
+    },
+    {
+      "path": "workers-ts/src/services/product/PublicCatalogService.ts",
+      "sha256": "702a0b20a7ceac5bd2dd865cae5a4fba72c844e899031a59984b2743f6ab816a"
+    },
+    {
+      "path": "workers-ts/src/services/product/ReplyService.ts",
+      "sha256": "dd3a2454ee833f583d7580bfa423388cbf0fb90a5b88a3b8ae9c9ebc59c183db"
+    },
+    {
+      "path": "workers-ts/src/services/product/StoreProductService.ts",
+      "sha256": "7dc64077b57923f77e13fd654dbf2147b8387efb89417204424f20115b143fec"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductCopyService.ts",
+      "sha256": "5d7d23e0578ffdb9c8e43024e4facdd9cfc4f1e8bb9b8e5da5cd7de8e77a5918"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductCopySource.ts",
+      "sha256": "eee6eccdf9f6a2e1558e03f9536c33539eb3a23824ad6c13024abb10680f09a7"
+    },
+    {
+      "path": "workers-ts/test/admin-mobile-order-operation-migration.test.ts",
+      "sha256": "efe968d423c992e345354329bfdb5fc7f2c3bc4cb190cdfd301e956c6a7f5fba"
+    },
+    {
+      "path": "workers-ts/test/admin-order-frontend.test.ts",
+      "sha256": "2f0dbb1f2e882f893a48c028c87e99ef2620cb1bd96e42aea82f9f0e12316997"
+    },
+    {
+      "path": "workers-ts/test/admin-order-fulfillment-assignment-native.test.ts",
+      "sha256": "aab6eaff67081d9fb22e4c4f3a754807e08565df376f73b52520aa11c70f6ab6"
+    },
+    {
+      "path": "workers-ts/test/admin-order-generations.test.ts",
+      "sha256": "b3c520eeaf328e19ded81c6414f56b85ff3433e35ee7074941dc33ab3255de86"
+    },
+    {
+      "path": "workers-ts/test/admin-product-editor-native.test.ts",
+      "sha256": "439638ed82ad5cb64c272fe461f05a612ef9eb20c6f68bdec8116fe0e6eec910"
+    },
+    {
+      "path": "workers-ts/test/helpers/adminOrderRemark.ts",
+      "sha256": "d8cd11a9c1b4e422f189e491587468be5330e48c58ef83ab568eb0e474c1dacd"
+    },
+    {
+      "path": "workers-ts/test/helpers/customerCashierRuntimeHttpFixture.ts",
+      "sha256": "8dfa065fa1010d97866cfdb609b9358484a10a0647f2a6a44b9cbcceda19f6a5"
+    },
+    {
+      "path": "workers-ts/test/helpers/refundRuntimeFixture.ts",
+      "sha256": "cee737293c79fc2434f5031163410b684a900b1ce7c59e1e2fa876d3e3173b33"
+    },
+    {
+      "path": "workers-ts/test/out-stock-candidate-boundary.test.ts",
+      "sha256": "f012d2b2a07942ddbeaea9c6ca597c372bf3780b56afae0a19fdace5588b165e"
+    },
+    {
+      "path": "workers-ts/test/product-creation-defaults-native.test.ts",
+      "sha256": "8bfc5f04d8ee77934aae3bc9c1c723efc99e39760deed49b5a1266e49c28d632"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-copy-native.test.ts",
+      "sha256": "38525e635b7035785c77d80e16f2f6a27353406c895bc9184ac9a43472b3f530"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-recommend-image-native.test.ts",
+      "sha256": "8b482fa45f743b656d5f521620842f03c1c072995998489967f56b23f85f5ecb"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-spu-native.test.ts",
+      "sha256": "5c16beb5ab46106cb322b3977a1e3ad54fec8caf9aa6fd2ed84c135059a663e4"
+    },
+    {
+      "path": "workers-ts/tsconfig.json",
+      "sha256": "8f6d36740c91218ae3856c55d26a91ed4dc8944db602e69aec5f043c67fa50df"
+    },
+    {
+      "path": "workers-ts/tsconfig.runtime-test.json",
+      "sha256": "12965a90180c0eba6a02d1193b1cf6921d9fa98c719e99bf431ca55cb195ce02"
+    },
+    {
+      "path": "workers-ts/vitest.config.ts",
+      "sha256": "d02332818aefb724c00e07e60f4ad77580d94fab97e7bc7426ac75c7d36f4690"
+    },
+    {
+      "path": "workers-ts/vitest.worker.config.ts",
+      "sha256": "1e29a052a926da8f2db8d10b6c46a57c91d289c083670b0061fcc36bd2008467"
+    }
+  ],
+  "behavior": {
+    "legacyPrimaryLookupIncludesAllDeletionFlagStates": true,
+    "legacyRawTextPreserved": true,
+    "legacyExactZeroAndEmptyRejected": true,
+    "legacyPaddedZeroAndWhitespaceAccepted": true,
+    "modernAndMobileNumberRoutesRemainTrimmedActiveOnly": true,
+    "clientCannotChooseLookupPolicy": true,
+    "deletionFinancialOwnerColumnsOmittedFromUpdateSet": true,
+    "capturedDeletionFlagsBoundInUpdatePredicate": true,
+    "lateFlagRestoreRolledBack": true,
+    "onlyRemarkAuthored": true,
+    "historyRestored": false,
+    "exactRawNoopConsumesNoAuditSequence": true,
+    "trimmedEquivalentLegacyTextIsDistinctIntent": true,
+    "existingTextFingerprintsAndByNumberMethodUnchanged": true,
+    "frontendSchemaGrantRunnerChanges": false
+  },
+  "validation": {
+    "native": {
+      "remark": {
+        "files": [
+          "test/admin-order-remark-native.test.ts"
+        ],
+        "passed": 37,
+        "failed": 0,
+        "skipped": 0,
+        "remainingFixtures": 0,
+        "stopped": true
+      },
+      "assignment": {
+        "files": [
+          "test/admin-order-fulfillment-assignment-native.test.ts"
+        ],
+        "passed": 11,
+        "failed": 0,
+        "skipped": 0,
+        "remainingFixtures": 0,
+        "stopped": true
+      },
+      "generations": {
+        "files": [
+          "test/admin-order-generations.test.ts"
+        ],
+        "passed": 20,
+        "failed": 0,
+        "skipped": 0,
+        "remainingFixtures": 0,
+        "stopped": true
+      }
+    },
+    "nativePassed": 68,
+    "unitFiles": [
+      "test/admin-authority-write.test.ts",
+      "test/admin-legacy-product-input.test.ts",
+      "test/admin-mobile-order-operation-migration.test.ts",
+      "test/admin-mobile-order-read-migration.test.ts",
+      "test/admin-order-frontend.test.ts",
+      "test/admin-order-remark.test.ts",
+      "test/admin-permission.test.ts",
+      "test/admin-product-editor.test.ts",
+      "test/local-finance-postgres-runner.test.ts",
+      "test/order-brokerage.test.ts",
+      "test/order-paid-outbox-queue-consumer.test.ts",
+      "test/order-reward.test.ts",
+      "test/out-card-product-input.test.ts",
+      "test/out-manual-virtual-product.test.ts",
+      "test/out-product-coupons.test.ts",
+      "test/out-product-presale.test.ts",
+      "test/out-product-price-options.test.ts",
+      "test/out-product-recommendations.test.ts",
+      "test/out-product-settings.test.ts",
+      "test/out-second-card-input.test.ts",
+      "test/out-type2-compat.test.ts",
+      "test/presale-schedule.test.ts",
+      "test/product-association-migration.test.ts",
+      "test/product-association-transaction.test.ts",
+      "test/product-coupon-migration.test.ts",
+      "test/product-erp-code.test.ts",
+      "test/product-purchase-admission.test.ts",
+      "test/product-sku-editor-migration.test.ts",
+      "test/purchased-label-operations.test.ts",
+      "test/purchased-product-label-codec.test.ts",
+      "test/purchased-product-label-queue.test.ts",
+      "test/purchased-product-label-result.test.ts",
+      "test/purchased-product-label-runtime.test.ts",
+      "test/purchased-product-label-selection.test.ts",
+      "test/purchased-product-label-source.test.ts",
+      "test/supplier-product-batch-permission.test.ts",
+      "test/supplier-product-brand-frontend.test.ts",
+      "test/supplier-product-category-permission.test.ts",
+      "test/supplier-product-code-preview.test.ts",
+      "test/supplier-product-code.test.ts",
+      "test/supplier-product-copy-frontend.test.ts",
+      "test/supplier-product-coupons.test.ts",
+      "test/supplier-product-detail-frontend.test.ts",
+      "test/supplier-product-ensures-frontend.test.ts",
+      "test/supplier-product-integral.test.ts",
+      "test/supplier-product-label-frontend.test.ts",
+      "test/supplier-product-label-picker-frontend.test.ts",
+      "test/supplier-product-management.test.ts",
+      "test/supplier-product-media-frontend.test.ts",
+      "test/supplier-product-parameters-frontend.test.ts",
+      "test/supplier-product-price-options.test.ts",
+      "test/supplier-product-purchase-options.test.ts",
+      "test/supplier-product-recommend-image-frontend.test.ts",
+      "test/supplier-product-recommendations.test.ts",
+      "test/supplier-product-rule-frontend.test.ts",
+      "test/supplier-product-rule-inline-frontend.test.ts",
+      "test/supplier-product-schedule-frontend.test.ts",
+      "test/supplier-product-settings.test.ts",
+      "test/supplier-product-shipping-editor-frontend.test.ts",
+      "test/supplier-product-system-form-frontend.test.ts",
+      "test/supplier-product-unit-frontend.test.ts",
+      "test/supplier-product-user-labels.test.ts",
+      "test/supplier-product-video-upload-frontend.test.ts",
+      "test/supplier-sku-batch-frontend.test.ts"
+    ],
+    "unitPassed": 2058,
+    "unitFailed": 0,
+    "unitSkipped": 0,
+    "workerCompiler": {
+      "originalRoots": 4383,
+      "commonRoots": 1917,
+      "testRoots": 2466,
+      "shardTestCounts": [
+        1233,
+        1233
+      ],
+      "unionExactlyMatchesOriginal": true,
+      "optionsExactlyMatchOriginal": true
+    },
+    "runtimeTypesPassed": true,
+    "workerd": {
+      "files": [
+        "test/runtime/admin-branding-pages-proxy.test.ts",
+        "test/runtime/admin-mobile-product-body.test.ts",
+        "test/runtime/checkout-scenario-maintenance.test.ts",
+        "test/runtime/community-upload-rate.test.ts",
+        "test/runtime/kefu-mobile-notification-protocol-runtime.test.ts",
+        "test/runtime/offline-payment-contract.test.ts",
+        "test/runtime/offline-payment-provider.test.ts",
+        "test/runtime/offline-payment-return.test.ts",
+        "test/runtime/orphan-test-cleanup-worker.test.ts",
+        "test/runtime/paid-runtime-audit-worker.test.ts",
+        "test/runtime/pink-recovery-queue-runtime.test.ts",
+        "test/runtime/product-auto-shelf-queue-runtime.test.ts",
+        "test/runtime/product-recycle-effects-queue-runtime.test.ts",
+        "test/runtime/product-save-effects-queue-runtime.test.ts",
+        "test/runtime/product-video-compose.test.ts",
+        "test/runtime/product-video-gc-queue-runtime.test.ts",
+        "test/runtime/release-protocol-schema-worker.test.ts",
+        "test/runtime/response-cache.test.ts",
+        "test/runtime/runtime-business-worker.test.ts",
+        "test/runtime/runtime-role-provision-worker.test.ts",
+        "test/runtime/staff-notification-proxy-runtime.test.ts",
+        "test/runtime/staff-notification-runtime.test.ts",
+        "test/runtime/supplier-cash-proof-runtime.test.ts",
+        "test/runtime/supplier-proactive-refund-planning.test.ts",
+        "test/runtime/supplier-product-video-compose.test.ts",
+        "test/runtime/test-release-core-schema-migration-worker.test.ts",
+        "test/runtime/test-release-schema-migration-worker.test.ts",
+        "test/runtime/withdrawal-effects-migration-worker.test.ts",
+        "test/runtime/withdrawal-replay-migration-worker.test.ts",
+        "test/runtime/worker-runtime.test.ts"
+      ],
+      "passed": 410,
+      "failed": 0,
+      "skipped": 0,
+      "remainingFixtures": 0,
+      "stopped": true
+    },
+    "productionAuditFindings": 0,
+    "historicalSourceProof": {
+      "testFile": "test/supplier-product-label-runtime-source-binding.test.ts",
+      "baseline": "4c0ebe7b4ad8de71c8c480c5ba0e833f2a29de0a",
+      "baselinePassed": 178,
+      "currentPassed": 178,
+      "baselineFailed": 10,
+      "currentFailed": 10,
+      "skipped": 0,
+      "failingFullNamesExactlyMatch": true,
+      "failedCases": [
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance admits the exact new definer only in current shared-shop pricing recognition while isolated scopes and the fixed privilege plan remain frozen",
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance keeps all prior frontend public selection binding and privilege plan bytes unchanged for a backend-only closure",
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance partitions true8023 before and all controlled changed/additional files with no missing or duplicated image",
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance pins complete current and accepted ProductLabel bytes workers-ts/scripts/run-local-finance-postgres.mjs",
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance pins complete current and accepted ProductLabel bytes workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance pins complete current and accepted ProductLabel bytes workers-ts/src/migrations/checkoutPricingLock.ts",
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance refuses altered current and forged whole-file inverse workers-ts/scripts/run-local-finance-postgres.mjs",
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance refuses altered current and forged whole-file inverse workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance rejects nonexact publication bytes and forged bridge hashes while composing each immutable validation layer",
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance runs current789 callSites827 variants before keeping every exact report byte and predecessor call object"
+      ],
+      "restoredIgnoredResources": 150,
+      "profiles": [
+        {
+          "profile": "baseline",
+          "exit": 1,
+          "seconds": 49.67
+        },
+        {
+          "profile": "current",
+          "exit": 1,
+          "seconds": 24.34
+        }
+      ],
+      "isPassingGate": false,
+      "isRuntimeAcceptance": false
+    },
+    "frozenThroughoutFormalCommands": true,
+    "commands": [
+      {
+        "name": "unit",
+        "exitCode": 0,
+        "durationSeconds": 198.57,
+        "passed": 2058,
+        "files": 64
+      },
+      {
+        "name": "source-proof",
+        "exitCode": 0,
+        "durationSeconds": 74.37
+      },
+      {
+        "name": "native-remark",
+        "exitCode": 0,
+        "durationSeconds": 518.62
+      },
+      {
+        "name": "type-partition",
+        "exitCode": 0,
+        "durationSeconds": 0.43
+      },
+      {
+        "name": "type-options",
+        "exitCode": 0,
+        "durationSeconds": 0.36
+      },
+      {
+        "name": "worker-types-1",
+        "exitCode": 0,
+        "durationSeconds": 206.78
+      },
+      {
+        "name": "worker-types-2",
+        "exitCode": 0,
+        "durationSeconds": 207.0
+      },
+      {
+        "name": "runtime-types",
+        "exitCode": 0,
+        "durationSeconds": 138.46
+      },
+      {
+        "name": "native-assignment",
+        "exitCode": 0,
+        "durationSeconds": 156.89
+      },
+      {
+        "name": "native-generations",
+        "exitCode": 0,
+        "durationSeconds": 297.07
+      },
+      {
+        "name": "workerd-runtime",
+        "exitCode": 0,
+        "durationSeconds": 217.09
+      },
+      {
+        "name": "audit-production",
+        "exitCode": 0,
+        "durationSeconds": 3.2
+      }
+    ],
+    "baselineExpectedFailures": 4,
+    "baselineSkippedNotCredited": 28,
+    "finalWholeFileAddedCases": 9
+  },
+  "preservedAttempts": {
+    "initialWrongCwdBeforePostgresStart": true,
+    "initialFullNativePassed": 36,
+    "initialFullNativeOldExpectationFailed": 1,
+    "onlyTestAssertionChangedAfterPreflight": true,
+    "productionBytesUnchangedAfterPreflight": true,
+    "legacySpecificExpectationsCorrectedToFixedPhp": 3,
+    "lateSequenceRollbackClaimed": false
+  },
+  "invariants": {
+    "runnerAndTimeoutsUnchanged": true,
+    "legacyPhpRefUnchanged": true,
+    "secretIgnoresUnchanged": true,
+    "unchangedIgnoredResources": 150,
+    "noPhpUpload": true,
+    "noDeploy": true,
+    "noLiveProviderCalls": true,
+    "noManufacturedPaymentOrFulfillment": true,
+    "newOrdersAreUnpaidFixtureConfiguration": true
+  },
+  "priorCI": {
+    "runId": 43406379106,
+    "terminalJobs": 13,
+    "passed": 10,
+    "failedBeforeUnitTestsAtFixedPhpCheckout": 2,
+    "failedAggregate": 1
+  },
+  "carriedDebts": [
+    "Fixed legacy PHP commit cannot be fetched by Worker CI before unit execution",
+    "Historical source-binding 10 unchanged failures, not a passing gate",
+    "Old refund materialization literal and private-schema writeoff failures outside scope"
+  ],
+  "artifactHashes": [
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/source.json",
+      "sha256": "fb150a95f42a9a191987adaa38774609761d3d91e061b209a34188dea303d867"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/dependencies.json",
+      "sha256": "2106e79fd48e9a1e5f9d36a98d45d9b301f0cc9d72ec8c896f60ae4832e434c1"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/php-reference.json",
+      "sha256": "90642da87f487eaa8ee5df76a9fd9fb32d29647710b798fde3582ac45c8334b5"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/baseline-native.log",
+      "sha256": "8a01a7cb5765492c00d3865596793d346d849ab487382e36081f1490e8ad3dc7"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/baseline-native-test.ts",
+      "sha256": "3ee55e8214b0b5e88e50bf3442663758fb9229897969a66f45022f5c277861e1"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/baseline-implementation.json",
+      "sha256": "95426c7d388c90d0907e251a2ec5761c7e8f1207a9d80141ca15b004b3b3f639"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/baseline-cwd-error.log",
+      "sha256": "96e0cf5f6754a1ebfd8a1cfbbb9c3e087d4e909a27c45bd3a2ad064034cdfd0d"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/base-native-test.ts",
+      "sha256": "4efbd9f37ba28f66bb37bcb5f32d7a5a7d7f6f7ffde2386712588a85f74d025a"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/preflight-unit.log",
+      "sha256": "a772db21e5bb0115d8113bda42f323229e00fb3889e5502707b385a51fa4a21e"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/preflight-native.log",
+      "sha256": "fa9124d5e79e5744d1704190e199a2d009a6f20839bab11ab96de1908dfa3b4d"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/preflight-native-test.ts",
+      "sha256": "bc91f81af0f78ab289b2082387d5a39b5711ffbcae60a1cf76e23e2b3eefb196"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/preflight-source.json",
+      "sha256": "3df2bffe509761bcf63c6fc693d1997f448113e98c28bf5d07d6ca1b9ee2c1bc"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/source-proof-comparison.json",
+      "sha256": "85b0b5206128ee99a36971817df94a0e035c41a34359a844ea526b972603bf42"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/unit-files.json",
+      "sha256": "24c04eb420573aa9c9e6e57c0b06203219b6f7edccae55adf1aa1bffb1ef1356"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/unit.json",
+      "sha256": "872d486be860366fdba5e61c2572d1847c4c599589e986db2bc1f4b0b433f6b1"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/results.json",
+      "sha256": "d03a8674ad6bfcc7a165afeabf127459243003c1cf7ad22ac7ed65639f034c93"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/type-shards.json",
+      "sha256": "02aa16709e79bffbab81a9f707889d491ff15551628e2e2a18e3b516669b1e20"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/restored-resources.json",
+      "sha256": "2805035753af768b74ac4b987581644a085a6b857765a6c19ac0a2a6cd8fdd57"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/source-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/previous-ci-jobs.json",
+      "sha256": "77c81d72325c2a2156efa42ebe21d42186a1c66aa57782bd67e26a16a34401b2"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/previous-ci-shard1.log",
+      "sha256": "7f7b5b18f36cfc4284e8820e02b699d3a4ec627b425a796922fabf7481c39499"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/previous-ci-shard2.log",
+      "sha256": "856f924623e153afa580f233597ce92226982d5693b85f5f4d49dc825fc8061c"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/previous-ci-runtime.log",
+      "sha256": "451ca75e90750bd627821fedf71390b69d623a889daa543072121de2340d3a40"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/validate.py",
+      "sha256": "6f7852dd0c9cb465b45db869c491788c631c1c16c9df3bda18bfb2df8e6d8a41"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/source-proof.py",
+      "sha256": "c8dbcfce7f5a394adf401e24d07630367e185e9f33e1e8368c2e8988f1387bb6"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/type-shards.cjs",
+      "sha256": "d45a3b823f6489d41c59ea7da31ab33a5f11f7bfd1c91580f5c96145e213a649"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/check-options.cjs",
+      "sha256": "8464025c1374271864b7da6e3f5d268a0550f1be4e39bba76b0a32740cf570d0"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/validation.log",
+      "sha256": "65db521a02ab5c299fc3944f55d066b3921ad7d6ad8b7929ddf82b25a48c358c"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/native-remark.log",
+      "sha256": "475642d8f2a222747efc56316ad2dc10c060f63e6527844c66add0018772ffd6"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/native-assignment.log",
+      "sha256": "917b6bc35acca291a24a8ae0e862ec16c810e38cc187c4100f79c8413b53a7e9"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/native-generations.log",
+      "sha256": "f7bbb2567f3fe73026a152dfdbcfb5db9411d34362904f04a1d41ce137e914e3"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/workerd-runtime.log",
+      "sha256": "7199d422c83dd6500d80259ff2cb948a009c92d7e821160707cf42ecd2425bee"
+    },
+    {
+      "path": "/tmp/php-ts-admin-legacy-order-remarks-20261113/audit-production.log",
+      "sha256": "4ca0bc8f609b8cd4e43a18d0faebf8f0b05d91b15ee6386fb48a789c00393192"
+    }
+  ],
+  "createdAt": "2026-11-13T11:46:57.636820+00:00"
+}

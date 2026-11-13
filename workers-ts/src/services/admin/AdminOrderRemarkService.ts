@@ -4,7 +4,7 @@ import { storeOrder, storeOrderStatus } from '@/models/schema';
 import { HttpApiException, NotFoundException } from '@/utils/errors';
 import { loadAdminAuthorityLiveActor, withAdminAuthorityWriteTx, type AdminAuthorityActor } from './AdminAuthorityWriteService';
 import { parseAdminOrderPrimaryId } from './AdminMobileOrderReadService';
-import { parseAdminOrderRemarkInput, parseAdminOrderRemarkValue } from './AdminOrderRemarkInput';
+import { parseAdminOrderRemarkInput, parseAdminLegacyOrderRemarkValue } from './AdminOrderRemarkInput';
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 const conflict = () => new HttpApiException('订单备注或审计记录已变化，请刷新后重试', 409, 409);
@@ -31,7 +31,7 @@ export class AdminOrderRemarkService {
   }
 
   byPrimaryId(actor: AdminAuthorityActor, id: unknown, body: Record<string, unknown>) {
-    return this.commit(actor, { kind: 'primary', id: parseAdminOrderPrimaryId(id) }, parseAdminOrderRemarkValue(body.remark));
+    return this.commit(actor, { kind: 'primary', id: parseAdminOrderPrimaryId(id) }, parseAdminLegacyOrderRemarkValue(body.remark));
   }
 
   private commit(actor: AdminAuthorityActor, target: Target, remark: string) {
@@ -40,7 +40,9 @@ export class AdminOrderRemarkService {
       // a numeric order number. The selected row remains locked through audit.
       const rows = await tx.select(orderColumns).from(storeOrder).where(and(
         target.kind === 'number' ? eq(storeOrder.orderId, target.orderId) : eq(storeOrder.id, target.id),
-        eq(storeOrder.isDel, 0), eq(storeOrder.isSystemDel, 0),
+        // PHP's primary-ID writer can annotate deleted history without
+        // restoring it. Number-based modern/mobile paths remain active-only.
+        ...(target.kind === 'number' ? [eq(storeOrder.isDel, 0), eq(storeOrder.isSystemDel, 0)] : []),
       )).orderBy(asc(storeOrder.id)).limit(2).for('update', { noWait: true }).catch(error => {
         let cause: unknown = error;
         for (let depth = 0; depth < 4 && cause && typeof cause === 'object'; depth++) {
@@ -58,7 +60,7 @@ export class AdminOrderRemarkService {
       }
       const expected = { ...current, remark };
       const updated = await tx.update(storeOrder).set({ remark }).where(and(eq(storeOrder.id, current.id),
-        eq(storeOrder.isDel, 0), eq(storeOrder.isSystemDel, 0))).returning({ id: storeOrder.id });
+        eq(storeOrder.isDel, current.isDel), eq(storeOrder.isSystemDel, current.isSystemDel))).returning({ id: storeOrder.id });
       if (updated.length !== 1 || updated[0].id !== current.id) throw conflict();
       const auditValues = { oid: current.id, changeType: 'admin_order_remark',
         changeMessage: `管理员 ${actor.id} 更新订单备注`, changeTime: Math.floor(Date.now() / 1000) };

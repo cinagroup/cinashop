@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { parseAdminOrderRemarkInput, parseAdminOrderRemarkValue } from '@/services/admin/AdminOrderRemarkInput';
+import { parseAdminOrderRemarkInput, parseAdminOrderRemarkValue, parseAdminLegacyOrderRemarkValue } from '@/services/admin/AdminOrderRemarkInput';
 import { AdminOrderRemarkService } from '@/services/admin/AdminOrderRemarkService';
 import { adminOrderRemark, adminLegacyOrderRemark, privateAdminOrderRemarkResponse } from '@/controllers/api/v1/AdminCrudController';
 import { requiredAdminPermission } from '@/services/admin/AdminPermissionService';
@@ -15,6 +15,16 @@ describe('Admin order remark normalization and distinct route identities', () =>
   ('rejects malformed or PHP-empty remark %j', value => expect(() => parseAdminOrderRemarkValue(value)).toThrow());
   it.each(['', '../other', 'a'.repeat(33)])('rejects malformed order number %j', order_id =>
     expect(() => parseAdminOrderRemarkInput({ order_id, remark: '有效备注' })).toThrow());
+
+  it.each([' ', '\t\r\n', ' 0 ', '  保留空白  ', '0.0', '00'])('preserves PHP legacy raw remark %j', raw =>
+    expect(parseAdminLegacyOrderRemarkValue(raw)).toBe(raw));
+  it.each([undefined, null, false, 0, [], {}, '', '0', '\u0000', '\ud800', '\udfff', 'x'.repeat(513)])
+  ('refuses invalid PHP legacy remark %j', raw => expect(() => parseAdminLegacyOrderRemarkValue(raw)).toThrow());
+  it('counts preserved legacy padding against the real Unicode column bound', () => {
+    expect(parseAdminLegacyOrderRemarkValue(' ' + '🛍'.repeat(510) + ' ')).toBe(' ' + '🛍'.repeat(510) + ' ');
+    expect(() => parseAdminLegacyOrderRemarkValue(' ' + '🛍'.repeat(512) + ' ')).toThrow('512');
+    expect(parseAdminOrderRemarkValue(' ' + '🛍'.repeat(512) + ' ')).toBe('🛍'.repeat(512));
+  });
 
   const actor = { id: 41, authVersion: 'a'.repeat(32), expiresAt: 2_000_000_000 };
   function context(params: Record<string, string>, body: object) {

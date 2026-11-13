@@ -25,7 +25,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Admin order rema
   ])('updates the actual order through $method $path and writes one canonical audit', async ({ method, path }) => withRemarkScenario(async s => {
     await s.seed(); const result = await s.request(method, path, { remark: '  桌面订单备注  ' });
     expect(result.status, result.msg).toBe(200);
-    expect((await s.f.db.select().from(storeOrder).where(eq(storeOrder.id, 820001)))[0].remark).toBe('桌面订单备注');
+    expect((await s.f.db.select().from(storeOrder).where(eq(storeOrder.id, 820001)))[0].remark).toBe(method === 'PUT' ? '  桌面订单备注  ' : '桌面订单备注');
     const logs = await s.f.db.select().from(storeOrderStatus).where(eq(storeOrderStatus.oid, 820001));
     expect(logs).toHaveLength(1); expect(logs[0]).toMatchObject({ changeType: 'admin_order_remark', changeMessage: '管理员 101 更新订单备注' });
   }), 120000);
@@ -68,7 +68,10 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Admin order rema
   it('rejects malformed empty oversized and invalid-Unicode bodies before business or audit sequence writes', async () => withRemarkScenario(async s => {
     await s.seed(); const before = await s.snapshot(), seq = await sequence(s);
     for (const e of endpoints) {
-      for (const remark of ['', ' ', '0', null, false, [], {}, '\u0000', '\ud800', 'x'.repeat(513), '🛍'.repeat(513)]) {
+      for (const remark of ['', '0', null, false, [], {}, '\u0000', '\ud800', 'x'.repeat(513), '🛍'.repeat(513)]) {
+        const result = await call(s, e, remark); expect(result.status, result.msg).toBe(400); privateResponse(result);
+      }
+      if (e.name !== 'legacy-primary') for (const remark of [' ', '\t\r\n', ' 0 ']) {
         const result = await call(s, e, remark); expect(result.status, result.msg).toBe(400); privateResponse(result);
       }
       for (const body of ['{broken', '[]', JSON.stringify({ remark: 'x'.repeat(9000) })]) {
@@ -78,12 +81,20 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Admin order rema
     }
   }), 120000);
 
-  it.each(endpoints.slice(0, 2))('refuses missing user-deleted and system-deleted orders through $name', async e => withRemarkScenario(async s => {
+  it.each(endpoints.slice(0, 2))('keeps the distinct missing and deleted-order contract through $name', async e => withRemarkScenario(async s => {
     const missing = await call(s, e, 'missing'); expect(missing.status, missing.msg).toBe(404); await s.seed();
     for (const flags of [{ isDel: 1, isSystemDel: 0 }, { isDel: 0, isSystemDel: 1 }]) {
       await s.f.db.update(storeOrder).set(flags).where(eq(storeOrder.id, 820001));
-      const before = await s.snapshot(), seq = await sequence(s), result = await call(s, e, 'deleted');
-      expect(result.status, result.msg).toBe(404); expect(await s.snapshot()).toEqual(before); expect(await sequence(s)).toEqual(seq);
+      const before = await s.snapshot(), original = await read(s), seq = await sequence(s), remark = 'deleted ' + JSON.stringify(flags);
+      const result = await call(s, e, remark);
+      if (e.name === 'legacy-primary') {
+        expect(result.status, result.msg).toBe(200); expect(await read(s)).toEqual({ ...original, remark });
+        const { store_order: _orders, store_order_status: _logs, ...unrelated } = await s.snapshot();
+        const { store_order: _beforeOrders, store_order_status: _beforeLogs, ...beforeUnrelated } = before;
+        expect(unrelated).toEqual(beforeUnrelated); expect((await audits(s)).at(-1)).toMatchObject({ changeType: 'admin_order_remark' });
+      } else {
+        expect(result.status, result.msg).toBe(404); expect(await s.snapshot()).toEqual(before); expect(await sequence(s)).toEqual(seq);
+      }
     }
   }), 120000);
 
@@ -180,5 +191,98 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Admin order rema
     await s.f.exec('DROP TRIGGER owned_remark_text_growth ON store_order_status');
     const final = await call(s, endpoints[0], 'NULL不能变成空字符串'); expect(final.status, final.msg).toBe(200);
     expect((await read(s)).virtualInfo).toBeNull();
+  }), 120000);
+
+  it('keeps PHP primary-ID remarks available for every deletion-flag state without authoring flags or financial columns', async () => withRemarkScenario(async s => {
+    const flags = [{ isDel: 0, isSystemDel: 0 }, { isDel: 1, isSystemDel: 0 }, { isDel: 0, isSystemDel: 1 }, { isDel: 1, isSystemDel: 1 }];
+    for (let i = 0; i < flags.length; i++) {
+      await s.seed(820010 + i, 'legacy-history-' + i);
+      await s.f.db.update(storeOrder).set(flags[i]).where(eq(storeOrder.id, 820010 + i));
+    }
+    await s.f.exec(`CREATE FUNCTION owned_remark_omitted_columns() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
+      RAISE EXCEPTION 'Remark must not author deletion, owner or financial columns'; END $$;
+      CREATE TRIGGER owned_remark_omitted_columns BEFORE UPDATE OF is_del,is_system_del,uid,paid,pay_price,status,pid,supplier_id,store_id
+      ON store_order FOR EACH ROW EXECUTE FUNCTION owned_remark_omitted_columns()`);
+    for (let i = 0; i < flags.length; i++) {
+      const id = 820010 + i, original = await read(s, id);
+      for (const role of ['manager', 'root'] as const) {
+        const remark = '历史备注 ' + i + ' ' + role, result = await s.request('PUT', '/adminapi/order/remark/' + id,
+          { remark, is_del: 0, is_system_del: 0, paid: 1, pay_price: '999.00', uid: 22, admin_id: 999 }, s.token(role));
+        expect(result.status, result.msg + ' flags=' + JSON.stringify(flags[i])).toBe(200); privateResponse(result); expect(result.data).toBeNull();
+        expect(await read(s, id)).toEqual({ ...original, remark });
+        const before = await s.snapshot(), seq = await sequence(s);
+        const retry = await s.request('PUT', '/adminapi/order/remark/' + id, { remark }, s.token(role));
+        expect(retry.status, retry.msg).toBe(200); expect(await s.snapshot()).toEqual(before); expect(await sequence(s)).toEqual(seq);
+      }
+      const logs = await s.f.db.select().from(storeOrderStatus).where(eq(storeOrderStatus.oid, id));
+      expect(logs).toHaveLength(2); expect(logs.map(row => row.changeMessage)).toEqual(['管理员 102 更新订单备注', '管理员 101 更新订单备注']);
+    }
+  }), 120000);
+
+  it.each([
+    { kind: 'padding', remark: '  原文首尾空白  ' }, { kind: 'whitespace', remark: ' \t\r\n ' }, { kind: 'padded zero', remark: ' 0 ' },
+  ])('preserves raw legacy remark $kind through the actual primary-ID writer', async ({ remark }) => withRemarkScenario(async s => {
+    await s.seed(); const original = await read(s), result = await s.request('PUT', '/adminapi/order/remark/820001', { remark });
+    expect(result.status, result.msg).toBe(200); expect(await read(s)).toEqual({ ...original, remark });
+    const before = await s.snapshot(), seq = await sequence(s), retry = await s.request('PUT', '/adminapi/order/remark/820001', { remark });
+    expect(retry.status, retry.msg).toBe(200); expect(await s.snapshot()).toEqual(before); expect(await sequence(s)).toEqual(seq);
+  }), 120000);
+
+  it('keeps deleted history private to number callers and denies forged inclusion or Admin identities', async () => withRemarkScenario(async s => {
+    await s.seed();
+    for (const flags of [{ isDel: 1, isSystemDel: 0 }, { isDel: 0, isSystemDel: 1 }, { isDel: 1, isSystemDel: 1 }]) {
+      await s.f.db.update(storeOrder).set(flags).where(eq(storeOrder.id, 820001));
+      const before = await s.snapshot(), seq = await sequence(s);
+      for (const e of endpoints.filter(e => e.name !== 'legacy-primary')) {
+        const result = await s.request(e.method, e.path, { order_id: 'owned-remark-order', remark: '不能改变路由命名空间',
+          id: 820001, kind: 'primary', include_deleted: true, is_del: 0, is_system_del: 0 });
+        expect(result.status, result.msg).toBe(404); privateResponse(result);
+      }
+      for (const token of [null, s.token('viewer'), s.token('disabled'), s.token('supplier')]) {
+        const result = await s.request('PUT', '/adminapi/order/remark/820001', { remark: '不能伪造管理员', admin_id: 101 }, token);
+        expect(result.status, result.msg).not.toBe(200); expect(result.status).not.toBe(500); privateResponse(result);
+      }
+      expect(await s.snapshot()).toEqual(before); expect(await sequence(s)).toEqual(seq);
+    }
+  }), 120000);
+
+  it.each(['immediate', 'deferred'] as const)('rolls back a %s attempt to restore deleted flags after a legacy remark', async timing => withRemarkScenario(async s => {
+    await s.seed(); await s.f.db.update(storeOrder).set({ isDel: 1, isSystemDel: 1 }).where(eq(storeOrder.id, 820001));
+    await s.f.exec(`CREATE FUNCTION owned_legacy_remark_restore() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+      BEGIN UPDATE public.store_order SET is_del=0,is_system_del=0 WHERE id=NEW.oid; RETURN NEW; END $$;
+      ${timing === 'deferred' ? 'CREATE CONSTRAINT TRIGGER' : 'CREATE TRIGGER'} owned_legacy_remark_restore AFTER INSERT ON store_order_status
+      ${timing === 'deferred' ? 'DEFERRABLE INITIALLY DEFERRED' : ''} FOR EACH ROW EXECUTE FUNCTION owned_legacy_remark_restore()`);
+    const original = await read(s), before = await s.snapshot(), remark = '  注释历史并不恢复订单  ';
+    const failed = await s.request('PUT', '/adminapi/order/remark/820001', { remark }, s.token('manager'));
+    expect(failed.status, failed.msg).toBe(409); expect(await s.snapshot()).toEqual(before);
+    await s.f.exec('DROP TRIGGER owned_legacy_remark_restore ON store_order_status');
+    const retry = await s.request('PUT', '/adminapi/order/remark/820001', { remark }, s.token('manager'));
+    expect(retry.status, retry.msg).toBe(200); expect(await read(s)).toEqual({ ...original, remark }); expect(await audits(s)).toHaveLength(1);
+  }), 120000);
+
+  it('counts legacy raw Unicode padding and keeps trimmed-equivalent content a distinct write', async () => withRemarkScenario(async s => {
+    await s.seed(); const remark = ' ' + '🛍'.repeat(510) + ' ';
+    const saved = await s.request('PUT', '/adminapi/order/remark/820001', { remark });
+    expect(saved.status, saved.msg).toBe(200); expect((await read(s)).remark).toBe(remark); expect(await audits(s)).toHaveLength(1);
+    const distinct = await s.request('PUT', '/adminapi/order/remark/820001', { remark: remark.trim() });
+    expect(distinct.status, distinct.msg).toBe(200); expect((await read(s)).remark).toBe(remark.trim()); expect(await audits(s)).toHaveLength(2);
+    const before = await s.snapshot(), seq = await sequence(s), oversized = await s.request('PUT', '/adminapi/order/remark/820001', { remark: ' ' + '🛍'.repeat(512) + ' ' });
+    expect(oversized.status, oversized.msg).toBe(400); expect(await s.snapshot()).toEqual(before); expect(await sequence(s)).toEqual(seq);
+  }), 120000);
+
+  it('preserves large deleted-order history and rejects a same-length late rewrite during a raw legacy remark', async () => withRemarkScenario(async s => {
+    await s.seed(); const content = 'x'.repeat(262145);
+    await s.f.db.update(storeOrder).set({ isDel: 1, isSystemDel: 1, virtualInfo: content }).where(eq(storeOrder.id, 820001));
+    const original = await read(s), remark = '  原样注释大正文历史  ';
+    const saved = await s.request('PUT', '/adminapi/order/remark/820001', { remark });
+    expect(saved.status, saved.msg).toBe(200); expect(saved.data).toBeNull(); expect(await read(s)).toEqual({ ...original, remark });
+    await s.f.exec(`CREATE FUNCTION owned_legacy_remark_text() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+      BEGIN UPDATE public.store_order SET virtual_info=repeat('y',262145) WHERE id=NEW.oid; RETURN NEW; END $$;
+      CREATE TRIGGER owned_legacy_remark_text AFTER INSERT ON store_order_status FOR EACH ROW EXECUTE FUNCTION owned_legacy_remark_text()`);
+    const before = await s.snapshot(), next = '  再次注释历史  ', failed = await s.request('PUT', '/adminapi/order/remark/820001', { remark: next });
+    expect(failed.status, failed.msg).toBe(409); expect(await s.snapshot()).toEqual(before);
+    await s.f.exec('DROP TRIGGER owned_legacy_remark_text ON store_order_status');
+    const retry = await s.request('PUT', '/adminapi/order/remark/820001', { remark: next });
+    expect(retry.status, retry.msg).toBe(200); expect(await read(s)).toEqual({ ...original, remark: next }); expect(await audits(s)).toHaveLength(2);
   }), 120000);
 });
