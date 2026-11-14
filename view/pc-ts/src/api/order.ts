@@ -220,3 +220,7 @@ export function apiOrderExpress(orderId: string, type?: "refund"): Promise<Order
   const suffix = type ? `/${type}` : "";
   return getData(request.get(`/order/express/${encodeURIComponent(orderId)}${suffix}`));
 }
+
+export function apiBuyerOrderTracking(intent: import('../../../common/buyerOrderTracking').BuyerTrackingIntent): Promise<unknown> {
+  return getData(request.get(`/order/express/${encodeURIComponent(intent.reference)}${intent.kind === 'refund' ? '/refund' : ''}`, { params: { view: 'buyer' } }));
+}

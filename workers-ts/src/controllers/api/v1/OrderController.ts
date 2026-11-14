@@ -17,6 +17,8 @@ import { StoreOrderPayService } from "@/services/order/StoreOrderPayService";
 import { StoreOrderInvoiceService } from "@/services/order/StoreOrderInvoiceService";
 import { StoreDeliveryOrderService } from "@/services/order/StoreDeliveryOrderService";
 import { ExpressService } from "@/services/order/ExpressService";
+import { BuyerOrderTrackingService, assertBuyerTrackingSession } from '@/services/order/BuyerOrderTrackingService';
+import { authMiddleware } from '@/middleware/auth';
 import { StoreIntegralOrderService } from "@/services/activity/StoreIntegralOrderService";
 import { SystemMetadataService } from "@/services/system/SystemMetadataService";
 import {
@@ -909,7 +911,19 @@ export async function orderExpress(c: C) {
   const type = c.req.param("type") ?? "";
   const svc = new ExpressService(c.get("container"), c.env);
   try {
-    const result = await svc.query(uid, orderId, type);
+    const params = new URL(c.req.url).searchParams;
+    const view = params.get('view');
+    if (view !== null && (view !== 'buyer' || params.getAll('view').length !== 1 || [...params.keys()].some(key => key !== 'view')))
+      throw new ValidateException('物流查询版本无效');
+    const actor = { uid, authVersion: c.get('socketAuthVersion') ?? '', expiresAt: c.get('socketTokenExp') ?? 0 };
+    const authorize = async () => {
+      await authMiddleware({ force: true })(c, async () => {});
+      if (c.get('uid') !== actor.uid || c.get('socketAuthVersion') !== actor.authVersion || c.get('socketTokenExp') !== actor.expiresAt)
+        throw new ValidateException('登录状态已变化，请重新查询物流');
+      await assertBuyerTrackingSession(c.get('container'), actor);
+    };
+    const result = await new BuyerOrderTrackingService(c.get('container'), c.env, svc)
+      .query(uid, orderId, type, { buyerView: view === 'buyer', authorize });
     return jsonOk(c, result);
   } catch (e) {
     if (e instanceof ValidateException) return jsonFail(c, e.message);

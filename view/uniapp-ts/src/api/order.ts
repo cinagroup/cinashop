@@ -1,4 +1,5 @@
 import { parseOrderLifecycleLog } from '../../../common/orderLifecycle';
+import type { BuyerTrackingIntent } from '../../../common/buyerOrderTracking';
 /**
  * 购物车 + 订单 API
  */
@@ -325,6 +326,11 @@ export interface OrderExpressResult extends OrderTrackingPackage {
 export function apiOrderExpress(orderId: string, type?: "refund"): Promise<OrderExpressResult> {
   const suffix = type ? `/${type}` : "";
   return http.get(`/order/express/${encodeURIComponent(orderId)}${suffix}`);
+}
+
+/** The buyer view has explicit query/owner identity and bounded public goods. */
+export function apiBuyerOrderTracking(intent: BuyerTrackingIntent): Promise<unknown> {
+  return http.get(`/order/express/${encodeURIComponent(intent.reference)}${intent.kind === 'refund' ? '/refund' : ''}`, { view: 'buyer' });
 }
 
 /** 评价统计 (GET /api/reply/config/:productId) */

@@ -82,6 +82,7 @@ export type ScopedTrackingOrder = Pick<typeof storeOrder.$inferSelect,
   'id' | 'pid' | 'orderId' | 'status' | 'deliveryType' | 'deliveryName' | 'deliveryCode' | 'deliveryId' | 'userPhone' | 'isDel' | 'isSystemDel'>;
 
 interface ShipmentInput {
+  direction?: 'order' | 'refund';
   orderPk: number;
   orderId: string;
   orderStatus: number;
@@ -276,10 +277,12 @@ function fallbackPackage(
   state: TrackingState,
   message: string,
 ): TrackingPackage {
-  const received = shipment.orderStatus >= 2;
+  const received = shipment.direction !== 'refund' && [2, 3].includes(shipment.orderStatus);
   return {
     orderId: shipment.orderId,
-    deliveryStatus: received ? "已收货" : shipment.expressNo ? "已发货" : "未发货",
+    deliveryStatus: shipment.direction === 'refund'
+      ? shipment.expressNo ? '已填写退货运单' : '尚未填写退货运单'
+      : received ? "已收货" : shipment.expressNo ? "已发货" : "未发货",
     expressName: shipment.expressName,
     expressCode: shipment.expressCode,
     expressNo: shipment.expressNo,
@@ -305,7 +308,8 @@ export class ExpressService {
     // Independently authorized staff callers explicitly opt into legacy
     // user-deleted history tracking. The default manager/customer readers keep
     // their existing deletion policy, and system deletion is never bypassed.
-    if(!orders.length||orders.length>MAX_SPLIT_PACKAGES||new Set(orders.map(order=>order.id)).size!==orders.length||orders.some(order=>order.id<1||order.isDel&&options.allowUserDeleted!==true||order.isSystemDel))throw new ValidateException('物流订单范围无效');
+    const splitRoot = orders[0]?.pid === -1 || orders[0]?.deliveryType === 'split';
+    if(!orders.length||orders.length>MAX_SPLIT_PACKAGES+(splitRoot?1:0)||new Set(orders.map(order=>order.id)).size!==orders.length||orders.some(order=>order.id<1||order.isDel&&options.allowUserDeleted!==true||order.isSystemDel))throw new ValidateException('物流订单范围无效');
     await authorize();
     const root=orders[0],split=root.pid===-1||root.deliveryType==='split';
     const shipments=(split?orders.slice(1):orders).filter(order=>order.deliveryType==='express'&&order.deliveryId.trim());
@@ -314,6 +318,32 @@ export class ExpressService {
     const first=packages[0]??fallbackPackage(this.fromOrder(root),'pending','暂无已发货包裹');
     await authorize();
     return this.response(split?{...first,orderId:root.orderId,deliveryStatus:packages.length?'分包发货':first.deliveryStatus,message:packages.length?`共 ${packages.length} 个已发货包裹`:first.message}:first,packages);
+  }
+
+  /** Caller freezes the owned refund row before external I/O and revalidates
+   * that exact identity afterwards. A submitted/refunded application is not
+   * evidence that the carrier or merchant has received a return parcel. */
+  async queryScopedRefund(refund: Pick<typeof storeOrderRefund.$inferSelect,
+    'id' | 'orderId' | 'refundExpress' | 'refundExpressName' | 'refundPhone'>,
+    authorize: () => Promise<void>): Promise<ExpressQueryResult> {
+    if (!Number.isInteger(refund.id) || refund.id <= 0 || refund.id > 2147483647 || !refund.refundExpress.trim())
+      throw new ValidateException('该退款单尚未填写退货运单');
+    await authorize();
+    const tracked = await this.track({ orderPk: -refund.id, direction: 'refund', orderId: refund.orderId,
+      orderStatus: 1, deliveryType: 'express', expressName: refund.refundExpressName || '用户退回',
+      expressCode: '', expressNo: refund.refundExpress, userPhone: refund.refundPhone });
+    await authorize();
+    return this.response(tracked, [tracked]);
+  }
+
+  async queryScopedOrder(order: ScopedTrackingOrder, authorize: () => Promise<void>): Promise<ExpressQueryResult> {
+    if (!Number.isInteger(order.id) || order.id <= 0 || order.isDel || order.isSystemDel)
+      throw new ValidateException('物流订单范围无效');
+    if (order.deliveryType !== 'express') throw new ValidateException('该订单不是快递发货，无法查询物流信息');
+    await authorize();
+    const tracked = await this.track(this.fromOrder(order));
+    await authorize();
+    return this.response(tracked, [tracked]);
   }
 
   /** 查询订单或 PHP 兼容的退款物流。 */
@@ -351,7 +381,8 @@ export class ExpressService {
           ),
         )
         .orderBy(asc(storeOrder.id))
-        .limit(MAX_SPLIT_PACKAGES);
+        .limit(MAX_SPLIT_PACKAGES + 1);
+      if (children.length > MAX_SPLIT_PACKAGES) throw new ValidateException('拆分包裹数量过多，请联系商家核对');
       const shippable = children.filter(
         (child) => child.deliveryType === "express" && child.deliveryId.trim(),
       );
@@ -380,7 +411,7 @@ export class ExpressService {
   }
 
   private async queryRefund(uid: number, reference: string): Promise<ExpressQueryResult> {
-    const numericId = /^\d+$/.test(reference) ? Number(reference) : -1;
+    const numericId = /^[1-9]\d{0,9}$/.test(reference) && Number(reference) <= 2147483647 ? Number(reference) : -1;
     const rows = await this.container.db
       .select()
       .from(storeOrderRefund)
@@ -394,7 +425,8 @@ export class ExpressService {
           ),
         ),
       )
-      .limit(1);
+      .limit(2);
+    if (rows.length > 1) throw new ValidateException('退款物流标识存在歧义，请从退款详情重新进入');
     const refund = rows[0];
     if (!refund) throw new NotFoundException("退款单不存在或不属于当前用户");
     if (!refund.refundExpress.trim()) throw new ValidateException("该退款单尚未填写退货运单");
@@ -405,9 +437,10 @@ export class ExpressService {
       .where(and(eq(storeOrder.id, refund.storeOrderId), eq(storeOrder.uid, uid)))
       .limit(1);
     const shipment: ShipmentInput = {
+      direction: 'refund',
       orderPk: -refund.id,
       orderId: refund.orderId,
-      orderStatus: refund.refundType >= 5 ? 2 : 1,
+      orderStatus: 1,
       deliveryType: "express",
       expressName: refund.refundExpressName || "用户退回",
       expressCode: "",
@@ -588,7 +621,7 @@ export class ExpressService {
     source: "carrier" | "cache",
     fetchedAt: number,
   ): TrackingPackage {
-    const received = shipment.orderStatus >= 2;
+    const received = shipment.direction !== 'refund' && [2, 3].includes(shipment.orderStatus);
     return {
       orderId: shipment.orderId,
       deliveryStatus: received && !result.delivered ? "已收货" : result.statusText,

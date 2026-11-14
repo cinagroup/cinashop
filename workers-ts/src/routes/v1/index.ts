@@ -190,7 +190,7 @@ export const v1Routes = new Hono<{
 // checks, so rejected requests cannot be cached as public share data.
 for (const path of ['/get_qrcode/*', '/share/scene/*', '/share/code/image/*', '/wechat/follow', '/wechat/follow/image/*', '/admin/brand/*', '/admin/category/*', '/cart/compute',
   '/admin/config_class', '/admin/config_class/*', '/admin/setting/config_class', '/admin/setting/config_class/*',
-  '/order/detail/*', '/delivery_order/detail/*']) {
+  '/order/detail/*', '/delivery_order/detail/*', '/order/express/*']) {
   v1Routes.use(path, async (c, next) => {
     c.header('Cache-Control', 'private, no-store');
     c.header('Pragma', 'no-cache');

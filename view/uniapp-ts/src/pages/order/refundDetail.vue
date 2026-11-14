@@ -46,6 +46,7 @@
         <view>{{ detail.returnContact.address || '退货地址未配置，请先联系商家' }}</view>
       </view>
       <view v-if="detail.refundExpress" class="info-card"><view class="card-title">已提交的退货物流</view>
+        <button size="mini" :disabled="busy" @tap="goLogistics(detail)">查询退货物流</button>
         <view>{{ detail.refundExpressName }} · {{ detail.refundExpress }}</view><view v-if="detail.refundPhone">寄件人电话：{{ detail.refundPhone }}</view><view>{{ detail.refundGoodsExplain }}</view>
         <view v-if="detail.returnImagesError" class="notice">{{ detail.returnImagesError }}</view>
         <view class="evidence"><image v-for="item in detail.returnImages" :key="item.url" :src="item.src" mode="aspectFit" alt="已提交的退货凭证" /></view></view>
@@ -80,7 +81,7 @@ import { returnEligible } from '../../../../common/refundReturn';
 import type { ReturnImage } from '../../../../common/refundReturn';
 import { refundStatus, refundStatusDescription, refundTime, refundableCancellation, type RefundRecordDetail } from '../../../../common/refundRecords';
 defineOptions({ inheritAttrs: false });
-const { auth, state, detail, busy, canCancel, canReturn, uploadReturnImage, submitReturn, removeReturnImage, routeError, navigationError, load, goList, goOrder, goService, login, cancel } = useRefundRecords('detail');
+const { auth, state, detail, busy, canCancel, canReturn, uploadReturnImage, submitReturn, removeReturnImage, routeError, navigationError, load, goList, goOrder, goLogistics, goService, login, cancel } = useRefundRecords('detail');
 const carrierName = computed(() => state.shipment.carriers.find(row => row.id === state.shipment.form.carrierId)?.name);
 function chooseCarrier(event: { detail: { value: string | number } }) {
   const index = Number(event.detail.value);

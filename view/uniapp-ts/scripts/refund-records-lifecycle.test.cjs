@@ -206,3 +206,6 @@ test('refund cancellation dispatched before hide remains uncertain after late su
     await r.checkout.cancel();assert.equal(posts(r).length,1);
   }finally{waiting.resolve({data:null});r.stop();}
 });
+test('refund detail logistics entry binds only the current owned return record, never its public number or a stale object',async()=>{
+  const r=setup(()=>({data:detail(25,{refundType:5,refundExpress:'RETURN-25'})}));try{await r.start({id:'25'});const old=r.checkout.detail.value;r.checkout.goLogistics(old);assert.deepEqual(r.navigations,['/pages/order/express?orderId=25&type=refund']);await r.checkout.load();r.checkout.goLogistics(old);assert.equal(r.navigations.length,1);r.hooks.onHide();r.checkout.goLogistics(r.checkout.detail.value);assert.equal(r.navigations.length,1);}finally{r.stop();}
+});

@@ -37,6 +37,7 @@
         <p>{{ detail.returnContact.address || '退货地址未配置，请先联系商家' }}</p>
       </section>
       <section v-if="detail.refundExpress" class="record-card"><h3>已提交的退货物流</h3><p>{{ detail.refundExpressName }} · {{ detail.refundExpress }}</p>
+        <el-button :disabled="busy" @click="goLogistics(detail)">查询退货物流</el-button>
         <p v-if="detail.refundPhone">寄件人电话：{{ detail.refundPhone }}</p><p v-if="detail.refundGoodsExplain">{{ detail.refundGoodsExplain }}</p>
         <p v-if="detail.returnImagesError" role="alert">{{ detail.returnImagesError }}</p>
         <div class="evidence"><ProductImage v-for="item in detail.returnImages" :key="item.url" :src="item.src" alt="已提交的退货凭证" /></div></section>
@@ -73,7 +74,7 @@ async function confirmCancel() {
   try { await ElMessageBox.confirm('确认撤销本次退款申请？退款渠道处理中的申请可能无法撤销。', '撤销售后', { type: 'warning', confirmButtonText: '确认撤销', cancelButtonText: '保留申请' }); return true; }
   catch (error) { if (error === 'cancel' || error === 'close') return false; throw error; }
 }
-const { state, detail, busy, canCancel, canReturn, uploadReturnImage, submitReturn, removeReturnImage, navigationError, routeError, load, goList, goOrder, goService, cancel } = useRefundRecords('detail', confirmCancel);
+const { state, detail, busy, canCancel, canReturn, uploadReturnImage, submitReturn, removeReturnImage, navigationError, routeError, load, goList, goOrder, goLogistics, goService, cancel } = useRefundRecords('detail', confirmCancel);
 const failedRequestImages = ref<ReturnImage[]>([]);
 watch(detail, () => { failedRequestImages.value = []; }, { flush: 'sync' });
 function requestImageFailed(image: ReturnImage) {

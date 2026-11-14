@@ -36,6 +36,10 @@ export function useRefundRecords(mode: 'list' | 'detail', confirm: () => Promise
   function goDetail(row: RefundRecord) { if (reader.canOpen(row)) return navigate(`/user/refunds/${row.id}`); }
   function goList() { return navigate('/user/refunds'); }
   function goOrder() { if (reader.currentView() && state.detail) return navigate(`/order/${state.detail.orderId}`); }
+  function goLogistics(row: typeof state.detail) {
+    if (row && row === state.detail && reader.currentView() && row.refundExpress)
+      return navigate(`/express?orderId=${row.id}&type=refund`);
+  }
   function goService() { return navigate('/service'); }
   function setFilter(filter: unknown) {
     if (disposed || navigating.value || state.operating) return;
@@ -60,5 +64,5 @@ export function useRefundRecords(mode: 'list' | 'detail', confirm: () => Promise
     } catch (error) { routeError.value = (error as Error).message; }
   }, { immediate: true, flush: 'sync' });
   onBeforeUnmount(() => { disposed = true; stopAuth(); clear(); });
-  return { state, list, detail, search, busy, canCancel, canReturn, uploadReturnImage, submitReturn, removeReturnImage, navigationError, routeError, load, goDetail, goList, goOrder, goService, setFilter, applySearch, cancel };
+  return { state, list, detail, search, busy, canCancel, canReturn, uploadReturnImage, submitReturn, removeReturnImage, navigationError, routeError, load, goDetail, goList, goOrder, goLogistics, goService, setFilter, applySearch, cancel };
 }

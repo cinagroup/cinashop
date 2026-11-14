@@ -1,0 +1,1820 @@
+{
+  "batch": "php-ts-buyer-order-logistics-20261113",
+  "baseCommit": "72bc71d90f767ff628c48c805678e14f6cbeebdb",
+  "wholeMigrationComplete": false,
+  "evidenceRoot": "/tmp/php-ts-buyer-order-logistics-20261113",
+  "sourceHashes": [
+    {
+      "path": "view/common/buyerOrderTracking.ts",
+      "sha256": "c60992457b37437fd361986cd02751d162bda889b84481db8e1622676e0e06e7"
+    },
+    {
+      "path": "view/common/test/buyerOrderTrackingFixture.cjs",
+      "sha256": "9b72450791e9a18afd0d0d59f835a37bdffff2ee9ccf1bd7c5257bc294f47b5e"
+    },
+    {
+      "path": "view/pc-ts/src/composables/useBuyerOrderTracking.ts",
+      "sha256": "2c792cf5e5ea9ffa65bd19af4429395e5b3fdb82dbfdc2ced59bd82069d8823d"
+    },
+    {
+      "path": "view/pc-ts/test/buyer-order-tracking.test.mjs",
+      "sha256": "dde1016baa4c96c3bf08a9d4e4e35f95b601420f25aaf646119145b03afdc26a"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/buyer-order-tracking-lifecycle.test.cjs",
+      "sha256": "7b5526296787defe6b02fdd388dcdb21a06c1699642c51ac49c8900513c3844e"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useBuyerOrderTracking.ts",
+      "sha256": "5ce5efb2d6aec10049aea4cedc2ad9531c6afa92eece13400ba5a0de7b047da7"
+    },
+    {
+      "path": "workers-ts/src/services/order/BuyerOrderTrackingService.ts",
+      "sha256": "2422c3bcdf7093e1467a61100d7f56a43cd5882fbcf2e27ed5e22c94d7f23af5"
+    },
+    {
+      "path": "workers-ts/test/browser/buyer-order-tracking.acceptance.ts",
+      "sha256": "02a3863bf6172a04b045bc1d0c3dc29f81cda4cde59937ffb167fceb58307052"
+    },
+    {
+      "path": "workers-ts/test/buyer-order-tracking-native.test.ts",
+      "sha256": "9114c41eb2fd96652b30c58dfdd3947aa642119cd2fdf6652281cd4065420d32"
+    },
+    {
+      "path": "workers-ts/test/buyer-order-tracking.test.ts",
+      "sha256": "7de9705ae3cd7ef7c82941f52fc1e0ad0da0cf3935348c6ca7a90b7f8ae09702"
+    },
+    {
+      "path": "workers-ts/test/helpers/buyerOrderTracking.ts",
+      "sha256": "55659504b5e0970380408deb773b5c64f6db6f03ded1e66cace67c5be646556b"
+    },
+    {
+      "path": "workers-ts/vitest.buyer-order-tracking-browser.config.ts",
+      "sha256": "6542a816f92d162ae69e8e83885bc9c4025a9a9ccd169f99862b9864dc7e2fb3"
+    },
+    {
+      "path": "view/pc-ts/src/api/order.ts",
+      "sha256": "46b6f75a5d630e0e3021c3846a9e76aea15d973df1172a34bda0afa348e6d287"
+    },
+    {
+      "path": "view/pc-ts/src/composables/useRefundRecords.ts",
+      "sha256": "ce795a530217fb591c05b6855c02bc0113efd0168b0bf08033ab8cc04c3046b5"
+    },
+    {
+      "path": "view/pc-ts/src/pages/order/OrderDetail.vue",
+      "sha256": "31759356e6c3a23f1b2e8cdc6787c2a70f6fb179f998c0c0af2cfc2b45a83af2"
+    },
+    {
+      "path": "view/pc-ts/src/pages/order/OrderExpress.vue",
+      "sha256": "92d5d62f35e227c9dd40735c88ce9334dc1388b12a8c04e0b196c07fe9d14700"
+    },
+    {
+      "path": "view/pc-ts/src/pages/order/RefundDetail.vue",
+      "sha256": "8721886a8a4404dad889e310ac4574e3c751789f9f96c518f1baef780840b145"
+    },
+    {
+      "path": "view/pc-ts/test/auth-session.test.mjs",
+      "sha256": "16dbd2a5aa8f917cae82a2b0e5317e22b1b171761625ff2d2aca3ad306e5d7ef"
+    },
+    {
+      "path": "view/uniapp-ts/package.json",
+      "sha256": "b374bdedd57b53e4ad54b513c40548ae5e40c928fc1ae8af82726f823eef525d"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/refund-records-lifecycle.test.cjs",
+      "sha256": "3900559eb9962836c9591d0dc623322f7014ef42389222469d9e6dc0acc6aa98"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/order.ts",
+      "sha256": "3972ca9ad8f23978831e42e66e8ec79a21b9d75c6d11d852d0de643f0e39f981"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useRefundRecords.ts",
+      "sha256": "6adf53c8522cb6860f67b95bb4c803509514cf43f248e548f42b82650d4886a1"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/order/detail.vue",
+      "sha256": "bd95ed50ad7afc4593b1b464347a355ea4932e045365a5e0c3465ed97d573273"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/order/express.vue",
+      "sha256": "46a073e02a069e59716a3168ad5e508436f75eeb40bda56ee2e7a346a38b6b9c"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/order/refundDetail.vue",
+      "sha256": "b01cdbd87cdf25a764db05c876dd68af9bb6d6cdb04377f9efb5abf04c649a47"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "794510228d4573a5a5eb53511f6aca9f9b5de605711f87517d3d061dae1d15e5"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/OrderController.ts",
+      "sha256": "86b06138b12a30c98874e4ea042e22b55925274866405cd4673efa2b0c559cfa"
+    },
+    {
+      "path": "workers-ts/src/routes/v1/index.ts",
+      "sha256": "a0f1d4df3fe441bf552369e836cc221617d8b3d7a2f5744bac95da17f1e0b591"
+    },
+    {
+      "path": "workers-ts/src/services/order/ExpressService.ts",
+      "sha256": "67047b0584c218f30366801608a899845c876d92664ceb3a3c2d04b7873480fd"
+    },
+    {
+      "path": "workers-ts/test/supplier-operational-reads.test.ts",
+      "sha256": "5b7ae028f005cf8ea6fb83c68f9dd4e5295a827e627f71307a20b92b87e52b7f"
+    }
+  ],
+  "protectedFiles": 4932,
+  "originalTypes": {
+    "originalRoots": 4419,
+    "commonRoots": 1930,
+    "testRoots": 2489,
+    "shardTestCounts": [
+      1245,
+      1244
+    ],
+    "unionExactlyMatchesOriginal": true,
+    "optionsExactlyMatchOriginal": true
+  },
+  "validation": {
+    "unitFiles": 94,
+    "unitPassed": 2565,
+    "nativePassed": 165,
+    "nativeFiles": 6,
+    "nativeByFile": {
+      "buyer": 18,
+      "supplier-tracking": 59,
+      "customer-work": 22,
+      "manager": 35,
+      "supplier-operations": 21,
+      "supplier-split": 10
+    },
+    "workerdFiles": 30,
+    "workerdPassed": 410,
+    "uniappToolchainInvocations": 25,
+    "uniappToolchainPassed": 3799,
+    "pcAuthPassed": 382,
+    "pcImagePassed": 9,
+    "deferredUnitCasesAllExecutedNatively": 31,
+    "sourceProof": {
+      "passed": 178,
+      "failed": 10,
+      "skipped": 0,
+      "isPassingGate": false
+    }
+  },
+  "frontendReuse": {
+    "reason": "Only server malformed buyer-view validation is translated to its known 400 business envelope; native assertion strengthened. Frontend and all build inputs unchanged.",
+    "previousSourceManifest": "candidate-7-source.json",
+    "changedFiles": [
+      "workers-ts/src/services/order/BuyerOrderTrackingService.ts",
+      "workers-ts/test/buyer-order-tracking-native.test.ts",
+      "workers-ts/test/supplier-operational-reads.test.ts",
+      "workers-ts/test/browser/buyer-order-tracking.acceptance.ts",
+      "workers-ts/vitest.buyer-order-tracking-browser.config.ts",
+      "workers-ts/scripts/run-local-finance-postgres.mjs"
+    ],
+    "unchangedSourceFiles": 24,
+    "allProtectedDependenciesUnchanged": true,
+    "exactProductionBundlesUnchanged": true,
+    "reuse": [
+      "uniapp-typecheck",
+      "pc-types",
+      "uniapp-toolchain-3799",
+      "pc-auth-382-and-images-9",
+      "uniapp-build-h5",
+      "uniapp-build-mp-weixin",
+      "uniapp-build-app",
+      "pc-build",
+      "supplier-tracking-native-59",
+      "customer-work-read-native",
+      "manager-read-native"
+    ],
+    "sharedExpressEngineUnchanged": true,
+    "additionalTestRepair": "Supplier native status test retains actual checkout creation and all 500/501/deletion/write invariants",
+    "interactiveDeadlineRepair": true
+  },
+  "browser": {
+    "passed": true,
+    "browser": "Installed Codex In-app Browser, ID 2, no fallback",
+    "surfaces": {
+      "pc": "http://127.0.0.1:40249",
+      "uni": "http://127.0.0.1:41901"
+    },
+    "checks": {
+      "pageIdentity": true,
+      "nonBlank": true,
+      "noFrameworkOverlay": true,
+      "noRelevantConsoleError": true,
+      "screenshotEvidence": true,
+      "interactionProof": true,
+      "noHorizontalOverflow": true
+    },
+    "metrics": {
+      "desktop": {
+        "client": 1265,
+        "height": 720,
+        "scroll": 1265,
+        "width": 1280
+      },
+      "desktopFrame": {
+        "height": 720,
+        "scrollWidth": 1265,
+        "width": 1265
+      },
+      "mobile": {
+        "client": 360,
+        "height": 812,
+        "scroll": 360,
+        "width": 375
+      },
+      "mobileFrame": {
+        "height": 812,
+        "scrollWidth": 345,
+        "width": 345
+      }
+    },
+    "interactions": [
+      "PC actual order detail -> view logistics",
+      "UniApp actual order detail -> view logistics",
+      "Both actual refund detail -> numeric PK return logistics",
+      "Both second packet selection and owner-specific context",
+      "Both copy feedback on the currently selected parcel",
+      "Latest trace -> expand -> both returned local carrier nodes",
+      "Original outgoing waybill -> owner SQL change -> OUTGOING-REFRESHED",
+      "503 -> private logistics cleared -> explicit retry",
+      "wrong identity DTO -> private logistics cleared",
+      "SQL account disable -> refresh -> login and no private logistics",
+      "recover -> fresh GET only; full business and sequence state invariant between declared controls"
+    ],
+    "clipboardLimit": "Browser native clipboard success feedback verified. The plugin clipboard read was empty; exact payload selection is separately asserted in whole component tests. No OS clipboard claim.",
+    "consoleWarning": "UniApp dependency emits the existing vue-router dist-entry deprecation; no app error or overlay. PC console clean.",
+    "screenshots": [
+      {
+        "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-pc-outgoing-final.jpg",
+        "width": 1280,
+        "height": 820,
+        "sha256": "b402443d5222efa13a564dcdfd65e5c1bbdad1f68e265943a46c78612ea7b158"
+      },
+      {
+        "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-pc-return-final.jpg",
+        "width": 1280,
+        "height": 820,
+        "sha256": "85a4880ea0aa182fd30e63bfbbe884fb5e6e97c6e97d111a1b3b8980037709ed"
+      },
+      {
+        "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-pc-refreshed-final.jpg",
+        "width": 1280,
+        "height": 820,
+        "sha256": "153364f469396e03d7daf14ed92251e8e533457a71ed918937c1aa79e728c948"
+      },
+      {
+        "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-desktop-final.jpg",
+        "width": 1264,
+        "height": 1595,
+        "sha256": "2b4ed784485c1d5e0c01628c05977616cf8dd5bb30a9bdf137b35c73fd67ea29"
+      },
+      {
+        "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-mobile-final.jpg",
+        "width": 360,
+        "height": 1020,
+        "sha256": "e95f575c96728279b119bc983c79af817cb6bc7ed7f485146aeffd49a1cdb9e3"
+      },
+      {
+        "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-mobile-viewport-final.jpg",
+        "width": 375,
+        "height": 812,
+        "sha256": "23bcfad9a76dc37ca023cf3c47db680705a5bbe5b68e44867c5830e0a7cbb8ea"
+      },
+      {
+        "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-pc-revoked.jpg",
+        "width": 1280,
+        "height": 720,
+        "sha256": "f43bc872e05a6ad6655e1a5a2c9289b3ecf3c3eb08f4d6d62604d3cc9e6ba50d"
+      },
+      {
+        "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-mobile-revoked.jpg",
+        "width": 360,
+        "height": 779,
+        "sha256": "0a6176deacbdebca2dfc5f48441e994f92a8446b45559221f4b3558d6d535131"
+      }
+    ],
+    "limitations": [
+      "Only installed Chromium engine and these viewport sizes",
+      "Local declared carrier boundary and historical shipment fixtures; no live provider/payment/Queue",
+      "Full-page screenshots capture sticky headers at the current scroll offset; viewport screenshots are primary layout evidence"
+    ],
+    "firstAttempt": "browser-attempt-1/outer-terminal.json",
+    "wholeMigrationComplete": false
+  },
+  "interactiveDeadlineRepair": {
+    "onlyInteractiveHarnessDeadlineChanged": true,
+    "businessSourcesUnchanged": true,
+    "typeSignaturesAndRootSetsUnchanged": true,
+    "ownedFixtureMinutes": 35,
+    "outerRunnerMinutes": 40,
+    "firstAttemptPreserved": "/tmp/php-ts-buyer-order-logistics-20261113/browser-attempt-1",
+    "changedFiles": [
+      "workers-ts/test/browser/buyer-order-tracking.acceptance.ts",
+      "workers-ts/vitest.buyer-order-tracking-browser.config.ts",
+      "workers-ts/scripts/run-local-finance-postgres.mjs"
+    ]
+  },
+  "nativeTestRepair": {
+    "changedFile": "workers-ts/test/supplier-operational-reads.test.ts",
+    "changedProductionFilesAfterCandidate8": 0,
+    "affectedOriginalTypeShard": 1,
+    "otherShardInputsUnchanged": true,
+    "unit94InputsUnchanged": true,
+    "buyerNative18InputsUnchanged": true,
+    "oldFailurePreserved": "candidate-8-native-supplier-operations.log"
+  },
+  "postBrowserRunnerUnitPassed": 693,
+  "sourceProof": {
+    "testFile": "test/supplier-product-label-runtime-source-binding.test.ts",
+    "baseline": "72bc71d90f767ff628c48c805678e14f6cbeebdb",
+    "baselinePassed": 178,
+    "currentPassed": 178,
+    "baselineFailed": 10,
+    "currentFailed": 10,
+    "skipped": 0,
+    "failingFullNamesExactlyMatch": true,
+    "failedCases": [
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance admits the exact new definer only in current shared-shop pricing recognition while isolated scopes and the fixed privilege plan remain frozen",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance keeps all prior frontend public selection binding and privilege plan bytes unchanged for a backend-only closure",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance partitions true8023 before and all controlled changed/additional files with no missing or duplicated image",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance pins complete current and accepted ProductLabel bytes workers-ts/scripts/run-local-finance-postgres.mjs",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance pins complete current and accepted ProductLabel bytes workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance pins complete current and accepted ProductLabel bytes workers-ts/src/migrations/checkoutPricingLock.ts",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance refuses altered current and forged whole-file inverse workers-ts/scripts/run-local-finance-postgres.mjs",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance refuses altered current and forged whole-file inverse workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance rejects nonexact publication bytes and forged bridge hashes while composing each immutable validation layer",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance runs current789 callSites827 variants before keeping every exact report byte and predecessor call object"
+    ],
+    "restoredIgnoredResources": 150,
+    "profiles": [
+      {
+        "profile": "baseline",
+        "exit": 1,
+        "seconds": 49.46
+      },
+      {
+        "profile": "current",
+        "exit": 1,
+        "seconds": 23.49
+      }
+    ],
+    "isPassingGate": false,
+    "isRuntimeAcceptance": false
+  },
+  "phpSource": {
+    "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+    "files": [
+      {
+        "path": "app/controller/api/v1/order/StoreOrder.php",
+        "sha256": "3cc0cda63a02d86ca577bcc2ba924cbb54672a01bc49d7fe5d512dc43e87ca70"
+      },
+      {
+        "path": "app/services/other/ExpressServices.php",
+        "sha256": "2bec7d45b563696a1c70bd472a4d62a1a49beea3c0645be332f0d7ff04752ad3"
+      },
+      {
+        "path": "crmeb/services/ExpressService.php",
+        "sha256": "2473a1aa1dd93782bc0eaa16d85959a6f8b14221b5c570438f746d404370b1e9"
+      },
+      {
+        "path": "view/uniapp/pages/goods/goods_logistics/index.vue",
+        "sha256": "7817709c21722ab24d65b8644cba4c4ab6af342bce9da0fa03e584b87884e37d"
+      },
+      {
+        "path": "view/uniapp/pages/goods/order_details/index.vue",
+        "sha256": "5067867eba1161020791f983e58cfda1a41586c462d9933f5e89ec9e58ae8ca8"
+      },
+      {
+        "path": "view/uniapp/pages/goods/order_after_details/index.vue",
+        "sha256": "2990c7edc602f84960071975fb091901977c533d5d9abf4d52b6c27cbe4fe03d"
+      },
+      {
+        "path": "view/uniapp/pages/users/user_return_list/index.vue",
+        "sha256": "13e3a03ba78a2ae0e746d121b892b7f4c4aff22188066097b2c1e04aaaae2189"
+      },
+      {
+        "path": "view/uniapp/api/order.js",
+        "sha256": "a9db2a019ba0cfcad8cbce4caecc404514c8a76d89c270648eb1d449cca76a21"
+      }
+    ]
+  },
+  "invariants": {
+    "userSymlinks": 5,
+    "restoredResources": 150,
+    "noLiveProviders": true,
+    "noDeploy": true,
+    "noPhpUpload": true,
+    "noExternalQueue": true,
+    "syntheticPaidAdmissionIsNotPayment": true
+  },
+  "artifactHashes": [
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/accepted-counts.json",
+      "sha256": "664f894932fe9c11cc6d24306fbd6d0b3ff1c7e2709ef32272fb75d6d2c43a59"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/baseline-dependencies.json",
+      "sha256": "988db59e66f57ad9e73943e165aa95b0aec5c07de7135068e097c971f10aadb7"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-attempt-1/browser-command.json",
+      "sha256": "1eb8deee378749ba9cccbd3193b96d052643767eea0fea138733dc94e2837ba4"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-attempt-1/browser.log",
+      "sha256": "50f6151bc300162c614892a50a0e368301aa74555d2ad6b791b947e9f19f2767"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-attempt-1/outer-terminal.json",
+      "sha256": "a332438b1641932ec53f9394f08f324b2d082e6579414f2d86c3ac52b3e4a079"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-command.json",
+      "sha256": "d37b4be984cbf0b203d8ebf59155d88d4af9af9f0b6f577fc2353ca6256f7cf5"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-console.json",
+      "sha256": "f106329d8f344eebe7f9f7d006e7683b2d31342c3e4da8b49d8e3828c6cbaa11"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-desktop-final.jpg",
+      "sha256": "2b4ed784485c1d5e0c01628c05977616cf8dd5bb30a9bdf137b35c73fd67ea29"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-dom-evidence.json",
+      "sha256": "9e60f7c8457d5ab003e7dc3c5285b97e9c622d9677f0e96556ef9a3392552ad8"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-mobile-final.jpg",
+      "sha256": "e95f575c96728279b119bc983c79af817cb6bc7ed7f485146aeffd49a1cdb9e3"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-mobile-return-frame.jpg",
+      "sha256": "041681aa9142e8ea4144fb7b36cdce7d036184c2eeb73de2409cd5eb36a43a72"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-mobile-revoked.jpg",
+      "sha256": "0a6176deacbdebca2dfc5f48441e994f92a8446b45559221f4b3558d6d535131"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-mobile-viewport-final.jpg",
+      "sha256": "23bcfad9a76dc37ca023cf3c47db680705a5bbe5b68e44867c5830e0a7cbb8ea"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-outer-terminal.json",
+      "sha256": "537793fc81026d088f99f437f58e9c58b8f56a54d48d52ab9649a3f63a08073d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-pc-outgoing-final.jpg",
+      "sha256": "b402443d5222efa13a564dcdfd65e5c1bbdad1f68e265943a46c78612ea7b158"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-pc-refreshed-final.jpg",
+      "sha256": "153364f469396e03d7daf14ed92251e8e533457a71ed918937c1aa79e728c948"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-pc-return-final.jpg",
+      "sha256": "85a4880ea0aa182fd30e63bfbbe884fb5e6e97c6e97d111a1b3b8980037709ed"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-pc-return-ready.jpg",
+      "sha256": "2b6c7177adbfe056ac95cf1f926013c525184a09affcc529f4392caa895069af"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-pc-return.jpg",
+      "sha256": "bc26c7c62be511452a1cf7b755e31f0e1d3cc30a858a256a9bcf8c18d3dac838"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-pc-revoked.jpg",
+      "sha256": "f43bc872e05a6ad6655e1a5a2c9289b3ecf3c3eb08f4d6d62604d3cc9e6ba50d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-pc-split.jpg",
+      "sha256": "3581df0b865f62843fae69e4e2a7cbbaa3194da60773b28018110f0b0624d736"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-qa.json",
+      "sha256": "9414b9edcc931f2ceef6dedfd8a72adc85a2024603b47b45b29211c405d7404c"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-result.json",
+      "sha256": "37d7f3fc1fb2ee23580300500e34154ed8c13eed601ed835f9f888435ce1f666"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-run.py",
+      "sha256": "60a84548c097afae4d739562d257cae20fec430f55c86d628cce6ac95f92d2cb"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-timeout-repair/workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "794510228d4573a5a5eb53511f6aca9f9b5de605711f87517d3d061dae1d15e5"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-timeout-repair/workers-ts/test/browser/buyer-order-tracking.acceptance.ts",
+      "sha256": "02a3863bf6172a04b045bc1d0c3dc29f81cda4cde59937ffb167fceb58307052"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-timeout-repair/workers-ts/vitest.buyer-order-tracking-browser.config.ts",
+      "sha256": "6542a816f92d162ae69e8e83885bc9c4025a9a9ccd169f99862b9864dc7e2fb3"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-timeout-repair.json",
+      "sha256": "513eb84ed43b1fc955b7bc5d2ccc50eae004c9d7e22b8a1311e558ecf4e98f2d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser-timeout-source.json",
+      "sha256": "f77938afefb8c4c81bf0f218e647711219674703627e18135f85ec0369548a68"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser.acceptance.candidate.ts",
+      "sha256": "4f87de6a1dd87f54faf96a3eac3a00bad0e82e124085880b4bb362dc56bcf383"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/browser.log",
+      "sha256": "37f7d43b53441d7a194e4b5c94c903dd98610259c8afa044dd0c0a040ed4c14b"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/build-files.json",
+      "sha256": "720d4b080c804b373dfbc7444269e5af71c0802e460c40d558eef8eda7e6f13d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-1/view/common/buyerOrderTracking.ts",
+      "sha256": "c60992457b37437fd361986cd02751d162bda889b84481db8e1622676e0e06e7"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-1/workers-ts/src/controllers/api/v1/OrderController.ts",
+      "sha256": "86b06138b12a30c98874e4ea042e22b55925274866405cd4673efa2b0c559cfa"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-1/workers-ts/src/routes/v1/index.ts",
+      "sha256": "a0f1d4df3fe441bf552369e836cc221617d8b3d7a2f5744bac95da17f1e0b591"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-1/workers-ts/src/services/order/BuyerOrderTrackingService.ts",
+      "sha256": "2d78a0ad65f4aadaaa36aa8abe9456beafbdee24db26c2f89bffd32958dabfcc"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-1/workers-ts/src/services/order/ExpressService.ts",
+      "sha256": "67047b0584c218f30366801608a899845c876d92664ceb3a3c2d04b7873480fd"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-1/workers-ts/test/buyer-order-tracking.test.ts",
+      "sha256": "7de9705ae3cd7ef7c82941f52fc1e0ad0da0cf3935348c6ca7a90b7f8ae09702"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-1-pure-result.json",
+      "sha256": "1b4ef5558ec88896a2cbab47437e94107cccc88a8ce7bbf80792e11d8d9a1313"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-1-pure-terminal.json",
+      "sha256": "abe4ad536c558140555d842fe89e59c9dd7b3a7c278c01bac21af6ccc5aa795b"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-1-pure.log",
+      "sha256": "5ad8c10c16a0975654736ef2c213d4a84ffadbaa90c7421a7cdbfd29c8dd9a33"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-1-source.json",
+      "sha256": "ae270f61c10b00f6189af3d78ddf551f937f0d68eb606b5f7a1075fdd3c1a8a7"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-2/view/common/buyerOrderTracking.ts",
+      "sha256": "c60992457b37437fd361986cd02751d162bda889b84481db8e1622676e0e06e7"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-2/view/pc-ts/src/api/order.ts",
+      "sha256": "46b6f75a5d630e0e3021c3846a9e76aea15d973df1172a34bda0afa348e6d287"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-2/view/pc-ts/src/composables/useBuyerOrderTracking.ts",
+      "sha256": "efa23126f4d9a0ae5a26d68c32e1a6821991179ebe2020bc4ebd9b9edaa694e8"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-2/view/pc-ts/src/composables/useRefundRecords.ts",
+      "sha256": "ce795a530217fb591c05b6855c02bc0113efd0168b0bf08033ab8cc04c3046b5"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-2/view/pc-ts/src/pages/order/OrderDetail.vue",
+      "sha256": "31759356e6c3a23f1b2e8cdc6787c2a70f6fb179f998c0c0af2cfc2b45a83af2"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-2/view/pc-ts/src/pages/order/OrderExpress.vue",
+      "sha256": "92d5d62f35e227c9dd40735c88ce9334dc1388b12a8c04e0b196c07fe9d14700"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-2/view/pc-ts/src/pages/order/RefundDetail.vue",
+      "sha256": "8721886a8a4404dad889e310ac4574e3c751789f9f96c518f1baef780840b145"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-2/view/uniapp-ts/src/api/order.ts",
+      "sha256": "3972ca9ad8f23978831e42e66e8ec79a21b9d75c6d11d852d0de643f0e39f981"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-2/view/uniapp-ts/src/composables/useBuyerOrderTracking.ts",
+      "sha256": "2afe1bed6c2228a6dbd4ac69748bd38b925fbd10c9a2cbc9368ad453122657cc"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-2/view/uniapp-ts/src/composables/useRefundRecords.ts",
+      "sha256": "6adf53c8522cb6860f67b95bb4c803509514cf43f248e548f42b82650d4886a1"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-2/view/uniapp-ts/src/pages/order/detail.vue",
+      "sha256": "bd95ed50ad7afc4593b1b464347a355ea4932e045365a5e0c3465ed97d573273"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-2/view/uniapp-ts/src/pages/order/express.vue",
+      "sha256": "baf38bc6a508f3e0133b01ab7348a12d9344cfd166964066f2936aa0118e82d4"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-2/view/uniapp-ts/src/pages/order/refundDetail.vue",
+      "sha256": "b01cdbd87cdf25a764db05c876dd68af9bb6d6cdb04377f9efb5abf04c649a47"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-2/workers-ts/src/controllers/api/v1/OrderController.ts",
+      "sha256": "86b06138b12a30c98874e4ea042e22b55925274866405cd4673efa2b0c559cfa"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-2/workers-ts/src/routes/v1/index.ts",
+      "sha256": "a0f1d4df3fe441bf552369e836cc221617d8b3d7a2f5744bac95da17f1e0b591"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-2/workers-ts/src/services/order/BuyerOrderTrackingService.ts",
+      "sha256": "c4e42dfd41bedbf1c5c026282341e4ca7fc06799f0d4d4964c3cd5bdc278858a"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-2/workers-ts/src/services/order/ExpressService.ts",
+      "sha256": "67047b0584c218f30366801608a899845c876d92664ceb3a3c2d04b7873480fd"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-2/workers-ts/test/buyer-order-tracking.test.ts",
+      "sha256": "7de9705ae3cd7ef7c82941f52fc1e0ad0da0cf3935348c6ca7a90b7f8ae09702"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-2-pc-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-2-pure.log",
+      "sha256": "7fe121b221647e307ad688540b4da7f91aa7452ff7ace9f0509155d9b271edcc"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-2-results.json",
+      "sha256": "20cae9eda3dc7301ef8497ec608e414a5c582c3188cf52357c8beb7db9feeb67"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-2-source.json",
+      "sha256": "bc481006fbc4d937f741f299fdc56227bd880f3a5d88847c3cbff8f9b8a11466"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-2-terminal.json",
+      "sha256": "21211c6fe775a8854118d16823373699e977ab46eca06ea6509f102d4752e04d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-2-uniapp-types.log",
+      "sha256": "8df3dce693eb220393fcacf48ff5aa51254bd573a4b59e9f912c5cb11caf918a"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-3/view/common/buyerOrderTracking.ts",
+      "sha256": "c60992457b37437fd361986cd02751d162bda889b84481db8e1622676e0e06e7"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-3/view/pc-ts/src/api/order.ts",
+      "sha256": "46b6f75a5d630e0e3021c3846a9e76aea15d973df1172a34bda0afa348e6d287"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-3/view/pc-ts/src/composables/useBuyerOrderTracking.ts",
+      "sha256": "efa23126f4d9a0ae5a26d68c32e1a6821991179ebe2020bc4ebd9b9edaa694e8"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-3/view/pc-ts/src/composables/useRefundRecords.ts",
+      "sha256": "ce795a530217fb591c05b6855c02bc0113efd0168b0bf08033ab8cc04c3046b5"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-3/view/pc-ts/src/pages/order/OrderDetail.vue",
+      "sha256": "31759356e6c3a23f1b2e8cdc6787c2a70f6fb179f998c0c0af2cfc2b45a83af2"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-3/view/pc-ts/src/pages/order/OrderExpress.vue",
+      "sha256": "92d5d62f35e227c9dd40735c88ce9334dc1388b12a8c04e0b196c07fe9d14700"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-3/view/pc-ts/src/pages/order/RefundDetail.vue",
+      "sha256": "8721886a8a4404dad889e310ac4574e3c751789f9f96c518f1baef780840b145"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-3/view/uniapp-ts/src/api/order.ts",
+      "sha256": "3972ca9ad8f23978831e42e66e8ec79a21b9d75c6d11d852d0de643f0e39f981"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-3/view/uniapp-ts/src/composables/useBuyerOrderTracking.ts",
+      "sha256": "2afe1bed6c2228a6dbd4ac69748bd38b925fbd10c9a2cbc9368ad453122657cc"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-3/view/uniapp-ts/src/composables/useRefundRecords.ts",
+      "sha256": "6adf53c8522cb6860f67b95bb4c803509514cf43f248e548f42b82650d4886a1"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-3/view/uniapp-ts/src/pages/order/detail.vue",
+      "sha256": "bd95ed50ad7afc4593b1b464347a355ea4932e045365a5e0c3465ed97d573273"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-3/view/uniapp-ts/src/pages/order/express.vue",
+      "sha256": "46a073e02a069e59716a3168ad5e508436f75eeb40bda56ee2e7a346a38b6b9c"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-3/view/uniapp-ts/src/pages/order/refundDetail.vue",
+      "sha256": "b01cdbd87cdf25a764db05c876dd68af9bb6d6cdb04377f9efb5abf04c649a47"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-3/workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "551f15c49ee4adee732098ea99a8d53b0d7e494a697128fe11874590350d666e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-3/workers-ts/src/controllers/api/v1/OrderController.ts",
+      "sha256": "86b06138b12a30c98874e4ea042e22b55925274866405cd4673efa2b0c559cfa"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-3/workers-ts/src/routes/v1/index.ts",
+      "sha256": "a0f1d4df3fe441bf552369e836cc221617d8b3d7a2f5744bac95da17f1e0b591"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-3/workers-ts/src/services/order/BuyerOrderTrackingService.ts",
+      "sha256": "807fd09e34d4538d590c685a780f4f79c66cb63b8e8e1c6de9d2ca40eec696ea"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-3/workers-ts/src/services/order/ExpressService.ts",
+      "sha256": "67047b0584c218f30366801608a899845c876d92664ceb3a3c2d04b7873480fd"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-3/workers-ts/test/buyer-order-tracking-native.test.ts",
+      "sha256": "887f712dd91f67bf6cce99fb0f6274bbfb6150cb78ffa309a7ac7b14990941e2"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-3/workers-ts/test/buyer-order-tracking.test.ts",
+      "sha256": "7de9705ae3cd7ef7c82941f52fc1e0ad0da0cf3935348c6ca7a90b7f8ae09702"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-3/workers-ts/test/helpers/buyerOrderTracking.ts",
+      "sha256": "55659504b5e0970380408deb773b5c64f6db6f03ded1e66cace67c5be646556b"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-3-native.log",
+      "sha256": "814cc869997501bd44c67ab974f58a36b505e9bce478e01571f1caa85b2aab39"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-3-source.json",
+      "sha256": "6071455243385c828426d2e9643143c67aa8d6a1bf582b6c77b39ffc1f613829"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-3-terminal.json",
+      "sha256": "3964c9e9db22633b4761789724eff0cb40f06ee17c184ba1528a3ac263617e44"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4/view/common/buyerOrderTracking.ts",
+      "sha256": "c60992457b37437fd361986cd02751d162bda889b84481db8e1622676e0e06e7"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4/view/common/test/buyerOrderTrackingFixture.cjs",
+      "sha256": "9b72450791e9a18afd0d0d59f835a37bdffff2ee9ccf1bd7c5257bc294f47b5e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4/view/pc-ts/src/api/order.ts",
+      "sha256": "46b6f75a5d630e0e3021c3846a9e76aea15d973df1172a34bda0afa348e6d287"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4/view/pc-ts/src/composables/useBuyerOrderTracking.ts",
+      "sha256": "efa23126f4d9a0ae5a26d68c32e1a6821991179ebe2020bc4ebd9b9edaa694e8"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4/view/pc-ts/src/composables/useRefundRecords.ts",
+      "sha256": "ce795a530217fb591c05b6855c02bc0113efd0168b0bf08033ab8cc04c3046b5"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4/view/pc-ts/src/pages/order/OrderDetail.vue",
+      "sha256": "31759356e6c3a23f1b2e8cdc6787c2a70f6fb179f998c0c0af2cfc2b45a83af2"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4/view/pc-ts/src/pages/order/OrderExpress.vue",
+      "sha256": "92d5d62f35e227c9dd40735c88ce9334dc1388b12a8c04e0b196c07fe9d14700"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4/view/pc-ts/src/pages/order/RefundDetail.vue",
+      "sha256": "8721886a8a4404dad889e310ac4574e3c751789f9f96c518f1baef780840b145"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4/view/pc-ts/test/auth-session.test.mjs",
+      "sha256": "16dbd2a5aa8f917cae82a2b0e5317e22b1b171761625ff2d2aca3ad306e5d7ef"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4/view/pc-ts/test/buyer-order-tracking.test.mjs",
+      "sha256": "8496ad3bfebadda565c9ed19c257487c99eaba1186e64fe0a23ff76f6500c112"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4/view/uniapp-ts/package.json",
+      "sha256": "b374bdedd57b53e4ad54b513c40548ae5e40c928fc1ae8af82726f823eef525d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4/view/uniapp-ts/scripts/buyer-order-tracking-lifecycle.test.cjs",
+      "sha256": "935c9841cbff86ddfb73fd2eb58cbc1914f7c749ea83195fd29fc5574d1e53a7"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4/view/uniapp-ts/src/api/order.ts",
+      "sha256": "3972ca9ad8f23978831e42e66e8ec79a21b9d75c6d11d852d0de643f0e39f981"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4/view/uniapp-ts/src/composables/useBuyerOrderTracking.ts",
+      "sha256": "2afe1bed6c2228a6dbd4ac69748bd38b925fbd10c9a2cbc9368ad453122657cc"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4/view/uniapp-ts/src/composables/useRefundRecords.ts",
+      "sha256": "6adf53c8522cb6860f67b95bb4c803509514cf43f248e548f42b82650d4886a1"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4/view/uniapp-ts/src/pages/order/detail.vue",
+      "sha256": "bd95ed50ad7afc4593b1b464347a355ea4932e045365a5e0c3465ed97d573273"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4/view/uniapp-ts/src/pages/order/express.vue",
+      "sha256": "46a073e02a069e59716a3168ad5e508436f75eeb40bda56ee2e7a346a38b6b9c"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4/view/uniapp-ts/src/pages/order/refundDetail.vue",
+      "sha256": "b01cdbd87cdf25a764db05c876dd68af9bb6d6cdb04377f9efb5abf04c649a47"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4/workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "551f15c49ee4adee732098ea99a8d53b0d7e494a697128fe11874590350d666e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4/workers-ts/src/controllers/api/v1/OrderController.ts",
+      "sha256": "86b06138b12a30c98874e4ea042e22b55925274866405cd4673efa2b0c559cfa"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4/workers-ts/src/routes/v1/index.ts",
+      "sha256": "a0f1d4df3fe441bf552369e836cc221617d8b3d7a2f5744bac95da17f1e0b591"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4/workers-ts/src/services/order/BuyerOrderTrackingService.ts",
+      "sha256": "807fd09e34d4538d590c685a780f4f79c66cb63b8e8e1c6de9d2ca40eec696ea"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4/workers-ts/src/services/order/ExpressService.ts",
+      "sha256": "67047b0584c218f30366801608a899845c876d92664ceb3a3c2d04b7873480fd"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4/workers-ts/test/buyer-order-tracking-native.test.ts",
+      "sha256": "4f6877db32c9ecade8b897c35ecc57cbdb215636223a0a5f1b452b2b80954ed6"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4/workers-ts/test/buyer-order-tracking.test.ts",
+      "sha256": "7de9705ae3cd7ef7c82941f52fc1e0ad0da0cf3935348c6ca7a90b7f8ae09702"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4/workers-ts/test/helpers/buyerOrderTracking.ts",
+      "sha256": "55659504b5e0970380408deb773b5c64f6db6f03ded1e66cace67c5be646556b"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4-results.json",
+      "sha256": "423e4077d211cf412b1b3378baeeb00f12827373dcba395b471a528464936c29"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4-source.json",
+      "sha256": "ddb9e24b1b14c9376ba14d7deac4b21dfd740172f0db9f11d870924b4d5188a4"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4-terminal.json",
+      "sha256": "b6ef789628e33d7ce800099edf960e3d90d35cc07394aab99ee50bc85a9da102"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-4-uniapp-lifecycle.log",
+      "sha256": "dd7cea415606448966fb0c8e54ce5be2747d37a987e96c882605179962f90e61"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5/view/common/buyerOrderTracking.ts",
+      "sha256": "c60992457b37437fd361986cd02751d162bda889b84481db8e1622676e0e06e7"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5/view/common/test/buyerOrderTrackingFixture.cjs",
+      "sha256": "9b72450791e9a18afd0d0d59f835a37bdffff2ee9ccf1bd7c5257bc294f47b5e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5/view/pc-ts/src/api/order.ts",
+      "sha256": "46b6f75a5d630e0e3021c3846a9e76aea15d973df1172a34bda0afa348e6d287"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5/view/pc-ts/src/composables/useBuyerOrderTracking.ts",
+      "sha256": "efa23126f4d9a0ae5a26d68c32e1a6821991179ebe2020bc4ebd9b9edaa694e8"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5/view/pc-ts/src/composables/useRefundRecords.ts",
+      "sha256": "ce795a530217fb591c05b6855c02bc0113efd0168b0bf08033ab8cc04c3046b5"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5/view/pc-ts/src/pages/order/OrderDetail.vue",
+      "sha256": "31759356e6c3a23f1b2e8cdc6787c2a70f6fb179f998c0c0af2cfc2b45a83af2"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5/view/pc-ts/src/pages/order/OrderExpress.vue",
+      "sha256": "92d5d62f35e227c9dd40735c88ce9334dc1388b12a8c04e0b196c07fe9d14700"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5/view/pc-ts/src/pages/order/RefundDetail.vue",
+      "sha256": "8721886a8a4404dad889e310ac4574e3c751789f9f96c518f1baef780840b145"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5/view/pc-ts/test/auth-session.test.mjs",
+      "sha256": "16dbd2a5aa8f917cae82a2b0e5317e22b1b171761625ff2d2aca3ad306e5d7ef"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5/view/pc-ts/test/buyer-order-tracking.test.mjs",
+      "sha256": "8496ad3bfebadda565c9ed19c257487c99eaba1186e64fe0a23ff76f6500c112"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5/view/uniapp-ts/package.json",
+      "sha256": "b374bdedd57b53e4ad54b513c40548ae5e40c928fc1ae8af82726f823eef525d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5/view/uniapp-ts/scripts/buyer-order-tracking-lifecycle.test.cjs",
+      "sha256": "453198b7c19bbab70e67940964b0514c1674a91468fb2833d1a13ce2ff66c1e9"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5/view/uniapp-ts/src/api/order.ts",
+      "sha256": "3972ca9ad8f23978831e42e66e8ec79a21b9d75c6d11d852d0de643f0e39f981"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5/view/uniapp-ts/src/composables/useBuyerOrderTracking.ts",
+      "sha256": "2afe1bed6c2228a6dbd4ac69748bd38b925fbd10c9a2cbc9368ad453122657cc"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5/view/uniapp-ts/src/composables/useRefundRecords.ts",
+      "sha256": "6adf53c8522cb6860f67b95bb4c803509514cf43f248e548f42b82650d4886a1"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5/view/uniapp-ts/src/pages/order/detail.vue",
+      "sha256": "bd95ed50ad7afc4593b1b464347a355ea4932e045365a5e0c3465ed97d573273"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5/view/uniapp-ts/src/pages/order/express.vue",
+      "sha256": "46a073e02a069e59716a3168ad5e508436f75eeb40bda56ee2e7a346a38b6b9c"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5/view/uniapp-ts/src/pages/order/refundDetail.vue",
+      "sha256": "b01cdbd87cdf25a764db05c876dd68af9bb6d6cdb04377f9efb5abf04c649a47"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5/workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "551f15c49ee4adee732098ea99a8d53b0d7e494a697128fe11874590350d666e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5/workers-ts/src/controllers/api/v1/OrderController.ts",
+      "sha256": "86b06138b12a30c98874e4ea042e22b55925274866405cd4673efa2b0c559cfa"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5/workers-ts/src/routes/v1/index.ts",
+      "sha256": "a0f1d4df3fe441bf552369e836cc221617d8b3d7a2f5744bac95da17f1e0b591"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5/workers-ts/src/services/order/BuyerOrderTrackingService.ts",
+      "sha256": "807fd09e34d4538d590c685a780f4f79c66cb63b8e8e1c6de9d2ca40eec696ea"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5/workers-ts/src/services/order/ExpressService.ts",
+      "sha256": "67047b0584c218f30366801608a899845c876d92664ceb3a3c2d04b7873480fd"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5/workers-ts/test/buyer-order-tracking-native.test.ts",
+      "sha256": "4f6877db32c9ecade8b897c35ecc57cbdb215636223a0a5f1b452b2b80954ed6"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5/workers-ts/test/buyer-order-tracking.test.ts",
+      "sha256": "7de9705ae3cd7ef7c82941f52fc1e0ad0da0cf3935348c6ca7a90b7f8ae09702"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5/workers-ts/test/helpers/buyerOrderTracking.ts",
+      "sha256": "55659504b5e0970380408deb773b5c64f6db6f03ded1e66cace67c5be646556b"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5-native.log",
+      "sha256": "52e20fcec49fd91eac504b65a4d850370681cc71329bcb74e5dab7dfd33ed399"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5-pc-auth.log",
+      "sha256": "c5988f11f44e038afe6ab83df155cf85cb5ca519104c0d4071bb10523de3d6b2"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5-results.json",
+      "sha256": "f64f3289a35de5cc62e20a59f4cd5e82573d78a09ac6cc933b0001d0fe174005"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5-source.json",
+      "sha256": "ca762468df8e8bab8fd417833eec199a42edbdd4c28981930017fcf73dbcf7b1"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5-terminal.json",
+      "sha256": "1fc9665f44bd623507c952447537fa6ee442471e02e33a1fe17ecaa17ee9fba0"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-5-uniapp-lifecycle.log",
+      "sha256": "e6a93963d8113021403459f138c81a9067a17798ea194f409e1f9532b09a71b6"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/view/common/buyerOrderTracking.ts",
+      "sha256": "c60992457b37437fd361986cd02751d162bda889b84481db8e1622676e0e06e7"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/view/common/test/buyerOrderTrackingFixture.cjs",
+      "sha256": "9b72450791e9a18afd0d0d59f835a37bdffff2ee9ccf1bd7c5257bc294f47b5e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/view/pc-ts/src/api/order.ts",
+      "sha256": "46b6f75a5d630e0e3021c3846a9e76aea15d973df1172a34bda0afa348e6d287"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/view/pc-ts/src/composables/useBuyerOrderTracking.ts",
+      "sha256": "2c792cf5e5ea9ffa65bd19af4429395e5b3fdb82dbfdc2ced59bd82069d8823d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/view/pc-ts/src/composables/useRefundRecords.ts",
+      "sha256": "ce795a530217fb591c05b6855c02bc0113efd0168b0bf08033ab8cc04c3046b5"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/view/pc-ts/src/pages/order/OrderDetail.vue",
+      "sha256": "31759356e6c3a23f1b2e8cdc6787c2a70f6fb179f998c0c0af2cfc2b45a83af2"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/view/pc-ts/src/pages/order/OrderExpress.vue",
+      "sha256": "92d5d62f35e227c9dd40735c88ce9334dc1388b12a8c04e0b196c07fe9d14700"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/view/pc-ts/src/pages/order/RefundDetail.vue",
+      "sha256": "8721886a8a4404dad889e310ac4574e3c751789f9f96c518f1baef780840b145"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/view/pc-ts/test/auth-session.test.mjs",
+      "sha256": "16dbd2a5aa8f917cae82a2b0e5317e22b1b171761625ff2d2aca3ad306e5d7ef"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/view/pc-ts/test/buyer-order-tracking.test.mjs",
+      "sha256": "8496ad3bfebadda565c9ed19c257487c99eaba1186e64fe0a23ff76f6500c112"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/view/uniapp-ts/package.json",
+      "sha256": "b374bdedd57b53e4ad54b513c40548ae5e40c928fc1ae8af82726f823eef525d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/view/uniapp-ts/scripts/buyer-order-tracking-lifecycle.test.cjs",
+      "sha256": "7b5526296787defe6b02fdd388dcdb21a06c1699642c51ac49c8900513c3844e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/view/uniapp-ts/scripts/refund-records-lifecycle.test.cjs",
+      "sha256": "3900559eb9962836c9591d0dc623322f7014ef42389222469d9e6dc0acc6aa98"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/view/uniapp-ts/src/api/order.ts",
+      "sha256": "3972ca9ad8f23978831e42e66e8ec79a21b9d75c6d11d852d0de643f0e39f981"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/view/uniapp-ts/src/composables/useBuyerOrderTracking.ts",
+      "sha256": "5ce5efb2d6aec10049aea4cedc2ad9531c6afa92eece13400ba5a0de7b047da7"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/view/uniapp-ts/src/composables/useRefundRecords.ts",
+      "sha256": "6adf53c8522cb6860f67b95bb4c803509514cf43f248e548f42b82650d4886a1"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/view/uniapp-ts/src/pages/order/detail.vue",
+      "sha256": "bd95ed50ad7afc4593b1b464347a355ea4932e045365a5e0c3465ed97d573273"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/view/uniapp-ts/src/pages/order/express.vue",
+      "sha256": "46a073e02a069e59716a3168ad5e508436f75eeb40bda56ee2e7a346a38b6b9c"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/view/uniapp-ts/src/pages/order/refundDetail.vue",
+      "sha256": "b01cdbd87cdf25a764db05c876dd68af9bb6d6cdb04377f9efb5abf04c649a47"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "0b1d5ebff31c36df38a829404ac9e5fc28ac270f8db0e80da2df5b24da283ff4"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/workers-ts/src/controllers/api/v1/OrderController.ts",
+      "sha256": "86b06138b12a30c98874e4ea042e22b55925274866405cd4673efa2b0c559cfa"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/workers-ts/src/routes/v1/index.ts",
+      "sha256": "a0f1d4df3fe441bf552369e836cc221617d8b3d7a2f5744bac95da17f1e0b591"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/workers-ts/src/services/order/BuyerOrderTrackingService.ts",
+      "sha256": "807fd09e34d4538d590c685a780f4f79c66cb63b8e8e1c6de9d2ca40eec696ea"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/workers-ts/src/services/order/ExpressService.ts",
+      "sha256": "67047b0584c218f30366801608a899845c876d92664ceb3a3c2d04b7873480fd"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/workers-ts/test/browser/buyer-order-tracking.acceptance.ts",
+      "sha256": "3968797760a1509c9c5b9601070a065bd0844f42202ee5446448b16cf004e750"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/workers-ts/test/buyer-order-tracking-native.test.ts",
+      "sha256": "4f6877db32c9ecade8b897c35ecc57cbdb215636223a0a5f1b452b2b80954ed6"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/workers-ts/test/buyer-order-tracking.test.ts",
+      "sha256": "7de9705ae3cd7ef7c82941f52fc1e0ad0da0cf3935348c6ca7a90b7f8ae09702"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/workers-ts/test/helpers/buyerOrderTracking.ts",
+      "sha256": "55659504b5e0970380408deb773b5c64f6db6f03ded1e66cace67c5be646556b"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6/workers-ts/vitest.buyer-order-tracking-browser.config.ts",
+      "sha256": "c14240f3962cfa9b5cb19dc46c63019d62fdb1269b2c6dccaf71de3208ecf1b3"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6-results.json",
+      "sha256": "03704424d636ba9007d3fe3f67a719e55509cc333007fdf4864cd7c6e4280872"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6-source.json",
+      "sha256": "c288caf0f6ffee2db22d3abeabee6e072a339392ed3f26a43e716a696fbcf8f4"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6-terminal.json",
+      "sha256": "1100dd43bee8809e78d4454f622fa430fbe7b8ae86e8c97de533bbfaf8e2d076"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6-type-options.log",
+      "sha256": "ef3a694c7a82602c8ecaa7f905d05126f455880873365d12397e49c65427b9d1"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6-type-partition.log",
+      "sha256": "f97c04e61641a874268e584ff62c23c27d3a6f7cee67ad80e0b417ecc50ed31e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-6-worker-types-1.log",
+      "sha256": "897e55f3089eca7418083fc43132fb4461850f2647635dd4185c925ac3397b19"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/view/common/buyerOrderTracking.ts",
+      "sha256": "c60992457b37437fd361986cd02751d162bda889b84481db8e1622676e0e06e7"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/view/common/test/buyerOrderTrackingFixture.cjs",
+      "sha256": "9b72450791e9a18afd0d0d59f835a37bdffff2ee9ccf1bd7c5257bc294f47b5e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/view/pc-ts/src/api/order.ts",
+      "sha256": "46b6f75a5d630e0e3021c3846a9e76aea15d973df1172a34bda0afa348e6d287"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/view/pc-ts/src/composables/useBuyerOrderTracking.ts",
+      "sha256": "2c792cf5e5ea9ffa65bd19af4429395e5b3fdb82dbfdc2ced59bd82069d8823d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/view/pc-ts/src/composables/useRefundRecords.ts",
+      "sha256": "ce795a530217fb591c05b6855c02bc0113efd0168b0bf08033ab8cc04c3046b5"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/view/pc-ts/src/pages/order/OrderDetail.vue",
+      "sha256": "31759356e6c3a23f1b2e8cdc6787c2a70f6fb179f998c0c0af2cfc2b45a83af2"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/view/pc-ts/src/pages/order/OrderExpress.vue",
+      "sha256": "92d5d62f35e227c9dd40735c88ce9334dc1388b12a8c04e0b196c07fe9d14700"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/view/pc-ts/src/pages/order/RefundDetail.vue",
+      "sha256": "8721886a8a4404dad889e310ac4574e3c751789f9f96c518f1baef780840b145"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/view/pc-ts/test/auth-session.test.mjs",
+      "sha256": "16dbd2a5aa8f917cae82a2b0e5317e22b1b171761625ff2d2aca3ad306e5d7ef"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/view/pc-ts/test/buyer-order-tracking.test.mjs",
+      "sha256": "dde1016baa4c96c3bf08a9d4e4e35f95b601420f25aaf646119145b03afdc26a"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/view/uniapp-ts/package.json",
+      "sha256": "b374bdedd57b53e4ad54b513c40548ae5e40c928fc1ae8af82726f823eef525d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/view/uniapp-ts/scripts/buyer-order-tracking-lifecycle.test.cjs",
+      "sha256": "7b5526296787defe6b02fdd388dcdb21a06c1699642c51ac49c8900513c3844e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/view/uniapp-ts/scripts/refund-records-lifecycle.test.cjs",
+      "sha256": "3900559eb9962836c9591d0dc623322f7014ef42389222469d9e6dc0acc6aa98"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/view/uniapp-ts/src/api/order.ts",
+      "sha256": "3972ca9ad8f23978831e42e66e8ec79a21b9d75c6d11d852d0de643f0e39f981"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/view/uniapp-ts/src/composables/useBuyerOrderTracking.ts",
+      "sha256": "5ce5efb2d6aec10049aea4cedc2ad9531c6afa92eece13400ba5a0de7b047da7"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/view/uniapp-ts/src/composables/useRefundRecords.ts",
+      "sha256": "6adf53c8522cb6860f67b95bb4c803509514cf43f248e548f42b82650d4886a1"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/view/uniapp-ts/src/pages/order/detail.vue",
+      "sha256": "bd95ed50ad7afc4593b1b464347a355ea4932e045365a5e0c3465ed97d573273"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/view/uniapp-ts/src/pages/order/express.vue",
+      "sha256": "46a073e02a069e59716a3168ad5e508436f75eeb40bda56ee2e7a346a38b6b9c"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/view/uniapp-ts/src/pages/order/refundDetail.vue",
+      "sha256": "b01cdbd87cdf25a764db05c876dd68af9bb6d6cdb04377f9efb5abf04c649a47"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "0b1d5ebff31c36df38a829404ac9e5fc28ac270f8db0e80da2df5b24da283ff4"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/workers-ts/src/controllers/api/v1/OrderController.ts",
+      "sha256": "86b06138b12a30c98874e4ea042e22b55925274866405cd4673efa2b0c559cfa"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/workers-ts/src/routes/v1/index.ts",
+      "sha256": "a0f1d4df3fe441bf552369e836cc221617d8b3d7a2f5744bac95da17f1e0b591"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/workers-ts/src/services/order/BuyerOrderTrackingService.ts",
+      "sha256": "9cbf4e25c665e16f62f93078cf1b541650348f9b96c50fb59526a52f8d8150c0"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/workers-ts/src/services/order/ExpressService.ts",
+      "sha256": "67047b0584c218f30366801608a899845c876d92664ceb3a3c2d04b7873480fd"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/workers-ts/test/browser/buyer-order-tracking.acceptance.ts",
+      "sha256": "3968797760a1509c9c5b9601070a065bd0844f42202ee5446448b16cf004e750"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/workers-ts/test/buyer-order-tracking-native.test.ts",
+      "sha256": "5d2ef4c5512097320613f433187dd1bb9ebc7f54da21445044422aee11c2078a"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/workers-ts/test/buyer-order-tracking.test.ts",
+      "sha256": "7de9705ae3cd7ef7c82941f52fc1e0ad0da0cf3935348c6ca7a90b7f8ae09702"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/workers-ts/test/helpers/buyerOrderTracking.ts",
+      "sha256": "55659504b5e0970380408deb773b5c64f6db6f03ded1e66cace67c5be646556b"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7/workers-ts/vitest.buyer-order-tracking-browser.config.ts",
+      "sha256": "c14240f3962cfa9b5cb19dc46c63019d62fdb1269b2c6dccaf71de3208ecf1b3"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7-pc-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7-pure.log",
+      "sha256": "5b4537c312e9a639788c982c1c10795eaf4e008fa6c22abb8d2e7132bc0c7742"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7-results.json",
+      "sha256": "69ebee42220ae78b90589517098c158a976f4d1c0eff71bab701f6ae3fc5d34b"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7-secret-scan-comparison.json",
+      "sha256": "883e6009235dd2917fb73429cf2b3b5294beee099e3eaab4d60d7f92408df7a8"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7-source-secret-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7-source-secret-scan.log",
+      "sha256": "4fb81af83614eb716013a683ddf2d526918cf59afac5f4b9dc3f9d4c74935bc2"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7-source.json",
+      "sha256": "b3079ff095cfbcdf47d71cd05d78756131965fc6279107a56a6903159f31c86c"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7-terminal.json",
+      "sha256": "b80a895a2d21eb688f868a41c6ea39f7ed984977ad20d3167eb7166d9b969cc0"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7-type-options.log",
+      "sha256": "ef3a694c7a82602c8ecaa7f905d05126f455880873365d12397e49c65427b9d1"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7-type-partition.log",
+      "sha256": "f97c04e61641a874268e584ff62c23c27d3a6f7cee67ad80e0b417ecc50ed31e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7-uniapp-lifecycle.log",
+      "sha256": "62ffec23c18de47413a4b87149af08163dd28f9cab48857ab0979964737f12b5"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7-uniapp-types.log",
+      "sha256": "8df3dce693eb220393fcacf48ff5aa51254bd573a4b59e9f912c5cb11caf918a"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7-worker-runtime-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7-worker-types-1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-7-worker-types-2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/view/common/buyerOrderTracking.ts",
+      "sha256": "c60992457b37437fd361986cd02751d162bda889b84481db8e1622676e0e06e7"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/view/common/test/buyerOrderTrackingFixture.cjs",
+      "sha256": "9b72450791e9a18afd0d0d59f835a37bdffff2ee9ccf1bd7c5257bc294f47b5e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/view/pc-ts/src/api/order.ts",
+      "sha256": "46b6f75a5d630e0e3021c3846a9e76aea15d973df1172a34bda0afa348e6d287"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/view/pc-ts/src/composables/useBuyerOrderTracking.ts",
+      "sha256": "2c792cf5e5ea9ffa65bd19af4429395e5b3fdb82dbfdc2ced59bd82069d8823d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/view/pc-ts/src/composables/useRefundRecords.ts",
+      "sha256": "ce795a530217fb591c05b6855c02bc0113efd0168b0bf08033ab8cc04c3046b5"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/view/pc-ts/src/pages/order/OrderDetail.vue",
+      "sha256": "31759356e6c3a23f1b2e8cdc6787c2a70f6fb179f998c0c0af2cfc2b45a83af2"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/view/pc-ts/src/pages/order/OrderExpress.vue",
+      "sha256": "92d5d62f35e227c9dd40735c88ce9334dc1388b12a8c04e0b196c07fe9d14700"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/view/pc-ts/src/pages/order/RefundDetail.vue",
+      "sha256": "8721886a8a4404dad889e310ac4574e3c751789f9f96c518f1baef780840b145"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/view/pc-ts/test/auth-session.test.mjs",
+      "sha256": "16dbd2a5aa8f917cae82a2b0e5317e22b1b171761625ff2d2aca3ad306e5d7ef"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/view/pc-ts/test/buyer-order-tracking.test.mjs",
+      "sha256": "dde1016baa4c96c3bf08a9d4e4e35f95b601420f25aaf646119145b03afdc26a"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/view/uniapp-ts/package.json",
+      "sha256": "b374bdedd57b53e4ad54b513c40548ae5e40c928fc1ae8af82726f823eef525d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/view/uniapp-ts/scripts/buyer-order-tracking-lifecycle.test.cjs",
+      "sha256": "7b5526296787defe6b02fdd388dcdb21a06c1699642c51ac49c8900513c3844e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/view/uniapp-ts/scripts/refund-records-lifecycle.test.cjs",
+      "sha256": "3900559eb9962836c9591d0dc623322f7014ef42389222469d9e6dc0acc6aa98"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/view/uniapp-ts/src/api/order.ts",
+      "sha256": "3972ca9ad8f23978831e42e66e8ec79a21b9d75c6d11d852d0de643f0e39f981"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/view/uniapp-ts/src/composables/useBuyerOrderTracking.ts",
+      "sha256": "5ce5efb2d6aec10049aea4cedc2ad9531c6afa92eece13400ba5a0de7b047da7"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/view/uniapp-ts/src/composables/useRefundRecords.ts",
+      "sha256": "6adf53c8522cb6860f67b95bb4c803509514cf43f248e548f42b82650d4886a1"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/view/uniapp-ts/src/pages/order/detail.vue",
+      "sha256": "bd95ed50ad7afc4593b1b464347a355ea4932e045365a5e0c3465ed97d573273"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/view/uniapp-ts/src/pages/order/express.vue",
+      "sha256": "46a073e02a069e59716a3168ad5e508436f75eeb40bda56ee2e7a346a38b6b9c"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/view/uniapp-ts/src/pages/order/refundDetail.vue",
+      "sha256": "b01cdbd87cdf25a764db05c876dd68af9bb6d6cdb04377f9efb5abf04c649a47"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "0b1d5ebff31c36df38a829404ac9e5fc28ac270f8db0e80da2df5b24da283ff4"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/workers-ts/src/controllers/api/v1/OrderController.ts",
+      "sha256": "86b06138b12a30c98874e4ea042e22b55925274866405cd4673efa2b0c559cfa"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/workers-ts/src/routes/v1/index.ts",
+      "sha256": "a0f1d4df3fe441bf552369e836cc221617d8b3d7a2f5744bac95da17f1e0b591"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/workers-ts/src/services/order/BuyerOrderTrackingService.ts",
+      "sha256": "2422c3bcdf7093e1467a61100d7f56a43cd5882fbcf2e27ed5e22c94d7f23af5"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/workers-ts/src/services/order/ExpressService.ts",
+      "sha256": "67047b0584c218f30366801608a899845c876d92664ceb3a3c2d04b7873480fd"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/workers-ts/test/browser/buyer-order-tracking.acceptance.ts",
+      "sha256": "3968797760a1509c9c5b9601070a065bd0844f42202ee5446448b16cf004e750"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/workers-ts/test/buyer-order-tracking-native.test.ts",
+      "sha256": "9114c41eb2fd96652b30c58dfdd3947aa642119cd2fdf6652281cd4065420d32"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/workers-ts/test/buyer-order-tracking.test.ts",
+      "sha256": "7de9705ae3cd7ef7c82941f52fc1e0ad0da0cf3935348c6ca7a90b7f8ae09702"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/workers-ts/test/helpers/buyerOrderTracking.ts",
+      "sha256": "55659504b5e0970380408deb773b5c64f6db6f03ded1e66cace67c5be646556b"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8/workers-ts/vitest.buyer-order-tracking-browser.config.ts",
+      "sha256": "c14240f3962cfa9b5cb19dc46c63019d62fdb1269b2c6dccaf71de3208ecf1b3"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8-native-buyer-tracking.log",
+      "sha256": "72076bc8016829added63fb35ca0923ccf8c5630ee13f2b24481207b5d0236c8"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8-native-supplier-operations.log",
+      "sha256": "92143bdbc62dea4e8cb723bd7e57ca644cba5dc42a5a948115589993aa4a0eee"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8-results.json",
+      "sha256": "ca148809ce174ccd60d421b9cbcee7aba577a67c7b5bd7de5a64b3d036bf2933"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8-secret-scan-comparison.json",
+      "sha256": "883e6009235dd2917fb73429cf2b3b5294beee099e3eaab4d60d7f92408df7a8"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8-source-proof.log",
+      "sha256": "e57beb6f894492ba5b9dd821538586735cbc6748a34eb8df204a5b39e538147f"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8-source-secret-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8-source-secret-scan.log",
+      "sha256": "ac6508503ffedc05d68f2efe802ef53251862d687913013d03fe2640c84741f9"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8-source.json",
+      "sha256": "6294fc497ab37c1235e4ea30f42dc690bb6b5fad1d4793dbe927c264a4ffe779"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8-terminal.json",
+      "sha256": "c740f36836059360750eed12b4ebc46f0633aa7066e710091f35df4ea547b095"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8-type-options.log",
+      "sha256": "ef3a694c7a82602c8ecaa7f905d05126f455880873365d12397e49c65427b9d1"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8-type-partition.log",
+      "sha256": "f97c04e61641a874268e584ff62c23c27d3a6f7cee67ad80e0b417ecc50ed31e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8-unit.log",
+      "sha256": "7ed00aa88c5e21d197d56c7e99ddee387cdec76798266253d54988da5b2635ae"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8-worker-runtime-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8-worker-types-1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-8-worker-types-2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-9/workers-ts/test/supplier-operational-reads.test.ts",
+      "sha256": "5b7ae028f005cf8ea6fb83c68f9dd4e5295a827e627f71307a20b92b87e52b7f"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-9-native-supplier-operations.log",
+      "sha256": "b46e5f7e5daece5559f39e56674ffaa3b9f6e5d52b308798ad54558853a1499f"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-9-native-supplier-split.log",
+      "sha256": "c8f4c0bf0810a56edd0e1eb3e0d0a0896ec57dc5e60075fd38c7d57f13e85ad6"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-9-results.json",
+      "sha256": "d3b1b2d45bac7c031e02f2aa2097deb973e50dc0bf9ace215af8c10943bb51d6"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-9-secret-scan-comparison.json",
+      "sha256": "007a2968f7737bf46871c3a98770937b66e5ff100adfd2fe0f52c92db8217bc8"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-9-source-secret-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-9-source-secret-scan.log",
+      "sha256": "251d9be8e5e3496388ba64bd8fb73590f2cfbcaad2694a6272cf19d26dc3cdba"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-9-source.json",
+      "sha256": "ea0c90931729c558200cee5920041daa6001a8fb0ef6e064c970001085166b21"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-9-terminal.json",
+      "sha256": "f440bcb649b8489db8cd4e46f92d77c10f7e553ed4796c5f96d25d9a42d886e4"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-9-worker-types-1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/candidate-9-workerd-runtime.log",
+      "sha256": "2e7d4fa9c70ba92e3281253dbb76587fc13c07c1aa272349313479244018bc88"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/check-options.cjs",
+      "sha256": "bbdc101a8c7cf5bd751eb4d23272b9b1083381cfb4b3cf53b3f38df86da5207f"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/commit.py",
+      "sha256": "5f58a5e521701957b7dbcbf5ee98a3a04de21a2a3cdb82f1313c5eda87b59909"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/dependencies.json",
+      "sha256": "4121b2fe92c5414f0d9c28ec8038ae42c02cd0522cf8b79a0d4f184652a29259"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/design.json",
+      "sha256": "7b5697b98c56974d8f071d90ab4045a705759956065188b2e85a8acd9789fe6a"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/evidence.py",
+      "sha256": "94361b04208c70ab5344002d9074b5312832016c11a87aae599a78571893e061"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/final-audit-production.log",
+      "sha256": "4ca0bc8f609b8cd4e43a18d0faebf8f0b05d91b15ee6386fb48a789c00393192"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/final-native-buyer-tracking.log",
+      "sha256": "1ff17d50dd0442e739459903455cf1399ac5e25230e7e7fe839c2600c6660400"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/final-native-customer-work-read.log",
+      "sha256": "fc8bdd18daa708be786d9def788d870bb492be0701f4061b37d3711fcfcc05cb"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/final-native-manager-read.log",
+      "sha256": "df04b223fa484c3cec97560a39f53a16ef097b628122b78e71ed2b5fd09352b2"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/final-native-supplier-tracking.log",
+      "sha256": "36c93ed7a2b5816403e00e07dda158547a8c1211073ae094636b6beb6c41b0dd"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/final-pc-build.log",
+      "sha256": "a89a950c1824bb88a405b3665a321eca41ff8d25a5b82780cb984ab52b308205"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/final-source-proof.log",
+      "sha256": "6663fcf86832090d2750314dd07b6c6161a51de07bfbdc99e6689361aea7aa24"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/final-uniapp-build-app.log",
+      "sha256": "a2051cd401599570aeafd694ace38af58a716eaa441c4dab1c75b80b0fa76800"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/final-uniapp-build-h5.log",
+      "sha256": "320a01fd74c9a7cd0fcb0e737e954dfca200c72a474135c84172cf234622e4dd"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/final-uniapp-build-mp-weixin.log",
+      "sha256": "e8741d81e50dbaf6580d232c46390dc304746a337fac6e4970d3efb56ed595ac"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/final-uniapp-toolchain.log",
+      "sha256": "930cb29b288de4a2b567119d49057b3575284800978c8f93f5cbfa8ba89f2ae8"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/final-unit.log",
+      "sha256": "61dc7e79845e4af7291ebe5c44bb82bd665f3b6cf20294cd6f2cf26b6205d65d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/final-workerd-runtime.log",
+      "sha256": "cb92523b7d11b478ee668a52fa71dc8777189f23c8be114221024d8ed28c8717"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/finish-ci.py",
+      "sha256": "c0b10f0bf1ce1be21109dfce965f4c93d5752790a864a0804ca1a8ff022015c3"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/frontend-reuse.json",
+      "sha256": "2cefa22242b02bdbad044660e59eb2364f08641da0c503c2323180cf25330989"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/full-file-scan.py",
+      "sha256": "1dc0c935d7a83fa85ee679d6a5059e5d6166a168acf1f3ed4268d18dc3deb3c7"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/native-test-repair.json",
+      "sha256": "fe33455b1250e8a51941d0337d59b399fb48edc7b514d34289ca90cb55896b0d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/php-source.json",
+      "sha256": "63396f15ce954a69a6ff2d6b1162110d338f2a056cbb9a088a84be630290ccc9"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/post-browser-results.json",
+      "sha256": "f444188b912e33e006a01be118bb11e51ea70314b28fc235af6b82e12f5cd364"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/post-browser-runner-unit.log",
+      "sha256": "41894d185d2cd5d5df0af7db736eea77ca049f52cad2121de9401315be07e538"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/post-browser-source-proof.log",
+      "sha256": "86e5a6ecebf97a0db43b28c19ac436b8a581575d7dd2431d2f5076595c5d05d3"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/post-browser-terminal.json",
+      "sha256": "9ab889e80cd547568ba6a82a5b098309f08e5f2235a740979c99330d7a6adbf4"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/post-browser-worker-types-1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/pre-browser-timeout-source.json",
+      "sha256": "ea0c90931729c558200cee5920041daa6001a8fb0ef6e064c970001085166b21"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/preflight-4.py",
+      "sha256": "e111fde45abcce27598cb7c2977e6079ef13227b9b46e1f2f148508505d1fc14"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/preflight-5.py",
+      "sha256": "af1936fc890a8fbab122f59e6d2ca3e06319a21d5dc349513f96b319e9c2e099"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/preflight-6.py",
+      "sha256": "009093df9fd3c6c537d601389e3c5fec808574a7c63347da7894a0c026af7a1a"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/preflight-7.py",
+      "sha256": "990a239e94ef6e378e1614fbf0076eba97410cdb64c830df92e87882f2deeaaa"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/preflight-frontend-2.py",
+      "sha256": "db4c159ccdc40087000656574b2bf015d88f4b7843713f453d2d8701b6be0e94"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/preflight-pure-1.py",
+      "sha256": "47dd72e943b725d9117f52840146b7aa927647cf894558c625c4fcf4f28c080e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/restored-resources.json",
+      "sha256": "2805035753af768b74ac4b987581644a085a6b857765a6c19ac0a2a6cd8fdd57"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/runner-unit-final.json",
+      "sha256": "cd2f1b201af1ed163d882ab7aee31638f5ec311e40d9a199df63106d7449a5b6"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/secret-scan-comparison.json",
+      "sha256": "007a2968f7737bf46871c3a98770937b66e5ff100adfd2fe0f52c92db8217bc8"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/source-baseline.json",
+      "sha256": "6fb8fe02806b768d51f12e31e9cecf6d9a7d33a7fa5501483f54cdc58aa758a6"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/source-baseline.log",
+      "sha256": "b5b161b4616b37bbcf3fe7d8ef1c0df8e8ad98b39faa4c4afb82b83ef85aea26"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/source-current.json",
+      "sha256": "8c6a41cbfd5088466a9c5c9bfd2ca13b1f9d41010af85579aceddb8bff7a0799"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/source-current.log",
+      "sha256": "7993708d2a091f772d133a7cfff7f7f29728adbb76b9df948916999b59f8e0c4"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/source-proof-comparison.json",
+      "sha256": "30abbfddf628b00fa52ca8a948faee1d80b4fdd50b7b35e833eab0e258251727"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/source-proof.py",
+      "sha256": "7c35570378494a5fd57a43ee1b0b2cd8c5a9f31eb83c36ac49eadab5e3089b19"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/source-secret-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/source-secret-scan.log",
+      "sha256": "255e79cd367e2c88d87c3661d0fa0d5f73aefa15be4d70b425d8f9e453d3ec2b"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/source.json",
+      "sha256": "f77938afefb8c4c81bf0f218e647711219674703627e18135f85ec0369548a68"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/tsconfig.buyer-order-logistics-shard-1.generated.json",
+      "sha256": "35db2c1f4ce928747d28808e3296413e69b01936f97e6db98a03b22cb035fe1a"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/tsconfig.buyer-order-logistics-shard-2.generated.json",
+      "sha256": "07c6c48594ef6012e4f5065324b015ebc62f5c5ad8c575c8abc52045c0f00a02"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/type-shards.cjs",
+      "sha256": "56e8906f2f0b5bd88666ca8a7afe2f1b3d7cbddc77a1cb7ebfa61bee102d8026"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/type-shards.json",
+      "sha256": "2075e3864ebe35cc663d023532408babdfc5ceb31865b0fb94600c47d8816cef"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/unit-files-candidate-7.json",
+      "sha256": "a86d095eed756639cbb15cd7034af195b25819e4274607bfa5ef42fbcf42c2d4"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/unit-files-final.json",
+      "sha256": "e263fe80d5b251b48407dff9c11057f06e0a1764ad87c0b1ec15281b3304ba12"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/unit-files.json",
+      "sha256": "a86d095eed756639cbb15cd7034af195b25819e4274607bfa5ef42fbcf42c2d4"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/unit-final.json",
+      "sha256": "1d72fe86cba2627a68d6f85c6516bd9900948119922c185ccced6fba0ede6c94"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/unit.json",
+      "sha256": "9f3591a8b86b264d11f945c03956243031df6d22149dc8f4ac47755029f6d85a"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/user-symlinks.json",
+      "sha256": "32f0ae750787e6bde76a8d6f60ab3e6f135ecff1c9e7cc3b06bd86a820fae4ca"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/validate-backend-final.py",
+      "sha256": "a6273a26339818757b293f790170bb8639ae12a03e1fbbfbf311aba02ddf2dbb"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/validate-native-context.py",
+      "sha256": "fce52cb8f452a615e0e7144ade5128b8ef3c8226cad4b5f17bf222dabf297b55"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/validate-native-final.py",
+      "sha256": "3693ef42c80219e004c013e3eae8eb3463b54d3b915f2517a89160d51b29203c"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/validate-post-browser.py",
+      "sha256": "c9f135cf98cc857f191eb751523b9b6c68ca30cfdf0322692a70d531b9352425"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/validate.py",
+      "sha256": "2bbba65e04d62141bfb367abf2a6adf9a697557cdb8a7897ab895cd471324a7d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/validation-results.json",
+      "sha256": "bd5ec9b8f8ab69f18ff6c9b039d81d2f6f8d063f27659e2af7202b28777f517a"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-order-logistics-20261113/validation-terminal.json",
+      "sha256": "958bee980a29efa29b8fa925d9f9173d5f8f827faeb7713c3949cc89c83c8701"
+    }
+  ],
+  "createdAt": "2026-11-14T10:56:52.518974+00:00"
+}

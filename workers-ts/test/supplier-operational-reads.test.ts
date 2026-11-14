@@ -358,8 +358,17 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier picking
       await f.db.update(storeOrder).set({ isDel: 1 }).where(eq(storeOrder.id, source.id));
       const before = await f.state(), logs = rows(await read('status', source.id));
       expect(logs).toHaveLength(500);
-      expect(logs[0]).toMatchObject({ oid: source.id, changeType: 'local_history', changeTime: 1234 });
-      expect(logs.slice(0, -1).map(row => row.id)).toEqual(logs.slice(0, -1).map(row => Number(row.id)).sort((a, b) => b - a));
+      // Actual checkout now records creation. Preserve that real event and
+      // assert the declared equal-time rows independently from its newer time.
+      expect(existing.filter(row => row.changeType === 'cache_key_create_order')).toEqual([
+        expect.objectContaining({ oid: source.id, changeTime: source.addTime }),
+      ]);
+      expect(logs.filter(row => row.changeType !== 'local_history')).toEqual(existing);
+      const historical = logs.filter(row => row.changeType === 'local_history');
+      expect(historical).toHaveLength(500 - existing.length);
+      expect(historical[0]).toMatchObject({ oid: source.id, changeType: 'local_history', changeTime: 1234 });
+      expect(historical.map(row => row.id)).toEqual(historical.map(row => Number(row.id)).sort((a, b) => b - a));
+      expect(logs.every((row, index) => !index || Number(logs[index - 1].changeTime) >= Number(row.changeTime))).toBe(true);
       expect(await f.state()).toEqual(before);
       await f.db.insert(storeOrderStatus).values({ oid: source.id, changeType: 'overflow' });
       expect(await send(path('status', source.id))).toMatchObject({ status: 400, data: null });

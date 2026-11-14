@@ -87,6 +87,10 @@ export function useRefundRecords(mode: 'list' | 'detail') {
   }
   function goDetail(row: RefundRecord) { if (reader.canOpen(row)) navigate(`/pages/order/refundDetail?id=${row.id}`); }
   function goOrder() { if (reader.currentView() && state.detail) navigate(`/pages/order/detail?orderId=${state.detail.orderId}`); }
+  function goLogistics(row: typeof state.detail) {
+    if (row && row === state.detail && reader.currentView() && row.refundExpress)
+      navigate(`/pages/order/express?orderId=${row.id}&type=refund`);
+  }
   function goList() { navigate('/pages/order/refundList'); }
   function goService() { navigate('/pages/user/kefu'); }
   function login() { if (!auth.isLoggedIn && !routeError.value) navigate('/pages/auth/login'); }
@@ -112,5 +116,5 @@ export function useRefundRecords(mode: 'list' | 'detail') {
     if (typeof window !== 'undefined') window.removeEventListener('hashchange', hashChanged);
     // #endif
   });
-  return { auth, state, list, detail, search, busy, canCancel, canReturn, uploadReturnImage, submitReturn, removeReturnImage, navigationError, routeError, load, goDetail, goList, goOrder, goService, login, setFilter, applySearch, cancel };
+  return { auth, state, list, detail, search, busy, canCancel, canReturn, uploadReturnImage, submitReturn, removeReturnImage, navigationError, routeError, load, goDetail, goList, goOrder, goLogistics, goService, login, setFilter, applySearch, cancel };
 }

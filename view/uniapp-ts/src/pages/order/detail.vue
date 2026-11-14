@@ -179,7 +179,7 @@
     </view>
 
     <!-- 物流入口 (已发货) -->
-    <view v-if="canOperate && order.delivery_type === 'express' && order.status >= 1" class="express-link" @tap="goExpress">
+    <view v-if="canOperate && order.delivery_type === 'express' && order.status >= 1" class="express-link" @tap="goExpress(order)">
       <text>📍 查看物流</text>
       <text class="arrow">›</text>
     </view>
@@ -586,9 +586,11 @@ function showPaidResult(scope: ReturnType<typeof currentView>) {
   });
 }
 
-function goExpress() {
-  if (!order.value || !canOperate.value || !currentView().current()) return;
-  uni.navigateTo({ url: `/pages/order/express?orderId=${order.value.order_id}` });
+function goExpress(expected: OrderDetailInfo) {
+  if (!order.value || expected !== order.value || !canOperate.value || !currentView().current()) return;
+  const scope = currentView();
+  uni.navigateTo({ url: `/pages/order/express?orderId=${encodeURIComponent(expected.order_id)}`,
+    fail: () => { if (scope.current() && expected === order.value) actionError.value = '物流页面未打开，请重试'; } });
 }
 
 function goReply() {

@@ -206,6 +206,9 @@
         <el-button v-if="canApplyRefund" size="large" @click="goRefund">
           申请退款
         </el-button>
+        <el-button v-if="order.delivery_type === 'express' && order.status >= 1" size="large" :disabled="loading || paying || taking || reviewing" @click="goExpress(order)">
+          查看物流
+        </el-button>
         <el-button v-if="order.status === 2" type="primary" size="large" :disabled="!!actionError" @click="reviewVisible = true">
           评价订单
         </el-button>
@@ -278,7 +281,7 @@
 <script setup lang="ts">
 import ProductImage from "@/components/ProductImage.vue";
 import { ref, reactive, computed, watch, onMounted, onBeforeUnmount, nextTick } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute, useRouter, isNavigationFailure } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import QRCode from "qrcode";
 import { apiOrderCashier, apiOrderDetail, apiOrderPay, apiOrderTake, apiOrderAgain } from "@/api/order";
@@ -648,6 +651,17 @@ async function submitReview() {
 }
 
 function errorText(error: unknown): string { return error instanceof Error ? error.message : '读取失败，请稍后重试'; }
+async function goExpress(expected: OrderInfo) {
+  const scope = currentView();
+  if (!scope.current() || !order.value || expected !== order.value || expected.paid !== 1 || expected.pid === -1
+    || expected.supplier_allocation_status === 1 || expected.delivery_type !== 'express' || expected.status < 1
+    || loading.value || paying.value || taking.value || reviewing.value) return;
+  try {
+    const result = await router.push(`/express?orderId=${encodeURIComponent(expected.order_id)}`);
+    if (scope.current() && expected === order.value && isNavigationFailure(result)) actionError.value = '物流页面未打开，请重试';
+  } catch { if (scope.current() && expected === order.value) actionError.value = '物流页面未打开，请重试'; }
+}
+
 function currentView() {
   const version = revision, path = route.fullPath, id = String(route.params.orderId ?? ''), owner = captureAuthSession(), uid = getUid();
   return { id, uid, current: () => !disposed && revision === version && route.fullPath === path && isCurrentAuthSession(owner) && !!owner.token && uid > 0 && getUid() === uid };
