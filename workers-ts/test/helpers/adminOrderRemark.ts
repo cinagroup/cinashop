@@ -24,6 +24,7 @@ type Role = 'root' | 'manager' | 'viewer' | 'disabled' | 'supplier';
 type Envelope = { status: number; msg: string; data: any; headers: Headers; httpStatus: number };
 export interface RemarkScenario {
   f: Fixture;
+  env: Env;
   fetch(request: Request): Promise<Response>;
   token(role?: Role): string;
   request(method: string, path: string, body?: unknown, token?: string | null): Promise<Envelope>;
@@ -82,7 +83,7 @@ export async function withRemarkScenario(work: (s: RemarkScenario) => Promise<vo
           result[table] = await f.exec('SELECT to_jsonb(t) AS row FROM public.' + table + ' t ORDER BY to_jsonb(t)::text');
         return result;
       };
-      await work({ f, request, snapshot, fetch: async request => {
+      await work({ f, env, request, snapshot, fetch: async request => {
         const tasks: Promise<unknown>[] = [];
         const response = await app.fetch(request, env, { waitUntil: task => { tasks.push(task); }, passThroughOnException() {}, props: {} });
         await Promise.all(tasks); return response;

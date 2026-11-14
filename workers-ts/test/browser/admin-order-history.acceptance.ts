@@ -6,12 +6,15 @@ import { extname, resolve, sep } from 'node:path';
 import { eq } from 'drizzle-orm';
 import { storeOrder, storeOrderStatus, storeProduct, storeProductAttrValue, systemRole } from '@/models/schema';
 import { withEditScenario } from '../helpers/adminOrderEdit';
+import { orderCreationClient } from '../helpers/orderCreationHistory';
 
 it('reads stable pages, refreshes after a real peer remark, clears failed reads and refuses a withdrawn viewer', async () => {
   const root = resolve(import.meta.dirname, '../../../view/admin-ts/dist'); expect((await stat(resolve(root, 'index.html'))).isFile()).toBe(true);
   await withEditScenario(async s => {
     await s.f.db.update(storeProduct).set({ image: '' }); await s.f.db.update(storeProductAttrValue).set({ image: '' });
-    const order = await s.checkout(), id = order.id, control = '/__admin_order_history_fixture/' + crypto.randomUUID();
+    const creation = await (await orderCreationClient(s)).checkout(), order = creation.order, id = order.id, control = '/__admin_order_history_fixture/' + crypto.randomUUID();
+    const createdStatus = await s.f.db.select().from(storeOrderStatus).where(eq(storeOrderStatus.oid, id));
+    expect(createdStatus).toHaveLength(1); expect(createdStatus[0]).toMatchObject({ oid: id, changeType: 'cache_key_create_order', changeMessage: '订单生成', changeTime: order.addTime });
     await s.f.db.insert(storeOrderStatus).values(Array.from({ length: 45 }, (_, n) => ({ oid: id, changeTime: 1700000000 + n,
       changeType: n === 4 ? 'unknown_legacy_event' : 'history_fixture',
       changeMessage: n === 4 ? '<script>仅作原文展示</script>' : `历史记录 ${String(n + 1).padStart(2, '0')}` })));
@@ -22,7 +25,7 @@ it('reads stable pages, refreshes after a real peer remark, clears failed reads 
     const paths: Array<{ path: string; method: string; page: string | null; status: number; envelope?: number }> = [];
     let finish!: () => void, fail!: (error: Error) => void;
     const completion = new Promise<void>((yes, no) => { finish = yes; fail = no; });
-    const state = async () => ({ paths, failed, appended, withdrawn, finished, initialCount: originalStatus.length,
+    const state = async () => ({ paths, failed, appended, withdrawn, finished, initialCount: originalStatus.length, creationStatus: createdStatus[0],
       status: await s.f.db.select().from(storeOrderStatus).where(eq(storeOrderStatus.oid, id)),
       order: (await s.f.db.select().from(storeOrder).where(eq(storeOrder.id, id)))[0] });
     const session = { userInfo: { id: 103, account: 'remark-viewer', head_pic: '', real_name: '本机订单只读管理员', level: 1, roles: '820002' }, menus: [], uniqueAuth: ['order.view'] };
@@ -49,6 +52,7 @@ it('reads stable pages, refreshes after a real peer remark, clears failed reads 
           expect((await state()).order).toEqual({ ...originalOrder, remark: '独立管理员提交的真实备注' });
           const current = (await state()).status; expect(current).toHaveLength(originalStatus.length + 1);
           expect(current.filter(row => row.changeType === 'admin_order_remark')).toHaveLength(1);
+          expect(current.filter(row => row.changeType === 'cache_key_create_order')).toEqual(createdStatus);
           expect(paths.every(row => row.method === 'GET')).toBe(true);
           expect(paths.some(row => row.page === '2' && row.envelope === 200)).toBe(true);
           expect(paths.some(row => row.envelope === 409)).toBe(true); expect(paths.some(row => row.envelope === 400011)).toBe(true);

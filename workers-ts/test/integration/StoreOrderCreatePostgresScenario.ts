@@ -808,6 +808,16 @@ async function seedFixtures(db: DbClient, schemaName: string, ids: FixtureIds): 
   });
 }
 
+/** Creation and cancellation are distinct events; never count one as the other. */
+async function createdAndCancelledStatusRows(container: Container, id: number) {
+  const rows = await container.db.select().from(storeOrderStatus).where(eq(storeOrderStatus.oid, id));
+  const created = rows.filter(row => row.changeType === 'cache_key_create_order');
+  const cancelled = rows.filter(row => row.changeType === 'cancel');
+  assertCondition(rows.length === 2 && created.length === 1 && cancelled.length === 1
+    && created[0].changeMessage === '订单生成', 'creation/cancellation history is incomplete or duplicated');
+  return [{ value: cancelled.length }];
+}
+
 async function productState(container: Container, productId: number, skuId: number) {
   const [products, skus] = await Promise.all([
     container.db.select({ stock: storeProduct.stock, sales: storeProduct.sales })
@@ -1017,8 +1027,7 @@ async function runSeckillReservationCancel(
       && snapshot.product?.activityId === ids.seckill.activityId
       && snapshot.sku?.price === "6.25"
       && snapshot.activitySku?.id === ids.seckill.activitySkuId;
-    const statusRows = await container.db.select({ value: count() }).from(storeOrderStatus)
-      .where(eq(storeOrderStatus.oid, orders[0].id));
+    const statusRows = await createdAndCancelledStatusRows(container, orders[0].id);
     const restored = activities[0].quota === 1 && activities[0].stock === 1 && activities[0].sales === 0
       && activitySkus[0].quota === 1 && activitySkus[0].stock === 1 && activitySkus[0].sales === 0
       && state.product.stock === 2 && state.product.sales === 0
@@ -1130,8 +1139,7 @@ async function runBargainReservationCancel(
     const marketingCouponIgnored = orders[0].couponId === 0
       && orders[0].couponPrice === "0.00"
       && coupons[0]?.status === 0;
-    const statusRows = await container.db.select({ value: count() }).from(storeOrderStatus)
-      .where(eq(storeOrderStatus.oid, orders[0].id));
+    const statusRows = await createdAndCancelledStatusRows(container, orders[0].id);
     const restored = activities[0].quota === 1 && activities[0].stock === 1 && activities[0].sales === 0
       && activitySkus[0].quota === 1 && activitySkus[0].stock === 1 && activitySkus[0].sales === 0
       && state.product.stock === 1 && state.product.sales === 0
@@ -1257,8 +1265,7 @@ async function runCombinationReservationCancel(
       && snapshot.product?.activityId === ids.combination.activityId
       && snapshot.sku?.price === "6.75"
       && snapshot.activitySku?.id === ids.combination.activitySkuId;
-    const statusRows = await container.db.select({ value: count() }).from(storeOrderStatus)
-      .where(eq(storeOrderStatus.oid, orders[0].id));
+    const statusRows = await createdAndCancelledStatusRows(container, orders[0].id);
     const restored = activities[0].quota === 1 && activities[0].stock === 1 && activities[0].sales === 0
       && activitySkus[0].quota === 1 && activitySkus[0].stock === 1 && activitySkus[0].sales === 0
       && state.product.stock === 1 && state.product.sales === 0
@@ -1331,8 +1338,7 @@ async function runIntegralReservationCancel(
       container.db.select().from(storeProductAttrValue)
         .where(eq(storeProductAttrValue.id, ids.integral.activitySkuId)).limit(1),
       productState(container, ids.integral.productId, ids.integral.skuId),
-      container.db.select({ value: count() }).from(storeOrderStatus)
-        .where(eq(storeOrderStatus.oid, beforeCancel.order.id)),
+      createdAndCancelledStatusRows(container, beforeCancel.order.id),
     ]);
     assertCondition(activities[0] && activitySkus[0], "integral inventory disappeared after cancellation");
     const resourcesRestored = activities[0].stock === 2

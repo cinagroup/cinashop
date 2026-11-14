@@ -2763,6 +2763,15 @@ export class StoreOrderCreateService {
         .returning();
       const order = orderInsert[0];
       if (!order) throw new Error("订单插入失败");
+      // PHP order.create -> OrderStatusJob(create). Only a newly inserted root
+      // reaches here; replay and read-only quotes have already returned. Keep
+      // the event in the creation transaction, including its later rejections.
+      await tx.insert(storeOrderStatus).values({
+        oid: order.id,
+        changeType: "cache_key_create_order",
+        changeMessage: "订单生成",
+        changeTime: now,
+      });
       if (assisted) {
         await tx.insert(storeOrderStatus).values({
           oid: order.id,
