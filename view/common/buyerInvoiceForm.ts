@@ -1,4 +1,4 @@
-import type { BuyerInvoiceDraft, BuyerInvoiceRecord } from './buyerInvoices';
+import type { BuyerInvoiceDraft, BuyerInvoiceFields } from './buyerInvoices';
 type Key = 'name' | 'dutyNumber' | 'drawerPhone' | 'email' | 'tell' | 'address' | 'bank' | 'cardNumber';
 const fields: Array<{ key: Key; label: string; max: number }> = [
   { key: 'name', label: '发票抬头', max: 100 }, { key: 'dutyNumber', label: '企业税号', max: 50 },
@@ -8,4 +8,4 @@ const fields: Array<{ key: Key; label: string; max: number }> = [
 ];
 export const buyerInvoiceFormFields = (draft: BuyerInvoiceDraft) => fields.filter(f => draft.headerType === 2 || ['name', 'drawerPhone', 'email'].includes(f.key))
   .map(f => ({ ...f, required: ['name', 'dutyNumber', 'drawerPhone', 'email'].includes(f.key) || draft.type === 2 }));
-export const buyerInvoiceSnapshotFields = (r: BuyerInvoiceRecord) => fields.filter(f => ['name', 'drawerPhone', 'email'].includes(f.key) || !!r[f.key]).map(f => ({ label: f.label, value: r[f.key] || '未记录' }));
+export const buyerInvoiceSnapshotFields = (r: BuyerInvoiceFields) => fields.filter(f => ['name', 'drawerPhone', 'email'].includes(f.key) || !!r[f.key]).map(f => ({ label: f.label, value: r[f.key] || '未记录' }));

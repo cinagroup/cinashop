@@ -1,4 +1,6 @@
-import { computed, ref, shallowRef, watch } from "vue";
+import { createCheckoutInvoice, initialCheckoutInvoice } from '../../../common/checkoutInvoice';
+import { apiBuyerInvoicePage } from '@/api/buyerInvoice';
+import { computed, reactive, ref, shallowRef, watch } from "vue";
 import { onLoad, onShow, onHide, onUnload } from "@dcloudio/uni-app";
 import { useAuthStore } from "@/stores/auth";
 import { useCartStore } from "@/stores/cart";
@@ -39,7 +41,16 @@ export function useCheckout() {
   const allowedShippingTypes = computed<readonly number[]>(() => activity.value.type === 2 ? shippingSelection.value?.shippingTypes ?? [] : items.value.some(i => i.productInfo?.productType === 4) ? [2] : [1,2]);
   const requiresAddress = computed(() => activity.value.type === 2
     ? shippingSelection.value?.requiresAddress !== false : checkoutRequiresAddress(items.value));
-  const options = computed<CheckoutQuoteOptions>(() => ({ ...activity.value, addressId: shippingType.value === 1 && requiresAddress.value ? addressId.value : 0,
+  let invoiceHash: string | null = null;
+  const invoiceDocumentVisible = ref(typeof document === 'undefined' || document.visibilityState !== 'hidden');
+  const invoiceRouteCurrent = () => typeof location === 'undefined' || invoiceHash === null || location.hash === invoiceHash;
+  const invoiceState = reactive(initialCheckoutInvoice());
+  const invoiceFlow = createCheckoutInvoice(invoiceState, {
+    page: apiBuyerInvoicePage,
+    capture: () => { const uid = auth.uid, token = auth.token, version = auth.sessionVersion, current = generation; return { uid, token, current: () => auth.isLoggedIn && auth.uid === uid && auth.token === token && auth.sessionVersion === version && current === generation && visible.value && invoiceDocumentVisible.value && invoiceRouteCurrent() && !pending.value }; },
+    canEdit: () => !locked.value && !submitting.value,
+  });
+  const options = computed<CheckoutQuoteOptions>(() => ({ ...activity.value, ...invoiceFlow.options(), addressId: shippingType.value === 1 && requiresAddress.value ? addressId.value : 0,
     shippingType: shippingType.value, storeId: shippingType.value === 2 ? storeId.value : 0,
     couponId: activity.value.type === 0 ? couponId.value : 0, useIntegral: integralEligible.value && useIntegral.value }));
   const deliveryError = computed(() => shippingLoading.value ? '正在读取活动配送规则' : shippingError.value ||
@@ -62,8 +73,8 @@ export function useCheckout() {
   });
   const ready = computed(() => !locked.value && !error.value && !deliveryError.value && !quote.value.loading && !!quote.value.result
     && quote.value.fingerprint === checkoutQuoteFingerprint(items.value, options.value));
-  const canSubmit = computed(() => !submitting.value && !error.value && visible.value && auth.isLoggedIn
-    && (pending.value ? pending.value.uid === auth.uid : ready.value && !formValidation.value && uploads.value === 0));
+  const canSubmit = computed(() => invoiceRouteCurrent() && !submitting.value && !error.value && visible.value && auth.isLoggedIn
+    && (pending.value ? pending.value.uid === auth.uid : ready.value && invoiceFlow.ready() && !formValidation.value && uploads.value === 0));
   const displayItems = computed(() => ready.value ? quote.value.result!.items : items.value);
   function message(e: unknown, fallback: string) { return e instanceof Error ? e.message : fallback; }
   async function refreshQuote(renew = false) {
@@ -142,6 +153,7 @@ export function useCheckout() {
       const formIds = [...new Set(rows.map((row) => row.productInfo!.systemFormId).filter((id) => id > 0))];
       if (formIds.length > 1) throw new Error("同一订单不能包含不同的自定义表单");
       await Promise.all([
+        invoiceFlow.load(),
         apiAddressList().then((list) => {
           if (current !== generation) return;
           addresses.value = list; addressError.value = "";
@@ -183,6 +195,7 @@ export function useCheckout() {
         ...options.value, cartIds: items.value.map((row) => row.id), mark: mark.value,
         ...(shippingType.value === 2 ? { realName: contact.value.realName.trim(), userPhone: contact.value.userPhone.trim() } : {}), customForm: customForm.value,
       });
+      invoiceFlow.clear(true);
       const intent = journal.assertCurrent(pending.value);
       couponSession.pause();
       sent = true;
@@ -207,7 +220,7 @@ export function useCheckout() {
       }
     } finally { submitting.value = false; if (visible.value && current !== generation) void load(); }
   }
-  function suspend() { cartCouponPreselection?.revoke(); resumeForm = uploads.value > 0; visible.value = false; generation++; shippingGeneration++; shippingLoading.value = false; quoteSession.reset(); couponSession.reset(); }
+  function suspend() { invoiceFlow.clear(true); cartCouponPreselection?.revoke(); resumeForm = uploads.value > 0; visible.value = false; generation++; shippingGeneration++; shippingLoading.value = false; quoteSession.reset(); couponSession.reset(); }
   watch(() => couponScope.value?.fingerprint ?? "", () => {
     cartCouponPreselection?.bind(couponScope.value, { uid: auth.uid, version: auth.sessionVersion }, items.value.map(row => row.id),
       !items.value.length || items.value.every(row => row.type === 0 && row.isNew === 0));
@@ -222,7 +235,7 @@ export function useCheckout() {
   }, { flush: 'sync' });
   watch(options, () => { void refreshQuote(); }, { flush: "sync" });
   watch(() => auth.sessionVersion, () => {
-    cartCouponPreselection?.revoke();
+    invoiceFlow.clear(); cartCouponPreselection?.revoke();
     generation++; quoteSession.reset(); couponSession.reset(); pending.value = null; items.value = [];
     shippingGeneration++; shippingSelection.value = null; shippingLoading.value = false; shippingError.value = '';
     customForm.value = []; formRevision.value++; formName.value = ""; uploads.value = 0;
@@ -230,7 +243,13 @@ export function useCheckout() {
     addressId.value = 0; storeId.value = 0; couponId.value = 0; useIntegral.value = false;
     error.value = "登录状态已变化，请重新加载结算";
   });
+  function invoiceDocumentChange() { invoiceDocumentVisible.value = document.visibilityState !== 'hidden'; if (!invoiceDocumentVisible.value) invoiceFlow.clear(true); else if (visible.value && !pending.value && invoiceRouteCurrent()) void invoiceFlow.load(); }
+  function invoiceHashChange() { invoiceFlow.clear(true); if (visible.value && !invoiceRouteCurrent()) { quoteSession.reset(); error.value = '结算页面链接已变化，请重新进入结算'; } }
+  if (typeof document !== 'undefined') document.addEventListener('visibilitychange', invoiceDocumentChange);
+  if (typeof window !== 'undefined') window.addEventListener('hashchange', invoiceHashChange);
+  onUnload(() => { if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', invoiceDocumentChange); if (typeof window !== 'undefined') window.removeEventListener('hashchange', invoiceHashChange); });
   onLoad((params) => {
+    invoiceHash = typeof location === 'undefined' ? null : location.hash;
     query = params ?? {}; checkedIds = cart.checkedItems.map((row) => row.id);
     if (query.couponId !== undefined) {
       try { cartCouponPreselection = new CartCouponPreselection(query.couponId, { uid: auth.uid, version: auth.sessionVersion }, checkedIds); }
@@ -239,11 +258,11 @@ export function useCheckout() {
   });
   onShow(() => {
     visible.value = true;
-    if (resumeForm && items.value.length && !error.value) { resumeForm = false; void refreshQuote(activity.value.type === 2); void loadCoupons(); }
+    if (resumeForm && items.value.length && !error.value) { resumeForm = false; void invoiceFlow.load(); void refreshQuote(activity.value.type === 2); void loadCoupons(); }
     else void load();
   });
   onHide(suspend); onUnload(suspend);
-  return { loading, error, load, locked, formLocked, items, displayItems, addresses, stores, addressId, storeId, shippingType, setShipping, contact, mark,
+  return { invoiceState, invoiceFlow, loading, error, load, locked, formLocked, items, displayItems, addresses, stores, addressId, storeId, shippingType, setShipping, contact, mark,
     allowedShippingTypes, requiresAddress, shippingLoading,
     customForm, formName, formRevision, formValidation, uploads, activity, integralEligible, useIntegral, quote, ready, deliveryError, refreshQuote,
     coupons, couponId, couponScope, selectCoupon, loadCoupons, pending, submissionError, submitting, canSubmit, submit };

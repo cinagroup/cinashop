@@ -1,3 +1,4 @@
+import type { CheckoutInvoiceInput } from './CheckoutInvoice';
 import { Buffer } from 'node:buffer';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
@@ -140,7 +141,7 @@ function verifyAlipayKey(env: Env, key: string, raw: string): Readonly<AlipayRed
 
 type LegacyCartSelection = { cartId: number; cartNum?: number };
 
-export interface LegacyCheckoutPreviewOptions {
+export interface LegacyCheckoutPreviewOptions extends CheckoutInvoiceInput {
   addressId?: number;
   existingKey?: string;
   couponId?: number;
@@ -455,6 +456,7 @@ export class LegacyOrderCompatibilityService {
     const quote = await new StoreOrderCreateService(this.container, this.env).quoteOrder({
       uid,
       cartIds,
+      invoiceId: options.invoiceId, invoiceAlias: options.invoiceAlias, invoiceRevision: options.invoiceRevision, invoiceRevisionAlias: options.invoiceRevisionAlias,
       addressId: address?.id ?? 0,
       realName: address?.realName,
       userPhone: address?.phone,
@@ -517,7 +519,7 @@ export class LegacyOrderCompatibilityService {
             price: '0.00', image: product.image } } };
     });
     const key = options.existingKey ?? await this.rememberCheckout(uid, cartIds);
-    const quoteToken = await issueCheckoutConfirmation(this.env.CONFIG_KV, { uid, key }, quote.confirmationFingerprint);
+    const quoteToken = await issueCheckoutConfirmation(this.env.CONFIG_KV, { uid, key }, quote.confirmationFingerprint, quote.invoiceSelection);
     const money = (cents: number) => (cents / 100).toFixed(2);
     const priceGroup = {
       sumPrice: money(quote.rawTotalCents),
@@ -563,6 +565,7 @@ export class LegacyOrderCompatibilityService {
       },
       orderKey: key,
       quoteToken,
+      ...(quote.invoiceSelection ? { invoiceSelection: quote.invoiceSelection } : {}),
       priceGroup,
       give_coupon: quote.giveCouponInfo,
       give_integral: quote.giveIntegral,

@@ -7,7 +7,8 @@ const TOKEN = /^[a-f0-9]{32}$/;
 const DIGEST = /^[a-f0-9]{64}$/;
 type QuoteStore = Pick<SystemConfigEnv['CONFIG_KV'], 'get' | 'put'>;
 export interface CheckoutConfirmationScope { uid: number; key: string; adminId?: number; touristUid?: string }
-export interface CheckoutConfirmation { fingerprint: string; expiresAt: number }
+export interface CheckoutInvoiceBinding { id: number; revision: string }
+export interface CheckoutConfirmation { fingerprint: string; expiresAt: number; invoiceSelection?: CheckoutInvoiceBinding }
 
 /** Only a definite pre-commit rejection. Infrastructure/unknown outcomes keep their original errors. */
 export class OrderQuoteReconfirmRequired extends ApiException {
@@ -30,13 +31,20 @@ export async function checkoutFingerprint(facts: unknown): Promise<string> {
   return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
+function validInvoiceBinding(value: unknown): value is CheckoutInvoiceBinding {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const row = value as Record<string, unknown>;
+  return Object.keys(row).length === 2 && Number.isInteger(row.id) && Number(row.id) > 0 && Number(row.id) <= 2147483647
+    && typeof row.revision === 'string' && DIGEST.test(row.revision);
+}
+
 /** Immutable random receipt. A computed response never overwrites another response's quote. */
-export async function issueCheckoutConfirmation(store: QuoteStore, scope: CheckoutConfirmationScope, fingerprint: string): Promise<string> {
-  if (!DIGEST.test(fingerprint)) throw new Error('Invalid server checkout fingerprint');
+export async function issueCheckoutConfirmation(store: QuoteStore, scope: CheckoutConfirmationScope, fingerprint: string, invoiceSelection?: CheckoutInvoiceBinding): Promise<string> {
+  if (!DIGEST.test(fingerprint) || invoiceSelection !== undefined && !validInvoiceBinding(invoiceSelection)) throw new Error('Invalid server checkout fingerprint or invoice binding');
   const token = crypto.randomUUID().replaceAll('-', '');
   const createdAt = Math.floor(Date.now() / 1000);
   await store.put(scopeKey(scope, token), JSON.stringify({ version: 1, uid: scope.uid, key: scope.key,
-    adminId: scope.adminId ?? 0, touristUid: scope.touristUid ?? '', fingerprint, createdAt, expiresAt: createdAt + TTL }), { expirationTtl: TTL });
+    adminId: scope.adminId ?? 0, touristUid: scope.touristUid ?? '', fingerprint, ...(invoiceSelection ? { invoiceSelection: { id: invoiceSelection.id, revision: invoiceSelection.revision } } : {}), createdAt, expiresAt: createdAt + TTL }), { expirationTtl: TTL });
   return token;
 }
 
@@ -52,11 +60,12 @@ export async function readCheckoutConfirmation(store: QuoteStore, scope: Checkou
   const now = Math.floor(Date.now() / 1000);
   if (row.version !== 1 || row.uid !== scope.uid || row.key !== scope.key || row.adminId !== (scope.adminId ?? 0)
     || row.touristUid !== (scope.touristUid ?? '') || typeof row.fingerprint !== 'string' || !DIGEST.test(row.fingerprint)
+    || row.invoiceSelection !== undefined && !validInvoiceBinding(row.invoiceSelection)
     || typeof row.createdAt !== 'number' || !Number.isSafeInteger(row.createdAt) || row.createdAt > now
     || typeof row.expiresAt !== 'number' || row.expiresAt !== row.createdAt + TTL || row.expiresAt <= now) {
     throw new OrderQuoteReconfirmRequired(scope.key);
   }
-  return { fingerprint: row.fingerprint, expiresAt: row.expiresAt };
+  return { fingerprint: row.fingerprint, expiresAt: row.expiresAt, ...(validInvoiceBinding(row.invoiceSelection) ? { invoiceSelection: { ...row.invoiceSelection } } : {}) };
 }
 
 export function assertCheckoutConfirmation(confirmation: CheckoutConfirmation, fingerprint: string, key: string): void {

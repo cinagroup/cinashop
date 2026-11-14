@@ -81,7 +81,8 @@
         <button v-if="coupons.nextCursor !== null" size="mini" :disabled="locked || coupons.loading" @tap="loadCoupons(true)">继续查找可用优惠券</button>
         <view v-if="couponId && ready && quote.result?.prices.couponDiscount === '0.00'" class="muted">所选券本次未产生抵扣，可取消或重选。</view>
       </view>
-      <SystemFormFields :key="formRevision" v-model="customForm" :title="formName" :disabled="formLocked" @pending="uploads = $event" />
+      <CheckoutInvoicePicker v-if="!pending && !loading && !error" :state="invoiceState" :disabled="locked || submitting" @select="invoiceFlow.select" @refresh="invoiceFlow.load" @next="invoiceFlow.next" @back="invoiceFlow.back" @manage="manageInvoices" />
+    <SystemFormFields :key="formRevision" v-model="customForm" :title="formName" :disabled="formLocked" @pending="uploads = $event" />
       <view v-if="formValidation || uploads" class="section error">{{ uploads ? '图片上传中，完成前不能提交。' : formValidation }}</view>
       <view class="section">
         <view class="heading">费用明细</view>
@@ -114,6 +115,7 @@
 </template>
 
 <script setup lang="ts">
+import CheckoutInvoicePicker from '@/components/CheckoutInvoicePicker.vue';
 import ThemePage from '@/components/ThemePage.vue';
 import SystemFormFields from "@/components/SystemFormFields.vue";
 import { ref } from 'vue';
@@ -123,7 +125,7 @@ import { useAuthStore } from '@/stores/auth';
 import { cartPromotionSummary } from '../../../../common/cartPrice';
 // Route parameters are validated by useCheckout.onLoad, not DOM attributes.
 defineOptions({ inheritAttrs: false });
-const { loading, error, load, locked, formLocked, items, displayItems, addresses, stores, addressId, storeId, shippingType, setShipping, contact, mark,
+const { invoiceState, invoiceFlow, loading, error, load, locked, formLocked, items, displayItems, addresses, stores, addressId, storeId, shippingType, setShipping, contact, mark,
   allowedShippingTypes, requiresAddress, shippingLoading,
   customForm, formName, formRevision, formValidation, uploads, activity, integralEligible, useIntegral, quote, ready, deliveryError, refreshQuote,
   coupons, couponId, couponScope, selectCoupon, loadCoupons, pending, submissionError, submitting, canSubmit, submit } = useCheckout();
@@ -134,6 +136,7 @@ function promotionSummary(id: number): string {
   const item = quote.value.result?.items.find(row => row.id === id);
   return item ? cartPromotionSummary(item) : '';
 }
+function manageInvoices() { if (!locked.value) uni.navigateTo({ url: '/pages/user/invoice' }); }
 function addAddress() { if (!locked.value) uni.navigateTo({ url: "/pages/user/address" }); }
 function integralChange(event: Event) { if (!locked.value) useIntegral.value = (event as unknown as { detail: { value: boolean } }).detail.value === true; }
 function reviewOrders() {

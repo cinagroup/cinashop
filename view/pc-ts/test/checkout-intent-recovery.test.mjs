@@ -1,3 +1,5 @@
+import { createRequire } from 'node:module';
+const invoiceFixture = createRequire(import.meta.url)('../../common/test/buyerInvoiceFixture.cjs');
 import { it } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRenderer, h, nextTick } from 'vue';
@@ -17,7 +19,7 @@ const item = { id: 10, productId: 70, unique: 'red001', cartNum: 2, type: 0, isN
 const gate = () => { let resolve; return { promise: new Promise(done => { resolve = done; }), resolve }; };
 
 export function registerCheckoutIntentRecoveryTests(getContext) {
-  async function mount(create = async () => { throw Error('network uncertainty'); }, { type = 0, quote = value => value } = {}) {
+  async function mount(create = async () => { throw Error('network uncertainty'); }, { type = 0, quote = value => value, invoice = q => invoiceFixture.page(q) } = {}) {
     const { server, api, response } = getContext();
     const selected = { ...item, type };
     const component = (await server.ssrLoadModule('/src/pages/order/Checkout.shipping-test.ts')).default;
@@ -27,10 +29,12 @@ export function registerCheckoutIntentRecoveryTests(getContext) {
       calls.push({ url: config.url, body, saved: sessionStorage.getItem(storageKey) });
       let data;
       if (config.url.startsWith('/order/create/')) return response(config, await create(body, config));
-      if (config.url === '/cart/list') data = [selected];
+      if (config.url === '/invoice') data = await invoice({ kind: 'titles', cursor: config.params.cursor ?? null, limit: config.params.limit ?? 20 });
+      else if (config.url === '/cart/list') data = [selected];
       else if (config.url === '/address/list') data = [{ id: 11, real_name: '本地测试', phone: '00000000000', is_default: 1 }];
       else if (config.url === '/store/list' || config.url === '/coupons/order/0') data = [];
       else if (config.url === '/order/confirm' || config.url.startsWith('/order/computed/')) data = {
+        ...(body.invoiceId === undefined ? {} : { invoiceSelection: { id: body.invoiceId, revision: body.invoiceRevision } }),
         orderKey: key, quoteToken: 'a'.repeat(32), addressInfo: { id: body.addressId }, cartInfo: [{ ...selected, truePrice: '10.00' }],
         priceGroup: { sumPrice: '20.00', totalPrice: '20.00', pay_price: '20.00', total_postage: '0.00', pay_postage: '0.00', storePostageDiscount: '0.00',
           vipPrice: '0.00', levelPrice: '0.00', memberPrice: '0.00', couponPrice: '0.00', deduction_price: '0.00', firstOrderPrice: '0.00', usedIntegral: 0, SurplusIntegral: 0, pay_integral: 0 },
@@ -264,4 +268,38 @@ export function registerCheckoutIntentRecoveryTests(getContext) {
       } finally { f.close(); }
     });
   }
+  for (const special of [false, true]) it(`PC actual checkout journals only selected invoice identity (special=${special})`, async () => {
+    const title = invoiceFixture.title(special ? { headerType: 2, type: 2, name: '本机公司', dutyNumber: 'A'.repeat(18), bank: '本机银行', cardNumber: '000123456789', address: '本机地址', tell: '010-00000000' } : {});
+    const f = await mount(undefined, { invoice: q => invoiceFixture.page(q, { items: [title] }) });
+    try {
+      f.view.invoiceFlow.select(f.view.invoiceFlow.titles()[0]); await flush();
+      assert.equal(f.view.canSubmit.value, true); assert.equal(f.view.invoiceState.selected.cardNumber, title.cardNumber);
+      await f.view.submitOrder(); const body = f.writes()[0].body;
+      assert.equal(body.invoiceId, 71); assert.equal(body.invoiceRevision, invoiceFixture.revision);
+      assert.equal(f.view.invoiceState.selected, null);
+      const saved = sessionStorage.getItem(storageKey); assert.equal(JSON.parse(saved).payload.invoiceId, 71);
+      for (const text of ['本机公司', '本机买家', '000123456789', '13800000000', 'buyer@example.invalid']) assert.equal(saved.includes(text), false);
+    } finally { f.close(); }
+  });
+  it('PC invoice refresh drops stale row callbacks and blocks submit until an explicit replacement choice', async () => {
+    const f = await mount(); try {
+      const old = f.view.invoiceFlow.titles()[0]; f.view.invoiceFlow.select(old); await flush();
+      await f.view.invoiceFlow.load(); await flush(); assert.equal(f.view.canSubmit.value, false);
+      f.view.invoiceFlow.select(old); assert.equal(f.view.canSubmit.value, false);
+      f.view.invoiceFlow.select(null); await flush(); assert.equal(f.view.canSubmit.value, true);
+    } finally { f.close(); }
+  });
+  it('PC uncertain invoice intent resumes the exact frozen selection without reading a replacement title', async () => {
+    const first = await mount(); let saved; try { first.view.invoiceFlow.select(first.view.invoiceFlow.titles()[0]); await flush(); await first.view.submitOrder(); saved = first.writes()[0].body; } finally { first.close(); }
+    const second = await mount(); try { assert.equal(second.calls.length, 0); assert.equal(second.view.invoiceState.page, null); await second.view.submitOrder(); assert.deepEqual(second.writes()[0].body, saved); } finally { second.close(); }
+  });
+  it('PC mismatched invoice quote cannot enable submission', async () => {
+    const f = await mount(undefined, { quote: (data, body) => body.invoiceId ? { ...data, invoiceSelection: { id: 72, revision: body.invoiceRevision } } : data });
+    try { f.view.invoiceFlow.select(f.view.invoiceFlow.titles()[0]); await flush(); assert.equal(f.view.canSubmit.value, false); assert.match(f.view.quoteState.value.error, /发票/); await f.view.submitOrder(); assert.equal(f.writes().length, 0); } finally { f.close(); }
+  });
+  it('PC late invoice page cannot repopulate checkout after an identity change', async () => {
+    const wait = gate(), f = await mount(undefined, { invoice: () => wait.promise });
+    try { getContext().authUtils.setAuth('replacement-checkout-owner',22); wait.resolve(invoiceFixture.page()); await flush(); assert.equal(f.view.invoiceState.page, null); assert.equal(f.view.invoiceState.selected, null); assert.equal(f.view.canSubmit.value, false); } finally { wait.resolve(invoiceFixture.page()); f.close(); }
+  });
+
 }

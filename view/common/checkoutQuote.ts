@@ -2,6 +2,8 @@ import type { CheckoutCartItem as CartItem } from "./checkoutSelection";
 import type { CartPromotion } from "./cartPrice";
 
 export interface CheckoutQuoteOptions {
+  invoiceId?: number;
+  invoiceRevision?: string;
   addressId: number;
   shippingType: 1 | 2;
   storeId: number;
@@ -171,6 +173,12 @@ export function normalizeCheckoutQuote(
   expectedKey?: string,
 ): CheckoutQuote {
   const source = record(value, "订单报价");
+  if (options.invoiceId !== undefined) {
+    if (!positiveId(options.invoiceId) || typeof options.invoiceRevision !== 'string' || !/^[a-f0-9]{64}$/.test(options.invoiceRevision)) throw Error('发票选择无效，请重新选择');
+    const invoice = record(source.invoiceSelection, '报价发票选择');
+    exactFields(invoice, ['id', 'revision'], '报价发票选择');
+    if (Object.keys(invoice).length !== 2 || invoice.id !== options.invoiceId || invoice.revision !== options.invoiceRevision) throw Error('报价发票抬头不匹配，请重新确认');
+  } else if (options.invoiceRevision !== undefined || source.invoiceSelection !== undefined) throw Error('报价发票选择不匹配，请重新确认');
   const key = source.orderKey;
   const quoteToken = source.quoteToken;
   if (typeof quoteToken !== 'string' || !/^[a-f0-9]{32}$/.test(quoteToken)) throw new Error('订单报价凭据无效，请重新确认');

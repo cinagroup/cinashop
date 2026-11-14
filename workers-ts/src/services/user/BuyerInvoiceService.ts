@@ -1,17 +1,18 @@
+import { invoiceTitleFields as fields, invoiceTitleRevision as buyerInvoiceTitleRevision, readInvoiceCapabilities as buyerInvoiceCapabilities } from '@/services/order/InvoiceTitlePolicy';
+export { buyerInvoiceTitleRevision, buyerInvoiceCapabilities };
 import { and, desc, eq, inArray, lt, ne, or, sql } from 'drizzle-orm';
 import type { Container, DbClient } from '@/lib/di';
 import type { Env } from '@/env';
-import { storeOrder, storeOrderCartInfo, storeOrderInvoice, storeOrderRefund, systemConfig, user, userInvoice } from '@/models/schema';
+import { storeOrder, storeOrderCartInfo, storeOrderInvoice, storeOrderRefund, user, userInvoice } from '@/models/schema';
 import { AuthException, ApiErrorCode, NotFoundException, ValidateException } from '@/utils/errors';
 import { md5 } from '@/utils/jwt';
-import { normalizeConfigScalar } from '@/utils/config';
 import { signAttachmentReferences } from '@/services/system/AttachmentService';
 import { lifecycleTime, withOrderLifecycleSnapshot } from '@/services/order/OrderLifecycleTimeline';
 import { buyerInvoiceOrderColumns, StoreOrderInvoiceService } from '@/services/order/StoreOrderInvoiceService';
 import { currentInvoiceAmount } from '@/services/order/InvoiceOrderLifecycle';
 import { UserFinanceService, type InvoiceTitleMutationPolicy } from './UserFinanceService';
 import { buyerInvoiceQuery, buyerInvoiceRevision, validateBuyerInvoiceDraft, type BuyerInvoiceAck, type BuyerInvoiceAction,
-  type BuyerInvoiceCapabilities, type BuyerInvoiceFields, type BuyerInvoiceOrder, type BuyerInvoicePage, type BuyerInvoiceQuery,
+  type BuyerInvoiceOrder, type BuyerInvoicePage, type BuyerInvoiceQuery,
   type BuyerInvoiceRecord, type BuyerInvoiceTitle } from '../../../../view/common/buyerInvoices';
 import { orderDetailId } from '../../../../view/common/orderDetailIdentity';
 
@@ -22,14 +23,10 @@ export interface BuyerInvoiceActor { uid: number; authVersion: string; expiresAt
 const invalid = (message = '发票参数无效，请重新读取') => new ValidateException(message);
 const stale = () => invalid('发票或订单资料已变化，请刷新后重新选择');
 const time = (n: number) => n === 0 ? '' : lifecycleTime(n, false);
-const fields = (r: Title | Invoice): BuyerInvoiceFields => ({ headerType: r.headerType as 1 | 2, type: r.type as 1 | 2,
-  name: r.name, dutyNumber: r.dutyNumber, drawerPhone: r.drawerPhone, email: r.email,
-  tell: r.tell, address: r.address, bank: r.bank, cardNumber: r.cardNumber });
 async function digest(value: unknown): Promise<string> {
   const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(value)));
   return Array.from(new Uint8Array(hash), b => b.toString(16).padStart(2, '0')).join('');
 }
-export const buyerInvoiceTitleRevision = (row: Title) => digest({ ...fields(row), id: row.id, uid: row.uid, isDefault: row.isDefault, isDel: row.isDel, addTime: row.addTime });
 export const buyerInvoiceOrderRevision = (r: Order, amount: string | null) => digest({ id: r.id, uid: r.uid, orderNo: r.orderId,
   pid: r.pid, paid: r.paid, status: r.status, supplierId: r.supplierId, storeId: r.storeId,
   supplierAllocationStatus: r.supplierAllocationStatus, payPrice: r.payPrice, refundPrice: r.refundPrice,
@@ -43,19 +40,6 @@ async function actorInDatabase(db: DbClient, actor: BuyerInvoiceActor) {
   const [row] = await db.select({ pwd: user.pwd, status: user.status, isDel: user.isDel, deleteTime: user.deleteTime }).from(user).where(eq(user.uid, actor.uid)).limit(1);
   if (!row || row.status !== 1 || row.isDel || row.deleteTime !== null || ![md5(row.pwd), row.pwd].includes(actor.authVersion))
     throw new AuthException('登录状态已变化，请重新登录', ApiErrorCode.ERR_EXPIRED);
-}
-export async function buyerInvoiceCapabilities(db: DbClient): Promise<BuyerInvoiceCapabilities> {
-  // Match SystemConfigDao's global scope and deterministic precedence for
-  // historical duplicate defaults, with at most two VARCHAR values transported
-  // in one SQL snapshot. A store override cannot disable the global buyer API.
-  const rows = await db.selectDistinctOn([systemConfig.menuName], { key: systemConfig.menuName, value: systemConfig.value }).from(systemConfig)
-    .where(and(eq(systemConfig.isStore, 0), inArray(systemConfig.menuName, ['invoice_func_status', 'special_invoice_status'])))
-    .orderBy(systemConfig.menuName, desc(systemConfig.sort), desc(systemConfig.id)).limit(2);
-  const enabled = (key: string) => {
-    const matches = rows.filter(r => r.key === key); if (matches.length !== 1) return false;
-    const value = normalizeConfigScalar(matches[0].value); return value === '1';
-  };
-  const on = enabled('invoice_func_status'); return { enabled: on, special: on && enabled('special_invoice_status') };
 }
 export async function requireBuyerInvoiceCapability(db: DbClient, type: number) {
   const flags = await buyerInvoiceCapabilities(db);

@@ -1,3 +1,4 @@
+import { checkoutInvoiceParameters } from '@/services/order/CheckoutInvoice';
 /**
  * 购物车 + 订单控制器
  *
@@ -351,6 +352,7 @@ export async function orderCreate(c: C) {
   if (!key) return jsonFail(c, "参数错误");
 
   const body = await readBoundedJsonObject(c) as {
+    invoiceId?: unknown; invoice_id?: unknown; invoiceRevision?: unknown; invoice_revision?: unknown;
     cartIds?: number[];
     cart_ids?: number[];
     quoteToken?: unknown;
@@ -419,6 +421,7 @@ export async function orderCreate(c: C) {
       key,
       cartIds,
       quoteToken: body.quoteToken,
+      ...checkoutInvoiceParameters(body),
       addressId: body.addressId,
       addressAlias: body.address_id,
       // Contacts are client-selected only for pickup. Delivery fields are
@@ -439,7 +442,7 @@ export async function orderCreate(c: C) {
       ...parseBargainSelection(body),
       couponId: body.couponId ?? body.coupon_id,
       customForm: body.customForm ?? body.custom_form,
-    });
+    }, { uid, authVersion: c.get('socketAuthVersion') ?? '', expiresAt: c.get('socketTokenExp') ?? 0 });
     creationReturned = true;
     if (requestedPayType) {
       const payment = await new StoreOrderPayService(c.get("container"), c.env).pay(
@@ -521,6 +524,7 @@ export async function orderConfirm(c: C) {
     const cartIds = parseLegacyCartIds(body.cartIds ?? body.cart_ids ?? body.cartId);
     const result = await new LegacyOrderCompatibilityService(c.get("container"), c.env)
       .checkoutPreview(uid, cartIds, {
+        ...checkoutInvoiceParameters(body),
         addressId: checkoutAddressId(body.addressId, body.address_id),
         couponId: Number(body.couponId ?? body.coupon_id ?? 0),
         useIntegral: Number(body.useIntegral ?? body.use_integral ?? 0) > 0,
@@ -553,6 +557,7 @@ export async function orderComputed(c: C) {
       uid,
       cartIds,
       {
+        ...checkoutInvoiceParameters(body),
         addressId: checkoutAddressId(body.addressId, body.address_id),
         existingKey: key,
         couponId: Number(body.couponId ?? body.coupon_id ?? 0),
@@ -575,6 +580,7 @@ export async function orderComputed(c: C) {
       addressInfo: preview.addressInfo,
       orderKey: preview.orderKey,
       quoteToken: preview.quoteToken,
+      ...(preview.invoiceSelection ? { invoiceSelection: preview.invoiceSelection } : {}),
     });
   } catch (error) {
     if (error instanceof ValidateException) return jsonFail(c, error.message);

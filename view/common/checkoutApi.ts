@@ -11,6 +11,7 @@ export interface CheckoutTransport {
 /** Boundary shared by native/H5 adapters. It sends identifiers/options, never client prices. */
 export function createCheckoutApi(transport: CheckoutTransport) {
   const quoteBody = (options: CheckoutQuoteOptions) => ({
+    ...(options.invoiceId === undefined ? {} : { invoiceId: options.invoiceId, invoiceRevision: options.invoiceRevision }),
     addressId: options.addressId, shippingType: options.shippingType, storeId: options.storeId,
     couponId: options.couponId, useIntegral: options.useIntegral, type: options.type,
     ...(options.pinkId === undefined ? {} : { pinkId: options.pinkId }),

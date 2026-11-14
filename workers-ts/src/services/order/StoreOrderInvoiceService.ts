@@ -142,13 +142,21 @@ export class StoreOrderInvoiceService {
       if (existing.length) throw new ValidateException("发票已申请，正在审核打印中");
 
       await policy?.check(tx, order, template, amount);
-      const [created] = await tx
+      return insertOrderInvoiceSnapshot(tx, order, template, amount, Math.floor(Date.now() / 1000));
+    });
+  }
+}
+
+/** Internal callers own order/title locks and admission; snapshot copying is
+ * shared by existing-order make-up and the atomic new-order transaction. */
+export async function insertOrderInvoiceSnapshot(tx: DbClient, order: Pick<Order, 'id' | 'uid' | 'paid'>, template: typeof userInvoice.$inferSelect, amount: string, now: number): Promise<{ id: number }> {
+  const [created] = await tx
         .insert(storeOrderInvoice)
         .values({
-          uid,
+          uid: order.uid,
           category: "order",
           orderId: order.id,
-          invoiceId,
+          invoiceId: template.id,
           headerType: template.headerType,
           type: template.type,
           name: template.name,
@@ -163,10 +171,9 @@ export class StoreOrderInvoiceService {
           isRefund: 0,
           isInvoice: 0,
           invoiceAmount: amount,
-          addTime: Math.floor(Date.now() / 1000),
+          addTime: now,
         })
         .returning({ id: storeOrderInvoice.id });
-      return created;
-    });
-  }
+  if (!created) throw new Error('开票申请插入失败');
+  return created;
 }

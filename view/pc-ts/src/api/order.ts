@@ -60,6 +60,8 @@ function toSnake(value: unknown): unknown {
 
 /** 创建订单 (POST /api/order/create/:key) */
 export function apiOrderCreate(key: string, params: {
+  invoiceId?: number;
+  invoiceRevision?: string;
   quoteToken?: string;
   cartIds: number[];
   addressId?: number;

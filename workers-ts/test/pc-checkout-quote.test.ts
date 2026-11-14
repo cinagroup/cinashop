@@ -129,7 +129,7 @@ describe("FE-002E server-authoritative PC checkout quote", () => {
     expect(source).toContain('apiOrderCreate(intent.key, intent.payload as Parameters<typeof apiOrderCreate>[1])');
     expect(source).toContain('journal.settled(intent, result)');
     expect(source).toContain('pendingIntent.value = journal.read(getUid())');
-    expect(source).toContain('await Promise.all([loadAddresses(generation), type === 2 ? loadShipping(generation, true) : loadPickupStores(generation), loadSystemForm(rows, generation)])');
+    expect(source).toContain('await Promise.all([invoiceFlow.load(), loadAddresses(generation), type === 2 ? loadShipping(generation, true) : loadPickupStores(generation), loadSystemForm(rows, generation)])');
     expect(source).toContain('class="checkout-mobile-items" aria-label="结算商品"');
     expect(source).toContain('.checkout-desktop-items { display: none; }');
     expect(source).toContain('.checkout-mobile-items { display: block; }');
@@ -138,4 +138,14 @@ describe("FE-002E server-authoritative PC checkout quote", () => {
     expect(source).not.toContain('payType:');
     expect(source).not.toContain('checkoutTotal');
   });
+});
+
+it('requires the exact invoice id/revision echo when normalizing confirm and computed results', () => {
+  const revision = 'a'.repeat(64), requested = { ...options, invoiceId: 71, invoiceRevision: revision }, response = { ...preview(), invoiceSelection: { id: 71, revision } };
+  expect(normalizeCheckoutQuote(response, selected, requested).prices.payable).toBe('20.50');
+  const { priceGroup, ...flat } = response;
+  expect(normalizeCheckoutQuote({ ...priceGroup, ...flat }, selected, requested).prices.payable).toBe('20.50');
+  for (const invoiceSelection of [undefined, { id: 72, revision }, { id: 71, revision: 'b'.repeat(64) }, { id: 71, revision, uid: 22 }]) expect(() => normalizeCheckoutQuote({ ...response, invoiceSelection }, selected, requested)).toThrow();
+  expect(() => normalizeCheckoutQuote(response, selected, options)).toThrow();
+  expect(() => normalizeCheckoutQuote(preview(), selected, { ...options, invoiceRevision: revision })).toThrow();
 });

@@ -23,12 +23,14 @@ export function decodeCheckoutIntent(value: unknown, uid: number): CheckoutInten
   try { record = JSON.parse(value) as CheckoutIntent; }
   catch { throw new Error("待确认订单记录不可读，请先核对订单列表"); }
   const p = record?.payload;
-  const fields = ["quoteToken", "cartIds", "addressId", "shippingType", "storeId", "couponId", "useIntegral", "type", "pinkId", "combinationId", "seckillId", "bargainUserId", "realName", "userPhone", "mark", "customForm"];
+  const fields = ["invoiceId", "invoiceRevision", "quoteToken", "cartIds", "addressId", "shippingType", "storeId", "couponId", "useIntegral", "type", "pinkId", "combinationId", "seckillId", "bargainUserId", "realName", "userPhone", "mark", "customForm"];
   if (record?.version !== 1 || !positive(uid) || record.uid !== uid || typeof record.key !== "string" || !keyPattern.test(record.key)
     || !p || typeof p !== "object" || Array.isArray(p) || Object.keys(p).some((field) => !fields.includes(field))
     || !Array.isArray(p.cartIds) || !p.cartIds.length || p.cartIds.length > 100 || !p.cartIds.every(positive)
     || new Set(p.cartIds).size !== p.cartIds.length || ![1, 2].includes(p.shippingType)
     || !nonnegative(p.addressId) || !nonnegative(p.storeId) || !nonnegative(p.couponId) || !nonnegative(p.type)
+    || (p.invoiceId !== undefined && (!positive(p.invoiceId) || p.invoiceId > 2147483647 || typeof p.invoiceRevision !== 'string' || !/^[a-f0-9]{64}$/.test(p.invoiceRevision)))
+    || (p.invoiceId === undefined && p.invoiceRevision !== undefined)
     || typeof p.useIntegral !== "boolean" || typeof p.mark !== "string" || p.mark.length > 200 || !Array.isArray(p.customForm) || p.customForm.length > 100
     || [p.pinkId, p.combinationId, p.seckillId, p.bargainUserId].some((id) => id !== undefined && !nonnegative(id))
     || [p.realName, p.userPhone].some((v) => v !== undefined && typeof v !== "string")

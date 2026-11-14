@@ -147,6 +147,7 @@
       </template>
     </section>
 
+    <CheckoutInvoicePicker :state="invoiceState" :disabled="checkoutLoading || submitting || !!pendingSubmission" @select="invoiceFlow.select" @refresh="invoiceFlow.load" @next="invoiceFlow.next" @back="invoiceFlow.back" @manage="router.push('/user/invoice')" />
     <SystemFormFields
       v-if="customForm.length"
       :key="formRevision"
@@ -216,8 +217,11 @@
 </template>
 
 <script setup lang="ts">
+import CheckoutInvoicePicker from '@/components/CheckoutInvoicePicker.vue';
+import { apiBuyerInvoicePage } from '@/api/buyerInvoice';
+import { createCheckoutInvoice, initialCheckoutInvoice } from '../../../../common/checkoutInvoice';
 import ProductImage from "@/components/ProductImage.vue";
-import { computed, onUnmounted, ref, shallowRef, watch } from "vue";
+import { computed, onUnmounted, reactive, ref, shallowRef, watch } from "vue";
 import { isNavigationFailure, useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { useCartStore } from "@/stores/cart";
@@ -295,6 +299,12 @@ const submissionError = ref("");
 const submissionUncertain = ref(false);
 const pendingIntent = shallowRef<CheckoutIntent | null>(null);
 const pendingSubmission = computed(() => pendingIntent.value?.payload ?? null);
+const invoiceState = reactive(initialCheckoutInvoice());
+const invoiceFlow = createCheckoutInvoice(invoiceState, {
+  page: apiBuyerInvoicePage,
+  capture: () => { const owner = captureAuthSession(), uid = getUid(); return { uid, token: String(ownerVersion.value + ':' + uid), current: () => !disposed && isLoggedIn() && isCurrentAuthSession(owner) && isCurrentAuthSession(checkoutOwner) && loadedRoute.value === route.fullPath && !pendingIntent.value && (typeof document === 'undefined' || document.visibilityState !== 'hidden') }; },
+  canEdit: () => !disposed && !checkoutLoading.value && !submitting.value && !pendingIntent.value && loadedRoute.value === route.fullPath,
+});
 const activityOptions = ref<Pick<CheckoutQuoteOptions, "type" | "pinkId" | "combinationId" | "seckillId" | "bargainUserId">>({ type: 0 });
 const checkoutItems = computed(() => checkoutLoading.value || selectionError.value || loadedRoute.value !== route.fullPath
   ? [] : selectedItems.value);
@@ -311,6 +321,7 @@ const couponContext = computed(() => {
   catch (error) { return { scope: null, error: error instanceof Error ? error.message : "订单筛券范围无效" }; }
 });
 const quoteOptions = computed<CheckoutQuoteOptions>(() => ({
+  ...invoiceFlow.options(),
   ...activityOptions.value,
   addressId: shippingType.value === 1 && requiresAddress.value ? selectedAddrId.value : 0,
   shippingType: shippingType.value,
@@ -337,7 +348,7 @@ const partSummary = (id: number) => {
 const partNonUniform = (id: number) => quoteState.value.result?.items.find(row => row.id === id)?.promotion?.unitPriceCents === null;
 const canSubmit = computed(() => currentOwner.value && loadedRoute.value === route.fullPath && !checkoutLoading.value && !selectionError.value
   && !submitting.value && !savingAddress.value && (pendingIntent.value ? pendingIntent.value.uid === getUid()
-    : quoteReady.value && !systemFormError.value && !formValidationError.value && pendingUploads.value === 0));
+    : quoteReady.value && invoiceFlow.ready() && !systemFormError.value && !formValidationError.value && pendingUploads.value === 0));
 
 function selectCoupon(id: number) {
   if (pendingSubmission.value || couponState.value.loading || couponState.value.fingerprint !== couponContext.value.scope?.fingerprint
@@ -525,6 +536,7 @@ async function submitOrder() {
         customForm: customForm.value,
       });
     }
+    invoiceFlow.clear(true);
     const intent = journal.assertCurrent(pendingIntent.value);
     if (intent.orderId) { pendingIntent.value = intent; await openOrderResult(intent, owner); return; }
     sent = true;
@@ -571,6 +583,7 @@ async function openOrderResult(intent: CheckoutIntent, owner: ReturnType<typeof 
 let checkoutGeneration = 0;
 function resetCheckout() {
   const generation = ++checkoutGeneration;
+  invoiceFlow.clear();
   checkoutOwner = captureAuthSession(); ownerVersion.value++;
   shippingGeneration++; shippingSelection.value = null; shippingLoading.value = false; shippingError.value = '';
   quoteSession.reset();
@@ -638,7 +651,7 @@ async function loadCheckout() {
     selectedItems.value = rows;
     loadedRoute.value = route.fullPath;
     shippingType.value = rows.some((item) => item.productInfo?.productType === 4) ? 2 : 1;
-    await Promise.all([loadAddresses(generation), type === 2 ? loadShipping(generation, true) : loadPickupStores(generation), loadSystemForm(rows, generation)]);
+    await Promise.all([invoiceFlow.load(), loadAddresses(generation), type === 2 ? loadShipping(generation, true) : loadPickupStores(generation), loadSystemForm(rows, generation)]);
   } catch (error) {
     if (generation === checkoutGeneration) selectionError.value = error instanceof Error ? error.message : "结算商品加载失败";
   } finally {
@@ -659,7 +672,9 @@ const stopAuth = onAuthChange(() => {
   selectionError.value = '登录状态已变化，请重新加载结算';
 });
 watch(() => route.fullPath, loadCheckout, { immediate: true, flush: "sync" });
-onUnmounted(() => { disposed = true; ownerVersion.value++; stopAuth(); checkoutGeneration++; quoteSession.reset(); couponPicker.reset(); });
+function invoiceVisibility() { if (document.visibilityState === 'hidden') invoiceFlow.clear(true); else if (!pendingIntent.value && !disposed && isCurrentAuthSession(checkoutOwner)) void invoiceFlow.load(); }
+if (typeof document !== 'undefined') document.addEventListener('visibilitychange', invoiceVisibility);
+onUnmounted(() => { if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', invoiceVisibility); invoiceFlow.clear(); disposed = true; ownerVersion.value++; stopAuth(); checkoutGeneration++; quoteSession.reset(); couponPicker.reset(); });
 </script>
 
 <style scoped>

@@ -1,3 +1,4 @@
+import { captureCheckoutInvoice, persistCheckoutInvoice, assertCheckoutInvoiceActor, type CheckoutInvoiceInput, type CheckoutInvoiceActor } from './CheckoutInvoice';
 import { readOrderLifecycleLog } from './OrderLifecycleTimeline';
 /**
  * 订单创建 Service (M3 最高风险模块)
@@ -145,7 +146,7 @@ import { repurchaseCustomerOrder } from './CustomerOrderRepurchase';
 import { canonicalNewcomerBaseSkuUnique } from '@/services/activity/NewcomerSkuIdentity';
 
 /** 下单入参 */
-export interface CreateOrderParams {
+export interface CreateOrderParams extends CheckoutInvoiceInput {
   uid: number;
   /** 确认订单的 key (幂等防重) */
   key: string;
@@ -198,6 +199,8 @@ export interface CreateOrderParams {
 
 /** Infrastructure needed by the real order-creation core. */
 export interface StoreOrderCreationRuntime extends SystemConfigEnv {
+  /** Admitted HTTP identity; undefined is reserved for trusted core fixtures. */
+  checkoutInvoiceActor?: CheckoutInvoiceActor | null;
   /** Live server capability issued exclusively by the customer cashier adapter. */
   cashierSecondCardCreation?: CashierSecondCardCreationCapability;
   /** Independent ordinary/multi-SKU Customer capability. Never request JSON. */
@@ -225,6 +228,7 @@ export function customerVisibleManualVirtualContent(order: {
 }
 
 export interface OrderPricingQuote {
+  invoiceSelection?: { id: number; revision: string };
   confirmationFingerprint: string;
   deliveryAddress: DeliveryAddressSnapshot['saved'];
   /** Validated fields also exist for an unsaved assisted address. */
@@ -920,13 +924,14 @@ export class StoreOrderCreateService {
    *
    * 购物车认领和库存扣减都在 PostgreSQL 事务内完成。
    */
-  async createOrder(params: CreateOrderParams): Promise<{ orderId: string; key: string }> {
+  async createOrder(params: CreateOrderParams, invoiceActor?: CheckoutInvoiceActor): Promise<{ orderId: string; key: string }> {
     try { return await StoreOrderCreateService.createWithRuntime(
       this.container,
       {
         CONFIG_KV: this.env.CONFIG_KV,
         requireConfirmation: true,
         requirePurchaseOrigin: true,
+        checkoutInvoiceActor: invoiceActor ?? null,
         nextOrderId: async () => {
           const seqId = this.env.SEQUENCE.idFromName("seq");
           const seq = this.env.SEQUENCE.get(seqId);
@@ -1835,7 +1840,11 @@ export class StoreOrderCreateService {
     let assistedFormConfirmation: Awaited<ReturnType<typeof loadActiveOrderSystemForm>> | null = null;
     // Re-evaluated after final first-order/integral admission inside the transaction.
     // Mutable inventory and address-default metadata are deliberately not quote facts.
+    const invoiceSelection = await captureCheckoutInvoice(c.db, uid, params);
+    if (invoiceSelection && payCents <= 0) throw new ValidateException('实付金额为0，不能申请发票');
+    let bindInvoiceToQuote = true;
     const confirmationFingerprint = () => checkoutFingerprint({
+      ...(invoiceSelection && bindInvoiceToQuote ? { invoiceSelection } : {}),
       version: 1, uid, adminId: assisted?.adminId ?? 0, touristUid: assisted?.touristUid ?? '',
       ...(cashier?{customerCashier:{creatorUid:cashier.actor.uid,serviceId:cashier.service_id,scopeKey:cashier.scope_key,
         requestKey:cashier.request_key,requestHash:cashier.request_hash,touristUid:cashier.tourist_key,mode:'second-card-counter-v1'}}:{}),
@@ -1899,6 +1908,7 @@ export class StoreOrderCreateService {
       }
       return {
         confirmationFingerprint: await confirmationFingerprint(),
+        ...(invoiceSelection ? { invoiceSelection: { id: invoiceSelection.id, revision: invoiceSelection.revision } } : {}),
         deliveryAddress: deliveryAddress?.saved ?? null,
         deliveryAddressFields: deliveryAddress?.fields ?? null,
         integralPolicy: { enabled: Boolean(user) && supportsIntegralDeduction && pricingConfig.integralEnabled,
@@ -1962,6 +1972,15 @@ export class StoreOrderCreateService {
     const confirmation = ordinary ? ordinary.confirmation! : cashier ? cashier.confirmation! : runtime.requireConfirmation || params.quoteToken !== undefined
       ? await readCheckoutConfirmation(runtime.CONFIG_KV, { uid, key, adminId: assisted?.adminId, touristUid: assisted?.touristUid }, params.quoteToken)
       : null;
+    if (confirmation) {
+      const expected = confirmation.invoiceSelection;
+      if (expected && (!invoiceSelection || invoiceSelection.id !== expected.id || invoiceSelection.revision !== expected.revision)) throw new OrderQuoteReconfirmRequired(key);
+      // PHP's old checkout posts invoice_id only at the final create call. A
+      // receipt with no invoice binding preserves that late selection; its
+      // template is still captured now and locked/rechecked before the INSERT.
+      // Versioned clients and any invoice-bearing quote retain full binding.
+      bindInvoiceToQuote = !!expected || params.invoiceRevision !== undefined || params.invoiceRevisionAlias !== undefined;
+    }
     if (confirmation && (assisted || cashier || ordinary) && orderSystemFormId > 0) {
       assistedFormConfirmation = await loadActiveOrderSystemForm(c.db, orderSystemFormId);
     }
@@ -3187,6 +3206,7 @@ export class StoreOrderCreateService {
         throw new ValidateException("订单计价配置或会员权益已变化，请重新确认");
       }
       if (confirmation) assertCheckoutConfirmation(confirmation, await confirmationFingerprint(), key);
+      if (invoiceSelection) await persistCheckoutInvoice(tx, invoiceSelection, order, now);
       if (couponRow && (couponRow.startTime || couponRow.endTime)) {
         // A lock-only writer need not change the tuple, so an UPDATE predicate's
         // pre-wait clock is not sufficient. Check again after reservation and all
@@ -3238,13 +3258,14 @@ export class StoreOrderCreateService {
       // waits that would invert ordinary and points checkout or refund locks.
       if (uid > 0) {
         try {
-          const [activeAccount] = await tx.select({ uid: userTable.uid }).from(userTable)
+          const [activeAccount] = await tx.select({ uid: userTable.uid, pwd: userTable.pwd }).from(userTable)
             .where(and(
               eq(userTable.uid, uid), eq(userTable.status, 1),
               eq(userTable.isDel, 0), isNull(userTable.deleteTime),
             ))
             .limit(1).for("update", { noWait: true });
           if (!activeAccount) throw new NotFoundException("用户不存在或已失效");
+          if (invoiceSelection) assertCheckoutInvoiceActor(activeAccount, runtime.checkoutInvoiceActor);
         } catch (error) {
           let cause: unknown = error;
           for (let depth = 0; depth < 8 && cause && typeof cause === "object"; depth++) {

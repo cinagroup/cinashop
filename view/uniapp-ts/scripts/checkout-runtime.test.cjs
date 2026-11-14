@@ -1,3 +1,4 @@
+const invoiceFixture = require('../../common/test/buyerInvoiceFixture.cjs');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
@@ -8,11 +9,13 @@ const item = { id: 1, productId: 70, unique: 'realSku', cartNum: 2, type: 0, isN
 function server(overrides = {}) {
   return async call => {
     if (overrides[call.url]) return overrides[call.url](call);
+    if (call.url === '/api/invoice') return { data: invoiceFixture.page({ kind: 'titles', cursor: call.data.cursor ?? null, limit: call.data.limit ?? 20 }) };
     if (call.url === '/api/cart/list') return { data: [item] };
     if (call.url === '/api/address/list') return { data: [{ id: 11, real_name: 'local', phone: '00000000000', is_default: 1 }] };
     if (call.url === '/api/store/list') return { data: [{ id: 1, name: 'local' }] };
     if (call.url.startsWith('/api/coupons/order/')) return { data: [], headers: {} };
     if (call.url === '/api/order/confirm' || call.url.startsWith('/api/order/computed/')) return { data: {
+      ...(call.data.invoiceId === undefined ? {} : { invoiceSelection: { id: call.data.invoiceId, revision: call.data.invoiceRevision } }),
       orderKey: 'checkout_key1', quoteToken: 'a'.repeat(32), addressInfo: { id: call.data.addressId },
       cartInfo: [{ ...item, truePrice: '9.00', sumPrice: '20.00', productInfo: { ...item.productInfo, price: '10.00' } }],
       priceGroup: { sumPrice: '20.00', totalPrice: '18.00', pay_price: call.data.shippingType === 2 ? '18.00' : '21.00',
@@ -447,4 +450,28 @@ for(const change of ['account','hide','newer'])test(`UniApp late shipping respon
  const reading=r.checkout.refreshQuote(true);await tick();if(change==='account')r.auth.setLogin('other-owner',22);else if(change==='hide')r.hooks.onHide();else await r.checkout.refreshQuote(true);
  wait.resolve(shipping([1]));await reading;await tick();
  if(change==='newer')assert.deepEqual(r.checkout.allowedShippingTypes.value,[2]);else assert.equal(r.checkout.canSubmit.value,false);r.stop();
+});
+
+for (const special of [false, true]) test(`UniApp actual checkout freezes only invoice id/revision (special=${special})`, async () => {
+  const title = invoiceFixture.title(special ? { headerType: 2, type: 2, name: '本机公司', dutyNumber: 'A'.repeat(18), bank: '本机银行', cardNumber: '000123456789', address: '本机地址', tell: '010-00000000' } : {});
+  const r = runtime({ send: server({ '/api/invoice': call => ({ data: invoiceFixture.page({ kind:'titles',cursor:call.data.cursor??null,limit:call.data.limit??20 },{ items:[title] }) }), '/api/order/create/checkout_key1': () => ({ transport:'owned unknown result' }) }) });
+  try { await r.start(); r.checkout.invoiceFlow.select(r.checkout.invoiceFlow.titles()[0]); await tick(); assert.equal(r.checkout.canSubmit.value,true); assert.equal(r.checkout.invoiceState.selected.cardNumber,title.cardNumber);
+    await r.checkout.submit(); const body=r.calls.find(c=>c.url.includes('/create/')).data; assert.equal(body.invoiceId,71); assert.equal(body.invoiceRevision,invoiceFixture.revision); assert.equal(r.checkout.invoiceState.selected,null);
+    const saved=r.storage.get(key); for (const text of ['本机公司','本机买家','000123456789','13800000000','buyer@example.invalid']) assert.equal(saved.includes(text),false);
+  } finally { r.stop(); }
+});
+test('UniApp invoice refresh and stale row callbacks require an explicit new choice',async()=>{
+  const r=runtime({send:server()});try{await r.start();const old=r.checkout.invoiceFlow.titles()[0];r.checkout.invoiceFlow.select(old);await tick();await r.checkout.invoiceFlow.load();await tick();assert.equal(r.checkout.canSubmit.value,false);r.checkout.invoiceFlow.select(old);assert.equal(r.checkout.canSubmit.value,false);r.checkout.invoiceFlow.select(null);await tick();assert.equal(r.checkout.canSubmit.value,true);}finally{r.stop();}
+});
+test('UniApp uncertain invoice retry restores exactly the original intent without loading private titles',async()=>{
+  const storage=new Map(),first=runtime({storage,send:server({'/api/order/create/checkout_key1':()=>({transport:'owned unknown'})})});let saved;
+  try{await first.start();first.checkout.invoiceFlow.select(first.checkout.invoiceFlow.titles()[0]);await tick();await first.checkout.submit();saved=first.calls.find(c=>c.url.includes('/create/')).data;}finally{first.stop();}
+  const second=runtime({storage,send:server({'/api/order/create/checkout_key1':()=>({transport:'owned unknown'})})});try{await second.start();assert.equal(second.calls.length,0);assert.equal(second.checkout.invoiceState.page,null);await second.checkout.submit();assert.deepEqual(second.calls[0].data,saved);}finally{second.stop();}
+});
+test('UniApp mismatched invoice quote cannot enable checkout',async()=>{
+ const base=server(),r=runtime({send:async call=>{const result=await base(call);if(call.data.invoiceId&&call.url.includes('/computed/'))result.data.invoiceSelection.id=72;return result;}});
+ try{await r.start();r.checkout.invoiceFlow.select(r.checkout.invoiceFlow.titles()[0]);await tick();assert.equal(r.checkout.canSubmit.value,false);assert.match(r.checkout.quote.value.error,/发票/);await r.checkout.submit();assert.equal(r.calls.some(c=>c.url.includes('/create/')),false);}finally{r.stop();}
+});
+for(const ending of ['onHide','onUnload','identity'])test(`UniApp late invoice title read cannot restore private data after ${ending}`,async()=>{
+ const wait=deferred(),r=runtime({send:server({'/api/invoice':()=>wait.promise})});try{await r.start();if(ending==='identity')r.auth.setLogin('new-invoice-owner',22);else r.hooks[ending]();wait.resolve({data:invoiceFixture.page()});await tick();assert.equal(r.checkout.invoiceState.page,null);assert.equal(r.checkout.invoiceState.selected,null);}finally{wait.resolve({data:invoiceFixture.page()});r.stop();}
 });
