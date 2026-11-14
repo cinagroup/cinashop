@@ -178,6 +178,10 @@
       </view>
     </view>
 
+    <view v-if="order.pid >= 0 && order.supplier_allocation_status !== 1" class="section">
+      <button :disabled="loading || paying" @tap="goInvoice(order)">订单发票</button>
+    </view>
+
     <!-- 物流入口 (已发货) -->
     <view v-if="canOperate && order.delivery_type === 'express' && order.status >= 1" class="express-link" @tap="goExpress(order)">
       <text>📍 查看物流</text>
@@ -584,6 +588,13 @@ function showPaidResult(scope: ReturnType<typeof currentView>) {
     url: `/pages/order/payResult?orderId=${scope.id}`,
     fail: () => { if (scope.current()) actionError.value = '支付结果页未打开，请刷新订单核对'; },
   });
+}
+
+function goInvoice(expected: OrderDetailInfo) {
+  const scope = currentView();
+  if (!scope.current() || !order.value || expected !== order.value || expected.pid < 0 || expected.supplier_allocation_status === 1 || loading.value || paying.value) return;
+  uni.navigateTo({ url: `/pages/user/invoiceOrder?orderId=${encodeURIComponent(expected.order_id)}`,
+    fail: () => { if (scope.current() && expected === order.value) actionError.value = '发票页面未打开，请重试'; } });
 }
 
 function goExpress(expected: OrderDetailInfo) {

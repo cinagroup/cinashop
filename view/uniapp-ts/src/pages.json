@@ -656,6 +656,10 @@
       }
     },
     {
+      "path": "pages/user/invoiceOrder",
+      "style": { "navigationBarTitleText": "订单发票" }
+    },
+    {
       "path": "pages/goods/search",
       "style": {
         "navigationBarTitleText": "搜索"

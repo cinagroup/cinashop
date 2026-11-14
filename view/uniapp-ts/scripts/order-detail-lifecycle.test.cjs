@@ -233,3 +233,12 @@ for (const raw of [undefined, null, { create: '2024-02-30', pay: '', delivery: '
 // Keep the audited package manifest unchanged while registering this page's
 // complete logistics lifecycle cases through the existing order test entry.
 require('./buyer-order-tracking-lifecycle.test.cjs');
+
+// Register the complete buyer invoice lifecycle through the audited order entry.
+require('./buyer-invoices-lifecycle.test.cjs');
+
+test('UniApp invoice entry binds the currently loaded order and rejects a stale order callback', async () => {
+  const r = setup(); try { await r.start({ orderId: 'local_A' }); const old = r.checkout.order.value; await r.checkout.load(); r.checkout.goInvoice(old);
+    assert.deepEqual(r.navigations, []); r.checkout.goInvoice(r.checkout.order.value); assert.deepEqual(r.navigations, ['/pages/user/invoiceOrder?orderId=local_A']);
+  } finally { r.stop(); }
+});

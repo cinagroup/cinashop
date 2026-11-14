@@ -1,0 +1,1069 @@
+{
+  "batch": "buyer-invoices-20261114",
+  "base": "3b9d8210ccc423233685841824eec2a3ffcfcbe2",
+  "branch": "codex/buyer-invoices",
+  "phpReference": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "wholeMigrationComplete": false,
+  "scope": [
+    "PC and UniApp existing invoice hub: bounded own title and paid invoice record pages, personal/enterprise ordinary and special fields, edit/default/delete",
+    "Existing-order detail entry -> own title selection/create/edit -> invoice application -> immutable pending/issued/refused record and detail",
+    "Current invoice/refund/split/payment-root amount and document lineage rules remain authoritative; no live issuance",
+    "Private owner/route-bound versioned DTOs, fresh authorization, bounded strict inputs, stale row rejection, visibility/account/late-I/O isolation and uncertain-write readback without auto replay",
+    "Full native App/JWT/restricted LOGIN transaction and concurrency tests; original exact two Worker type shards and runtime config; full frontend toolchain/builds and installed Browser",
+    "Secret scans, FF main push, branch cleanup and every CI job/run terminal"
+  ],
+  "knownSeparateGap": "checkout invoice_id -> PHP order.create/CreateInvoiceJob is not connected in TS; not claimed complete by this existing-order invoice batch",
+  "validation": {
+    "sourceFiles": 44,
+    "protectedFiles": 4953,
+    "restoredResources": 150,
+    "userSymlinks": 5,
+    "workerTypeRoots": 4425,
+    "workerCommonRoots": 1932,
+    "workerTestRoots": 2493,
+    "workerTypeTestShards": [
+      1247,
+      1246
+    ],
+    "originalCompilerOptionsPreserved": true,
+    "explicitTypeLibraryResolutionPreserved": true,
+    "runtimeTypeConfigPassed": true,
+    "unitFiles": 107,
+    "unitPassed": 2793,
+    "unitFailed": 0,
+    "unitSkipped": 0,
+    "nativeFiles": 7,
+    "nativePassed": 259,
+    "nativeFailed": 0,
+    "nativeSkipped": 0,
+    "workerdFiles": 30,
+    "workerdPassed": 410,
+    "workerdFailed": 0,
+    "workerdSkipped": 0,
+    "productionAuditFindings": 0,
+    "uniToolchainInvocations": 25,
+    "uniPassed": 3816,
+    "uniFailed": 0,
+    "uniSkipped": 0,
+    "uniCancelled": 0,
+    "pcAuthPassed": 395,
+    "pcImagePassed": 9,
+    "productionBuilds": [
+      "pc",
+      "h5",
+      "mp-weixin",
+      "app"
+    ],
+    "browserBundleFiles": 667,
+    "historicalBinding": {
+      "baselinePassed": 178,
+      "currentPassed": 178,
+      "sameFailingNames": 10,
+      "skipped": 0,
+      "isPassingGate": false
+    },
+    "runnerRetestWholeFilePassed": 700,
+    "runnerAddedCases": 7,
+    "affectedOriginalTypeShardRetest": 1,
+    "browserPassed": true,
+    "browserSqlCleaned": true,
+    "browserOuterExitCode": 0,
+    "browserInnerPassed": 1
+  },
+  "sourceManifestSha256": "243e4775cc16efe20187de8ce75b394f85ea9c3ccdaeb0f9b0ccdf6c3961b2b0",
+  "controlledSources": [
+    {
+      "path": "view/common/buyerInvoiceFlow.ts",
+      "sha256": "d6e3ee4ed86f77c216214064d26093b5bec57c28bbe0a1e31b5adb2da1ba1428"
+    },
+    {
+      "path": "view/common/buyerInvoiceForm.ts",
+      "sha256": "48beb48e28f825aec91636a21ac22c90f4e3481d231ad3a91647d0268b0df840"
+    },
+    {
+      "path": "view/common/buyerInvoices.ts",
+      "sha256": "3c2ff2994a2bede0f5d9972db0da4389a9e2c6d7c1e3cfdd3cd54d001082efe0"
+    },
+    {
+      "path": "view/common/test/buyerInvoiceFixture.cjs",
+      "sha256": "8fe679f3294b3dedca2e1b4098459381cb121c7701e9a9c44adf40f7ed451b56"
+    },
+    {
+      "path": "view/pc-ts/src/api/buyerInvoice.ts",
+      "sha256": "0a40cf7e5a9c68f131c98067c518651cc83a23310bfa297cd27dc3dccee9953b"
+    },
+    {
+      "path": "view/pc-ts/src/components/BuyerInvoiceForm.vue",
+      "sha256": "54cf0d7fb1218feb963dd21b63f49e77f824f5ea4e56a57c6a7e9c168b7e82da"
+    },
+    {
+      "path": "view/pc-ts/src/components/BuyerInvoiceSnapshot.vue",
+      "sha256": "d64a82ca6b2f62f64cc92539b0838e50951484fe6be99743210e354bfdf707af"
+    },
+    {
+      "path": "view/pc-ts/src/components/BuyerInvoiceView.vue",
+      "sha256": "25853487009cfef7355b7ff1ce7e5c23dcf08da7fca86aff7f06d3cd33147d35"
+    },
+    {
+      "path": "view/pc-ts/src/composables/useBuyerInvoices.ts",
+      "sha256": "03736e080ff409b52daf706de4789ccaf40f107a4ed75de5c2c8c7fc90a0cf74"
+    },
+    {
+      "path": "view/pc-ts/src/pages/order/OrderDetail.vue",
+      "sha256": "4ee019a7efd62cddec174d86d3ce7eff1a010c1208e1f4a3d8f4e370493993bf"
+    },
+    {
+      "path": "view/pc-ts/src/pages/user/InvoiceList.vue",
+      "sha256": "dbdfeff62a1ce458e01f2d2a04571274e789c81fe0ede7e928fd3acc29a00f7c"
+    },
+    {
+      "path": "view/pc-ts/src/pages/user/InvoiceOrder.vue",
+      "sha256": "7228fea38f97243070a2d0b079ea848e94cc2787b76157bcd1941e3255953a5b"
+    },
+    {
+      "path": "view/pc-ts/src/router/index.ts",
+      "sha256": "f26650ee17a608f9ea6c3f62541dffbb539283293c65be6076a5a1650d033cdb"
+    },
+    {
+      "path": "view/pc-ts/test/auth-session.test.mjs",
+      "sha256": "bee613d896fa4d2d1dd4c3cf2ff7d82aa1a00d9d04cdca24bdf25833f6ddf4ba"
+    },
+    {
+      "path": "view/pc-ts/test/buyer-invoices.test.mjs",
+      "sha256": "e2ea777cf06ebee3817b2fa1f9d8cc7383a05bf5f70317fc7c8ccbff32f7a13d"
+    },
+    {
+      "path": "view/pc-ts/test/order-detail-lifecycle.test.mjs",
+      "sha256": "07b8265da22ab385683ddfa758b2b17d35161d5e6084ca6ba53ba99733428d3c"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/buyer-invoices-lifecycle.test.cjs",
+      "sha256": "d60d19fc4c4ca962ec8f283618367ac096a178163522d474a1bf579cd9c67a59"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/order-detail-lifecycle.test.cjs",
+      "sha256": "3024989df7d892169a9ea41cf8f16cfc8a66398156d298accc919cd63baa59de"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/buyerInvoice.ts",
+      "sha256": "3b6098ed0924db04d2fe1f779665f7c938738ecd13709cbc8660fffac2639dfe"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/BuyerInvoiceForm.vue",
+      "sha256": "f7c527b0fd90bb9e1ef35519726ccf6f6a70790e22fe98dcdde0a8f2fa9be81f"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/BuyerInvoiceSnapshot.vue",
+      "sha256": "99ac49a827e019ec65a47c8fa3afc8c29532bd842d1e82a2adf019dc47508c6b"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/BuyerInvoiceView.vue",
+      "sha256": "3b175f7954c6ac1b8643c4642a6a88c7faa815c925c6b3f836747902233ad002"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useBuyerInvoices.ts",
+      "sha256": "730c708a98373673a4f5496ef9b21cfbb39983f41327a8ddc37519be75437cda"
+    },
+    {
+      "path": "view/uniapp-ts/src/config/navigation.ts",
+      "sha256": "a38de483e8a337df2a8bed587b7b2c2f194d0efde21d2775598e73d47e0cd628"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages.json",
+      "sha256": "666d8fad55b084bee6d231a92909c7af22c10282dc827aed6244435afa3036fa"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/order/detail.vue",
+      "sha256": "12bd6d9147ec4638b4600e54ccbe27a00752a90198ef3246c520c74f02e82fdc"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/invoice.vue",
+      "sha256": "08c80f261b42bb8ce32735f372fedee8d221de78c63aebe30e57bd01acc74a73"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/invoiceOrder.vue",
+      "sha256": "34fd141a7c8749db0865d7d17fede2b3df98cd3e5ec90cfa5bc27a18b1172ef7"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "c5a8e4cc96f61d6c40051a9a7e96ed444bad7ead04be69a6849a73577f618a14"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/BuyerInvoiceController.ts",
+      "sha256": "330186c5fe1d8c8938688c2d482c7d6396eee50dd0714a1d1b99cbb091bb9314"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/OrderController.ts",
+      "sha256": "c2815c0c9ea7390ad57132e458d717462d7f065d444c0c1641db4eeeda323e89"
+    },
+    {
+      "path": "workers-ts/src/routes/v1/index.ts",
+      "sha256": "4e333e3353d74e82c39bb1666f4853d28a40419c0ec7999118a3f9dd7a963fb6"
+    },
+    {
+      "path": "workers-ts/src/routes/v2/index.ts",
+      "sha256": "31fedadb4f29012fee3b9afa9600f92b2abe8eb6d4b707d28712decbcf939cee"
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreOrderInvoiceService.ts",
+      "sha256": "3b6cc16f64ea698135c664cd47b169b5aa18b652191447e9a52e57a7f11476a4"
+    },
+    {
+      "path": "workers-ts/src/services/user/BuyerInvoiceService.ts",
+      "sha256": "563734e9c5f6112578fb648bc3ca58d4f92c3f95437c007e5d69ca4e612081dc"
+    },
+    {
+      "path": "workers-ts/src/services/user/UserFinanceService.ts",
+      "sha256": "b0c589e166f337faf61971b4e72f52e0956a17e6e45fa7248bb1a6c302afa30f"
+    },
+    {
+      "path": "workers-ts/test/browser/buyer-invoices.acceptance.ts",
+      "sha256": "9dbfc65969ca71f5a41cc1da8e255cb2b73b6ef5a75b4cc95704718d36b4fee2"
+    },
+    {
+      "path": "workers-ts/test/buyer-invoice-contract.test.ts",
+      "sha256": "f913cdd5ce44ec19e703dd9553a997ac4f6a8ec1595fe60fbb3e391f910714d6"
+    },
+    {
+      "path": "workers-ts/test/buyer-invoices-native.test.ts",
+      "sha256": "da4c5e09d394d780115b82c8e010ca651af81ca4c38151a1d665dac4a7639c14"
+    },
+    {
+      "path": "workers-ts/test/helpers/buyerInvoices.ts",
+      "sha256": "57c5dccc1996de98561d58f7273a6cf5325cb4c300724930262afe437f8b1c81"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "c629f68a9745ad4fc29148c25da27dcd8c25d2715000117c66ce48fcc164ab3e"
+    },
+    {
+      "path": "workers-ts/test/order-invoice-concurrency.test.ts",
+      "sha256": "9a486f0d809ba3a31b5241b27ed5cbf0a113c975d3d05edae3116c624e8bb7a9"
+    },
+    {
+      "path": "workers-ts/test/v2-compatibility-migration.test.ts",
+      "sha256": "9aca035ce70fda0ec8844677f5c773822ca41c7f1a56d19f6b5cc5c704605222"
+    },
+    {
+      "path": "workers-ts/vitest.buyer-invoices-browser.config.ts",
+      "sha256": "4add64bf5b0788801ff848dc269deb132dc929ac978c441a1dc40bc8a3028cdc"
+    }
+  ],
+  "documentation": {
+    "path": "workers-ts/docs/php-ts-buyer-invoices-20261114.md",
+    "sha256": "4259521a69c4a7170ec583e24fb9ab5bc3f0f23caa1bdcbea234638214c9d6c2"
+  },
+  "sourceSecretScan": {
+    "base": "3b9d8210ccc423233685841824eec2a3ffcfcbe2",
+    "completeSourceFiles": 44,
+    "baselineFindings": 0,
+    "currentFindings": 0,
+    "introducedFindings": 0,
+    "ignoredRulesChanged": false,
+    "ignoredFilesChanged": false
+  },
+  "browser": {
+    "passed": true,
+    "browser": "installed Codex Browser ID2; no install or fallback",
+    "environment": "PC and UniApp H5 production bundles, actual App/JWT, independently commissioned restricted LOGIN, isolated PostgreSQL16.14",
+    "viewport": {
+      "pc": [
+        1280,
+        820
+      ],
+      "mobile": [
+        375,
+        812
+      ]
+    },
+    "dom": {
+      "pc": {
+        "clientHeight": 820,
+        "clientWidth": 1265,
+        "privateMerchantNoteVisible": false,
+        "scrollWidth": 1265
+      },
+      "mobile": {
+        "clientHeight": 812,
+        "clientWidth": 360,
+        "privateMerchantNoteVisible": false,
+        "scrollWidth": 360
+      },
+      "mobileFormInControlFrame": {
+        "clientWidth": 345,
+        "scrollWidth": 345
+      }
+    },
+    "operations": {
+      "pc": {
+        "saves": 3,
+        "defaults": 1,
+        "deletes": 1,
+        "applications": 1,
+        "issued": true,
+        "refused": true,
+        "changed": true
+      },
+      "uni": {
+        "saves": 3,
+        "defaults": 1,
+        "deletes": 1,
+        "applications": 1,
+        "issued": true,
+        "refused": true,
+        "changed": true
+      }
+    },
+    "checks": [
+      "Full personal and enterprise special fields, including bank-account leading zeros",
+      "Edit/default/confirmed-delete and exact one existing-order application per surface",
+      "Actual loaded order detail entry and actual invoice-record detail entry",
+      "Pending/issued/refused states, correct refusal note, hidden private merchant note",
+      "Immutable title after later template change; exact created/issued evidence remains unchanged",
+      "Read 503 and wrong-UID response clear private fields; explicit read retry recovers",
+      "Actual UID22 cannot read UID11 order; SQL account revocation clears fields and redirects to login; recovery succeeds",
+      "No horizontal overflow at actual mobile and desktop client widths"
+    ],
+    "console": {
+      "applicationErrors": 0,
+      "dependencyWarning": "Existing vue-router deprecated esm-bundler entry only",
+      "warningCount": 7
+    },
+    "screenshots": [
+      {
+        "path": "/tmp/php-ts-buyer-invoices-20261114/browser-pc-product-final.jpg",
+        "format": "JPEG",
+        "width": 1264,
+        "height": 859
+      },
+      {
+        "path": "/tmp/php-ts-buyer-invoices-20261114/browser-mobile-final.jpg",
+        "format": "JPEG",
+        "width": 360,
+        "height": 856
+      }
+    ],
+    "noLiveIssuancePaymentProviderOrQueue": true,
+    "platformLimit": "MP-WEIXIN and App compiled; interactive browser acceptance is H5/PC, not physical devices",
+    "temporaryTabsClosed": 4,
+    "viewportReset": true,
+    "databaseRolesAndListenersCleaned": true
+  },
+  "typeGateInheritance": {
+    "originalBothShardsAndRuntime": "candidate-4b-results.json",
+    "runnerRepairAndAffectedFirstShard": "candidate-5-results.json",
+    "browserFixtureRepairAndAffectedFirstShard": "candidate-6-results.json",
+    "unaffectedSecondShardInputsUnchanged": true
+  },
+  "noDeployment": true,
+  "noPhpUpload": true,
+  "noLiveIssuancePaymentProvidersSmsOrExternalQueue": true,
+  "ciAtCommit": "Not yet run; every job and workflow terminal will be recorded in completion.json after pushing. Prior fixed-PHP checkout baseline is not a passing CI gate.",
+  "publicationChecks": "Full complete-file and exact-commit scans are mandatory before FF merge/push; their records are outside this precommit immutable artifact set.",
+  "artifactHashes": [
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/accepted-counts-pre-browser-final.json",
+      "sha256": "2ddfa7d9503c7439caababc102d440e42695866a62adaa6ab73ec0dcfd69c7a1"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/accepted-counts-pre-browser.json",
+      "sha256": "b0e47324d92b5252709c63a18cccaa6413a93a04439b17008817ada1b5438868"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/accepted-counts.json",
+      "sha256": "c3d49d37bda11682aa7d29fd2f9192c604331cbde5328f3d92dfd731531a947f"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/additional-native-files.json",
+      "sha256": "92c0292a8d5a26bb12579031871d491e472c50e929850098f4e973513d0446be"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/backend-terminal.json",
+      "sha256": "9931b0ad36817332760c60a2c6e6a1dca06aaad90e4420fa038fd46e510e835d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/baseline-dependencies.json",
+      "sha256": "60fe9dda3083ef5727e6eb54ab9de77c1c03b68c109750932cbc68566574dab4"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/baseline-secret-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/baseline-secret-scan.log",
+      "sha256": "bf50c0183fb9fa71e3b9c017ee30e2d3c384a616c3b15c4bd59495ca70a22f21"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-attempt-1/browser-command.json",
+      "sha256": "361fc9c6c091cb3737fb2a9a1dedb8839b23fda3daa016e96be978bd555b586b"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-attempt-1/browser.log",
+      "sha256": "2dae1faa2afd6222514e2e466eeae2cf248becfe0bead331ea55f1ffe6eaf816"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-attempt-2/browser-command.json",
+      "sha256": "032a3a5dd41ffff07d031a081f0632b94c251a065a636765606e6d35240241b7"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-attempt-2/browser.log",
+      "sha256": "754d89fa16eca6c42b7e8c1420462c7ff15a123b9412d7841b30c8306df3794b"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-attempt-2/pc-unknown-write.jpg",
+      "sha256": "7514fa5fe9e94a63cf98211ef40885df399a96787cc3d6a06d7c4ed0576e1e7e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-attempt-2/terminal.json",
+      "sha256": "32e9c4b824c3871b5dcedc342cd95d10cc93489837f9e6c42d1279d77a083a84"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-command.json",
+      "sha256": "804b2a43a5373236b4d56b3334cfd2c111a7e6cb377ed9aef5190a9a7dbb6bc3"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-fixture-repair-terminal.json",
+      "sha256": "fcfcb37bf70be11c70c03e004abb1561dfa765ccd01cb6ffc649fd4d42655554"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-mobile-console.json",
+      "sha256": "c4f3dc6019d7a86c0109a79004d87b34bb943550f01c80e6beb0ddd7804c38f2"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-mobile-detail-console.json",
+      "sha256": "ada8bfd6a7952cc0316652c531a529d2710ff2fdc91220a8497d993481f8c642"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-mobile-dom.json",
+      "sha256": "3d9d69738bcb59882a64f8bfdb6e0a4be1b1d0ccd3373df86396fddb538ab50d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-mobile-final.jpg",
+      "sha256": "bb139dffc88431607198b634534454f48a13e88808a7a184080d42d5ec3f96d9"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-mobile-raw-viewport.jpg",
+      "sha256": "ba831665b70bf120f31f17647dcb09518aa75ab7c6c296681144b34fe99dfc15"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-mobile-revoked.jpg",
+      "sha256": "fff17e54ba67cccf3f1aa803516c9c5a7b8c948346ee591266c37009f9709e2a"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-mobile-special-form.jpg",
+      "sha256": "458dcf1de842cb4ffd25288ae5e07862638bfbd01a976e80bd019ddc12ccf06d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-outer-terminal.json",
+      "sha256": "acd38eaddf44c81a77478260c8d878c3aadd3dc3e762f7bc7b410365e422dbbb"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-pc-console.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-pc-dom.json",
+      "sha256": "d6082a3c83bfdebd0505998aa0f75c299e05cc6ab3b4b0dfa8d96651c306d7f6"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-pc-final-console.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-pc-final.jpg",
+      "sha256": "4048a3172f850a94806b8e138dee95753d245dde761bbaa34fd95a14a164ff0e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-pc-issued.jpg",
+      "sha256": "141023e864d4fdfc5d17b105ac1c1d1bb7898f7e30ab2d3425b15cbf078244c4"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-pc-product-final.jpg",
+      "sha256": "96b7cfa99194cdbe07c46f8f3f34c04a5b9fb6924111ffc1cfb9b04e2ea3ac9e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-pc-revoked.jpg",
+      "sha256": "498adaf76e7cf9179cc776e88390271eb6f634c61ad6cc8146ba9574d08f1066"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-plan.json",
+      "sha256": "cc7be49460ab346cdae363bc6ba025462ac96e93a0427f3e8da85b09ebd01e2e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-qa.json",
+      "sha256": "c905151c6948e4a7556ea60ca99885c9857cde2707ab07f0b39847e6aacd2954"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-result.json",
+      "sha256": "c0e0b2fcbbb43c605af7a705e37bc59b7dfce381ca15af6c906e35b8744516ab"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-run-candidate-5.py",
+      "sha256": "c8ebc489816455378dcaf5dad210ed55a131e3c87fa2749728c89b600a4f9bf0"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-run-candidate-6.py",
+      "sha256": "033a49fe1ff214030f7fb820f8394c7efaf40469dd435e9f5be21583c255beef"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-run.py",
+      "sha256": "4506d2df1b26401bb95c59b30e0cd96117c6adabb38f6bda9943126610db3a03"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser-runbook.txt",
+      "sha256": "649bdcfc8f26c4621b2b96844fca2188b7ec65010ae46a56f8f892314f9faed9"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/browser.log",
+      "sha256": "9e28df68b12b96cc79c5bc4c60b1426af5ef8279501fc01c9c731fb56e88e928"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-1-dependencies.json",
+      "sha256": "7bb75a0a0652e74795a8d429f8de45bdb595d82ba6ddc1819b315265300df4d9"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-1-source.json",
+      "sha256": "af207cd5b85b19af40c2eec28ad7ad66ed95c6a402ca0510ea226425434e3524"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-2-dependencies.json",
+      "sha256": "e4c044391f40853e57c334e0e4e442aab3a7ed7736e94fe2464e9ca822ae9d4a"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-2-pc-build.log",
+      "sha256": "11a527e4d98a2345aecd57ad44bff02133da77c52679f6a16304cc27c3102ae6"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-2-results.json",
+      "sha256": "8f19b8e2083ce068c53c8b9a5e07c2eb986bd575bde909d04c05622cab319190"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-2-source.json",
+      "sha256": "ee7eef8b62ad86763092ff1b20ea8b0f213b36ad73a20edd585bcd282add5d43"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-2-uni-toolchain.log",
+      "sha256": "030965df9acf726f10960565650ee9bf0aec1e7efe43bc62ebb3f0bfc219af7f"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-2-uni-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-3-build-files.json",
+      "sha256": "85a2790505874a00b1cb6a0908522d085269a9af85a6c30d6da4ee3eb7c1529c"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-3-delta.json",
+      "sha256": "23470657c5d469d7d4e96b575596916469a1bc8d147da3b2372aaf8ad07a122f"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-3-dependencies.json",
+      "sha256": "e4c044391f40853e57c334e0e4e442aab3a7ed7736e94fe2464e9ca822ae9d4a"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-3-results.json",
+      "sha256": "e1dabfa8d29fcbde4bac2abb595e4d856bdee8dd70c565d8fdc75232a1b3f0cc"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-3-source.json",
+      "sha256": "25cd6172e919095067d88a269a098ffa353086d2732457958bbc834b55e22bdd"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-3-type-partition.log",
+      "sha256": "880398467b7d9fac0dc4061361cce4b88da177872dac438cacca0d76f2ff988d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-3-uni-build-app.log",
+      "sha256": "a2051cd401599570aeafd694ace38af58a716eaa441c4dab1c75b80b0fa76800"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-3-uni-build-h5.log",
+      "sha256": "8e58e293b51501ffab215ee0f088337dcfb775d8e09689203239877fbcb93a04"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-3-uni-build-mp-weixin.log",
+      "sha256": "e8741d81e50dbaf6580d232c46390dc304746a337fac6e4970d3efb56ed595ac"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-3-uni-page-entries.log",
+      "sha256": "51315138b5150b0c574e2cd62b7f2544f1068de45d4a1db1551bce70ce025f4e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-3-uni-toolchain.log",
+      "sha256": "f6d74e44f445f729fdc67a2b5ea2e3bae3f14b03ce42ecb396cb07ba077eb278"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-3-uni-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-4-dependencies.json",
+      "sha256": "e4c044391f40853e57c334e0e4e442aab3a7ed7736e94fe2464e9ca822ae9d4a"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-4-results.json",
+      "sha256": "dcefa22d5f07e3ffdeab444f1d5bcf2aa92ea20b6dbbfaad60687d89e37e79f9"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-4-runner-cases.json",
+      "sha256": "68af51e9fcb57159c4c733c24c5bf140e2d3e025d7eaab8407638de8179a3b6c"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-4-source.json",
+      "sha256": "b6c8be8281d15539b0e7a2e5e6230199e45d4664e538a08ff8da91b0d74df4f7"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-4-type-options.log",
+      "sha256": "47f5f2ac45f420987748ea333a72688020e07389f0b91a804a5b6e9ba7925de1"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-4-type-partition.log",
+      "sha256": "880398467b7d9fac0dc4061361cce4b88da177872dac438cacca0d76f2ff988d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-4-unit.json",
+      "sha256": "b6fbbb5e175d5175518036b15e54126b28be98fe8230e54fbb886ffc1e3bd3df"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-4-worker-types-1.log",
+      "sha256": "babcdaafee4381d4f2ef03078d085ec7c09ce6c422b94fbe464e955eddeb949d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-4b-native-buyer.log",
+      "sha256": "7f9470f34239b4bf99c84f0a26fb919e34e280553f404531ab42f2fc4c76bd3f"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-4b-native-evidence-1.log",
+      "sha256": "f3ba518fd3318edbbfb1eed53f7d2c36e282877ba38299656e3f83a70b14fa88"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-4b-native-evidence-2.log",
+      "sha256": "fbcfdf90d38713d1153fc2b07eb81243e0d3ac796d028efe59c82cd8c51b1d6c"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-4b-native-out.log",
+      "sha256": "2bb73968db174404dc98497dc1de891a7b990cc5d26e7092b5975e59738203c4"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-4b-native-refund.log",
+      "sha256": "34fe699241e1405e2624780ebd619e01ca508fb1265465222d9eba00021a0f33"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-4b-native-split.log",
+      "sha256": "edb0db4e9406072508d5cd06877bc861c6b8a3d628c15f1d52930dba43c3d319"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-4b-production-audit.log",
+      "sha256": "4ca0bc8f609b8cd4e43a18d0faebf8f0b05d91b15ee6386fb48a789c00393192"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-4b-results.json",
+      "sha256": "fc824328a06b11e0317fdef08b60c65919e53ef189f8240472ffde3fd153cd9e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-4b-source-proof.log",
+      "sha256": "007831ed7b6c8051afb425f030fba4e5bc3fd374cf5a16db9964936ce04a5230"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-4b-type-options.log",
+      "sha256": "1b548fc9ed5ae96eb38067ddbbf3d38fd9ed9fbdd57d784c3336b84f90f52d89"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-4b-type-partition.log",
+      "sha256": "880398467b7d9fac0dc4061361cce4b88da177872dac438cacca0d76f2ff988d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-4b-unit.log",
+      "sha256": "314362b8325f83baa32282b11c6778ee32b1cf173a9e6136439e756b7de0312d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-4b-worker-runtime-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-4b-worker-types-1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-4b-worker-types-2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-4b-workerd.log",
+      "sha256": "a962befdafa9990ed72be813a8354c2e4d0e838b0c341c7cdbd39a3a93ddf622"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-5-delta.json",
+      "sha256": "95a8e4ab75f936d3b634c47f02a28ca8568813ecbad7caa0ac9f0042b1e5d3db"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-5-dependencies.json",
+      "sha256": "4a7c4b6140dbb0602ffa6831e93bd112571796189b9b154babda92edd27c00e9"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-5-results.json",
+      "sha256": "476e42a9f97c6388abe96d352be22eaa6cc53daf12b49df46ce20737dd88c36f"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-5-runner-unit.json",
+      "sha256": "970598ba0a405628b740cd5f3d46c531b4c028948d5bade609048b797f8deb56"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-5-runner-unit.log",
+      "sha256": "34b21b18ec83979bb59cf52da600d8bfe881885091a66c3144469fb8c0587756"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-5-source-proof.log",
+      "sha256": "773541690d60397bb2fca587d5ffde2a5ff440fc3128657832eabb3b4aed0cc2"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-5-source.json",
+      "sha256": "f53cb93322376655f4bd006f3967e4b40e5fec9f6606f18188041015f07bcf7d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-5-type-options.log",
+      "sha256": "a637506bbcc750e001b9612c30ba6c8933e617ce2d8e56ffc4e0236e4748a638"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-5-worker-types-affected.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-6-delta.json",
+      "sha256": "9ad0586cbc25379553dab57a7d2f1d9ef330e11a7c56c41a56d5d36982f3037f"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-6-dependencies.json",
+      "sha256": "4a7c4b6140dbb0602ffa6831e93bd112571796189b9b154babda92edd27c00e9"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-6-results.json",
+      "sha256": "49208c3f38e429a41981d272b6c0481eab60a0cf9393244e6edf8ce7ea670b95"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-6-source-proof.log",
+      "sha256": "8f9c747ca30666aebc7cb5a25bdfecfdfef122caac6b4497c3cf6d9fb5a39ed1"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-6-source.json",
+      "sha256": "243e4775cc16efe20187de8ce75b394f85ea9c3ccdaeb0f9b0ccdf6c3961b2b0"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-6-type-options.log",
+      "sha256": "a637506bbcc750e001b9612c30ba6c8933e617ce2d8e56ffc4e0236e4748a638"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/candidate-6-worker-types-affected.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/check-options-final.cjs",
+      "sha256": "f9cfe577b305eb667b4d167159d8506f122d2d9a7530472b38bdd3a583c307c5"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/check-options-verified.cjs",
+      "sha256": "6cb64bcbca388237a4668f5a2fb2d51ab7704a9c93948fcbbe6e9267b129b940"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/check-options.cjs",
+      "sha256": "2cacc91c09ea2c706e96f6069f0744523b1dcce548657db94f7ccec4f73c0cfb"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/contract-initial.log",
+      "sha256": "29a4726d44ddabf78f0a0bc70b346ecd5a6097a851a00531897b3cc9c6d9f255"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/design.json",
+      "sha256": "831c699468451ad9a1614fce56fd0f7e45fa3a5db83b8fae0631d1795059b562"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/early-2-results.json",
+      "sha256": "88d8773b9d0ef404e0915d69a60a0faca5f686d691adf85dc4ec6eb0d142eed0"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/early-results.json",
+      "sha256": "bfeb4d496b992528e74d34a473e819c0d46b6402d0b07485eab5da0a903a3271"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/early-validation-2.py",
+      "sha256": "7aeb1398d6e7342c545b67fe2794494681b3ca51c9958a5b29249f484feb5d88"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/early-validation.py",
+      "sha256": "4c0e5034e3915c6a55dd224916d865ce46884b3af190ed9ff232ca9ef3d2c324"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/frontend-acceptance-inheritance.json",
+      "sha256": "b0061332e3a006f435822e757af087619cdb9d189dbb7c92891f35ef45952556"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/native-accepted-counts.json",
+      "sha256": "8027c6e53fafebb41a0165979fd9d2270e88d849438a34326b271f66053b0a28"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/native-initial.log",
+      "sha256": "80161b02709d5fc5191fd2c6e9f395b761e9fd297626cdfc7fbabd7a35601def"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/pc-auth-2.log",
+      "sha256": "86b997c473a65518a3698a95e893230e14d421b3f66e56c0950c504248b529e4"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/pc-auth-initial.log",
+      "sha256": "ac94eca02af87bb2c98ae17ae1d04b55b7bfa8a3a106527b5254a568e356f387"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/pc-types-initial.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/pending-backend-review.json",
+      "sha256": "266060980f2e2e165c57d73809daca8d3947f227709d6800d8d7f533386baa01"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/php-reference.json",
+      "sha256": "1aa8833616c71d603eb9147111a9b84a379ca0fc2e281bb449df92caf335e10b"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/restored-resources.json",
+      "sha256": "2805035753af768b74ac4b987581644a085a6b857765a6c19ac0a2a6cd8fdd57"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/retained-pc-build-files.json",
+      "sha256": "4eda41c7da1b8d1e4992406a568485c9eb1c206b8b7f461d67b8fb59e886ada1"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/retained-pc-build.json",
+      "sha256": "5905d7ad6d99a6d57465d014e8700b92aade86230a960b077a6c778b5c2f5353"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/runner-repair-terminal.json",
+      "sha256": "e146ca7a6528347b16cee8a14636a7bafe84a819b3732df4164643dcd90ac0db"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/secret-scan-comparison.json",
+      "sha256": "ca3949a292bd1f09952ae932d4693130bcafdf485f509309c59785534cfa85d8"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/source-baseline.json",
+      "sha256": "517bef17ae43316c4b1f33765061d80b4ff062d6d5edd4e4bfb3ddd9764180df"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/source-baseline.log",
+      "sha256": "e1bc4e5002c0f2d00d7fd5b66a06c454239d74068d3d064ebbf8a45503927d6e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/source-current.json",
+      "sha256": "31555c54cb2d20b556d822c407f73f92d3c67e944f270aeebf23f284d006d025"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/source-current.log",
+      "sha256": "7bd8c7eda1ac21caa7d24af352845d8efd27170522ff282b31fc6147306ff11f"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/source-proof-candidate-1.py",
+      "sha256": "9dc83f93c632cc0743f6c6bc6d1d2e4473fabdc47ec6caf252b657eb4d9060a0"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/source-proof-candidate-2.py",
+      "sha256": "39e3fe249b0598d48ecc4a1401dd133ab2c1f0fb8997cc57f7eee7a52c200d44"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/source-proof-candidate-3.py",
+      "sha256": "5a099036a953c4084c0571f5f142a7eaf70a349791270abc8f361c247455b5b9"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/source-proof-candidate-4/source-baseline.json",
+      "sha256": "5e8b027fadecadeb54dbdb3be1f39698b41fc711520578c6d86d7402e13d8b64"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/source-proof-candidate-4/source-baseline.log",
+      "sha256": "e1bc4e5002c0f2d00d7fd5b66a06c454239d74068d3d064ebbf8a45503927d6e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/source-proof-candidate-4/source-current.json",
+      "sha256": "809bbc6866e41864c967f2c928408b60dcba4d77af780b7ada83dee431150530"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/source-proof-candidate-4/source-current.log",
+      "sha256": "7bd8c7eda1ac21caa7d24af352845d8efd27170522ff282b31fc6147306ff11f"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/source-proof-candidate-4/source-proof-comparison.json",
+      "sha256": "29188bc474ffe4c568364e9ebba7aea65d4bc1b2b2d850ed7989d1d82f39d362"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/source-proof-candidate-4.py",
+      "sha256": "4118c1ac90daf3532bac13ffe429a90b6da266089195d7ad48a589b61414c855"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/source-proof-candidate-5/source-baseline.json",
+      "sha256": "dd8ffd16d8a71de3f64ac5dedcb987c0a8496b9bab45f9021c53338312777753"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/source-proof-candidate-5/source-baseline.log",
+      "sha256": "e1bc4e5002c0f2d00d7fd5b66a06c454239d74068d3d064ebbf8a45503927d6e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/source-proof-candidate-5/source-current.json",
+      "sha256": "9f722a424fdcd4ea06de4850ad15c5be3fec7d4e7e809688ca5e10b7b2119afd"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/source-proof-candidate-5/source-current.log",
+      "sha256": "7bd8c7eda1ac21caa7d24af352845d8efd27170522ff282b31fc6147306ff11f"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/source-proof-candidate-5/source-proof-comparison.json",
+      "sha256": "4182ebaf174d475be8178a0ba4d1ed2dbb0de2c60c512809975c95da1aa93138"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/source-proof-candidate-5.py",
+      "sha256": "c57cf2fb1b7553cc8b63b8dd5d4c8fd40b15b447e9980e5e68f545a07a080a8a"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/source-proof-candidate-6.py",
+      "sha256": "08cbefff2f3b1e45916a2de581aecae03c736da65ec190d9f9adac65c85ab50b"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/source-proof-comparison.json",
+      "sha256": "f10c2c90987bac3cb8a2c0eb96e6775d72e3d681f99a0466bfde6151ed40fdf5"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/source-secret-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/source-secret-scan.log",
+      "sha256": "056ef1900391be624051a4484e829841b53695ebb73f83bdc042c23023fa7d68"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/tsconfig.worker-buyer-invoices-shard-1.generated.json",
+      "sha256": "e81035fbfd6ca91847db2c81ee2b461796b2b8dc675de86b9ab82ecec448c785"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/tsconfig.worker-buyer-invoices-shard-2.generated.json",
+      "sha256": "f573e5094fdf34f53d02dabb03c2ee2763cf8a16e8f6b8ec0311302a95460827"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/type-options-candidate-2.log",
+      "sha256": "ac092bedb51161ceba02b4f04101974c661bb74433dfaf9d029ed9137cc03ab3"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/type-options-initial.log",
+      "sha256": "ac092bedb51161ceba02b4f04101974c661bb74433dfaf9d029ed9137cc03ab3"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/type-partition-candidate-2.log",
+      "sha256": "16ab3c3cf866f85e11ecebfa574fab50ec9212b87683fdd26bd4e0bdfcea2b15"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/type-partition-initial.log",
+      "sha256": "16ab3c3cf866f85e11ecebfa574fab50ec9212b87683fdd26bd4e0bdfcea2b15"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/type-shards-final.cjs",
+      "sha256": "ac4f4917b9cfaef5d4318fe30492fd1cbb0da7f38a191de250c8b7d1ab9afe55"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/type-shards-final.json",
+      "sha256": "75a64e0204d9fe8d8e35ca68657a05efef1b40bda10c73a5985b4c40894daa3b"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/type-shards-verified.cjs",
+      "sha256": "448c617ff515925c2b83deb5fdd082758f8acf51536858a96467dbafd81b14f8"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/type-shards-verified.json",
+      "sha256": "d4c750b1028cede0b753eda7f5db847c8606ca7581849bd84fa852181ba105c3"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/type-shards.cjs",
+      "sha256": "cde4b3977c8e2c0f382cab20f789dbc7acc084e35708816adb29c643ac5dc343"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/type-shards.json",
+      "sha256": "2aca87944bafbad674e5190b2339d024ba8d0e13fd10809ed576df1c870ada4f"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/types-2-results.json",
+      "sha256": "bb2f1b164b40706444afe620c4bbc62d1410cf8669c6303ad5d8fd08a619dfcf"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/types-2.py",
+      "sha256": "fd4ecdfd898fe5a4d3c67ccca7dc0ed75b04bd7f71f32f8f24bbfbb053525c02"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/uni-order-2.log",
+      "sha256": "5248f6be1ad48541c32aa7360696b621ae386f754c445c3117e6846e281a648f"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/uni-types-2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/uni-types-initial.log",
+      "sha256": "c07d6a6bf979ecc4df07dde97de56a118d82917d9b4855fe9a6bd7dfbad7b544"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/unit-files-before-native-separation.json",
+      "sha256": "efd8a3bd3cccd20be4d0a620351fd6a11729a6f6eab76b0fc4b617a45cdac825"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/unit-files.json",
+      "sha256": "80a298556a2cb0158e008212116e1367604f03502189ddff474634e5c4ced508"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/user-symlinks.json",
+      "sha256": "32f0ae750787e6bde76a8d6f60ab3e6f135ecff1c9e7cc3b06bd86a820fae4ca"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/validate-candidate-2.py",
+      "sha256": "5c5302b2f35abf3f054b383d0a8babae45bde6ba642a22fdb9ce239c3c56b97c"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/validate-candidate-3.py",
+      "sha256": "b7136fafde68f48cb45e6280c62a8b9a02f06d2c49d080d68f595d2e9756294e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/validate-candidate-4.py",
+      "sha256": "963d542a8e4f99aa9bbb5ed1c2d51b9fa84c83899e16c382dd72b5aca5c723fa"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/validate-candidate-4b.py",
+      "sha256": "2192491a30a68f356c2462efb24df070d5988caaf33ba25c2325927d03e443ae"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/validate-candidate-5.py",
+      "sha256": "3794d3d7ac9ba63290fd9734800f4d31d511ef461ffbfd14d659370ef1fdec29"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/validate-candidate-6.py",
+      "sha256": "736da75259a07c68cad8321cc456650ea3842332237328c4329faf10ab4fed3e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/validation-scope-note.json",
+      "sha256": "df8e55fd259adb90827236db506148daa70e947ba1ae870d723fd47e8882b556"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/worker-types-candidate-2-1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/worker-types-candidate-2-2.log",
+      "sha256": "c7f2ee56b1d9cd7848c0b983b6af3d22c77cd2025256043285eda4b24fed245d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-invoices-20261114/worker-types-initial-1.log",
+      "sha256": "ebf43f3d1ac3be943d6d9d318f869319ed60bf915e6a44aaedf86f0f2ca95137"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts/.cache/buyer-invoices-types-20261114/tsconfig.worker-buyer-invoices-shard-1.generated.json",
+      "sha256": "e81035fbfd6ca91847db2c81ee2b461796b2b8dc675de86b9ab82ecec448c785"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts/.cache/buyer-invoices-types-20261114/tsconfig.worker-buyer-invoices-shard-2.generated.json",
+      "sha256": "f573e5094fdf34f53d02dabb03c2ee2763cf8a16e8f6b8ec0311302a95460827"
+    }
+  ]
+}

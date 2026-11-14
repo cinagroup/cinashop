@@ -42,12 +42,19 @@ export function registerOrderDetailTests(getContext) {
     const router = createRouter({ history: createMemoryHistory(), routes: [
       { path: '/order/:orderId', component: { setup(props, ctx) { view = component.setup(props, ctx); return () => null; } } },
       { path: '/away', component: { render: () => null } },
+      { path: '/user/invoice/order', component: { render: () => null } },
       { path: '/checkout', component: { render: () => null } }] });
     const app = renderer.createApp({ render: () => h(RouterView) }); app.use(router);
     await router.push('/order/local_A'); app.mount({ children: [] }); await flush(); let closed = false;
     return { get view() { return view; }, calls, dialog, router, writes: () => calls.filter(c => c.method === 'post'),
       close() { if (!closed) { app.unmount(); closed = true; } } };
   }
+  it('PC invoice entry uses the current loaded order and rejects an object from a prior read', async () => {
+    const f = await mount(); try { const old = f.view.order.value; await f.view.load(); await f.view.goInvoice(old);
+      assert.equal(f.router.currentRoute.value.path, '/order/local_A'); await f.view.goInvoice(f.view.order.value);
+      assert.equal(f.router.currentRoute.value.fullPath, '/user/invoice/order?orderId=local_A');
+    } finally { f.close(); }
+  });
   it('PC detail refresh failure removes stale order/cashier and exposes retryable error', async () => {
     let fail = false; const f = await mount(c => fail && c.url.startsWith('/order/detail/') ? { status: 400, msg: '读取失败' } : undefined);
     try { assert.equal(f.view.order.value.order_id, 'local_A'); fail = true; await f.view.load();

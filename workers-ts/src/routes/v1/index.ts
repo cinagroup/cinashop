@@ -1,3 +1,4 @@
+import { buyerInvoiceView, privateBuyerInvoiceResponse } from '@/controllers/api/v1/BuyerInvoiceController';
 import * as UserExtractController from '@/controllers/api/v1/UserExtractController';
 import * as AdminWechatOpen from "@/controllers/api/v1/AdminWechatOpenController";
 import * as AdminWechatApp from '@/controllers/api/v1/AdminWechatAppController';
@@ -869,9 +870,9 @@ v1Routes.get(
   authMiddleware({ force: true }),
   OrderController.deliveryOrderDetail,
 );
-v1Routes.get("/order/invoice_list", authMiddleware({ force: true }), OrderController.orderInvoiceList);
-v1Routes.get("/order/invoice_detail/:uni", authMiddleware({ force: true }), OrderController.orderInvoiceDetail);
-v1Routes.post("/order/make_up_invoice", authMiddleware({ force: true }), OrderController.orderMakeUpInvoice);
+v1Routes.get("/order/invoice_list", privateBuyerInvoiceResponse, authMiddleware({ force: true }), buyerInvoiceView('records', OrderController.orderInvoiceList));
+v1Routes.get("/order/invoice_detail/:uni", privateBuyerInvoiceResponse, authMiddleware({ force: true }), buyerInvoiceView('order', OrderController.orderInvoiceDetail));
+v1Routes.post("/order/make_up_invoice", privateBuyerInvoiceResponse, authMiddleware({ force: true }), buyerInvoiceView('apply', OrderController.orderMakeUpInvoice));
 // 订单操作 (补全)
 v1Routes.post("/order/take", authMiddleware({ force: true }), OrderController.orderTake);
 v1Routes.post("/order/cancel", authMiddleware({ force: true }), OrderController.orderCancel);
@@ -1112,11 +1113,11 @@ v1Routes.get("/user/message_system/list", async (c,next)=>{c.header("Cache-Contr
 v1Routes.get("/user/message_system/detail/:id", async (c,next)=>{c.header("Cache-Control","private, no-store");await next();}, authMiddleware({ force: true }), UserMessageController.messageDetail);
 
 // ─── 发票 (补全) ───────────────────────────────────────────────
-v1Routes.get("/invoice", authMiddleware({ force: true }), UserFinanceController.invoiceList);
-v1Routes.post("/invoice/save", authMiddleware({ force: true }), UserFinanceController.invoiceSave);
-v1Routes.delete("/invoice/del/:id", authMiddleware({ force: true }), UserFinanceController.invoiceDel);
-v1Routes.post("/invoice/set_default/:id", authMiddleware({ force: true }), UserFinanceController.invoiceSetDefault);
-v1Routes.get("/invoice/get_default/:type", authMiddleware({ force: true }), UserFinanceController.invoiceGetDefault);
+v1Routes.get("/invoice", privateBuyerInvoiceResponse, authMiddleware({ force: true }), buyerInvoiceView('titles', UserFinanceController.invoiceList));
+v1Routes.post("/invoice/save", privateBuyerInvoiceResponse, authMiddleware({ force: true }), buyerInvoiceView('save', UserFinanceController.invoiceSave));
+v1Routes.delete("/invoice/del/:id", privateBuyerInvoiceResponse, authMiddleware({ force: true }), buyerInvoiceView('delete', UserFinanceController.invoiceDel));
+v1Routes.post("/invoice/set_default/:id", privateBuyerInvoiceResponse, authMiddleware({ force: true }), buyerInvoiceView('default', UserFinanceController.invoiceSetDefault));
+v1Routes.get("/invoice/get_default/:type", privateBuyerInvoiceResponse, authMiddleware({ force: true }), UserFinanceController.invoiceGetDefault);
 
 // ─── 优惠券 (M5) ───────────────────────────────────────────────
 v1Routes.get("/coupons", authMiddleware({ force: false }), UserActivityController.couponList);

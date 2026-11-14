@@ -185,6 +185,9 @@
           {{ repurchase.cartIds.length ? '继续进入结算' : '再次购买' }}
         </el-button>
       </div>
+      <div v-if="order.pid >= 0 && order.supplier_allocation_status !== 1" class="detail-card">
+        <el-button :disabled="loading || paying || taking || reviewing" @click="goInvoice(order)">订单发票</el-button>
+      </div>
       <div v-if="order.paid === 0" class="pay-bar">
         <el-button
           type="primary"
@@ -660,6 +663,15 @@ async function goExpress(expected: OrderInfo) {
     const result = await router.push(`/express?orderId=${encodeURIComponent(expected.order_id)}`);
     if (scope.current() && expected === order.value && isNavigationFailure(result)) actionError.value = '物流页面未打开，请重试';
   } catch { if (scope.current() && expected === order.value) actionError.value = '物流页面未打开，请重试'; }
+}
+
+async function goInvoice(expected: OrderInfo) {
+  const scope = currentView();
+  if (!scope.current() || !order.value || expected !== order.value || expected.pid < 0 || expected.supplier_allocation_status === 1
+    || loading.value || paying.value || taking.value || reviewing.value) return;
+  try { const result = await router.push(`/user/invoice/order?orderId=${encodeURIComponent(expected.order_id)}`);
+    if (scope.current() && expected === order.value && isNavigationFailure(result)) actionError.value = '发票页面未打开，请重试';
+  } catch { if (scope.current() && expected === order.value) actionError.value = '发票页面未打开，请重试'; }
 }
 
 function currentView() {

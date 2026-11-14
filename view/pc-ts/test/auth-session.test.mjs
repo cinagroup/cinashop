@@ -1,3 +1,4 @@
+import { buyerInvoicesPlugin, registerBuyerInvoicesTests } from './buyer-invoices.test.mjs';
 import { buyerTrackingPlugin, registerBuyerTrackingTests } from './buyer-order-tracking.test.mjs';
 import { after, before, beforeEach, describe, it } from "node:test";
 import assert from "node:assert/strict";
@@ -40,7 +41,7 @@ before(async () => {
   localStorage.setItem("pc_token", "obsolete-persistent-token");
   localStorage.setItem("pc_uid", "99");
   server = await createServer({ configFile: false, root, envFile: false, logLevel: "error",
-    plugins: [vue(), seckillComponentPlugin(root), combinationComponentPlugin(root), presaleComponentPlugin(root), presaleCatalogPlugin(root), bargainComponentPlugin(root), checkoutShippingPlugin(root), productDetailComponentPlugin(root), cartTemplatePlugin(root), orderDetailPlugin(root), orderListPlugin(root), refundApplyPlugin(root), refundRecordsPlugin(root), buyerTrackingPlugin(root)],
+    plugins: [vue(), seckillComponentPlugin(root), combinationComponentPlugin(root), presaleComponentPlugin(root), presaleCatalogPlugin(root), bargainComponentPlugin(root), checkoutShippingPlugin(root), productDetailComponentPlugin(root), cartTemplatePlugin(root), orderDetailPlugin(root), orderListPlugin(root), refundApplyPlugin(root), refundRecordsPlugin(root), buyerTrackingPlugin(root), buyerInvoicesPlugin(root)],
     optimizeDeps: { noDiscovery: true, include: [] },
     resolve: { alias: { "@": fileURLToPath(new URL("../src", import.meta.url)) } },
     server: { middlewareMode: true, hmr: false, watch: null } });
@@ -106,6 +107,7 @@ describe("actual Axios + storage + Pinia auth-session isolation", { concurrency:
   registerCheckoutShippingTests(() => ({ server, authUtils, api, response }));
   registerCheckoutIntentRecoveryTests(() => ({ server, authUtils, api, response }));
   registerBuyerTrackingTests(() => ({ server, authUtils, api, response }));
+  registerBuyerInvoicesTests(() => ({ server, authUtils, api, location, navigation, response }));
   registerOrderDetailTests(() => ({ server, authUtils, api, response }));
   registerOrderListTests(() => ({ server, authUtils, api, response }));
   registerRefundApplyTests(() => ({ server, authUtils, api, response }));

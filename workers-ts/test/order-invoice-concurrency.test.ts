@@ -7,7 +7,7 @@ import { financePostgres } from './helpers/financePostgres';
 import { outcome, waitForFinanceBlock, withFinancePeers } from './helpers/financePeers';
 import { createContainerFromDb, type DbClient } from '../src/lib/di';
 import { StoreOrderInvoiceService } from '../src/services/order/StoreOrderInvoiceService';
-import { storeOrder, storeOrderCartInfo, storeOrderRefund, storeOrderInvoice, userInvoice } from '../src/models/schema';
+import { storeOrder, storeOrderCartInfo, storeOrderRefund, storeOrderInvoice, userInvoice, systemConfig } from '../src/models/schema';
 
 let f: Awaited<ReturnType<typeof financePostgres>>;
 const service = (db: DbClient = f.db) => new StoreOrderInvoiceService(createContainerFromDb(db));
@@ -18,9 +18,10 @@ const state = async () => ({
   templates: await f.db.select().from(userInvoice).orderBy(userInvoice.id),
 });
 beforeEach(async () => {
-  f = await financePostgres([storeOrder, storeOrderCartInfo, storeOrderRefund, storeOrderInvoice, userInvoice]);
+  f = await financePostgres([storeOrder, storeOrderCartInfo, storeOrderRefund, storeOrderInvoice, userInvoice, systemConfig]);
   await f.db.insert(storeOrder).values({ id: 10, orderId: 'local-invoice-order', uid: 11, paid: 1, payType: 'yue',
     totalNum: 1, payPrice: '10.00', totalPrice: '10.00' });
+  await f.db.insert(systemConfig).values({ menuName: 'invoice_func_status', value: '1' });
   await f.db.insert(userInvoice).values({ id: 1, uid: 11, name: 'Local invoice title', email: 'local@example.invalid' });
   vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('External I/O forbidden'));
 }, 30_000);

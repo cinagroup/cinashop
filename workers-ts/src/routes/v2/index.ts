@@ -1,3 +1,4 @@
+import { buyerInvoiceView, privateBuyerInvoiceResponse } from '@/controllers/api/v1/BuyerInvoiceController';
 import { Hono } from "hono";
 import { authMiddleware } from "@/middleware/auth";
 import * as LotteryController from "@/controllers/api/v1/LotteryController";
@@ -78,15 +79,15 @@ v2Routes.get("/agent/agent_user_list/:type", authMiddleware({ force: true }), V2
 v2Routes.get("/agent/agent_info", authMiddleware({ force: true }), V2UserCompatibilityController.agentInfo);
 
 // PHP v2 invoice endpoints. The mutating GET delete is retained only for client compatibility.
-v2Routes.get("/invoice", authMiddleware({ force: true }), UserFinanceController.invoiceListV2);
-v2Routes.get("/invoice/detail/:id", authMiddleware({ force: true }), UserFinanceController.invoiceDetail);
-v2Routes.post("/invoice/save", authMiddleware({ force: true }), UserFinanceController.invoiceSaveV2);
-v2Routes.post("/invoice/set_default/:id", authMiddleware({ force: true }), UserFinanceController.invoiceSetDefault);
-v2Routes.get("/invoice/get_default/:type", authMiddleware({ force: true }), UserFinanceController.invoiceGetDefaultV2);
-v2Routes.get("/invoice/del/:id", authMiddleware({ force: true }), UserFinanceController.invoiceDel);
-v2Routes.post("/order/make_up_invoice", authMiddleware({ force: true }), OrderController.orderMakeUpInvoice);
-v2Routes.get("/order/invoice_list", authMiddleware({ force: true }), OrderController.orderInvoiceList);
-v2Routes.get("/order/invoice_detail/:uni", authMiddleware({ force: true }), OrderController.orderInvoiceDetail);
+v2Routes.get("/invoice", privateBuyerInvoiceResponse, authMiddleware({ force: true }), buyerInvoiceView('titles', UserFinanceController.invoiceListV2));
+v2Routes.get("/invoice/detail/:id", privateBuyerInvoiceResponse, authMiddleware({ force: true }), UserFinanceController.invoiceDetail);
+v2Routes.post("/invoice/save", privateBuyerInvoiceResponse, authMiddleware({ force: true }), buyerInvoiceView('save', UserFinanceController.invoiceSaveV2));
+v2Routes.post("/invoice/set_default/:id", privateBuyerInvoiceResponse, authMiddleware({ force: true }), buyerInvoiceView('default', UserFinanceController.invoiceSetDefault));
+v2Routes.get("/invoice/get_default/:type", privateBuyerInvoiceResponse, authMiddleware({ force: true }), UserFinanceController.invoiceGetDefaultV2);
+v2Routes.get("/invoice/del/:id", privateBuyerInvoiceResponse, authMiddleware({ force: true }), buyerInvoiceView('delete', UserFinanceController.invoiceDel));
+v2Routes.post("/order/make_up_invoice", privateBuyerInvoiceResponse, authMiddleware({ force: true }), buyerInvoiceView('apply', OrderController.orderMakeUpInvoice));
+v2Routes.get("/order/invoice_list", privateBuyerInvoiceResponse, authMiddleware({ force: true }), buyerInvoiceView('records', OrderController.orderInvoiceList));
+v2Routes.get("/order/invoice_detail/:uni", privateBuyerInvoiceResponse, authMiddleware({ force: true }), buyerInvoiceView('order', OrderController.orderInvoiceDetail));
 
 v2Routes.get("/agent/level_list", authMiddleware({ force: true }), AgentLevelController.levelList);
 v2Routes.get("/agent/level_task_list", authMiddleware({ force: true }), AgentLevelController.levelTaskList);

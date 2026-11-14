@@ -1,4 +1,5 @@
-import { and, asc, desc, eq, inArray, ne, or } from "drizzle-orm";
+import { and, asc, desc, eq, getTableColumns, inArray, ne, or, sql } from "drizzle-orm";
+import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import { storeOrder, storeOrderInvoice, userInvoice } from "@/models/schema";
 import { withTx, type Container, type DbClient } from "@/lib/di";
 import { NotFoundException, ValidateException } from "@/utils/errors";
@@ -6,13 +7,40 @@ import { lockOrderSettlement } from './OrderBrokerageService';
 import { currentInvoiceAmount } from './InvoiceOrderLifecycle';
 
 type Order = typeof storeOrder.$inferSelect;
+export interface InvoiceApplicationPolicy {
+  identity?: { id: number; orderNo: string };
+  prepare?(db: DbClient): Promise<void>;
+  beforeAmount?(db: DbClient, order: Order): Promise<void>;
+  check(db: DbClient, order: Order, title: typeof userInvoice.$inferSelect, amount: string): Promise<void>;
+}
+
+/** Preserve real order values for the shared refund-generation verifier while
+ * bounding every unbounded TEXT column before it crosses the SQL transport. */
+export function buyerInvoiceOrderColumns(bounded = true) {
+  const text = [storeOrder.cartId, storeOrder.refundReasonWapImg, storeOrder.expressDump, storeOrder.virtualInfo,
+    storeOrder.customForm, storeOrder.promotionsGive, storeOrder.giveCoupon];
+  const sizes = text.map(column => sql`coalesce(octet_length(${column}),0)`);
+  const readable = bounded ? sql<boolean>`(${sql.join(sizes, sql`+`)})<=131072 AND greatest(${sql.join(sizes, sql`,`)})<=65536` : sql<boolean>`true`;
+  const read = (column: AnyPgColumn) => bounded ? sql<string | null>`CASE WHEN ${readable} THEN ${column} ELSE NULL END` : sql<string | null>`${column}`;
+  return { ...getTableColumns(storeOrder), cartId: read(storeOrder.cartId), refundReasonWapImg: read(storeOrder.refundReasonWapImg),
+    expressDump: read(storeOrder.expressDump), virtualInfo: read(storeOrder.virtualInfo), customForm: read(storeOrder.customForm),
+    promotionsGive: read(storeOrder.promotionsGive), giveCoupon: read(storeOrder.giveCoupon), readable };
+}
+async function lockedOrder(tx: DbClient, id: number, bounded: boolean): Promise<Order | undefined> {
+  const [selected] = await tx.select(buyerInvoiceOrderColumns(bounded)).from(storeOrder).where(eq(storeOrder.id, id)).limit(1).for('update');
+  if (!selected) return undefined; const { readable, ...row } = selected;
+  if (!readable) throw new ValidateException('订单资料过大，请联系商家核对'); return row;
+}
+
 
 /** Share the physical split/refund lock graph, never a hash of the caller's
  * spelling of an order. Resolve aliases without choosing an arbitrary match,
  * then revalidate the same identity and ancestor after every possible wait. */
-async function lockInvoiceOrder(tx: DbClient, uid: number, reference: string): Promise<Order> {
+async function lockInvoiceOrder(tx: DbClient, uid: number, reference: string, identity?: InvoiceApplicationPolicy['identity']): Promise<Order> {
   const numericId = Number(reference);
-  const referenceCondition = Number.isSafeInteger(numericId) && numericId > 0
+  if (identity && (!Number.isInteger(identity.id) || identity.id <= 0 || identity.id > 2147483647 || identity.orderNo !== reference))
+    throw new ValidateException('开票订单标识无效');
+  const referenceCondition = identity ? and(eq(storeOrder.id, identity.id), eq(storeOrder.orderId, reference)) : Number.isSafeInteger(numericId) && numericId > 0
     ? or(eq(storeOrder.orderId, reference), eq(storeOrder.id, numericId)) : eq(storeOrder.orderId, reference);
   const matches = await tx.select({ id: storeOrder.id, pid: storeOrder.pid, orderId: storeOrder.orderId }).from(storeOrder)
     .where(and(referenceCondition, eq(storeOrder.uid, uid), eq(storeOrder.isDel, 0), eq(storeOrder.isSystemDel, 0))).limit(2);
@@ -20,10 +48,9 @@ async function lockInvoiceOrder(tx: DbClient, uid: number, reference: string): P
   if (matches.length !== 1) throw new ValidateException('订单标识存在歧义，请使用明确的订单号');
   const initial = matches[0], rootId = initial.pid > 0 ? initial.pid : initial.id;
   await lockOrderSettlement(tx, rootId);
-  const [root] = await tx.select().from(storeOrder).where(eq(storeOrder.id, rootId)).limit(1).for('update');
+  const root = await lockedOrder(tx, rootId, !!identity);
   if (rootId !== initial.id) await lockOrderSettlement(tx, initial.id);
-  const [order] = rootId === initial.id ? [root] : await tx.select().from(storeOrder)
-    .where(eq(storeOrder.id, initial.id)).limit(1).for('update');
+  const order = rootId === initial.id ? root : await lockedOrder(tx, initial.id, !!identity);
   if (!root || !order || order.uid !== uid || root.uid !== uid || order.isDel || order.isSystemDel
     || root.isDel || root.isSystemDel || order.orderId !== initial.orderId || order.pid !== initial.pid
     || (order.pid > 0 && (root.pid !== -1 || order.payType !== root.payType || order.paid !== root.paid))
@@ -73,6 +100,7 @@ export class StoreOrderInvoiceService {
     uid: number,
     orderReference: string | number,
     invoiceId: number,
+    policy?: InvoiceApplicationPolicy,
   ): Promise<{ id: number }> {
     const reference = String(orderReference).trim();
     if (!reference || reference.length > 50 || !Number.isSafeInteger(uid) || uid <= 0
@@ -81,7 +109,9 @@ export class StoreOrderInvoiceService {
     }
 
     return withTx(this.container, async (tx) => {
-      const order = await lockInvoiceOrder(tx, uid, reference);
+      await policy?.prepare?.(tx);
+      const order = await lockInvoiceOrder(tx, uid, reference, policy?.identity);
+      await policy?.beforeAmount?.(tx, order);
       const amount = await currentInvoiceAmount(tx, order);
 
       const [template] = await tx
@@ -111,6 +141,7 @@ export class StoreOrderInvoiceService {
       }
       if (existing.length) throw new ValidateException("发票已申请，正在审核打印中");
 
+      await policy?.check(tx, order, template, amount);
       const [created] = await tx
         .insert(storeOrderInvoice)
         .values({

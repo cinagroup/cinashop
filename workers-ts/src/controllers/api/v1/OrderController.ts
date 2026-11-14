@@ -14,6 +14,7 @@ import { checkoutAddressId } from '@/services/order/OrderDeliveryAddress';
 import { OrderQuoteReconfirmRequired } from '@/services/order/CheckoutConfirmation';
 import { OrderFormRejectedException } from "@/services/order/OrderSystemFormService";
 import { StoreOrderPayService } from "@/services/order/StoreOrderPayService";
+import { requireBuyerInvoiceCapability } from '@/services/user/BuyerInvoiceService';
 import { StoreOrderInvoiceService } from "@/services/order/StoreOrderInvoiceService";
 import { StoreDeliveryOrderService } from "@/services/order/StoreDeliveryOrderService";
 import { ExpressService } from "@/services/order/ExpressService";
@@ -829,7 +830,9 @@ export async function orderMakeUpInvoice(c: C) {
   try {
     return jsonOk(
       c,
-      await svc.makeUp(uid, body.order_id ?? "", Number(body.invoice_id ?? 0)),
+      await svc.makeUp(uid, body.order_id ?? "", Number(body.invoice_id ?? 0), {
+        check: (db, _order, title) => requireBuyerInvoiceCapability(db, title.type),
+      }),
       "申请成功",
     );
   } catch (error) {

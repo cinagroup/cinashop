@@ -17,7 +17,7 @@ import {
   userRecharge,
   userSpread,
 } from "@/models/schema";
-import type { Container } from "@/lib/di";
+import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
 import { ValidateException, NotFoundException } from "@/utils/errors";
 import { centsToDecimal, decimalToCents } from "@/services/order/OrderBrokerageService";
@@ -28,6 +28,13 @@ import { UserFinanceReadService } from "./UserFinanceReadService";
 import { evaluateAgentLevelsAfterRegistration } from '@/services/agent/AgentLevelRegistrationEffects';
 import { decodeRechargeQuota, MAX_RECHARGE_QUOTAS, rechargeQuotaDeadlines, rechargeQuotaGroup,
   RECHARGE_QUOTA_LOCK_KEY, RECHARGE_QUOTA_LOCK_NAMESPACE } from '@/services/payment/RechargeQuotaPolicy';
+
+/** New-client freshness checks execute in the existing invoice transaction.
+ * They perform SQL/local computation only; never external authorization I/O. */
+export interface InvoiceTitleMutationPolicy {
+  prepare?(db: DbClient): Promise<void>;
+  check(db: DbClient, id: number): Promise<void>;
+}
 
 const USER_INVOICE_LOCK_NAMESPACE = 21_406;
 
@@ -601,6 +608,7 @@ export class UserFinanceService {
       cardNumber?: string;
       isDefault?: number;
     },
+    policy?: InvoiceTitleMutationPolicy,
   ): Promise<{ id: number; created: boolean }> {
     const invoiceId = Number(params.id ?? 0);
     if (!Number.isSafeInteger(invoiceId) || invoiceId < 0) throw new ValidateException("参数错误!");
@@ -636,6 +644,7 @@ export class UserFinanceService {
     }
 
     return withTx(this.container, async (tx) => {
+      await policy?.prepare?.(tx);
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${USER_INVOICE_LOCK_NAMESPACE}, ${uid})`);
       const duplicate = await tx
         .select({ id: userInvoice.id })
@@ -674,8 +683,10 @@ export class UserFinanceService {
           .for("update");
         if (!rows[0]) throw new NotFoundException("发票不存在");
         id = rows[0].id;
+        await policy?.check(tx, id);
         await tx.update(userInvoice).set(values).where(eq(userInvoice.id, id));
       } else {
+        await policy?.check(tx, 0);
         const rows = await tx
           .insert(userInvoice)
           .values({ ...values, uid, addTime: Math.floor(Date.now() / 1000) })
@@ -700,9 +711,14 @@ export class UserFinanceService {
   }
 
   /** 删除发票 (invoice/del/:id) */
-  async invoiceDel(uid: number, id: number): Promise<void> {
+  async invoiceDel(uid: number, id: number, policy?: InvoiceTitleMutationPolicy): Promise<void> {
     if (!Number.isSafeInteger(id) || id <= 0) throw new ValidateException("参数错误!");
     await withTx(this.container, async (tx) => {
+      await policy?.prepare?.(tx);
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${USER_INVOICE_LOCK_NAMESPACE}, ${uid})`);
+      await tx.select({ id: userInvoice.id }).from(userInvoice)
+        .where(and(eq(userInvoice.id, id), eq(userInvoice.uid, uid), eq(userInvoice.isDel, 0))).limit(1).for('update');
+      await policy?.check(tx, id);
       await tx
         .update(userInvoice)
         .set({ isDel: 1, isDefault: 0 })
@@ -711,9 +727,10 @@ export class UserFinanceService {
   }
 
   /** 设置默认发票 (invoice/set_default/:id) */
-  async setDefault(uid: number, id: number): Promise<void> {
+  async setDefault(uid: number, id: number, policy?: InvoiceTitleMutationPolicy): Promise<void> {
     if (!Number.isSafeInteger(id) || id <= 0) throw new ValidateException("参数错误!");
     await withTx(this.container, async (tx) => {
+      await policy?.prepare?.(tx);
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${USER_INVOICE_LOCK_NAMESPACE}, ${uid})`);
       const rows = await tx
         .select({ id: userInvoice.id, headerType: userInvoice.headerType, type: userInvoice.type })
@@ -723,6 +740,7 @@ export class UserFinanceService {
         .for("update");
       const invoice = rows[0];
       if (!invoice) throw new NotFoundException("发票不存在");
+      await policy?.check(tx, id);
       await tx
         .update(userInvoice)
         .set({ isDefault: 0 })
