@@ -1,0 +1,226 @@
+{
+  "batch": "php-ts-buyer-logistics-toolchain-20261114",
+  "baseCommit": "2cfb296cac7938747b3e50d1f9c65467bde16f23",
+  "wholeMigrationComplete": false,
+  "evidenceRoot": "/tmp/php-ts-buyer-logistics-toolchain-20261114",
+  "sourceHashes": [
+    {
+      "path": "view/uniapp-ts/package.json",
+      "sha256": "8dadbccf7ae03c8b040267766eceb0dadcc9bb30cf29506db439790619273555"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/order-detail-lifecycle.test.cjs",
+      "sha256": "0235b350f847a7c57531ee487b7b1049805470c333a896654b2875f126f6b17d"
+    }
+  ],
+  "protectedFiles": 4962,
+  "parentAcceptance": {
+    "path": "workers-ts/audit/php-ts-buyer-order-logistics-20261113.json",
+    "sha256": "f22288e05306c6104be259e4d17bfe9f14f13c4ce98fd6b81fba5fed17fa3cfa",
+    "immutableArtifactHashesVerified": 350,
+    "unchangedSourceFiles": 29,
+    "unchangedBuildFiles": 663,
+    "unitPassed": 2565,
+    "nativePassed": 165,
+    "workerdPassed": 410
+  },
+  "validation": {
+    "focusedEntryPassed": 60,
+    "newLogisticsCasesIncludedOnce": 18,
+    "fullToolchainPassed": 3799,
+    "fullToolchainInvocations": 25,
+    "securityUnitPassed": 101,
+    "localLiveAudit": "ETIMEDOUT; new pushed CI must pass the complete live gate",
+    "parentUnitPassed": 2565,
+    "parentNativePassed": 165,
+    "parentWorkerdPassed": 410
+  },
+  "initialPushedCI": {
+    "runId": 43588003673,
+    "headSha": "2cfb296cac7938747b3e50d1f9c65467bde16f23",
+    "terminalJobs": 13,
+    "success": 8,
+    "failed": [
+      {
+        "id": 132426537023,
+        "name": "UniApp type, runtime and three-platform build execution"
+      },
+      {
+        "id": 132426537094,
+        "name": "Worker type, unit, schema and route execution (shard 1/2)"
+      },
+      {
+        "id": 132426537157,
+        "name": "Worker type, unit, schema and route execution (shard 2/2)"
+      },
+      {
+        "id": 132428966478,
+        "name": "Worker type, unit, schema and route gates"
+      },
+      {
+        "id": 132429217785,
+        "name": "UniApp build"
+      }
+    ],
+    "manifestDigest": {
+      "actual": "b374bdedd57b53e4ad54b513c40548ae5e40c928fc1ae8af82726f823eef525d",
+      "expected": "8dadbccf7ae03c8b040267766eceb0dadcc9bb30cf29506db439790619273555"
+    },
+    "logs": [
+      {
+        "path": "/tmp/php-ts-buyer-order-logistics-20261113/pushed-ci-uniapp.log",
+        "sha256": "cbe8fdc2e498d916b4d928768ff45150f143bcadd7c0a752255ceff2b74d406c"
+      },
+      {
+        "path": "/tmp/php-ts-buyer-order-logistics-20261113/pushed-ci-shard-1.log",
+        "sha256": "c79071f74641ae6f75e94ae43c38b1dfb0a2803995675b49bc7aa7c7e15725d3"
+      },
+      {
+        "path": "/tmp/php-ts-buyer-order-logistics-20261113/pushed-ci-shard-2.log",
+        "sha256": "d8149ac847599c164a680e169db3df42149c502d7943b80953ec290de6d55d64"
+      },
+      {
+        "path": "/tmp/php-ts-buyer-order-logistics-20261113/pushed-ci-runtime.log",
+        "sha256": "1e4b12e6dbc144a530aa4df5ae492ae5dd20cc2b47214368738535de9b0707ce"
+      }
+    ]
+  },
+  "manifestRestoredToAuditedSha256": "8dadbccf7ae03c8b040267766eceb0dadcc9bb30cf29506db439790619273555",
+  "invariants": {
+    "strictSecurityAssertionsUnchanged": true,
+    "noBusinessCodeChange": true,
+    "canonicalRootRestored": true,
+    "userSymlinksPreserved": 5,
+    "restoredResourcesUnchanged": 150,
+    "noDeploy": true,
+    "noPhpUpload": true,
+    "noLiveProviders": true
+  },
+  "artifactHashes": [
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/accepted-counts.json",
+      "sha256": "22666a3e06ece079cd508ee8dabaa4cd238fc8cbf47570ca90e702ee36532a0a"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/baseline-dependencies.json",
+      "sha256": "65f58ffe6dbbc5c455777dd81b786eefd7f2d92d0eeb47c10e362fc399907a2c"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/before-d3.log",
+      "sha256": "c90b0a6a0783679338d1f1e968b4db22358eaf43e434cb2f26cb1a4f248bd398"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/before-terminal.json",
+      "sha256": "1d70b47cbbd4fea8c8f8f2dd7f01da0ff76780570c9d543d5494c606d48f3b34"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/candidate-1/view/uniapp-ts/package.json",
+      "sha256": "8dadbccf7ae03c8b040267766eceb0dadcc9bb30cf29506db439790619273555"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/candidate-1/view/uniapp-ts/scripts/order-detail-lifecycle.test.cjs",
+      "sha256": "0235b350f847a7c57531ee487b7b1049805470c333a896654b2875f126f6b17d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/candidate-1-terminal.json",
+      "sha256": "61ee916ab91c0fcf70b44f738d362f4334d0687f599743302e5d14f3ced46cd8"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/canonical-terminal.json",
+      "sha256": "46232e6a4269bc5cb3abff33260cae3c8891b912a9efe8ee6d91dc75fb6a3a02"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/commit.py",
+      "sha256": "36af39c00f5bc8c24f503afcea99d1f341cfad6cbbe3d787d3e1d8dcee4f143d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/d3-canonical-root.log",
+      "sha256": "98eb8a116b689084d2d94258194be1bd46c39a70cea8ff2c4054968bd01d89fb"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/d3-security-advisories.log",
+      "sha256": "6b0b0ea0727cf3f54cf2384d1a5839f0b3aa7e7afb726b7e3a8cbbbef2d22ac4"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/dependencies.json",
+      "sha256": "84c867bfae560a3fb9067feea69c55f6f24bd229cfa9061de4ad5eda2a379eec"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/evidence.py",
+      "sha256": "d7924e4068f152acbbc7936901e4bc8d2022bc3507dbaf83c1d6cbde41ba734f"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/final-validation-results.json",
+      "sha256": "31e2eaebad3b469be52c224311585c0bd67ec46b579b6208a130aafddb5efedb"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/finish-ci.py",
+      "sha256": "bd561389ca613e5d20d471552ddec66fa4ec08e6e75d7e74f9e92d0b2493ed16"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/focused-entry.log",
+      "sha256": "9c6a46de07385afa477a32c6c818103ce50bdfcb70049d03ce1ba92e0c4f9444"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/full-file-scan.py",
+      "sha256": "ad3be57929eb91ef40b6801d3c69c81cc43788ca4fc2895f2502ec04d1e38b7a"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/full-toolchain.log",
+      "sha256": "847d52b4d0e16020f420c42a6ff1fbd9d21a544e6b3388df4b31a8fab38dd1d4"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/initial-ci-summary.json",
+      "sha256": "5e297778889859828306a15b63265f1e119fae5c46f5fa08f14ed3b67b37c493"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/restored-resources.json",
+      "sha256": "2805035753af768b74ac4b987581644a085a6b857765a6c19ac0a2a6cd8fdd57"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/secret-scan-comparison.json",
+      "sha256": "a934e32dbf5adbce885b084d630df53f669007dcb10a7cd61814ef772a53e7d6"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/source-secret-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/source-secret-scan.log",
+      "sha256": "8f537356442ea3785d90b08078fd669009591cdee5f82e10e819416622672a32"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/source.json",
+      "sha256": "5086e1af5f75747a9f59bcfb8979ccc53705eb659ad3736d81cc39cb6915cd2b"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/toolchain-command.json",
+      "sha256": "06b90b1d627f3974c5900f9f10ce41e1fea59f068a9afab41945052203013c9b"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/toolchain-terminal.json",
+      "sha256": "a8068f66d4d66b1ff1a1e48d12638f0be556efbb687947f9e33b85a24b941d7d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/user-symlinks.json",
+      "sha256": "32f0ae750787e6bde76a8d6f60ab3e6f135ecff1c9e7cc3b06bd86a820fae4ca"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/validate-final.py",
+      "sha256": "35641267b6cff90095ae4e95967d01a69addce7e922dc90bee0b6c6e7f2a6623"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/validate-toolchain.py",
+      "sha256": "82881c1dcc5534abd3bcf5677cb12d8882720d79759bdd35283a7b1f6ad490d5"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/validate.py",
+      "sha256": "7da7b90332445fa71f75d0463dcec5548c529a31ec9c747dcf44d88724c21e79"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-logistics-toolchain-20261114/validation-results.json",
+      "sha256": "db16d454fe731e7d1b2da004326cea6ed5ee50b260fce136d8d0167730c4beb7"
+    }
+  ],
+  "createdAt": "2026-11-14T12:06:40.756081+00:00"
+}

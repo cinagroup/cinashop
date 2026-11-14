@@ -229,3 +229,7 @@ for (const raw of [undefined, null, { create: '2024-02-30', pay: '', delivery: '
     } finally { r.stop(); }
   });
 }
+
+// Keep the audited package manifest unchanged while registering this page's
+// complete logistics lifecycle cases through the existing order test entry.
+require('./buyer-order-tracking-lifecycle.test.cjs');
