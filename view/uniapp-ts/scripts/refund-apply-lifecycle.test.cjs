@@ -1,7 +1,7 @@
 const test=require('node:test');const assert=require('node:assert/strict');
 const {runtime,tick,deferred}=require('./uni-store-runtime.cjs');
 const detail=(id='local_A',change={})=>({id:100,uid:11,orderId:id,paid:1,payPrice:'10.00',status:0,productType:0,pid:0,supplierAllocationStatus:0,refundStatus:0,
-  cartInfo:[{id:1,oid:100,cartId:'500',cartNum:2,refundNum:0,isSupportRefund:1,writeTimes:0,writeSurplusTimes:0,cartInfo:{product:{storeName:'本地商品'},sku:{price:'5.00',suk:'红色'}}}],...change});
+  orderLog:{create:'',pay:'',delivery:'',take:'',complete:''}, cartInfo:[{id:1,oid:100,cartId:'500',cartNum:2,refundNum:0,isSupportRefund:1,writeTimes:0,writeSurplusTimes:0,cartInfo:{product:{storeName:'本地商品'},sku:{price:'5.00',suk:'红色'}}}],...change});
 const setup=(override=()=>undefined)=>runtime({component:'pages/order/refundApply.vue',send:c=>override(c)??{data:c.url.includes('/refund/apply/')?{refundId:91}:detail(c.url.split('/').at(-1))}});
 test('UniApp refund clears the old order, selection and reason on hide',async()=>{
   const r=setup();try{await r.start({orderId:'local_A'});r.checkout.selectedIds.value=[1];r.checkout.reason.value='其他';r.hooks.onHide?.();
@@ -277,5 +277,11 @@ test('UniApp choosing an image locks the exact selected quantity until its uploa
 test('UniApp large safe purchased counts require no quantity-sized array and send the small selected remainder', async () => {
   const r = setup(c => c.url.includes('/refund/apply/') ? undefined : { data: detail('local_A', { cartInfo: [{ ...detail().cartInfo[0], cartNum: Number.MAX_SAFE_INTEGER, refundNum: Number.MAX_SAFE_INTEGER - 2 }] }) });
   try { await r.start({ orderId: 'local_A' }); fill(r); quantityInput(r, '1'); await r.checkout.submit(); assert.equal(r.checkout.state.items[0].remainingQuantity, 2); assert.equal(appliedBody(r).cart_ids[0].cart_num, 1); }
+  finally { r.stop(); }
+});
+
+test('refund application rejects a missing lifecycle contract before accepting a selection',async()=>{
+  const r=setup(()=>({data:detail('local_A',{orderLog:undefined})}));
+  try { await r.start({orderId:'local_A'});fill(r);await r.checkout.submit();assert.equal(r.checkout.order.value,null);assert.match(r.checkout.state.loadError,/订单进度记录响应无效/);assert.equal(posts(r).length,0); }
   finally { r.stop(); }
 });

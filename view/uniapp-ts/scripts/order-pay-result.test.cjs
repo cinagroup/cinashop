@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { runtime, tick, deferred } = require('./uni-store-runtime.cjs');
 const detail = (id = 'result_A', change = {}) => ({ orderId:id, uid:11, paid:0,
-  payPrice:'10.00', status:0, refundStatus:0, payType:'weixin', cartInfo:[], ...change });
+  payPrice:'10.00', orderLog:{create:'',pay:'',delivery:'',take:'',complete:''}, status:0, refundStatus:0, payType:'weixin', cartInfo:[], ...change });
 const setup = (send = c => ({ data:detail(c.url.split('/').at(-1)) })) =>
   runtime({ component:'pages/order/payResult.vue', send });
 
@@ -105,4 +105,10 @@ test('payment result H5 route identity and duplicate IDs are isolated with liste
     assert.equal(r.checkout.orderId.value,'result_B');assert.equal(r.checkout.success.value,true);
     window.location.hash='#/pages/order/list';handlers.get('hashchange')();assert.equal(r.checkout.amount.value,'');assert.equal(r.calls.length,2);
   }finally{r.stop();assert.equal(handlers.size,0);if(descriptor)Object.defineProperty(globalThis,'window',descriptor);else delete globalThis.window;}
+});
+
+test('payment result rejects a missing lifecycle contract without claiming a paid result', async () => {
+  const r=setup(()=>({data:detail('result_A',{paid:1,orderLog:undefined})}));
+  try { await r.start({orderId:'result_A'});assert.equal(r.checkout.success.value,false);assert.equal(r.checkout.verified.value,null);assert.match(r.checkout.loadError.value,/订单进度记录响应无效/); }
+  finally { r.stop(); }
 });

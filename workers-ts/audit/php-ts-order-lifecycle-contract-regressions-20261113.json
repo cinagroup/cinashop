@@ -1,0 +1,382 @@
+{
+  "batch": "php-ts-order-lifecycle-contract-regressions-20261113",
+  "baseCommit": "a7835e6287fcdffd47e3d8f9428290ce5e113b14",
+  "wholeMigrationComplete": false,
+  "evidenceRoot": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113",
+  "parentAcceptance": {
+    "path": "workers-ts/audit/php-ts-order-lifecycle-timeline-20261113.json",
+    "sha256": "abe2d9eca30ac633f0aed57cfcd2531214a46c4cec225ff66d1bcf28abd81add",
+    "unchangedSourceFiles": 20,
+    "unchangedBuildFiles": 559,
+    "immutableArtifactHashesVerified": 227,
+    "unitPassed": 2387,
+    "nativePassed": 82,
+    "workerdPassed": 410,
+    "frontendLifecyclePassed": 56
+  },
+  "sourceHashes": [
+    {
+      "path": "view/uniapp-ts/scripts/native-wechat-payment-runtime.test.cjs",
+      "sha256": "0ce829dc713e309a42559a2584c84faa604d7fe80bd67dc6645e20fd8b79eb66"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/order-pay-result.test.cjs",
+      "sha256": "b78e5e44cc3e33c4777db8d241c82081da23634a9ecefae38f2d877e62573793"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/refund-apply-lifecycle.test.cjs",
+      "sha256": "6efceb57762f622be979ea3aa9b1bec672de05cce053d591165ec9afc7465ab8"
+    }
+  ],
+  "protectedManifest": {
+    "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/dependencies.json",
+    "sha256": "7d3f48faa59019a352a62155b1169f77106aad626eaf3e3ca91dfe36b7da4ebc",
+    "files": 4934
+  },
+  "validation": {
+    "commands": [
+      {
+        "name": "focused-consumers",
+        "exitCode": 0,
+        "durationSeconds": 31.59,
+        "sourceManifestSha256": "0e98a330fe70651c300bd0b9f8d6f99c4761f9cae4a0153d071e9dba4f1aba89"
+      },
+      {
+        "name": "full-uniapp-toolchain",
+        "exitCode": 0,
+        "durationSeconds": 1272.43,
+        "sourceManifestSha256": "0e98a330fe70651c300bd0b9f8d6f99c4761f9cae4a0153d071e9dba4f1aba89"
+      }
+    ],
+    "focusedBefore": {
+      "tests": 198,
+      "passed": 117,
+      "failed": 81,
+      "skipped": 0
+    },
+    "focusedAfter": {
+      "tests": 200,
+      "passed": 200,
+      "failed": 0,
+      "skipped": 0
+    },
+    "wholeUniappToolchain": {
+      "script": "test:toolchain",
+      "invocations": 25,
+      "passed": 3780,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "counts": {
+        "tests": [
+          2729,
+          38,
+          29,
+          42,
+          94,
+          18,
+          26,
+          46,
+          42,
+          47,
+          60,
+          30,
+          39,
+          38,
+          42,
+          47,
+          87,
+          34,
+          48,
+          84,
+          72,
+          20,
+          17,
+          29,
+          22
+        ],
+        "pass": [
+          2729,
+          38,
+          29,
+          42,
+          94,
+          18,
+          26,
+          46,
+          42,
+          47,
+          60,
+          30,
+          39,
+          38,
+          42,
+          47,
+          87,
+          34,
+          48,
+          84,
+          72,
+          20,
+          17,
+          29,
+          22
+        ],
+        "fail": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "skipped": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cancelled": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    }
+  },
+  "initialPushedCI": {
+    "runId": 43550509811,
+    "headSha": "a7835e6287fcdffd47e3d8f9428290ce5e113b14",
+    "jobsTerminal": 13,
+    "success": 8,
+    "failure": 5,
+    "failedJobs": [
+      "UniApp type, runtime and three-platform build execution",
+      "Worker type, unit, schema and route execution (shard 2/2)",
+      "Worker type, unit, schema and route execution (shard 1/2)",
+      "Worker type, unit, schema and route gates",
+      "UniApp build"
+    ],
+    "newFailure": "UniApp lifecycle consumers used pre-contract fixtures without order_log",
+    "knownFailure": "both Worker shards cannot checkout fixed PHP reference before tests",
+    "localReproduction": {
+      "tests": 198,
+      "passed": 117,
+      "failed": 81,
+      "skipped": 0
+    },
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/43550509811",
+    "conclusion": "failure",
+    "fixedPhpRef": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+    "logs": [
+      {
+        "path": "/tmp/php-ts-order-lifecycle-timeline-20261113/pushed-ci-jobs.json",
+        "sha256": "c59abc917384d0f35fde6d83ebdb7490bf8f8ea79474637976a82ecd5acb65cb"
+      },
+      {
+        "path": "/tmp/php-ts-order-lifecycle-timeline-20261113/pushed-ci-run.json",
+        "sha256": "2d9a8b4cde12f56823637698d0bf4f794acacb7a98741126ccc4e7c4ec79898e"
+      },
+      {
+        "path": "/tmp/php-ts-order-lifecycle-timeline-20261113/pushed-ci-uniapp.log",
+        "sha256": "837e699a0b745458abe5622091bec9fca991c91102c8079345a2f53b45166541"
+      },
+      {
+        "path": "/tmp/php-ts-order-lifecycle-timeline-20261113/pushed-ci-runtime.log",
+        "sha256": "dfb88b40225a1c9078a04d3141ec77b03b1b74773e40883fb8e0115e323f9265"
+      },
+      {
+        "path": "/tmp/php-ts-order-lifecycle-timeline-20261113/pushed-ci-shard-1.log",
+        "sha256": "2921ce22f079894b3b1c5b605cda223f0ac5bd0962dcb1ebc4e63e763ffb666c"
+      },
+      {
+        "path": "/tmp/php-ts-order-lifecycle-timeline-20261113/pushed-ci-shard-2.log",
+        "sha256": "29c6ce2f9309047fed6ed2b71357020435d72ac502f8bb98863f68039f337d4d"
+      }
+    ]
+  },
+  "invariants": {
+    "noProductionRuntimeSourceChange": true,
+    "strictParserUnchanged": true,
+    "oldTestAssertionsPreserved": true,
+    "extraMissingContractNegativeCases": 2,
+    "noDeploy": true,
+    "noPhpUpload": true,
+    "noLiveProviders": true,
+    "ignoredResourcesUnchanged": 150,
+    "userSymlinksPreserved": 5
+  },
+  "artifactHashes": [
+    {
+      "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/before-source/view/uniapp-ts/scripts/native-wechat-payment-runtime.test.cjs",
+      "sha256": "74ca1fdbc14dccd531edf3b9f262351a62b1490f16135e3814b899e3d3ccb5a3"
+    },
+    {
+      "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/before-source/view/uniapp-ts/scripts/order-pay-result.test.cjs",
+      "sha256": "1c4542700ec1830ec5fc4a1872522b49ae52e7f7bee5d5cab1b4fb446b44cdc1"
+    },
+    {
+      "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/before-source/view/uniapp-ts/scripts/refund-apply-lifecycle.test.cjs",
+      "sha256": "3fe3f675c4f53d40f4a8885c919dd00c34c60408a9623c9adce9b4732825acc2"
+    },
+    {
+      "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/before-terminal.json",
+      "sha256": "3cf83b4b035c354376413639bed0ac301c0acf41b18dfa7d8aadc06a778cf93c"
+    },
+    {
+      "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/before.log",
+      "sha256": "295e4c707333061241e2c0d300f37a6b9b83e12a401a0d9bc0b811ab30238a64"
+    },
+    {
+      "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/candidate-1-results.json",
+      "sha256": "236fc25f2e82e1f38792914309d401fc438b3545dcab9e84e6d8403ab1156f5a"
+    },
+    {
+      "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/candidate-1-terminal.json",
+      "sha256": "a32d0691e677de05ed81fba23385c2517eeec7d4bb7f56208db61cf4377b52c8"
+    },
+    {
+      "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/commit.py",
+      "sha256": "1c0c484b1f801fc67ee772fb6d529a64edf6c6a3778db2064fb121c33c29aed4"
+    },
+    {
+      "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/dependencies.json",
+      "sha256": "7d3f48faa59019a352a62155b1169f77106aad626eaf3e3ca91dfe36b7da4ebc"
+    },
+    {
+      "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/evidence.py",
+      "sha256": "d489f2d9d1f0f7a278b00215a7b684c2719da2a9c56ef81ee7ed701d09bcb341"
+    },
+    {
+      "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/finish-ci.py",
+      "sha256": "f4b25d5afc1607d2618bcc426879003bb967c340516e372631d23b70267f6775"
+    },
+    {
+      "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/focused-consumers.log",
+      "sha256": "0e44f450ea7442db293737d65ea7e573b34c8f91b001ac8346bb996e3225d50f"
+    },
+    {
+      "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/full-file-scan.py",
+      "sha256": "6c68eb4793b87a72db1d5013dc5fc3ea180232535b90466196f94a5b01d497bd"
+    },
+    {
+      "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/full-uniapp-runtime.log",
+      "sha256": "b59d01e6deece738c68248fddd247f2a3aa0677697a16935027114d4870e98b3"
+    },
+    {
+      "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/full-uniapp-toolchain.log",
+      "sha256": "dfa4e35b10cd657626f0f321986287ebd3e848d59ac430efac630c1f11478597"
+    },
+    {
+      "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/initial-ci-summary.json",
+      "sha256": "508eee067d77713a38af9aaffc9da81f878929ef3037156c85d1b6c19b515630"
+    },
+    {
+      "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/missing-script.log",
+      "sha256": "b59d01e6deece738c68248fddd247f2a3aa0677697a16935027114d4870e98b3"
+    },
+    {
+      "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/restored-resources.json",
+      "sha256": "2805035753af768b74ac4b987581644a085a6b857765a6c19ac0a2a6cd8fdd57"
+    },
+    {
+      "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/secret-scan-comparison.json",
+      "sha256": "65fc7ae9e41b9fe5433d47f9cef58de29eb27cdd8c6fb9129294ae2f5235646b"
+    },
+    {
+      "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/setup-failure.json",
+      "sha256": "27782243597dc12fba994d3a28eb7d65b9d7350659de80c684283313470686f3"
+    },
+    {
+      "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/source-secret-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/source-secret-scan.log",
+      "sha256": "bbd7f59f8b790c6218bc20fd25abe7a8eab8187ef5806c4c3190183c67371a58"
+    },
+    {
+      "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/source.json",
+      "sha256": "0e98a330fe70651c300bd0b9f8d6f99c4761f9cae4a0153d071e9dba4f1aba89"
+    },
+    {
+      "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/user-symlinks.json",
+      "sha256": "32f0ae750787e6bde76a8d6f60ab3e6f135ecff1c9e7cc3b06bd86a820fae4ca"
+    },
+    {
+      "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/validate.py",
+      "sha256": "54129c912d176d4bc5a1a71aaaa509f08266cd1d18bb357c3805dddd74c11f12"
+    },
+    {
+      "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/validation-results.json",
+      "sha256": "47ee19c593b115e7ec2a81753cec01cda591f2e9b8cb4d0d2aa6788a23eea5cb"
+    },
+    {
+      "path": "/tmp/php-ts-order-lifecycle-contract-regressions-20261113/validation-terminal.json",
+      "sha256": "9b48471a3dbbf485a54328981e37972a9393e24ee5ef2c10eb808c7608e14960"
+    }
+  ],
+  "createdAt": "2026-11-14T04:12:29.104376+00:00"
+}

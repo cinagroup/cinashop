@@ -162,7 +162,7 @@ for (const [label, change] of [
 const methods = { weixin: { enabled: true, reason: '' }, yue: { enabled: false, reason: 'not selected' },
   alipay: { enabled: false, reason: 'not selected' }, offline: { enabled: false, reason: 'not selected' } };
 const order = (paid = 0) => ({ orderId: 'owned_order', uid: 11, paid, payPrice: '10.00', totalPrice: '10.00', status: 0, type: 0,
-  pid: 0, supplierAllocationStatus: 0, productType: 0, cartInfo: [], customForm: [] });
+  pid: 0, supplierAllocationStatus: 0, productType: 0, orderLog: { create: '', pay: '', delivery: '', take: '', complete: '' }, cartInfo: [], customForm: [] });
 const cashier = (type = 'order', paid = false) => ({ type, order_id: 'owned_order', paid, payable: true, payable_reason: '', zero_pay: false,
   pay_price: '10.00', now_money: '20.00', integral: 0, pay_integral: 0, methods });
 const memberRequestId = '4d3446ed-dc61-4db8-a9d7-c6e99786e0c1';
