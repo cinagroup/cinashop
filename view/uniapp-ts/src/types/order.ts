@@ -1,3 +1,4 @@
+import type { OrderLifecycleLog } from '../../../common/orderLifecycle';
 /** 订单/购物车类型 */
 import type { SystemFormComponent } from "@/types/systemForm";
 
@@ -72,6 +73,8 @@ export interface OrderInfo {
     "id" | "name" | "phone" | "address" | "detailed_address" | "image" | "latitude" | "longitude" | "valid_time" | "day_time"
   > | null;
 }
+
+export interface OrderDetailInfo extends OrderInfo { order_log: OrderLifecycleLog }
 
 export interface DiscountPackageSku {
   id: number;

@@ -1,3 +1,4 @@
+import { parseOrderLifecycleLog } from '../../../common/orderLifecycle';
 /**
  * 购物车 + 订单 API
  */
@@ -12,6 +13,7 @@ import type {
   CreateOrderResult,
   FirstOrderQuote,
   OrderInfo,
+  OrderDetailInfo,
   PaymentReadiness,
   PickupStore,
   UserAddress,
@@ -243,9 +245,10 @@ export function apiOrderSystemForm(id: number): Promise<SystemFormInfo> {
   return http.get<SystemFormInfo>(`/order/system_form/${id}`);
 }
 
-export async function apiOrderDetail(orderId: string): Promise<OrderInfo> {
+export async function apiOrderDetail(orderId: string): Promise<OrderDetailInfo> {
   const data = await http.get<Record<string, unknown>>(`/order/detail/${orderId}`);
-  return toSnake(data) as OrderInfo;
+  const normalized = toSnake(data) as Record<string, unknown>;
+  return { ...normalized, order_log: parseOrderLifecycleLog(normalized.order_log) } as unknown as OrderDetailInfo;
 }
 
 export function apiOrderCashier(orderId: string, type = "order"): Promise<CheckoutCashier> {

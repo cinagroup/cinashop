@@ -1,3 +1,4 @@
+import { parseOrderLifecycleLog, type OrderLifecycleLog } from '../../../common/orderLifecycle';
 /**
  * Enterprise WeChat customer/group workbench API.
  *
@@ -115,6 +116,8 @@ export interface WorkOrder {
   promotions_price?: string;
 }
 
+export interface WorkOrderDetail extends WorkOrder { order_log: OrderLifecycleLog }
+
 export interface WorkJsConfig {
   appId: string;
   timestamp: number;
@@ -198,11 +201,12 @@ export function getWorkOrderList(
   return http.get<WorkOrder[]>("/work/order/list", query, contextOptions(token));
 }
 
-export function getWorkOrderInfo(token: string, orderId: number) {
-  return http.get<{
+export async function getWorkOrderInfo(token: string, orderId: number) {
+  const result = await http.get<{
     orderInfo: WorkOrder;
     userInfo: { nickname: string; real_name: string; phone: string; avatar: string };
   }>(`/work/order/info/${orderId}`, {}, contextOptions(token));
+  return { ...result, orderInfo: { ...result.orderInfo, order_log: parseOrderLifecycleLog((result.orderInfo as unknown as Record<string, unknown>).order_log) } as WorkOrderDetail };
 }
 
 export function getWorkPurchasedProducts(

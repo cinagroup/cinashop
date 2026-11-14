@@ -1,3 +1,4 @@
+import { readOrderLifecycleLog, withOrderLifecycleSnapshot } from '@/services/order/OrderLifecycleTimeline';
 import { SignJWT, jwtVerify } from "jose";
 import {
   and,
@@ -741,38 +742,34 @@ export class EnterpriseWechatContextService {
     const scope = await this.clientScopeFromToken(token);
     if (scope.client.uid <= 0) throw new NotFoundException("订单不存在或不属于当前客户");
     const id = positiveInteger(rawId, "订单ID");
-    const rows = await this.container.db.select().from(storeOrder).where(and(
-      eq(storeOrder.id, id),
-      eq(storeOrder.uid, scope.client.uid),
-      eq(storeOrder.isSystemDel, 0),
-      eq(storeOrder.isDel, 0),
-      eq(storeOrder.storeId, 0),
-      eq(storeOrder.pid, 0),
-      inArray(storeOrder.refundType, [...CUSTOMER_ORDER_REFUND_TYPES]),
-    )).limit(1);
-    if (!rows[0]) throw new NotFoundException("订单不存在或不属于当前客户");
-    const [projected] = await this.projectOrders(rows);
-    await this.signOrderImages([projected]);
-    const users = await this.container.db.select({
-      uid: user.uid,
-      real_name: user.realName,
-      nickname: user.nickname,
-      avatar: user.avatar,
-      phone: user.phone,
-      group_id: user.groupId,
-      now_money: user.nowMoney,
-      integral: user.integral,
-      spread_uid: user.spreadUid,
-      status: user.status,
-    }).from(user).where(and(
-      eq(user.uid, scope.client.uid),
-      eq(user.status, 1),
-      eq(user.isDel, 0),
-      isNull(user.deleteTime),
-    )).limit(1);
-    if (!users[0]) throw new NotFoundException("用户信息不存在");
-    const [avatar] = await signAttachmentReferences(this.env.APP_KEY, [users[0].avatar]);
-    return { orderInfo: projected, userInfo: { ...users[0], avatar } };
+    if (id > 2_147_483_647) throw new ValidateException("订单ID无效");
+    const result = await withOrderLifecycleSnapshot(this.container, async db => {
+      const rows = await db.select().from(storeOrder).where(and(
+        eq(storeOrder.id, id), eq(storeOrder.uid, scope.client.uid),
+        eq(storeOrder.isSystemDel, 0), eq(storeOrder.isDel, 0),
+        eq(storeOrder.storeId, 0), eq(storeOrder.pid, 0),
+        inArray(storeOrder.refundType, [...CUSTOMER_ORDER_REFUND_TYPES]),
+      )).limit(1);
+      if (!rows[0]) throw new NotFoundException("订单不存在或不属于当前客户");
+      const [projected] = await this.projectOrders(rows, db);
+      const users = await db.select({
+        uid: user.uid, real_name: user.realName, nickname: user.nickname, avatar: user.avatar,
+        phone: user.phone, group_id: user.groupId, now_money: user.nowMoney, integral: user.integral,
+        spread_uid: user.spreadUid, status: user.status,
+      }).from(user).where(and(eq(user.uid, scope.client.uid), eq(user.status, 1),
+        eq(user.isDel, 0), isNull(user.deleteTime))).limit(1);
+      if (!users[0]) throw new NotFoundException("用户信息不存在");
+      return { orderInfo: { ...projected, order_log: await readOrderLifecycleLog(db, id) }, userInfo: users[0] };
+    });
+    // Authorization uses its existing member/client fences outside the data
+    // snapshot, so a completed revocation is not hidden by repeatable read.
+    const current = await this.clientScopeFromToken(token);
+    if (current.corpId !== scope.corpId || current.actorUserid !== scope.actorUserid
+      || current.source !== scope.source || current.client.id !== scope.client.id || current.client.uid !== scope.client.uid)
+      throw new ForbiddenException("客户上下文已发生变化，请重新授权");
+    await this.signOrderImages([result.orderInfo]);
+    const [avatar] = await signAttachmentReferences(this.env.APP_KEY, [result.userInfo.avatar]);
+    return { orderInfo: result.orderInfo, userInfo: { ...result.userInfo, avatar } };
   }
 
   async purchasedProducts(token: string, query: Record<string, string>) {
@@ -1835,14 +1832,14 @@ export class EnterpriseWechatContextService {
     return this.requireClientScopeById(await this.verifyClaims(token, "work-client"));
   }
 
-  private async projectOrders(rows: Array<typeof storeOrder.$inferSelect>) {
+  private async projectOrders(rows: Array<typeof storeOrder.$inferSelect>, db: DbClient = this.container.db) {
     if (!rows.length) return [];
     const ids = rows.map((item) => item.id);
     const [carts, refunds] = await Promise.all([
-      this.container.db.select().from(storeOrderCartInfo)
+      db.select().from(storeOrderCartInfo)
         .where(inArray(storeOrderCartInfo.oid, ids))
         .orderBy(storeOrderCartInfo.oid, storeOrderCartInfo.id),
-      this.container.db.select().from(storeOrderRefund).where(and(
+      db.select().from(storeOrderRefund).where(and(
         inArray(storeOrderRefund.storeOrderId, ids),
         eq(storeOrderRefund.isCancel, 0),
         eq(storeOrderRefund.isDel, 0),

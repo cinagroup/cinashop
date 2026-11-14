@@ -11,6 +11,7 @@
         <text class="muted">订单号 {{ order.order_id }}</text>
         <text class="muted">下单时间 {{ order._add_time }}</text>
       </view>
+      <OrderLifecycleTimeline :log="order.order_log" :loading="loading" @refresh="load" />
       <view class="card"><text class="heading">客户与收货</text>
         <view class="row"><text>客户</text><text>{{ shopper?.nickname || shopper?.real_name || "暂无" }}</text></view>
         <view class="row"><text>收货人</text><text>{{ order.real_name || "暂无" }}</text></view>
@@ -45,13 +46,14 @@
 
 <script setup lang="ts">
 import ThemePage from '@/components/ThemePage.vue';
+import OrderLifecycleTimeline from '@/components/OrderLifecycleTimeline.vue';
 import { ref, watch } from "vue";
 import { onLoad, onUnload } from "@dcloudio/uni-app";
-import { getWorkOrderInfo, type WorkOrder } from "@/api/work";
+import { getWorkOrderInfo, type WorkOrderDetail } from "@/api/work";
 import { useWorkAccess } from "@/composables/useWorkAccess";
 
 const access = useWorkAccess("client");
-const order = ref<WorkOrder | null>(null);
+const order = ref<WorkOrderDetail | null>(null);
 const shopper = ref<{ nickname: string; real_name: string; phone: string; avatar: string } | null>(null);
 const routeError = ref("");
 const loading = ref(false);

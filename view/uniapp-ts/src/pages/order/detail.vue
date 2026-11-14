@@ -8,6 +8,8 @@
       <text class="status-sub">{{ statusSub }}</text>
     </view>
 
+    <OrderLifecycleTimeline :log="order.order_log" :loading="loading" @refresh="load" />
+
     <view v-if="order.split_orders?.length" class="section">
       <view class="package-heading">
         <text class="package-title">履约包裹</text>
@@ -218,6 +220,7 @@
 
 <script setup lang="ts">
 import ThemePage from '@/components/ThemePage.vue';
+import OrderLifecycleTimeline from '@/components/OrderLifecycleTimeline.vue';
 // #ifdef APP-PLUS
 import { onUnmounted } from 'vue';
 import { reserveNativeWechatPayment } from '@/utils/nativeWechatPaymentEntry';
@@ -230,7 +233,7 @@ import type {
   CheckoutCashier,
   CheckoutPaymentMethod,
   CheckoutPaymentResult,
-  OrderInfo,
+  OrderDetailInfo,
 } from "@/types/order";
 import type { SystemFormComponent } from "@/types/systemForm";
 import { API_BASE, getFormType, RequestError } from "@/utils/request";
@@ -243,7 +246,7 @@ defineOptions({ inheritAttrs: false });
 const authStore = useAuthStore();
 const loading = ref(false), loadError = ref(''), cashierError = ref(''), actionError = ref('');
 let currentOrderId = '', revision = 0, disposed = false, visible = false, paymentAttempt = 0;
-const order = ref<OrderInfo | null>(null);
+const order = ref<OrderDetailInfo | null>(null);
 const cashier = ref<CheckoutCashier | null>(null);
 const payType = ref<CheckoutPaymentMethod>("yue");
 const paying = ref(false);
@@ -290,7 +293,7 @@ const secondCardRemaining = computed(() => secondCardLines.value.reduce(
   0,
 ));
 
-function secondCardValidityText(item: NonNullable<OrderInfo["cart_info"]>[number]): string {
+function secondCardValidityText(item: NonNullable<OrderDetailInfo["cart_info"]>[number]): string {
   if (!item.write_start && !item.write_end) return "永久有效";
   return `有效期：${formatTime(item.write_start)} 至 ${formatTime(item.write_end)}`;
 }

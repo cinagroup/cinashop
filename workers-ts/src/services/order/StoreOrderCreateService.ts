@@ -1,3 +1,4 @@
+import { readOrderLifecycleLog } from './OrderLifecycleTimeline';
 /**
  * 订单创建 Service (M3 最高风险模块)
  *
@@ -3585,8 +3586,10 @@ export class StoreOrderCreateService {
       new AttachmentService(this.container, this.env),
       order,
     );
+    const orderLog = await readOrderLifecycleLog(this.container.db, order.id);
     return {
       ...order,
+      order_log: orderLog,
       fictitiousContent: customerVisibleManualVirtualContent(order),
       virtualInfo:
         order.productType === 1 && order.paid === 1 && order.deliveryType === "fictitious"

@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { runtime, tick, deferred } = require('./uni-store-runtime.cjs');
 const detail = id => ({ orderId: id, uid: 11, paid: 0, payPrice: '10.00', totalPrice: '10.00', status: 0, type: 0,
-  pid: 0, supplierAllocationStatus: 0, productType: 0, cartInfo: [], customForm: [], realName: '本地私有联系人' });
+  pid: 0, supplierAllocationStatus: 0, productType: 0, orderLog: { create: '', pay: '', delivery: '', take: '', complete: '' }, cartInfo: [], customForm: [], realName: '本地私有联系人' });
 const repurchaseDetail = (id = 'local_A', change = {}) => ({ ...detail(id), id: 501, paid: 1, status: 2,
   refundStatus: 0, supplierAllocationStatus: 2, cartInfo: [{ id: 701, type: 2, cartNum: 2 }], ...change });
 const repurchaseResult = (change = {}) => ({ cartIds: [901, 902], cateId: '901,902', sourceOrderId: 'local_A', sourceRowId: 501, ...change });
@@ -215,3 +215,17 @@ test('UniApp detail H5 hash reuse clears the old view and rejects ambiguous IDs'
     assert.equal(r.checkout.order.value,null); assert.ok(r.checkout.loadError.value);
   } finally { r.stop(); assert.equal(handlers.size,0); if(descriptor) Object.defineProperty(globalThis,'window',descriptor); else delete globalThis.window; }
 });
+
+for (const raw of [undefined, null, { create: '2024-02-30', pay: '', delivery: '', take: '', complete: '' }]) {
+  test('UniApp lifecycle contract failure clears an already rendered private order '+JSON.stringify(raw), async () => {
+    let malformed = false;
+    const r = setup(c => c.url.includes('/detail/') && malformed ? { data: { ...detail('local_A'), orderLog: raw } } : undefined);
+    try {
+      await r.start({ orderId: 'local_A' }); assert.equal(r.checkout.order.value.order_id, 'local_A');
+      malformed = true; await r.checkout.load();
+      assert.equal(r.checkout.order.value, null); assert.equal(r.checkout.cashier.value, null);
+      assert.match(r.checkout.loadError.value, /订单进度记录响应无效/);
+      assert.ok(r.calls.every(c => c.url.includes('/order/detail/') || c.url.includes('/cashier/')));
+    } finally { r.stop(); }
+  });
+}

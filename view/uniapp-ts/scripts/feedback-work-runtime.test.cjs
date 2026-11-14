@@ -198,7 +198,7 @@ test('authorized group member keeps client target through customer, orders, deta
     if (call.url === '/api/work/order/list') return { data: [{ id: 44, order_id: 'order-44',
       _add_time: '', pay_price: '8.00', total_num: 1, paid: 1, refund_type: 0,
       _status: { _title: '已付款' }, cartInfo: [] }] };
-    if (call.url === '/api/work/order/info/44') return { data: { orderInfo: { id: 44, order_id: 'order-44',
+    if (call.url === '/api/work/order/info/44') return { data: { orderInfo: { order_log: { create: '', pay: '', delivery: '', take: '', complete: '' }, id: 44, order_id: 'order-44',
       _add_time: '', pay_price: '8.00', total_num: 1, paid: 1, refund_type: 0,
       _status: { _title: '已付款' }, cartInfo: [] }, userInfo: null } };
     if (call.url === '/api/work/product/cart_list') return { data: [{ id: 3, store_name: '花',
@@ -318,7 +318,7 @@ test('all five no-hint private pages discard a response after the Enterprise cha
       data: [{ id: 44, order_id: 'order-44', _add_time: '', pay_price: '8.00', total_num: 1,
         paid: 1, refund_type: 0, _status: {}, cartInfo: [] }], empty: page => page.rows.value.length === 0 },
     { page: 'orderDetail', kind: 'client', endpoint: '/api/work/order/info/44', query: { id: '44' },
-      data: { orderInfo: { id: 44, order_id: 'order-44', _add_time: '', pay_price: '8.00',
+      data: { orderInfo: { order_log: { create: '', pay: '', delivery: '', take: '', complete: '' }, id: 44, order_id: 'order-44', _add_time: '', pay_price: '8.00',
         total_num: 1, paid: 1, refund_type: 0, _status: {}, cartInfo: [] }, userInfo: null },
       empty: page => page.order.value === null },
     { page: 'record', kind: 'client', endpoint: '/api/work/product/cart_list', query: {},
@@ -575,5 +575,21 @@ test('Work purchased and visited product tabs use separate scoped endpoints and 
       '/api/work/product/cart_list', '/api/work/product/visit_list',
     ]);
     assert.equal(r.calls.at(-1).data.store_name, '花');
+  } finally { r.stop(); b.dispose(); }
+});
+
+test('Work detail lifecycle contract failure clears an already rendered private order', async () => {
+  const b = browser(); let malformed = false;
+  const r = runtime({ component: 'pages/work/orderDetail/index.vue', send: call => {
+    if (call.url === '/api/work/context/challenge') return { data: { authorization_url: `https://open.weixin.qq.com/connect/oauth2/authorize?state=${state}`, state, expires_in: 300 } };
+    if (call.url === '/api/work/context/exchange') return { data: { token: 'work-secret', token_type: 'Bearer', expires_in: 300, target: { type: 'client', id: 5 } } };
+    assert.equal(call.url, '/api/work/order/info/44');
+    return { data: { orderInfo: { id: 44, order_id: 'order-44', order_log: malformed ? undefined : { create: '2024-01-01', pay: '', delivery: '', take: '', complete: '' }, cartInfo: [] }, userInfo: null } };
+  } });
+  try {
+    const query = { id: '44', userid: 'external-1' }; await r.start(query); await callbackTo(r, b.location, query);
+    assert.equal(r.checkout.order.value.order_log.create, '2024-01-01');
+    malformed = true; await r.checkout.load(); assert.equal(r.checkout.order.value, null);
+    assert.match(r.checkout.access.error.value, /订单进度记录响应无效/);
   } finally { r.stop(); b.dispose(); }
 });
