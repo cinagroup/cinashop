@@ -77,7 +77,7 @@
                 v-for="(p, i) in r.pics"
                 :key="i"
                 class="reply-pic"
-                :src="p"
+                :src="reviewImageSource(p)"
                 mode="aspectFill" @tap.stop="previewReply(r.pics,p)"
               />
             </view>
@@ -249,6 +249,7 @@
 </template>
 
 <script setup lang="ts">
+import { reviewImageSource,reviewImagePreview } from '@/utils/reviewImage';
 import ThemePage from '@/components/ThemePage.vue';
 import ProductMedia from '@/components/productDetail/ProductMedia.vue';
 import ProductSharePoster from '@/components/productDetail/ProductSharePoster.vue';
@@ -501,7 +502,7 @@ async function receiveCoupon(id:number){if(!visible.value||!detail.value||coupon
   try{await apiCouponReceive(id);if(current()){receivedCoupons.value.push(id);uni.showToast({title:'优惠券领取已处理',icon:'success'});}}
   catch{if(current())marketingError.value='优惠券领取未确认，可在优惠券页面核对后重新读取';}finally{if(current())couponLoading.value=0;}
 }
-function previewReply(urls:string[],current:string){if(visible.value&&urls.includes(current))uni.previewImage({urls:[...urls],current});}
+function previewReply(urls:string[],current:string){if(visible.value&&urls.includes(current)){const preview=reviewImagePreview(urls,current);if(preview)uni.previewImage(preview);}}
 function goProduct(id:number){if(recommendations.value.some(row=>row.id===id))navigate(`/pages/goods/detail?id=${id}`);}
 function goRank(){if(display.value.rank>0&&display.value.rankType>0)navigate(`/pages/columnGoods/rank/index?type=${display.value.rankType}`);}
 function goCommunity(){if(detail.value)navigate(`/pages/goods/productCommunity?productId=${detail.value.id}`);}

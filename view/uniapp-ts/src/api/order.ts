@@ -358,7 +358,7 @@ export function apiReplySubmit(params: {
   serviceScore: number;
   logisticsScore: number;
   pics?: string[];
-}): Promise<{ id: number; oid: number; completed: boolean; to_lottery: false }> {
+}): Promise<{ id: number; oid: number; completed: boolean; to_lottery: boolean }> {
   return http.post(`/reply/submit`, params);
 }
 

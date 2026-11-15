@@ -159,12 +159,11 @@ export function registerOrderDetailTests(getContext) {
       waiting.resolve({status:200,data:null}); await pending; assert.equal(f.calls.length,reads); assert.equal(f.dialog.messages.length,0);
     } finally { waiting.resolve({status:400}); f.close(); }
   });
-  it('PC detail review loop stops before the next product when its owner changes', async () => {
-    const waiting = gate(), f = await mount(c => c.method === 'post' ? waiting.promise : c.url.includes('/detail/') ? {status:200,data:{...detail('local_A'),paid:1,status:2,cartInfo:[{id:1,unique:'row_A'},{id:2,unique:'row_B'}]}} : undefined);
-    try { f.view.reviewForm.value.comment='本地测试评价'; const pending = f.view.submitReview(); await flush(); assert.equal(f.writes().length,1);
-      getContext().authUtils.setAuth('new-session',22); waiting.resolve({status:200,data:null}); await pending;
-      assert.equal(f.writes().length,1); assert.equal(f.view.reviewForm.value.comment,''); assert.equal(f.dialog.messages.length,0);
-    } finally { waiting.resolve({status:400}); f.close(); }
+  it('PC detail removes an open per-product review panel when its owner changes', async () => {
+    const f = await mount(c => c.url.includes('/detail/') ? {status:200,data:{...detail('local_A'),paid:1,status:2}} : undefined);
+    try { f.view.reviewVisible.value=true;getContext().authUtils.setAuth('new-session',22);
+      assert.equal(f.view.reviewVisible.value,false);assert.equal(f.view.order.value,null);assert.equal(f.writes().length,0);
+    } finally { f.close(); }
   });
 
   const repurchaseDetail = (id = 'local_A', change = {}) => ({ ...detail(id), id: 501, paid: 1, status: 2,

@@ -242,3 +242,5 @@ test('UniApp invoice entry binds the currently loaded order and rejects a stale 
     assert.deepEqual(r.navigations, []); r.checkout.goInvoice(r.checkout.order.value); assert.deepEqual(r.navigations, ['/pages/user/invoiceOrder?orderId=local_A']);
   } finally { r.stop(); }
 });
+
+require('./buyer-reviews-lifecycle.test.cjs');

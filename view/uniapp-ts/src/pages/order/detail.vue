@@ -189,8 +189,8 @@
     </view>
 
     <!-- 评价入口 (已签收) -->
-    <view v-if="canOperate && order.status === 2" class="express-link" @tap="goReply">
-      <text>✍️ 评价订单</text>
+    <view v-if="canOperate && (order.status === 2 || order.status === 3)" class="express-link" @tap="goReply">
+      <text>✍️ {{ order.status === 3 ? "查看已提交评价" : "评价订单" }}</text>
       <text class="arrow">›</text>
     </view>
 
@@ -605,8 +605,8 @@ function goExpress(expected: OrderDetailInfo) {
 }
 
 function goReply() {
-  if (!order.value || !canOperate.value || !currentView().current()) return;
-  uni.navigateTo({ url: `/pages/order/reply?orderId=${order.value.order_id}` });
+  if (!order.value || !canOperate.value || ![2, 3].includes(order.value.status) || !currentView().current()) return;
+  uni.navigateTo({ url: `/pages/order/reply?orderId=${encodeURIComponent(order.value.order_id)}` });
 }
 
 function goRefund() {

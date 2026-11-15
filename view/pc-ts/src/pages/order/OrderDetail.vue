@@ -212,24 +212,10 @@
         <el-button v-if="order.delivery_type === 'express' && order.status >= 1" size="large" :disabled="loading || paying || taking || reviewing" @click="goExpress(order)">
           查看物流
         </el-button>
-        <el-button v-if="order.status === 2" type="primary" size="large" :disabled="!!actionError" @click="reviewVisible = true">
-          评价订单
+        <el-button v-if="order.status === 2 || order.status === 3" type="primary" size="large" :disabled="!!actionError" @click="reviewVisible = true">
+          {{ order.status === 3 ? "查看已提交评价" : "评价订单" }}
         </el-button>
       </div>
-    </template>
-    <div v-else class="detail-card" role="alert">
-      <p>{{ loadError || '暂无订单信息，请重新加载' }}</p>
-      <el-button @click="load">重新加载订单</el-button>
-    </div>
-
-    <el-dialog v-model="reviewVisible" title="评价订单" width="min(520px, 92vw)" destroy-on-close>
-      <div v-if="order" class="review-products">
-        <div v-for="item in order.cart_info" :key="item.id" class="review-product">
-          <ProductImage v-if="item.cart_info?.product" :src="item.cart_info.product.image" :alt="item.cart_info.product.storeName" class="review-product-image" />
-          <span>{{ item.cart_info?.product?.storeName || "商品" }}</span>
-        </div>
-      </div>
-
       <div v-if="customForm.length" class="detail-card">
         <h3>补充信息</h3>
         <div v-for="(item, index) in customForm" :key="String(item.id ?? index)" class="form-snapshot-row">
@@ -246,25 +232,15 @@
           <span v-else class="form-snapshot-value">{{ formValue(item.value) }}</span>
         </div>
       </div>
-      <el-form label-position="top">
-        <el-form-item label="商品质量"><el-rate v-model="reviewForm.productScore" /></el-form-item>
-        <el-form-item label="服务态度"><el-rate v-model="reviewForm.serviceScore" /></el-form-item>
-        <el-form-item label="物流速度"><el-rate v-model="reviewForm.logisticsScore" /></el-form-item>
-        <el-form-item label="评价内容">
-          <el-input
-            v-model="reviewForm.comment"
-            type="textarea"
-            :rows="4"
-            :maxlength="512"
-            show-word-limit
-            placeholder="分享你的购物体验，帮助更多买家"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="reviewVisible = false">取消</el-button>
-        <el-button type="primary" :loading="reviewing" @click="submitReview">提交评价</el-button>
-      </template>
+    </template>
+    <div v-else class="detail-card" role="alert">
+      <p>{{ loadError || '暂无订单信息，请重新加载' }}</p>
+      <el-button @click="load">重新加载订单</el-button>
+    </div>
+
+    <el-dialog v-model="reviewVisible" title="评价订单" width="min(760px, 94vw)" top="5vh" destroy-on-close>
+      <BuyerReviewPanel v-if="reviewVisible && order" :order-no="order.order_id" @busy="reviewing = $event" @completed="reviewCompleted" />
+      <template #footer><el-button @click="reviewVisible = false">关闭</el-button></template>
     </el-dialog>
 
     <el-dialog v-model="qrVisible" title="微信扫码支付" width="360px" @closed="stopPaymentPolling">
@@ -288,7 +264,7 @@ import { useRoute, useRouter, isNavigationFailure } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import QRCode from "qrcode";
 import { apiOrderCashier, apiOrderDetail, apiOrderPay, apiOrderTake, apiOrderAgain } from "@/api/order";
-import { apiReplySubmit } from "@/api/product";
+import BuyerReviewPanel from "@/components/BuyerReviewPanel.vue";
 import type {
   CheckoutCashier,
   CheckoutPaymentMethod,
@@ -329,12 +305,6 @@ const qrCanvas = ref<HTMLCanvasElement | null>(null);
 let paymentPollingToken = 0;
 const reviewing = ref(false);
 const reviewVisible = ref(false);
-const reviewForm = ref({
-  productScore: 5,
-  serviceScore: 5,
-  logisticsScore: 5,
-  comment: "",
-});
 const descriptionColumns = ref(window.innerWidth <= 768 ? 1 : 2);
 const customForm = computed(() => order.value?.custom_form ?? []);
 const virtualItems = computed(() =>
@@ -620,38 +590,8 @@ async function confirmExternalPayment() {
   } catch (error) { if (scope.current()) ElMessage.warning(`支付状态读取失败，请重试。${errorText(error)}`); }
 }
 
-async function submitReview() {
-  if (!order.value || reviewing.value || actionError.value || order.value.paid !== 1 || order.value.status !== 2) return;
-  const scope = currentView();
-  if (!scope.current()) return;
-  const comment = reviewForm.value.comment.trim();
-  if (!comment) return ElMessage.warning("请填写评价内容");
-  const items = order.value.cart_info ?? [];
-  if (!items.length || items.some((item) => !item.unique)) {
-    return ElMessage.error("订单商品快照不完整，无法评价");
-  }
-  reviewing.value = true;
-  const scores = { productScore: reviewForm.value.productScore, serviceScore: reviewForm.value.serviceScore, logisticsScore: reviewForm.value.logisticsScore };
-  try {
-    for (const item of items) {
-      if (!scope.current()) return;
-      await apiReplySubmit({
-        unique: item.unique,
-        comment,
-        ...scores,
-      });
-    }
-    if (!scope.current()) return;
-    ElMessage.success("评价成功，感谢你的反馈");
-    reviewVisible.value = false;
-    reviewForm.value.comment = "";
-    await load();
-  } catch (error) {
-    if (scope.current()) actionError.value = `评价可能部分提交，请刷新订单核对。${errorText(error)}`;
-  } finally {
-    if (scope.current()) reviewing.value = false;
-  }
-}
+function reviewCompleted() { if (order.value) order.value.status = 3; }
+watch(reviewVisible, value => { if (!value) reviewing.value = false; }, { flush: 'sync' });
 
 function errorText(error: unknown): string { return error instanceof Error ? error.message : '读取失败，请稍后重试'; }
 async function goExpress(expected: OrderInfo) {
@@ -685,7 +625,6 @@ function clearView() {
   if (confirming) { confirming = false; ElMessageBox.close(); }
   paying.value = false; taking.value = false; reviewing.value = false; loading.value = false;
   loadError.value = ''; cashierError.value = ''; actionError.value = ''; payType.value = 'yue';
-  reviewForm.value = { productScore: 5, serviceScore: 5, logisticsScore: 5, comment: '' };
 }
 async function load() {
   if (disposed) return;

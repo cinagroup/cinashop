@@ -1,3 +1,4 @@
+import { buyerReviewLegacyPath,buyerReviewQuery,buyerReviewPageRoute } from '../../../common/buyerReviewRoute';
 import { resolveCommunityPageRoute } from "../../../common/communityRoute";
 import { resolveCustomerWorkPageRoute } from '../../../common/customerWorkRoute';
 import { divisionStaffInviteReturnPath, parseDivisionStaffInviteRoute } from '../../../common/divisionStaff';
@@ -94,6 +95,7 @@ export const REGISTERED_PAGE_ROUTES = new Set<string>([
   "/pages/order/detail",
   "/pages/order/express",
   "/pages/order/reply",
+  "/pages/goods/goods_comment_con/index",
   "/pages/order/refundApply",
   "/pages/order/refundList",
   "/pages/order/refundDetail",
@@ -299,7 +301,7 @@ export const LEGACY_ROUTE_RULES: Readonly<Record<string, LegacyRouteRule>> = {
     queryAliases: { order_id: "orderId", totalPrice: "amount" },
   },
   "/pages/goods/goods_comment_list/index": { target: "/pages/goods/commentList", coverage: "candidate_covered" },
-  "/pages/goods/goods_comment_con/index": { target: "/pages/order/reply", coverage: "candidate_covered" },
+  "/pages/goods/goods_comment_con/index": { target: "/pages/order/reply", coverage: "partial_replacement" },
   "/pages/goods/goods_comment_con/comment_con": { target: "/pages/goods/commentDetail", coverage: "candidate_covered" },
   "/pages/goods/goods_comment_con/lottery_comment": { target: "/pages/order/reply", coverage: "partial_replacement" },
   "/pages/goods/goods_logistics/index": { target: "/pages/order/express", coverage: "candidate_covered" },
@@ -383,6 +385,9 @@ function resolveLegacyActivityDetail(query: string): string {
 }
 
 export function resolveRegisteredPageRoute(path: string, query = ""): string {
+  if(path===buyerReviewLegacyPath||path==='/pages/order/reply'){
+    try { const q=buyerReviewQuery(query,path===buyerReviewLegacyPath);return buyerReviewPageRoute(q); } catch { return ''; }
+  }
   const community = resolveCommunityPageRoute(path, query);
   if (community !== null) return community;
   const work = resolveCustomerWorkPageRoute(path, query);

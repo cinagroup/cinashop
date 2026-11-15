@@ -1,3 +1,4 @@
+import { buyerReviewOrder, buyerReviewSubmit } from '@/controllers/api/v1/BuyerReviewController';
 import { buyerInvoiceView, privateBuyerInvoiceResponse } from '@/controllers/api/v1/BuyerInvoiceController';
 import * as UserExtractController from '@/controllers/api/v1/UserExtractController';
 import * as AdminWechatOpen from "@/controllers/api/v1/AdminWechatOpenController";
@@ -860,6 +861,7 @@ v1Routes.post("/order/computed/:key", authMiddleware({ force: true }), OrderCont
 v1Routes.get("/order/data", authMiddleware({ force: true }), OrderController.orderData);
 v1Routes.post("/order/prize/:orderId", authMiddleware({ force: true }), OrderController.orderPrize);
 v1Routes.get("/order/write/records/:id", authMiddleware({ force: true }), OrderController.orderWriteoffRecords);
+v1Routes.get("/order/reviews/:uni", authMiddleware({ force: true }), buyerReviewOrder);
 v1Routes.post("/order/product", authMiddleware({ force: true }), OrderController.orderProduct);
 v1Routes.get("/order/pay_cashier", authMiddleware({ force: true }), OrderController.orderPayCashier);
 v1Routes.get("/order/system_form/:id", authMiddleware({ force: true }), OrderController.orderSystemForm);
@@ -1200,12 +1202,12 @@ v1Routes.get("/reply/list/:productId", authMiddleware({ force: false }), ReplyCo
 v1Routes.get("/reply/comment/:id", authMiddleware({ force: false }), ReplyController.commentList);
 v1Routes.get("/reply/info/:id", authMiddleware({ force: true }), ReplyController.replyInfo);
 v1Routes.post("/reply/comment/:id", authMiddleware({ force: true }), ReplyController.replyComment);
-v1Routes.post("/reply/submit", authMiddleware({ force: true }), ReplyController.submitReply);
+v1Routes.post("/reply/submit", authMiddleware({ force: true }), buyerReviewSubmit(ReplyController.submitReply));
 v1Routes.post("/reply/praise/:id", authMiddleware({ force: true }), ReplyController.praiseComment);
 v1Routes.post("/reply/un_praise/:id", authMiddleware({ force: true }), ReplyController.unpraiseComment);
 v1Routes.post("/reply/unpraise/:id", authMiddleware({ force: true }), ReplyController.unpraiseReply);
 // PHP 兼容端点：旧商城提交评价与点赞路由可无感切换。
-v1Routes.post("/order/comment", authMiddleware({ force: true }), ReplyController.submitReply);
+v1Routes.post("/order/comment", authMiddleware({ force: true }), buyerReviewSubmit(ReplyController.submitReply));
 v1Routes.post("/reply/reply_praise/:id", authMiddleware({ force: true }), ReplyController.praiseReply);
 v1Routes.post(
   "/reply/un_reply_praise/:id",

@@ -20,7 +20,7 @@ import { withTx, type Container, type DbClient } from "@/lib/di";
 import { ValidateException } from "@/utils/errors";
 import { grantLotteryEntitlement } from "@/services/activity/LotteryService";
 import { lockReviewProducts, refreshProductReviewStar, verifyReviewProductSnapshot } from './ProductReviewRatingService';
-import { renderProductReplyMedia } from './ProductReplyMediaPolicy';
+import { renderProductReplyMedia, validateBuyerReplyMedia, verifyBuyerReplyMedia } from './ProductReplyMediaPolicy';
 import { publicProductPictures, renderProductPictures } from '@/services/activity/ProductAssetPolicy';
 import { parseCanonicalAttachmentId } from '@/services/system/AttachmentService';
 import { publicUserAvatars } from '@/services/user/UserProfilePublicAvatar';
@@ -34,6 +34,12 @@ const MAX_PICTURE_URL_LENGTH = 2_048;
 
 type CartRow = typeof storeOrderCartInfo.$inferSelect;
 type OrderRow = typeof storeOrder.$inferSelect;
+
+export interface BuyerReviewMutationPolicy {
+  prepare?(db:DbClient,order:OrderRow,carts:CartRow[]):Promise<void>;
+  check(db:DbClient,order:OrderRow,cart:CartRow):Promise<void>;
+  verify(db:DbClient,order:OrderRow,cart:CartRow,completed:boolean):Promise<void>;
+}
 
 export interface SubmitReplyInput {
   unique: string;
@@ -668,6 +674,7 @@ export class ReplyService {
   async submitReply(
     uid: number,
     rawInput: SubmitReplyInput,
+    policy?: BuyerReviewMutationPolicy,
   ): Promise<{ id: number; oid: number; completed: boolean; to_lottery: boolean }> {
     const input = normalizeReplyInput(rawInput);
     const c = this.container;
@@ -696,9 +703,12 @@ export class ReplyService {
       );
       if (!cart) throw new ValidateException("订单商品不存在");
 
+      await policy?.prepare?.(tx,order,carts);
       const reviewed = await reviewedCartIds(tx, order.id, carts);
       if (reviewed.has(cart.id)) throw new ValidateException("该商品已评价");
       const products = await lockReviewProducts(tx, [cart.productId]);
+      const mediaProof = await validateBuyerReplyMedia(tx, uid, input.pics);
+      await policy?.check(tx,order,cart);
       const now = Math.floor(Date.now() / 1_000);
       const inserted = await tx
         .insert(storeProductReply)
@@ -718,6 +728,8 @@ export class ReplyService {
         now,
       });
       if (rating) await verifyReviewProductSnapshot(tx, rating);
+      await verifyBuyerReplyMedia(tx, mediaProof);
+      await policy?.verify(tx,order,cart,completed);
       return { id: inserted[0].id, oid: order.id, completed, to_lottery: entitlement.activityId > 0 };
     });
   }

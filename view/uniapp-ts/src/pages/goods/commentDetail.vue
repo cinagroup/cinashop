@@ -36,7 +36,7 @@
             v-for="(pic, index) in detail.reply.pics"
             :key="pic + index"
             class="review-pic"
-            :src="pic"
+            :src="reviewImageSource(pic)"
             mode="widthFix"
             @tap="previewReview(index)"
           />
@@ -101,6 +101,7 @@
 </template>
 
 <script setup lang="ts">
+import { reviewImageSource,reviewImagePreview } from '@/utils/reviewImage';
 import ThemePage from '@/components/ThemePage.vue';
 import { ref } from "vue";
 import { onLoad, onShow } from "@dcloudio/uni-app";
@@ -215,7 +216,7 @@ async function toggleCommentPraise(item: ReplyCommentItem) {
 
 function previewReview(index: number) {
   if (!detail.value) return;
-  uni.previewImage({ urls: detail.value.reply.pics, current: detail.value.reply.pics[index] });
+  const preview=reviewImagePreview(detail.value.reply.pics,detail.value.reply.pics[index]??'');if(preview)uni.previewImage(preview);
 }
 
 function openProduct() {

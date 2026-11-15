@@ -1,0 +1,705 @@
+{
+  "batch": "buyer-reviews",
+  "base": "56b34f6b4ac30c3a55408d0aa8b5cdd0e708eef1",
+  "phpRef": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "sourceManifestSha256": "8d6cef5893f908c8ff9da7c0293038173a9cf8a6bad5c594e1e4532c224f4bda",
+  "sourceFiles": [
+    {
+      "path": "view/common/buyerReview.ts",
+      "sha256": "dfe63265fbb8a0fae0c4b38430e258191387cdeb42aeb89d3a04e0cddf1233be"
+    },
+    {
+      "path": "view/common/buyerReviewFlow.ts",
+      "sha256": "efbd24868602db0deebc2c91e660519b1d12ee42444b2970a33e86970382e655"
+    },
+    {
+      "path": "view/common/buyerReviewRoute.ts",
+      "sha256": "1c43866840af70e10cacfe6303a0779079a2ffaf70bee6f305a1819eedd89c45"
+    },
+    {
+      "path": "view/common/test/buyerReviewFixture.cjs",
+      "sha256": "c1f769028bac28e11f6af42532b37f956cdf3ef603e6a24706e2a6e60f114d1a"
+    },
+    {
+      "path": "view/pc-ts/src/api/buyerReview.ts",
+      "sha256": "0cd7cfe526627a476524b2a14129fb3dafacd44a817c270fce8e780b847fb46e"
+    },
+    {
+      "path": "view/pc-ts/src/api/product.ts",
+      "sha256": "9a733fc4cddf37950fe374a6560977d35b08e56fcdba4c22e462430925886879"
+    },
+    {
+      "path": "view/pc-ts/src/components/BuyerReviewPanel.vue",
+      "sha256": "a64e9f8ffd8e2e0c54c37bd19937ca6112e17543c6ce8f7b50c7adb6324571d2"
+    },
+    {
+      "path": "view/pc-ts/src/composables/useBuyerReviews.ts",
+      "sha256": "cdaa32017cc7edd2c026ead192d7400c3defbf028aad10c4f06bc57c65958d8f"
+    },
+    {
+      "path": "view/pc-ts/src/pages/order/OrderDetail.vue",
+      "sha256": "1897d5a7a5703221dea567578b1726c1c78dd043816536de0e865f8a304cbbc2"
+    },
+    {
+      "path": "view/pc-ts/test/auth-session.test.mjs",
+      "sha256": "15ab5c8e610f16f5de55624ec292da66a6ea78d653efd949572c2bd07f60d71a"
+    },
+    {
+      "path": "view/pc-ts/test/buyer-reviews.test.mjs",
+      "sha256": "9d5fd3739d641f6546c197bf43664ec0e9e6c4d70fd29f83fcf60a0bdc223a78"
+    },
+    {
+      "path": "view/pc-ts/test/order-detail-lifecycle.test.mjs",
+      "sha256": "5599e15e3446e2dd053be788704b3f0f3e64044f45f3354ff1159f279eced299"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/buyer-reviews-lifecycle.test.cjs",
+      "sha256": "b14ad61eb0fcf8816a0ffe716bcef4c3b87c0e183118ded8ad22089bf608c198"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/order-detail-lifecycle.test.cjs",
+      "sha256": "64bd13bea0c0f0b53d50bd0c2e8978245c0c04cf5de3c96da9630560c52f1e44"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/buyerReview.ts",
+      "sha256": "f0085464f1ea9824243e8b69fb41221d2795e6a9de99e5e1dbf300a7ceee6447"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/order.ts",
+      "sha256": "1ca14dab7668d8e73ceb186210c8043c6e414da2203b28bbf6dd74d453fb003f"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/productDetail/ActivityDetailContent.vue",
+      "sha256": "b9598e1fddc05dacd2fc4cbaa62a71b2b55000e739babe5beaa18c375df1a598"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useBuyerReviews.ts",
+      "sha256": "69e8ac2721f0883424ad438e826390e103d2969436d35efe6a8ce3b306ca9393"
+    },
+    {
+      "path": "view/uniapp-ts/src/config/navigation.ts",
+      "sha256": "9f65d40b33e2d9365a620d8a8fdccf9eb7b85e4d355456dc89a7e496f7507498"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages.json",
+      "sha256": "ec0cf1fababa3f1665e64bfedb87582ad7a64ac63582ba510fb0bf4be4cf8f23"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/goods/commentDetail.vue",
+      "sha256": "f48287aeb63984b3a9de459e757e4c77eb084a63b5134f4e4ad9061b89d802a8"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/goods/commentList.vue",
+      "sha256": "caff5e4c025037eaab6c39166823b5b1bc99b9105f5d9a4bf2ac032da7cbe6ce"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/goods/detail.vue",
+      "sha256": "e8837095a66450b4f1100eb903e5a2cc4e695d554aaaf9cc1a285420f1140196"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/goods/goods_comment_con/index.vue",
+      "sha256": "7106bba0f0c78919947bd61fbc0d004789de1f49b376afdce89a64865750fdff"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/order/detail.vue",
+      "sha256": "559ca3b0aa8b30931f593fe7411e73de6eca0efbec1007738c74cb948784a578"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/order/reply.vue",
+      "sha256": "2e776802454d1193d3fa2a29f57e38afe10c81b160795a008992a3aae7d86320"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/reviewImage.ts",
+      "sha256": "5715a7813902244f2db00ccc681f96998264b86d78616194148d8b2309d056c3"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "17d3224afc99d599c7861fb5fa7b12f730dd73d7a0b89083328bacbff5f72561"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/BuyerReviewController.ts",
+      "sha256": "bc4395fcd4295e3a1fe4b095b9f89a633c7c516f37ecf170e8c2da72fd7ebc42"
+    },
+    {
+      "path": "workers-ts/src/routes/v1/index.ts",
+      "sha256": "4df7cd371c8eadcacc79f611353314c55966f84c80777d2c52a6b0e4cdc07027"
+    },
+    {
+      "path": "workers-ts/src/services/order/BuyerReviewService.ts",
+      "sha256": "d3feaa53a6adb5bd3c1f80d52397d616a25a123360934b775a4a0600ac8bf5e4"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductReplyMediaPolicy.ts",
+      "sha256": "6aac37ad1d4b29955c0743b86e5a13dc6f8501600d9fc879c70ca07b30606d65"
+    },
+    {
+      "path": "workers-ts/src/services/product/ReplyService.ts",
+      "sha256": "fdd83ed69c3fec205ca5cf85efec13f1fe811da6b5979972b98cac5926d01bcd"
+    },
+    {
+      "path": "workers-ts/test/browser/buyer-reviews.acceptance.ts",
+      "sha256": "fe4cbdd09d927220e67df7db0468b32125d77633cdf4c3a8706ce9e487c13ea0"
+    },
+    {
+      "path": "workers-ts/test/buyer-review-contract.test.ts",
+      "sha256": "ecbc71ae6630d2b675ff48c6771be5810eccb3019b31239440b84d356dcdb7bc"
+    },
+    {
+      "path": "workers-ts/test/buyer-review-flow.test.ts",
+      "sha256": "adc73fb63c9a7a2b607ed6a32ef446b3ee6a33577df4be8dffecabbb7dfa982a"
+    },
+    {
+      "path": "workers-ts/test/buyer-review-media.test.ts",
+      "sha256": "e93b842ba2f2e2d6a5848ce83b58e61492a6432983b6a182fdcb103db3b39432"
+    },
+    {
+      "path": "workers-ts/test/buyer-reviews-native.test.ts",
+      "sha256": "4f93ae7ec679368abf7bc80313c1229be4df45a9537297231ad8376c86cd9290"
+    },
+    {
+      "path": "workers-ts/test/helpers/buyerReviewR2.ts",
+      "sha256": "08b849d6cf418c41099342058e0a441b96b2a7b11b640551ad4485e9ae517cff"
+    },
+    {
+      "path": "workers-ts/vitest.buyer-reviews-browser.config.ts",
+      "sha256": "f3b3c73124d76291f8645634976b83548ae9359e75319c76cfb5ca36a4660c02"
+    }
+  ],
+  "protectedBaselineFiles": 9213,
+  "restoredResources": 150,
+  "preservedUserSymlinks": 5,
+  "typeProof": {
+    "originalRoots": 4438,
+    "commonRoots": 1936,
+    "testRoots": 2502,
+    "shardTestCounts": [
+      1251,
+      1251
+    ],
+    "unionExactlyMatchesOriginal": true,
+    "optionsExactlyMatchOriginal": true,
+    "explicitTypeLibrariesResolveExactlyAsOriginal": true,
+    "generatedConfigs": [
+      "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts/.cache/buyer-reviews-types-20261114/tsconfig.worker-buyer-reviews-shard-1.generated.json",
+      "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts/.cache/buyer-reviews-types-20261114/tsconfig.worker-buyer-reviews-shard-2.generated.json"
+    ]
+  },
+  "validation": {
+    "allRequiredGatesPassed": true,
+    "unit": {
+      "files": 130,
+      "tests": 3189,
+      "failed": 0,
+      "skipped": 0,
+      "retainedFromCandidate": 15,
+      "inputsUnchangedExceptBrowserFixtureAndPcLayout": true
+    },
+    "native": {
+      "buyerReviews": {
+        "files": 1,
+        "tests": 14,
+        "failed": 0,
+        "skipped": 0,
+        "resourcesCleaned": true,
+        "retainedFromCandidate": 15,
+        "applicationAndTestInputsUnchanged": true
+      },
+      "adminSupplierReviewRegression": {
+        "files": 3,
+        "tests": 61,
+        "failed": 0,
+        "skipped": 0,
+        "resourcesCleaned": true
+      }
+    },
+    "nativeTotal": 75,
+    "workerd": {
+      "files": 30,
+      "tests": 410,
+      "failed": 0,
+      "skipped": 0,
+      "resourcesCleaned": true
+    },
+    "productionAuditFindings": 0,
+    "pc": {
+      "invocations": 2,
+      "tests": 418,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "perInvocation": [
+        409,
+        9
+      ]
+    },
+    "uniFinal": {
+      "invocations": 1,
+      "tests": 356,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "perInvocation": [
+        356
+      ],
+      "wholeFiles": 6,
+      "retainedFromCandidate": 15,
+      "inputsByteIdentical": true
+    },
+    "uniFullToolchainPredecessor": {
+      "invocations": 25,
+      "tests": 3842,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "perInvocation": [
+        2791,
+        38,
+        29,
+        42,
+        94,
+        18,
+        26,
+        46,
+        42,
+        47,
+        60,
+        30,
+        39,
+        38,
+        42,
+        47,
+        87,
+        34,
+        48,
+        84,
+        72,
+        20,
+        17,
+        29,
+        22
+      ],
+      "candidate": 13,
+      "finalHeadEvidence": false
+    },
+    "builds": [
+      "PC",
+      "H5",
+      "MP-WEIXIN",
+      "App"
+    ],
+    "buildLineage": "PC17 rebuilt; three Uni15 builds and application bytes unchanged, all2418 bundle hashes verified",
+    "browser": {
+      "pcPosts": 2,
+      "h5Posts": 2,
+      "committedReviews": 4,
+      "attachments": 2,
+      "r2Reads": 8,
+      "lostAcknowledgementRecoveredWithoutReplay": true,
+      "actualPngBytes": 68,
+      "outerAndInnerExitZero": true,
+      "viewport": {
+        "pc": {
+          "width": 1280,
+          "height": 820
+        },
+        "uni": {
+          "width": 375,
+          "height": 812
+        }
+      },
+      "consoleErrors": 0,
+      "knownUniDeprecationWarnings": 4
+    },
+    "historicalSourceBinding": {
+      "passed": 178,
+      "failed": 10,
+      "skipped": 0,
+      "passingGate": false
+    }
+  },
+  "historicalSourceProof": {
+    "testFile": "test/supplier-product-label-runtime-source-binding.test.ts",
+    "baseline": "56b34f6b4ac30c3a55408d0aa8b5cdd0e708eef1",
+    "baselinePassed": 178,
+    "currentPassed": 178,
+    "baselineFailed": 10,
+    "currentFailed": 10,
+    "skipped": 0,
+    "failingFullNamesExactlyMatch": true,
+    "failedCases": [
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance admits the exact new definer only in current shared-shop pricing recognition while isolated scopes and the fixed privilege plan remain frozen",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance keeps all prior frontend public selection binding and privilege plan bytes unchanged for a backend-only closure",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance partitions true8023 before and all controlled changed/additional files with no missing or duplicated image",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance pins complete current and accepted ProductLabel bytes workers-ts/scripts/run-local-finance-postgres.mjs",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance pins complete current and accepted ProductLabel bytes workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance pins complete current and accepted ProductLabel bytes workers-ts/src/migrations/checkoutPricingLock.ts",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance refuses altered current and forged whole-file inverse workers-ts/scripts/run-local-finance-postgres.mjs",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance refuses altered current and forged whole-file inverse workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance rejects nonexact publication bytes and forged bridge hashes while composing each immutable validation layer",
+      "Supplier label current App full-byte increment; evidence is not runtime acceptance runs current789 callSites827 variants before keeping every exact report byte and predecessor call object"
+    ],
+    "restoredIgnoredResources": 150,
+    "profiles": [
+      {
+        "profile": "baseline",
+        "exit": 1,
+        "seconds": 17.51
+      },
+      {
+        "profile": "current",
+        "exit": 1,
+        "seconds": 18.41
+      }
+    ],
+    "isPassingGate": false,
+    "isRuntimeAcceptance": false
+  },
+  "artifactHashes": [
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/accepted-counts.json",
+      "sha256": "038fef8758cc6ae28971ee66cd49f212898ac33bf817e98d62240b5b10a71a91"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/browser-candidate-15.log",
+      "sha256": "0948965e69587f968eb653895bce33c9aeffaee1b5598383cd749b600f21b737"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/browser-candidate-16.log",
+      "sha256": "9cc3d43dd789385924e0d6494c886c2cb4714385baf4bfaf0871e7a2a0666c8f"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/browser-candidate-17-repeat.log",
+      "sha256": "c057e7b0bf02fbc24c9bc69d4affd7e4870e4b393035e6d0c15f10c9051d5cfc"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/browser-candidate-17.log",
+      "sha256": "2b9b2b458c642653f507a4cc1e50aa47fc7cdb52168eaa1782a63158d11c2fae"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/browser-command-candidate-15.json",
+      "sha256": "59d85699ba99789f309ffb6ab8661727da81292275ffc1e440c4965352f037cd"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/browser-command-candidate-16.json",
+      "sha256": "e43319db9f5cec26a8065f6778999a4ae448bacb07a8ce73c1fcf903c93ced07"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/browser-command-candidate-17-attempt-1.json",
+      "sha256": "847601b839559c6c0c044f3430f78f962a59cf8b61b854fb08fcdf3e22194c6e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/browser-command-candidate-17.json",
+      "sha256": "ef94bd19f612277e55d49e7868d89edfe8c3a1d9a4a907512e4181d0bc4d6b98"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/browser-pc-accepted.png",
+      "sha256": "d1a1047440d61c5f6af34df4c9e21befa7a7b738f8b5739522b0aa720a5c1f2e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/browser-pc-before-layout.png",
+      "sha256": "c929d9949b66fac64b7d127e1741a1f9e1afb8aa989bfdc250968c588ab2ae1f"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/browser-pc-ui-candidate-17.json",
+      "sha256": "f31b2a805f610e75793f9cf8f6bbecfdd01aac6d338c513472f59f63440963e8"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/browser-ready-candidate-16.json",
+      "sha256": "7e4d5986d86c0b530162a12f5950477a4c036cb82a6f670978800e670138f5ce"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/browser-ready-candidate-17.json",
+      "sha256": "5f7170408a4e10200f6aed941bd294c4f35e54ac94df663b9a8f379b55d52e94"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/browser-result-candidate-17-attempt-1-inner.json",
+      "sha256": "a4523f0598140e1bdb919a306c91536c5f8945ed2503ebeb545a04c4f058c41a"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/browser-result-candidate-17.json",
+      "sha256": "8efa660f63c735a39ee68836c13860b36c43373788848365f3aba1a5256876e7"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/browser-ui-candidate-16-partial.json",
+      "sha256": "1bb4750c79fd448eb5a108133b818161fa6b08c2f67dd8daae368ad2d2d4f680"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/browser-ui-evidence.json",
+      "sha256": "8ad8de65a865ecc670dd460994ac2c6896f3f3391fff4ada74cc5b333473d41b"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/browser-uni-accepted.png",
+      "sha256": "fcb1df3e6ae1f9e7f5f50ed9d14f1ab7fa901009df9b4458838259b0f6e541d5"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/browser-uni-ui-candidate-17.json",
+      "sha256": "1168907098637636e4187061097071654d96f933923b57ee854398ab4adb113b"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/browser-upload-file.json",
+      "sha256": "75415efa68bab54660d88a6adbbca0be4ea4544e689b525e1afa48742465fc9f"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-15-apply-assertion-note.json",
+      "sha256": "4ad111ae8bce7e8d15e308b5b9788255872e5f2fa5c07c650b8af445d5fc6009"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-15-build-files.json",
+      "sha256": "b0f85f0bd223b1097c53f1d7a3e08f0dd8325418936dacf16e7828fc77b37d17"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-15-delta.json",
+      "sha256": "6aa7ef23fefa230eed50c4fa89b89a500751ed4eef8af780d472f3d621dada25"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-15-dependencies.json",
+      "sha256": "4d738528a9eb8984a9c23a5aae5df42faf1718bcfdffd2ba59a217be63339cca"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-15-front-result.json",
+      "sha256": "be923afa6299d46c7bd3abec57f15b1cc1bdf7918ee303877930ea4f6778ddd5"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-15-front-terminal.json",
+      "sha256": "dc6ce5ee8ed0561e68d324061d7086094962afa5cb8a0b6d392f62f6031fe9b5"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-15-native-buyer-reviews.log",
+      "sha256": "4c5863ff0d0e8dbecb2162c0149bde7310be3c5061a491fd33c99d2ffb1839a1"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-15-pc-build.log",
+      "sha256": "75c93bdcd4a53e4598a192cebf4584dbb36b702aa33a19b7bd55731d1233d783"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-15-pre-back-result.json",
+      "sha256": "871dfa346208af1ba2bb16ecfbc47f6f48a7d4047ad2444af6b02656640d7ae4"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-15-pre-back-terminal.json",
+      "sha256": "285180ef4ff2fbd83179d30e137b824c8f812044d46c90062e925c1a7bdf0342"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-15-review-unit.json",
+      "sha256": "fb7c4add6032da4c1a6be86a117a30d4044348cae4514a30520b935dd063c87d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-15-review-unit.log",
+      "sha256": "d4678f679715d55ae84ad2ef38047551bf9b688506961c4ae386bd64ba122ac6"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-15-source-baseline.json",
+      "sha256": "204b57a1a26c2b3376234809b064e82b4abbc72cb3f803db562a24f1dc2a02c1"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-15-source-baseline.log",
+      "sha256": "c10ce5e718591de0e4b4dd8d9abc202c744b01bd3e0f2c89a22028223378355c"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-15-source-current.json",
+      "sha256": "0d5b3d052d3789d945e7ad36a018a0193d3f7e393be1eabdeefe51f221f9ec8a"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-15-source-current.log",
+      "sha256": "0679e3b5477782541b990f30b21a9f7b20b718f0d4518653447e583b79e7e656"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-15-source-proof-comparison.json",
+      "sha256": "fdaffa248332b6b5be204d1b75451584ad6d124fba5f0c86b3bfddcf192c0caf"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-15-source-proof.log",
+      "sha256": "6978d2b94adbe44a9afed023e04588e87fe464903e1c0a0672f91233916355ff"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-15-source.json",
+      "sha256": "06c1b764c4f55a9494d962092042c1f94e65c0b4829612d5c6947788fe69eeec"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-15-uni-build-app.log",
+      "sha256": "a2051cd401599570aeafd694ace38af58a716eaa441c4dab1c75b80b0fa76800"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-15-uni-build-h5.log",
+      "sha256": "6239bd61f15fd98ae430d38ddb77e3682d65481694c64b8f24b22b96cd56e282"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-15-uni-build-mp-weixin.log",
+      "sha256": "e8741d81e50dbaf6580d232c46390dc304746a337fac6e4970d3efb56ed595ac"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-15-uni-final-whole-files.log",
+      "sha256": "4a0615953ce71166593061753c4a508f2b838649bc2aafe9af104cfefedb3160"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-15-uni-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-15-unit.json",
+      "sha256": "101de124c38bc074b91beb627cd7579358e544c142aed027ee66d82c4062d8b8"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-15-unit.log",
+      "sha256": "18b3d1ae33e1d56a2b955b9916a63ff68697a6c960a24d7e9ed668a31b291767"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-17-back-result.json",
+      "sha256": "11c71fd7eb7bf7823a121741a33304ba850870fcc3a413ea8820d4975ef33dcc"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-17-build-files.json",
+      "sha256": "ba0b39aae37e4ccf8e033506e0c3f28cd8b1b42a05b904106a9c3d870a169684"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-17-dependencies.json",
+      "sha256": "4d738528a9eb8984a9c23a5aae5df42faf1718bcfdffd2ba59a217be63339cca"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-17-front-result.json",
+      "sha256": "45c7343ccd6773409b8ba7cf77c767d6c4391f045cde588ad0b2cff48e60157d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-17-lineage.json",
+      "sha256": "8956b427293c3b086efc49052dcbbfe6b3bb020610b110ab75cf000686d2a0b0"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-17-native-review-regression.log",
+      "sha256": "de487dd0f5e9fa1d4243842248f5002e71aa0637acf3a965f77a6aabcf78eff1"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-17-pc-build.log",
+      "sha256": "da88c208ccb582aea081fbc37f1601657847e17a620971535bcd5bef3a132946"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-17-pc-layout-lineage-proof.json",
+      "sha256": "c1f4d035743b8edc7ab65c1684125a6228b4858882a3d86de89bc29ba0838f37"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-17-pc-terminal-observation.json",
+      "sha256": "366ebc3570d80e662e75354e27ce3e64a3dc704191ef8e4ed17b354fcad6b808"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-17-pre-back-result.json",
+      "sha256": "871dfa346208af1ba2bb16ecfbc47f6f48a7d4047ad2444af6b02656640d7ae4"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-17-production-audit.log",
+      "sha256": "4ca0bc8f609b8cd4e43a18d0faebf8f0b05d91b15ee6386fb48a789c00393192"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-17-source-baseline.json",
+      "sha256": "c2df991489c7e6ab86ea303f05f8b53734db6b1266300104a73a1547a64075f0"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-17-source-baseline.log",
+      "sha256": "cea89fefa4bfca32d0b6370bde0faa1d5fb9a01dbd5da5c82c7417f61acbf563"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-17-source-current.json",
+      "sha256": "da535d52ae108f29c323bd227b103a9e893300434e9b8914dda3b9342186b87e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-17-source-current.log",
+      "sha256": "bc05aa421ad360cf197a3d7818de5a611b9ea092156ab5a52e1f151ff84374ce"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-17-source-proof-comparison.json",
+      "sha256": "476e1fbaf2d69b7db002caeb4206308e15ef208e842bd294ae8fd4cbc873cf6b"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-17-source-proof-fixture-lineage.log",
+      "sha256": "eb824ab56abcde3409180e20436357c3f21b9f0d9098f106c1cc6b61d4f3ca4e"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-17-source.json",
+      "sha256": "8d6cef5893f908c8ff9da7c0293038173a9cf8a6bad5c594e1e4532c224f4bda"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-17-type-options.log",
+      "sha256": "ece1c9b19a8aefb093c2c784887af6bd6da8cc288afb9ee9d737bd632c51c986"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-17-type-partition.log",
+      "sha256": "f0d6e3fdbeceb6340b3a9775fb605aa4f345990ad8219cf02d2d65ee67d4ff61"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-17-worker-runtime-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-17-worker-types-1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-17-worker-types-2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/candidate-17-workerd.log",
+      "sha256": "c8e450643a35c3140825f2047f2b8b735653525a50582b4e9c26b465a0bf0cf7"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/secret-scan-comparison.json",
+      "sha256": "59eb9f24c4c76b5a943bcd663d31a50762a48d6b7a336187ce12e95d5f1dd04d"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/source-baseline-secret-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/source-baseline-secret-scan.log",
+      "sha256": "da8c99ca0a7c6749b5887f3960acaaa2efb3f70a9b1fa529edcb07b7df0cbb83"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/source-baseline.json",
+      "sha256": "9d114b8ee90a667081814543ac19705511b554704999bcecfec437dd5d12e775"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/source-baseline.log",
+      "sha256": "605b3aa413ab5a9cdd27675416124586eba8e9b1a7bb3619acc2f16dd5803284"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/source-current.json",
+      "sha256": "ea664d0dac67ca460478277533221c6e6198da771837d7994eb09673a67258ec"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/source-current.log",
+      "sha256": "10a586c90a5d835210118637d02875ac8b98c1a2d3cc3abc30eb16b9f1c1f8c5"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/source-proof-comparison.json",
+      "sha256": "69a0b0053b7f542f1283a7f620ee4f2e65a6672a13611b4d9a1318d8180801c6"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/source-secret-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/source-secret-scan.log",
+      "sha256": "adafc05478f5e49bb18e0988aaab8c062da7f4e219a09f31423afb111d680988"
+    },
+    {
+      "path": "/tmp/php-ts-buyer-reviews-20261114/type-shards-verified.json",
+      "sha256": "21ad7b2ca75023d29560f06c546d0a335a11c46f7022afd1b9d56a2253a05abe"
+    }
+  ],
+  "scope": {
+    "schemaChanges": false,
+    "productionPermissionExpansion": false,
+    "externalQueue": false,
+    "providerPayment": false,
+    "actualIssuance": false,
+    "deploy": false,
+    "phpUpload": false,
+    "wholeMigrationComplete": false,
+    "isSyncCommunityChainComplete": false,
+    "physicalMpAppDeviceAcceptance": false
+  },
+  "sourceSecretFindings": {
+    "baseline": 0,
+    "current": 0,
+    "ignoreRulesChanged": false
+  },
+  "finalCommitAndCI": "/tmp/php-ts-buyer-reviews-20261114/completion.json"
+}

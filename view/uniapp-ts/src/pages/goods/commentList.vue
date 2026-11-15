@@ -32,7 +32,7 @@
             v-for="(p, i) in r.pics"
             :key="i"
             class="comment-pic"
-            :src="p"
+            :src="reviewImageSource(p)"
             mode="aspectFill"
             @tap.stop="previewImage(r.pics, i)"
           />
@@ -52,6 +52,7 @@
 </template>
 
 <script setup lang="ts">
+import { reviewImageSource,reviewImagePreview } from '@/utils/reviewImage';
 import ThemePage from '@/components/ThemePage.vue';
 import { ref, computed } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
@@ -80,7 +81,7 @@ function starText(score: number): string {
 }
 
 function previewImage(pics: string[], current: number) {
-  uni.previewImage({ urls: pics, current: pics[current] });
+  const preview=reviewImagePreview(pics,pics[current]??'');if(preview)uni.previewImage(preview);
 }
 
 async function loadStats() {
