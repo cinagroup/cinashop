@@ -161,52 +161,20 @@
         </template>
       </el-dialog>
 
-      <!-- 商品评价 -->
-      <div class="reply-section">
-        <div class="reply-head">
-          <h3 class="reply-title">商品评价</h3>
-          <span v-if="replyStats.total > 0" class="reply-count">
-            ({{ replyStats.total }}) · {{ replyStats.avgScore }}分 · 好评率{{ replyStats.goodRate }}%
-          </span>
-        </div>
-        <div v-if="replies.length" class="reply-list">
-          <div v-for="r in replies" :key="(r as any).id" class="reply-item">
-            <div class="reply-user">
-              <span class="reply-avatar">{{ ((r as any).nickname || "用")[0] }}</span>
-              <span class="reply-name">{{ (r as any).nickname || "用户" }}</span>
-              <span class="reply-stars">{{ starText((r as any).productScore) }}</span>
-            </div>
-            <div class="reply-comment">{{ (r as any).comment }}</div>
-            <div v-if="(r as any).pics && (r as any).pics.length" class="reply-pics">
-              <el-image
-                v-for="(p, i) in (r as any).pics"
-                :key="i"
-                :src="p"
-                class="reply-pic"
-                fit="cover"
-                :preview-src-list="(r as any).pics"
-              />
-            </div>
-            <div class="reply-meta">
-              <span>{{ (r as any).sku || "默认规格" }}</span>
-              <span>{{ formatTime((r as any).addTime) }}</span>
-            </div>
-          </div>
-        </div>
-        <el-empty v-else :image-size="60" description="暂无评价, 快来抢沙发" />
-      </div>
+      <PublicProductReviews :product-id="detail.id" />
     </template>
     <el-empty v-else description="商品不存在或已下架" />
   </div>
 </template>
 
 <script setup lang="ts">
+import PublicProductReviews from "@/components/PublicProductReviews.vue";
 import ProductPhoneBuy from "@/components/ProductPhoneBuy.vue";
 import ProductImage from "@/components/ProductImage.vue";
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { isNavigationFailure, useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
-import { apiGoodsDetail, apiReplyConfig, apiReplyList } from "@/api/product";
+import { apiGoodsDetail } from "@/api/product";
 import { apiCartAdd, apiDiscountCartAdd } from "@/api/cart";
 import { productCartInput } from "@/api/productPurchase";
 import { apiCollectAdd, apiCollectDel } from "@/api/user";
@@ -240,8 +208,6 @@ const canPurchase = computed(() => detail.value?.cart_button === 1 && !!selected
 watch(selectedUnique, () => { qty.value = Math.max(1, Math.min(qty.value, selectedStock.value)); });
 const collected = ref(false);
 const collectSubmitting = ref(false);
-const replies = ref<unknown[]>([]);
-const replyStats = ref({ total: 0, avgScore: "0.0", goodRate: 100 });
 const discountPackages = ref<DiscountPackage[]>([]);
 const selectedPackage = ref<DiscountPackage | null>(null);
 const packageVisible = ref(false);
@@ -263,35 +229,6 @@ const selectedPackageTotal = computed(() => {
   return (cents / 100).toFixed(2);
 });
 
-function formatTime(ts: number): string {
-  if (!ts) return "";
-  const d = new Date(ts * 1000);
-  const p = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-}
-
-function starText(score: number): string {
-  const n = Math.min(5, Math.max(1, Number(score) || 5));
-  return "★".repeat(n);
-}
-
-async function loadReplies(productId: number, current: () => boolean) {
-  try {
-    const stats = await apiReplyConfig(productId);
-    if (!current()) return;
-    replyStats.value = stats;
-  } catch {
-    // 静默
-  }
-  try {
-    if (!current()) return;
-    const rows = await apiReplyList(productId);
-    if (current()) replies.value = rows;
-  } catch {
-    if (current()) replies.value = [];
-  }
-}
-
 let loadGeneration = 0;
 let disposed = false;
 function currentView() {
@@ -302,7 +239,7 @@ function clearView() {
   loadGeneration++;
   detail.value = null; selectedUnique.value = ''; qty.value = 1;
   discountPackages.value = []; selectedPackage.value = null; packageChoices.value = {}; packageVisible.value = false;
-  collected.value = false; replies.value = []; replyStats.value = { total: 0, avgScore: '0.0', goodRate: 100 };
+  collected.value = false;
   purchaseSubmitting.value = false; packageBuying.value = false; collectSubmitting.value = false;
   preparedCart.value = null; checkoutNavigating.value = false; checkoutError.value = ''; purchaseNeedsRefresh.value = false;
   loading.value = false; loadError.value = '';
@@ -330,7 +267,6 @@ async function load() {
       ? Math.max(1, Math.min(requestedQuantity, selectedStock.value)) : 1;
     discountPackages.value = packages;
     collected.value = detail.value.userCollect;
-    void loadReplies(id, current);
   } catch (e) {
     if (current()) loadError.value = e instanceof Error ? e.message : "商品详情加载失败";
   } finally {

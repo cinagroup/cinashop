@@ -76,6 +76,7 @@ import { merchantShipmentCallback } from "@/controllers/api/v1/MerchantShipmentC
 import { cityDeliveryCallback } from "@/controllers/api/v1/CityDeliveryCallbackController";
 import * as EnterpriseWechatController from "@/controllers/api/v1/EnterpriseWechatController";
 import * as ReplyController from "@/controllers/api/v1/ReplyController";
+import * as PublicProductReviews from "@/controllers/api/v1/PublicProductReviewController";
 import * as AdminController from "@/controllers/api/v1/AdminController";
 import * as AdminCrud from "@/controllers/api/v1/AdminCrudController";
 import * as AdminConfigClass from "@/controllers/api/v1/AdminConfigClassController";
@@ -1198,6 +1199,13 @@ v1Routes.get("/store_integral/order/detail/:uni", authMiddleware({ force: true }
 v1Routes.post("/store_integral/order/del", authMiddleware({ force: true }), OrderController.integralOrderDel);
 
 // ─── 商品评价 (M8) ─────────────────────────────────────────────
+v1Routes.get("/product/reviews/:productId", authMiddleware({ force: false }), PublicProductReviews.directory);
+v1Routes.get("/product/review/:replyId", authMiddleware({ force: true }), PublicProductReviews.state);
+v1Routes.post("/product/review/:replyId/visit", authMiddleware({ force: true }), PublicProductReviews.visit);
+v1Routes.get("/product/review/:replyId/comments", authMiddleware({ force: true }), PublicProductReviews.comments);
+v1Routes.post("/product/review/:replyId/comment", authMiddleware({ force: true }), PublicProductReviews.comment);
+v1Routes.post("/product/review/:replyId/praise", authMiddleware({ force: true }), PublicProductReviews.praise);
+v1Routes.post("/product/review/:replyId/comments/:commentId/praise", authMiddleware({ force: true }), PublicProductReviews.commentPraise);
 v1Routes.get("/reply/config/:productId", authMiddleware({ force: false }), ReplyController.replyConfig);
 v1Routes.get("/reply/list/:productId", authMiddleware({ force: false }), ReplyController.replyList);
 v1Routes.get("/reply/comment/:id", authMiddleware({ force: false }), ReplyController.commentList);

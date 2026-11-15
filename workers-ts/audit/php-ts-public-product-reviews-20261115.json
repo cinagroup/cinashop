@@ -1,0 +1,933 @@
+{
+  "batch": "public-product-reviews",
+  "base": "52de07804f4f75eb87b8932de035f7b1b17e651e",
+  "phpRef": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "sourceFiles": [
+    {
+      "path": "view/common/publicProductReviewFlow.ts",
+      "sha256": "4bbd971be4d38cfcf00811ba25e89e076056ec2014e85895729f59dccffccafd"
+    },
+    {
+      "path": "view/common/publicProductReviewRoute.ts",
+      "sha256": "2f55055ecd39349884bc20ed0d59834672e393a31c505b48a0e7af284feef98f"
+    },
+    {
+      "path": "view/common/publicProductReviews.ts",
+      "sha256": "b29c3c600d57c0673ede9ff1ab9e730e311e1534c0bfe58d7583d566c016fe05"
+    },
+    {
+      "path": "view/common/test/publicProductReviewFixture.cjs",
+      "sha256": "b44ca1b249dcc04702bcda13ef02593ed01c1911049aa1591b267c713cad9806"
+    },
+    {
+      "path": "view/common/test/publicProductReviewFlow.test.cjs",
+      "sha256": "36415691edfd2676f665f59c6f4db39a9cb517fbea4b90cd34e710ce55b04062"
+    },
+    {
+      "path": "view/pc-ts/src/api/publicProductReview.ts",
+      "sha256": "41226b881e6a83c45f044f8d0ddc42664e13f87b7375d73693b5445c4fb48e8e"
+    },
+    {
+      "path": "view/pc-ts/src/components/PublicProductReviews.vue",
+      "sha256": "3d1abf9057541214bed973db162dcb612e507786a59770d8936bcaae12ee6eb4"
+    },
+    {
+      "path": "view/pc-ts/src/composables/usePublicProductReviews.ts",
+      "sha256": "adc09ea5fa713adafb58665da3dab2bf93900cb0861ee8fdb4b447f4fd775272"
+    },
+    {
+      "path": "view/pc-ts/src/pages/goods/GoodsDetail.vue",
+      "sha256": "2f13e14f9fc473270fb41987f310be4a30bf7ab76e38bddd9679c7d975683a9c"
+    },
+    {
+      "path": "view/pc-ts/src/pages/goods/PublicReviewDetail.vue",
+      "sha256": "771866a91fc0ddb026b303bc06dfbe320d273d70e4fbfa6e4749b0937af8efde"
+    },
+    {
+      "path": "view/pc-ts/src/router/index.ts",
+      "sha256": "57c95481eb25b0b055878e22301d49f6847ddcd7e312f628eba65621c7ab0445"
+    },
+    {
+      "path": "view/pc-ts/test/auth-session.test.mjs",
+      "sha256": "94b83c7c4495c65c2abadcaa179d57c905808080c433234300228a37e6380573"
+    },
+    {
+      "path": "view/pc-ts/test/product-detail-lifecycle.test.mjs",
+      "sha256": "a9664747d45dc36201d58ab967ff48a029cfca749e141d74410c5205e48fcb7d"
+    },
+    {
+      "path": "view/pc-ts/test/public-product-reviews.test.mjs",
+      "sha256": "d6fcd4a97e9e7533366abceace0d1de1bc680068573de9a27d784ec2f64af60e"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/buyer-reviews-lifecycle.test.cjs",
+      "sha256": "9dabb5d9c72a918d2e571ee1a18fa2b440f5f5d22efe664932366e19a086fa8a"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/public-product-reviews.test.cjs",
+      "sha256": "b4ba8d67f9f00fc1ba67a1daa0d46b59dfd4b9b14c046786def56d24788659c6"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/publicProductReview.ts",
+      "sha256": "5645ae85fea3c6290e4e46a09a64be7063f11dc1cecb423409b75f7b69657f60"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/usePublicReviewDetail.ts",
+      "sha256": "abda7c652460888f4f8a9c935b3c496f3fb2f868ced7c4225c69a634dcebe52b"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/usePublicReviewList.ts",
+      "sha256": "23cf453051fdc1ec04674c0ea1230d05411b6e4b85b1c986dbd23b6daf492a9d"
+    },
+    {
+      "path": "view/uniapp-ts/src/config/navigation.ts",
+      "sha256": "bb62098e9d604b804037ea9f19aaae5c08187820972b43522a53f91bbe149314"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages.json",
+      "sha256": "e539ef17741c7c06d7d2d85149dba365252dcb5e6eb2c7b0cbfb688dc32309af"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/goods/commentDetail.vue",
+      "sha256": "5702eede6cb11060e4f1594f770e1c04de8bf94681c1554060bf985c5a21935e"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/goods/commentList.vue",
+      "sha256": "5ec7a3940d673231550ac3ba74a4c170b327af685b6efc752af1202bf2b8f30a"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/goods/goods_comment_con/comment_con.vue",
+      "sha256": "4de5946e2fbf006aa195817fddad1b198bda6238752519b52f2dacdbbae7dcd9"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/goods/goods_comment_list/index.vue",
+      "sha256": "d2c396eacdf96ddc1adad39298c7f89e0a0a8c29050ca7ab00113c40391b6bc5"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "bfc7b2ee9998d9acefd9789cfe637dddaad25ddb4c732953b6138d44d44228f5"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/PublicProductReviewController.ts",
+      "sha256": "ebb19d73962c67fe6d8124cf99927cee6094992bbade7aa1ed214c1de089be9e"
+    },
+    {
+      "path": "workers-ts/src/routes/v1/index.ts",
+      "sha256": "53b5dffdde031457603a7e8cef9c6eb54fe2b0d9977a5a358575c8e73eec3e41"
+    },
+    {
+      "path": "workers-ts/src/routes/v2/index.ts",
+      "sha256": "42c54e6c1f0ae1bdfa975a49e8a705cff120090e7762994cf30b676d1d6782e9"
+    },
+    {
+      "path": "workers-ts/src/services/product/PublicProductReviewService.ts",
+      "sha256": "5ce0afea9b3bc0e05d7823ad207165299fdb21ee16fede86fbd0a61ffc8d68c5"
+    },
+    {
+      "path": "workers-ts/test/browser/public-product-reviews.acceptance.ts",
+      "sha256": "a7f0e07f5d5247ce6caa104601cb40039d5ff96b389c0bc299fb3aef55106990"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "bda0043ff9a8b0bad80182bfc43ad9b6b41da7a554662206f35a31cecf2d0170"
+    },
+    {
+      "path": "workers-ts/test/public-product-reviews-contract.test.ts",
+      "sha256": "1a748c35fcdf6f6b686bfa03266572b6631ed8593114d342541af5cd890eb18b"
+    },
+    {
+      "path": "workers-ts/test/public-product-reviews-native.test.ts",
+      "sha256": "673c7c1feb0f6c9c1c811f2a02c0e56dfbe8864c1a2c35ee77f5dfbf4f506c1c"
+    },
+    {
+      "path": "workers-ts/vitest.public-product-reviews-browser.config.ts",
+      "sha256": "8ee99d5791ab21f338df8ae018477bf19fb617084ce4e02940752bbd0417cc63"
+    }
+  ],
+  "sourceManifestSha256": "cbccb9f165f4683a16fb2aff999b08c6db5ec6f842074c488a17e63e1a338411",
+  "protectedBaselineFiles": 9256,
+  "restoredResources": 150,
+  "preservedUserSymlinks": 5,
+  "typeProof": {
+    "originalRoots": 4452,
+    "commonRoots": 1943,
+    "testRoots": 2509,
+    "shardTestCounts": [
+      1255,
+      1254
+    ],
+    "unionExactlyMatchesOriginal": true,
+    "optionsExactlyMatchOriginal": true,
+    "explicitTypeLibrariesResolveExactlyAsOriginal": true,
+    "generatedConfigs": [
+      "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts/.cache/public-product-reviews-types-20261115/tsconfig.worker-public-product-reviews-shard-1.generated.json",
+      "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts/.cache/public-product-reviews-types-20261115/tsconfig.worker-public-product-reviews-shard-2.generated.json"
+    ]
+  },
+  "candidate2Lineage": {
+    "from": "candidate-1-source.json",
+    "to": "candidate-2-source.json",
+    "changedPaths": [
+      "workers-ts/test/browser/public-product-reviews.acceptance.ts"
+    ],
+    "change": "Serve the existing finite local product image SVG in Browser fixture",
+    "unchangedProductionAndTests": true,
+    "affectedOriginalTypeShard": 1,
+    "frontendBundlesUnchanged": true
+  },
+  "candidate2Stabilization": [
+    {
+      "name": "types",
+      "exitCode": 0,
+      "seconds": 235.81
+    },
+    {
+      "name": "secrets",
+      "exitCode": 0,
+      "seconds": 2.31
+    }
+  ],
+  "validation": {
+    "allRequiredGatesPassed": true,
+    "unit": {
+      "files": 11,
+      "tests": 880,
+      "failed": 0,
+      "skipped": 0
+    },
+    "native": {
+      "files": 1,
+      "tests": 14,
+      "failed": 0,
+      "skipped": 0
+    },
+    "workerd": {
+      "files": 30,
+      "tests": 410,
+      "failed": 0,
+      "skipped": 0,
+      "resourcesCleaned": true
+    },
+    "front": {
+      "pc": {
+        "invocations": 2,
+        "tests": 458,
+        "perInvocation": [
+          449,
+          9
+        ],
+        "failed": 0,
+        "skipped": 0
+      },
+      "uni": {
+        "invocations": 25,
+        "tests": 3917,
+        "perInvocation": [
+          2866,
+          38,
+          29,
+          42,
+          94,
+          18,
+          26,
+          46,
+          42,
+          47,
+          60,
+          30,
+          39,
+          38,
+          42,
+          47,
+          87,
+          34,
+          48,
+          84,
+          72,
+          20,
+          17,
+          29,
+          22
+        ],
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    "builds": [
+      "PC",
+      "H5",
+      "MP-WEIXIN",
+      "App"
+    ],
+    "productionAuditFindings": 0,
+    "browser": {
+      "native": {
+        "files": 1,
+        "tests": 1,
+        "failed": 0,
+        "skipped": 0,
+        "resourcesCleaned": true
+      },
+      "reviewVisits": 2,
+      "rootComments": 2,
+      "likeRelations": 6,
+      "anonymousDirectory": true,
+      "completeFourFiltersAndPagination": true,
+      "secondPageFailureAndRetry": true,
+      "uniLostCommentAckManualReadbackWithoutReplay": true,
+      "actualLocalR2Images": true,
+      "viewports": [
+        {
+          "surface": "PC",
+          "width": 1280,
+          "height": 900,
+          "appWidth": 1265
+        },
+        {
+          "surface": "Uni H5",
+          "width": 375,
+          "height": 812,
+          "appWidth": 360
+        }
+      ],
+      "consoleErrors": 0
+    },
+    "historicalSourceBinding": {
+      "testFile": "test/supplier-product-label-runtime-source-binding.test.ts",
+      "baseline": "52de07804f4f75eb87b8932de035f7b1b17e651e",
+      "baselinePassed": 178,
+      "currentPassed": 178,
+      "baselineFailed": 10,
+      "currentFailed": 10,
+      "skipped": 0,
+      "failingFullNamesExactlyMatch": true,
+      "failedCases": [
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance admits the exact new definer only in current shared-shop pricing recognition while isolated scopes and the fixed privilege plan remain frozen",
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance keeps all prior frontend public selection binding and privilege plan bytes unchanged for a backend-only closure",
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance partitions true8023 before and all controlled changed/additional files with no missing or duplicated image",
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance pins complete current and accepted ProductLabel bytes workers-ts/scripts/run-local-finance-postgres.mjs",
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance pins complete current and accepted ProductLabel bytes workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance pins complete current and accepted ProductLabel bytes workers-ts/src/migrations/checkoutPricingLock.ts",
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance refuses altered current and forged whole-file inverse workers-ts/scripts/run-local-finance-postgres.mjs",
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance refuses altered current and forged whole-file inverse workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance rejects nonexact publication bytes and forged bridge hashes while composing each immutable validation layer",
+        "Supplier label current App full-byte increment; evidence is not runtime acceptance runs current789 callSites827 variants before keeping every exact report byte and predecessor call object"
+      ],
+      "restoredIgnoredResources": 150,
+      "profiles": [
+        {
+          "profile": "baseline",
+          "exit": 1,
+          "seconds": 54.62
+        },
+        {
+          "profile": "current",
+          "exit": 1,
+          "seconds": 20.04
+        }
+      ],
+      "isPassingGate": false,
+      "isRuntimeAcceptance": false
+    },
+    "historicalDataBinding": {
+      "profiles": [
+        {
+          "profile": "baseline",
+          "exitCode": 1,
+          "passed": 35,
+          "failed": 1,
+          "skipped": 0,
+          "failedNames": [
+            "MySQL to PostgreSQL schema audit keeps the explicit manifest aligned with all currently shared repository tables"
+          ]
+        },
+        {
+          "profile": "current",
+          "exitCode": 1,
+          "passed": 35,
+          "failed": 1,
+          "skipped": 0,
+          "failedNames": [
+            "MySQL to PostgreSQL schema audit keeps the explicit manifest aligned with all currently shared repository tables"
+          ]
+        }
+      ],
+      "sameFailure": true,
+      "isPassingGate": false,
+      "historicalHashesUnchanged": true
+    }
+  },
+  "phpParity": {
+    "phpRef": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+    "files": {
+      "app/services/product/product/StoreProductReplyServices.php": "d30fdb90467940e5127188cce957a97792fcc7f0b33eb57f840172ce6e455aa5",
+      "app/services/product/product/StoreProductReplyCommentServices.php": "ee2ee105a8ee82f97f00963e61b06edf5d5f4f9fd430589f3ee227ff7442c098",
+      "app/dao/product/product/StoreProductReplyDao.php": "0c280eeac38db4c7e755a8c8581718bae568580f5d9519873fa7b594135eeaf0",
+      "app/services/user/UserServices.php": "d8c5aae71df278a885b238bc44c1fc73d3644a5fa68441260a3cc22fdc2e6a25",
+      "app/services/system/config/SystemConfigServices.php": "f4aeb9e68365b18a36ba6bcefacc29955ee487db822c2e8b4a1239dac7281efc",
+      "view/PC/pages/goods_detail/_id/index.vue": "1aac380500a5e470803623968f2dcc33c6de9c29c688eff5dc64c94327e2d3c0",
+      "view/uniapp/pages/goods/goods_comment_list/index.vue": "0c2e635e381309cb0ce268d51e072d53cad37d769c33521431121d633b4025dd",
+      "view/uniapp/pages/goods/goods_comment_con/comment_con.vue": "a48153be33f29cee62eebd525805553705bb7b46891d9256d642d096de8ced89"
+    },
+    "scope": "Public directory, review detail, merchant response and buyer interactions",
+    "retained": [
+      "server-side four-bucket review filters",
+      "rich V2 cards with membership, root preview, total, views and likes",
+      "three-score truncated list star; two-score truncated detail star",
+      "root buyer comments and one immediate official response",
+      "masked user display identity and product summary"
+    ],
+    "intentionalDifferences": [
+      "New versioned DTO excludes order/private fields and strictly binds actor/parent/page",
+      "Read-only detail refresh separate from explicit first visit",
+      "Complete bounded root pagination replaces old fixed detail limit",
+      "Existing TS disjoint poor bucket retained rather than translating ambiguous PHP OR/AND literal",
+      "Visible level display uses TS level name and permanent-member semantics; missing config defaults enabled as existing ReplyService, unlike PHP default disabled/grade",
+      "Only official immediate children belonging to this review/supplier are rendered or liked",
+      "Existing V1 list and writer routes are retained; V2 list uses rich cards",
+      "Unknown write response requires readback and explicit ending; no automatic replay"
+    ],
+    "limitations": [
+      "Offset pagination rejects changed total or duplicate IDs but cannot guarantee snapshot across equal-count reordering",
+      "Canonical official avatars are omitted unless existing public media policy permits them",
+      "MP/App build is not physical device acceptance",
+      "No schema/migration/deploy or whole-migration-completion claim"
+    ]
+  },
+  "independentReview": {
+    "reviewer": "/root/public_reviews_independent",
+    "mode": "final read-only audit",
+    "productBlockersRemaining": [],
+    "fixedFindings": [
+      "PHP JSON scalar configuration decoding",
+      "hidden user-level suppression",
+      "changed pagination totals rejected",
+      "transaction-bound authorization avoids single-connection self-block"
+    ],
+    "backendNativeEvidence": "backend-fix-result.json",
+    "browserHarness": {
+      "fixedLocalMode": true,
+      "actualAppJWTRestrictedPG": true,
+      "externalFetchQueueDenied": true,
+      "originalGatesPreserved": true
+    },
+    "rootFollowups": [
+      "finish now requires anonymous directory reads on both surfaces",
+      "finally explicitly clears finite fault flags before computing cleanup receipt",
+      "seed timestamps precede current writes so readback can display new comments"
+    ],
+    "notClaimed": [
+      "malformed-route browser acceptance is optional; unit coverage is separate",
+      "entire PHP migration completed"
+    ]
+  },
+  "scope": {
+    "schemaChanges": false,
+    "migrationChanges": false,
+    "productionPermissionExpansion": false,
+    "deploy": false,
+    "phpUpload": false,
+    "externalQueue": false,
+    "wholeMigrationComplete": false,
+    "physicalMpAppDeviceAcceptance": false
+  },
+  "artifactHashes": [
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/accepted-counts.json",
+      "sha256": "ee00c6e04860f3fefcad17ec01be164a9414fe929e4e8f8ca1bc3ffad4d77a66"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/backend-fix-cleanup.json",
+      "sha256": "5591a6926ffb9d0d8052033341503ca1d193bf7f52c2a517a504dda2c6967468"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/backend-fix-inputs.json",
+      "sha256": "1ff59e2e343dfc20a1eda04fe724befe95d50377da36d23f94ebf01254ddd9e2"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/backend-fix-native.log",
+      "sha256": "bd7917c0f53faf492dc5c7135605d722b9380f953b9a7a4739056016fb8eccbc"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/backend-fix-result.json",
+      "sha256": "7578f75d1bf883b65a8fc38559a6df7fc00cd9e980213b167dbbf792bf1b7094"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/backend-initial-result.json",
+      "sha256": "aa2019480645cfacbac0fdeb685b0355fd1208b4eb1199731cfedcc9d6e82083"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/baseline-files.json",
+      "sha256": "5a0f48124582d4e3488897493e70c6195e95af9bb6c43a441038e758dd53ef51"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-attempt-1-cleanup.json",
+      "sha256": "ed5c9b3c6c976666d15c06a9d21a998bb2b5fbb6e40f722fe80bb967e1da0262"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-attempt-1-command.json",
+      "sha256": "b618f62790761a4f0ce4a2c316380183843f8d0990cdce682dd7c3a36ba1746d"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-attempt-1-frozen-inputs.json",
+      "sha256": "3e741d93678e9cf592a07417397778ff1890f56ad044c0536f612945eab08c88"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-attempt-1-native.log",
+      "sha256": "94fa224f72f68f5f8b550399eec228c8696a74dcc3d18d1fcb2df4b3968b8480"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-attempt-1-pc.jpg",
+      "sha256": "f59e801eb9837eec5365f06c22035ed721fd84d50a12ae4c357b710ab0c0e1c9"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-attempt-1-ready.json",
+      "sha256": "33be33706fe4417b0431be08f39e292749809f3116ce69c2d68beeaa8d6da110"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-attempt-2-cleanup.json",
+      "sha256": "d3c73ad31f08747785742c4b4568d78f643c073c13128fa9299956c3d2723077"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-attempt-2-command.json",
+      "sha256": "a3aa2bf026cddd91429372f984b669c7eaffe5b82abb53e77391a17dbf56e11c"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-attempt-2-frozen-inputs.json",
+      "sha256": "5cc782744e6801f128db7a1d644f3c0ae379f9d51a4caa2d2d41e1e692ccca21"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-attempt-2-native.log",
+      "sha256": "27346dab60e154ef43ad824e78cd8d745aa346ce8f5162ebdc37f138575561ff"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-attempt-2-pc-final.jpg",
+      "sha256": "17cb03a589006fc1724e30a8447d932e914f5050c0a6d9f43815498d60198bac"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-attempt-2-pc-ui.json",
+      "sha256": "46a8941d945976f1265f0ad8b04b3cf76960e30651db0925ce7ca4dd0568200f"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-attempt-2-ready.json",
+      "sha256": "e1f69bbe4408667d4bc329356dacfbcc6bc664994418b4d3c1429b3e6528df6e"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-attempt-2-result.json",
+      "sha256": "56ec16646d8909c69dc0c4ac9111dd180c9f834e34a2c04cb4b2e5041b53ad22"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-attempt-2-ui-evidence.json",
+      "sha256": "2cc8ab47a570fb94aa1a9fc119803df729c21755509f7215d4f6d6652d87d78e"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-attempt-2-uni-final.jpg",
+      "sha256": "1e73ed9e65ff8cb0a0975dad3cad500b7396d44144b6b298032db103125cb55a"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-attempt-2-uni-pending.jpg",
+      "sha256": "1513a05df6007235f9fc39fe8c1aea1b4f2274df19824691c5fa981059716fcc"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-attempt-2-uni-ui.json",
+      "sha256": "7778d4c980322d53225c9b7121bcadbba66a00b98955c2c1172f7d406d8dd73b"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-cleanup.json",
+      "sha256": "d3c73ad31f08747785742c4b4568d78f643c073c13128fa9299956c3d2723077"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-command.json",
+      "sha256": "7670741ca3591786622b0defd8ddb733b45934ce1d674474e23ce522d7fb1bd7"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-driver-pid.json",
+      "sha256": "44af6c70cc1439c5fbaa68a845e2609b40427e735340e10d738c99be04e37671"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-driver.log",
+      "sha256": "c54e46b84afc03500d0f5378061ca5fb6b305144d3a1be64af900a204233a539"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-frozen-inputs.json",
+      "sha256": "5cc782744e6801f128db7a1d644f3c0ae379f9d51a4caa2d2d41e1e692ccca21"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-harness-guide.json",
+      "sha256": "cba9b45d1ea25253cc14eef10ec967796642fd4eef99df44c5e706610bcfc16f"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-harness-source.json",
+      "sha256": "f45e8f5e79980c1a7b27bd57b7044909177ca64120057ed5df2d50de825aa7c2"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-harness-syntax.json",
+      "sha256": "f177d37c992334b7c71e45a7338d1d44e222542266a9e7c452aefa03f35383b3"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-native.log",
+      "sha256": "f1a39b524e69f7781310192ae33435a12f1352dc3ffd715478e2eadda652b026"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-pc-detail-before.jpg",
+      "sha256": "5a5c982700f24b5026a8af56523b4d51bc7bb0e065e0a9e9be78ac807c166ecd"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-pc-final.jpg",
+      "sha256": "231f88180f8acfc0c216ad497887d8404c1e6242f5cac98178d72da4bf44c8d4"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-pc-ui.json",
+      "sha256": "fbefb09aebb60843175dadd9963faa582f0c4d3328783185dee043f9af086878"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-ready.json",
+      "sha256": "c9065498976a75ce84ffa3ce7d9a696c770b69e8257db096b0c59d05e4f56ba8"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-resource-cleanup.json",
+      "sha256": "1d7a09ed88acff7d7bf1633619eae59433c0f54970a5f55650f3639c14280e2a"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-result.json",
+      "sha256": "7fb59410c5e0f127c36bf03cbd417b27ea82cf66a4fc88d0080e664aa051d580"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-run.py",
+      "sha256": "eb2bee4d5bd5db5f479e9030df285b56897c7efefcd63ae8025ebca76e366edd"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-ui-evidence.json",
+      "sha256": "ade0f7f0f0e110c09d62c5e43e5cb07302afca52af311840de62d41dab66336d"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-uni-final.jpg",
+      "sha256": "16fa97c473961cc4718ce583225f90f662b77f33337ec2b82f033d9cbdb45060"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-uni-pending.jpg",
+      "sha256": "2a6bcbdfe8c9edbc8eea58a0877e0dbea45f45c6b9d3d3c9576e4cec18137e74"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/browser-uni-ui.json",
+      "sha256": "ab25fb7c88998c4b7b1193363286ce9d7c94b542f8613682e5d49fbf17384bfb"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-back-result.json",
+      "sha256": "133608e0953f3414f2d19cc5da6c07561d9b949712af89316822bf7c51983b71"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-data-binding-baseline.json",
+      "sha256": "e0a9932e1a233546cc15bead1548c1193025725757b1ace01cee2e34a143794c"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-data-binding-baseline.log",
+      "sha256": "9fae36b2257400f710d0d4f240011f837dc62991ee670954aad748621e3309e5"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-data-binding-comparison.json",
+      "sha256": "c5cec44bda154d7ce022907ffdc406e3968edd229673759d3e629406560e4922"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-data-binding-current.json",
+      "sha256": "a8efff1db9eaa8aa28d99d2f1f9ee80a1fe8d1a1f41b2fda69a2e2911c54549f"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-data-binding-current.log",
+      "sha256": "8095b57e61f60cbae63675ec5fbc9b880167cb878db7c6c5d90813f3bf1d7a9c"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-dependencies.json",
+      "sha256": "7acd08deb5f052613eae55e656a5fbd0568a661b32f1a0c283129e48f7cc7383"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-front-build-files.json",
+      "sha256": "18e230b9c1ad2f4c097418a3e4f04e47a023c77009ddd706590881650a88173a"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-front-pc-build.log",
+      "sha256": "30b21ad628ec7785dc910a4f69baa9ae0a0206404ae1bb84b726deb33c8f7a55"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-front-result.json",
+      "sha256": "90a9450f8aaaa3e4017b282ec6cdac73c0b26950a885e19073117fe932adf804"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-front-uni-build-app.log",
+      "sha256": "a2051cd401599570aeafd694ace38af58a716eaa441c4dab1c75b80b0fa76800"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-front-uni-build-h5.log",
+      "sha256": "17bf80087ce4e8fdb74c1cb088d01344ba52f9278978d8718b422272f8dd275e"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-front-uni-build-mp-weixin.log",
+      "sha256": "e8741d81e50dbaf6580d232c46390dc304746a337fac6e4970d3efb56ed595ac"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-front-uni-toolchain.log",
+      "sha256": "ed60bf74318c11705d49826f68a512d80b25fd85d0ed9e35112de573425bed2c"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-front-uni-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-production-audit.log",
+      "sha256": "4ca0bc8f609b8cd4e43a18d0faebf8f0b05d91b15ee6386fb48a789c00393192"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-secret-scan-comparison.json",
+      "sha256": "4b635711a38c310549ad43c5e8fdf56a8d78e84a3edcd2f32b19e9c39fe023d6"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-source-baseline-secret-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-source-baseline-secret-scan.log",
+      "sha256": "cf73116db6babf487c52dc9061f0bacbdb9c5a8144d8ade521bd0e6cc8737735"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-source-baseline.json",
+      "sha256": "b56cd31b28a912093c6f05344e0be9e16a756908db9d6cb33caea4cd1ed34a7d"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-source-baseline.log",
+      "sha256": "8925d48e0afee3545fb03c5348c6fbff461e218c6437aede39191f86aecd8387"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-source-current.json",
+      "sha256": "90abd2a3386591333d7156c26beda9172acd27b6b88218ba8b3dfb262bd87f5e"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-source-current.log",
+      "sha256": "466ff5ae0506d9993d56a2a58fc9652d91f5fa0f09c20d429f1db016a63552d0"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-source-proof-comparison.json",
+      "sha256": "85b4d29c0edd13849f731fcc4380c3c5d198cbd628c3be0c5d1e1c54a829d9ef"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-source-proof.log",
+      "sha256": "c6d4bec91becfd9706da3967d9918abc5ccbc5c71ffa1a35e3385a96d74169de"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-source-secret-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-source-secret-scan.log",
+      "sha256": "780690da0e1368c6207a78bd9e99c9931b485f6a8d4b099951fa9d1acd47c61b"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-source-secrets.log",
+      "sha256": "2e6a532e4b299ab6fba2d3135051a7abce55371e565a5c364859bcdf6185df91"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-source.json",
+      "sha256": "2e7ba2058b5084019374f7cd18d32bfabbddead67304f1be9231b24dd989f9df"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-type-options.log",
+      "sha256": "01fe95aedbbbd658485afae436d574d2bdd84c84dbef657c855ff5aaa8f7c3b9"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-type-partition.log",
+      "sha256": "02e29bff68a38ce700c1fe75f39fccc0940ee9ac4c0e1920a52e94e774da2acb"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-unit.json",
+      "sha256": "23a9717e37185424a6c49a65d1798066e25da5018ccab3ae4efc2aa1986b3faf"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-unit.log",
+      "sha256": "e038ec31cb4d085edb15488f1a895eb36c2233d5a878316a037d5a740d319509"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-worker-runtime-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-worker-types-1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-worker-types-2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-1-workerd.log",
+      "sha256": "852bec11ee0a4674c8a3773a72a038c5afad7a10822adc267d81b9874aca945a"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-2-lineage.json",
+      "sha256": "aa477b0d18068fc7662a41df859ae91984712c0470ad8572b4dbbc9a42bbe353"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-2-secret-scan-comparison.json",
+      "sha256": "4b635711a38c310549ad43c5e8fdf56a8d78e84a3edcd2f32b19e9c39fe023d6"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-2-secrets.log",
+      "sha256": "8f850f9b644d04a0d9d64c197dc8621d6445e6fee316e99f7424a264661f7645"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-2-source-baseline-secret-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-2-source-baseline-secret-scan.log",
+      "sha256": "71fcbf0c75b233b02f7136c7277be431fb7e3dca0c86743e66986b05d020f7a9"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-2-source-secret-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-2-source-secret-scan.log",
+      "sha256": "2763301597e098ea696b0e9b16aca63d9873ce9be834b8192c95fe5050561ad1"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-2-source.json",
+      "sha256": "cbccb9f165f4683a16fb2aff999b08c6db5ec6f842074c488a17e63e1a338411"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-2-stabilization-result.json",
+      "sha256": "c593a9b523a4bc709695d5fd8fdd7c8e043fa3f5dcfe2f83841b9e1baa2eef57"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/candidate-2-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/check-options-verified.cjs",
+      "sha256": "9a0695ad21fc8a23b4cb501e221e98a9fb70f8ef87640cf7927b091701b6b82d"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/final-dependencies.json",
+      "sha256": "7acd08deb5f052613eae55e656a5fbd0568a661b32f1a0c283129e48f7cc7383"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/final-source.json",
+      "sha256": "cbccb9f165f4683a16fb2aff999b08c6db5ec6f842074c488a17e63e1a338411"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/frontend-counts.json",
+      "sha256": "76a1d0de741eb124d883a48af34e1ca609947a393817a664e7d9a382d7fad341"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/frontend-delivery-inputs.json",
+      "sha256": "c657c73bf717c969d1acc2dac007e8b0079ef4263fe861dfd76d86f1685dc5b1"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/frontend-pc-attempt-1.json",
+      "sha256": "30d4e08e46139d261e055579e023542c46d943d7bd079d53c4295850111ec1fa"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/frontend-pc-attempt-1.log",
+      "sha256": "a6dfcf9d66e9760cf8d82f4f4eb50b0f86b315585443448891a63ee688d42b44"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/frontend-pc-attempt-2.json",
+      "sha256": "3583e8dc1c9d9b48d46ad89999512505ccc15b29b6a968975fce66cd15a91087"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/frontend-pc-attempt-2.log",
+      "sha256": "1c32416e98ea85f1c7cb0ed596d46308a4e612b00eb8d39bb4ec376c90411d1c"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/frontend-uni-attempt-1.json",
+      "sha256": "72ea04fb5798bd47612dee51966bb9f8750dbc95ef6cff58b09faa9b4cbd8e7e"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/frontend-uni-attempt-1.log",
+      "sha256": "c2af645f70e229e43400e7f92f371c0111ac2afaff448052697661c17646395d"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/independent-final-review.json",
+      "sha256": "7fb0fba0e799fe94dc53a51ce9daf33ed15cb7d198a80dea0e2e55b1cc34be7f"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/initial-native.log",
+      "sha256": "46ae2fcd6cf303f7c2ec53614aed0f0dc2b6b396ed98f7d8db494ad3ce29ac84"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/initial-result.json",
+      "sha256": "fb83ebb1e2ef112cf5563dc08f77d8d10761d511db9e2f79406f7625416f8f98"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/initial-shared.log",
+      "sha256": "80f1bfcf4b659b97b92ffff81664eda008aee147fa59576177962492202dff75"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/php-parity.json",
+      "sha256": "6c2cf9663e7eda0649a359a7a617b46f130f843f890ad3388d6d92cc8923bc3a"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/restored-resources.json",
+      "sha256": "2805035753af768b74ac4b987581644a085a6b857765a6c19ac0a2a6cd8fdd57"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/scan-final-files.py",
+      "sha256": "c1658600a4ff0163303ef851e83e3250a8cc5daade37b0bc695d396e42e6b92d"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/scan-source-2.py",
+      "sha256": "cc46ba99fbbabc276a2dd5739d30b582cf05bde670ab740e018b047b521e3e62"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/scan-source.py",
+      "sha256": "b68d9cc49a2c36f27647a4b0f8a17410e06a6870ab641bb0a42303419ad6298c"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/shared-initial.log",
+      "sha256": "e4186a85534cd2185c3cab315ce26ad948be787c07ac32da9bd2056e4d6591ce"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/source-proof.py",
+      "sha256": "2dd278abb898b7b118fb927274a3548de1255eb6f3bb48c0c58f074590595240"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/stabilize-browser-2.py",
+      "sha256": "debbf5779fee1091c48b49a38c03d35a328d8e533d7b7b5f3b080cbc3cb2c419"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/type-generator-attempt-1-result.json",
+      "sha256": "d9fadfb8f3e065de69a386e1fdb4f7bc017766e758837e773dfe2ab1ffe9cc5a"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/type-generator-attempt-1.log",
+      "sha256": "72ee09632f0f67a240f68cc931d074ec391ae47129331e7f03b4ad923f4d2ec4"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/type-shards-verified.cjs",
+      "sha256": "6dd0c0de6ae90e11117d0fbd7fd02b012b0b349a967dafcb9fa5c61baa51f65c"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/type-shards-verified.json",
+      "sha256": "554e175fbe2414e56a06bc86279f8547b10071977cc2a5bbe2ce7614905571ec"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/unit-files.json",
+      "sha256": "85ed39e058309759b9112bf86537dc8a9224c8baacc36ab373069935e48dfa3e"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/user-symlinks.json",
+      "sha256": "32f0ae750787e6bde76a8d6f60ab3e6f135ecff1c9e7cc3b06bd86a820fae4ca"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/validate-back.py",
+      "sha256": "416453ba62b4103269414f7fc0c8ff8257f83f07bd03ae053c6841d776337feb"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/validate-front.py",
+      "sha256": "2348c15377c8a5d12853eebbbb1af6b3efba89d97fb405142ba56928416f1e5f"
+    },
+    {
+      "path": "/tmp/php-ts-public-reviews-20261115/validate-initial.py",
+      "sha256": "f8fa311fa78e63910285306a87ba60f033fa8dee45cdda07d91100bc0ed6c998"
+    }
+  ],
+  "finalCommitAndCI": "/tmp/php-ts-public-reviews-20261115/completion.json"
+}

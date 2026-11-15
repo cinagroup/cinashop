@@ -1,3 +1,4 @@
+import { publicReviewQuery,publicReviewListPath,publicReviewDetailPath,legacyPublicReviewListPath,legacyPublicReviewDetailPath } from '../../../common/publicProductReviewRoute';
 import { buyerReviewLegacyPath,buyerReviewQuery,buyerReviewPageRoute } from '../../../common/buyerReviewRoute';
 import { resolveCommunityPageRoute } from "../../../common/communityRoute";
 import { resolveCustomerWorkPageRoute } from '../../../common/customerWorkRoute';
@@ -96,6 +97,8 @@ export const REGISTERED_PAGE_ROUTES = new Set<string>([
   "/pages/order/express",
   "/pages/order/reply",
   "/pages/goods/goods_comment_con/index",
+  "/pages/goods/goods_comment_list/index",
+  "/pages/goods/goods_comment_con/comment_con",
   "/pages/order/refundApply",
   "/pages/order/refundList",
   "/pages/order/refundDetail",
@@ -385,6 +388,10 @@ function resolveLegacyActivityDetail(query: string): string {
 }
 
 export function resolveRegisteredPageRoute(path: string, query = ""): string {
+  if([publicReviewListPath,publicReviewDetailPath,legacyPublicReviewListPath,legacyPublicReviewDetailPath].includes(path)){
+    const detail=path===publicReviewDetailPath||path===legacyPublicReviewDetailPath;
+    try{return(detail?publicReviewDetailPath+'?id=':publicReviewListPath+'?productId=')+publicReviewQuery(query,detail);}catch{return '';}
+  }
   if(path===buyerReviewLegacyPath||path==='/pages/order/reply'){
     try { const q=buyerReviewQuery(query,path===buyerReviewLegacyPath);return buyerReviewPageRoute(q); } catch { return ''; }
   }

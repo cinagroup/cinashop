@@ -13,6 +13,8 @@
         "navigationBarTitleText": "商品晒单"
       }
     },
+    { "path": "pages/goods/goods_comment_list/index", "style": { "navigationBarTitleText": "商品评价" } },
+    { "path": "pages/goods/goods_comment_con/comment_con", "style": { "navigationBarTitleText": "评价详情" } },
     { "path": "pages/goods/goods_comment_con/index", "style": { "navigationBarTitleText": "订单评价" } },
     {
       "path": "pages/user/memberCode",

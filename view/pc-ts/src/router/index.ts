@@ -13,6 +13,7 @@ const routes: RouteRecordRaw[] = [
     children: [
       { path: "", name: "home", component: () => import("@/pages/Home.vue") },
       { path: "goods", name: "goods-list", component: () => import("@/pages/goods/GoodsList.vue") },
+      { path: "reviews/:id", name: "review-detail", component: () => import("@/pages/goods/PublicReviewDetail.vue"), meta: { title: "评价详情" } },
       { path: "goods/:id", name: "goods-detail", component: () => import("@/pages/goods/GoodsDetail.vue") },
       { path: "presale/:id", name: "presale-detail", component: () => import("@/pages/activity/PresaleDetail.vue"), meta: { title: "全款预售" } },
       { path: "presale", alias: "/goods_presell", name: "presale", component: () => import("@/pages/activity/Presale.vue"), meta: { title: "预售专区" } },

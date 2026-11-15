@@ -1,291 +1,36 @@
-<template>
-  <ThemePage>
-  <view class="page">
-    <view v-if="loading" class="state">加载中…</view>
-    <view v-else-if="errorMessage" class="state error">
-      <text>{{ errorMessage }}</text>
-      <button size="mini" @tap="loadAll">重新加载</button>
-    </view>
-    <template v-else-if="detail">
-      <view v-if="detail.product.id" class="product-card" @tap="openProduct">
-        <image class="product-image" :src="detail.product.image || placeholder" mode="aspectFill" />
-        <text class="product-name">{{ detail.product.store_name }}</text>
-        <text class="arrow">›</text>
-      </view>
-
-      <view class="review-card">
-        <view class="author-row">
-          <image v-if="detail.reply.avatar" class="avatar" :src="detail.reply.avatar" mode="aspectFill" />
-          <view v-else class="avatar fallback">{{ (detail.reply.nickname || "用")[0] }}</view>
-          <view class="author-copy">
-            <view class="author-name">
-              <text>{{ detail.reply.nickname || "匿名用户" }}</text>
-              <text v-if="detail.user.level_name" class="level">V{{ detail.user.level_name }}</text>
-              <text v-if="detail.user.vip_status" class="vip">SVIP</text>
-            </view>
-            <text class="time">{{ detail.reply.add_time }}</text>
-          </view>
-        </view>
-        <view class="rating-row">
-          <text class="stars">{{ starText(Number(detail.star)) }}</text>
-          <text v-if="detail.reply.suk" class="sku">{{ detail.reply.suk }}</text>
-        </view>
-        <view class="review-content">{{ detail.reply.comment }}</view>
-        <view v-if="detail.reply.pics.length" class="review-pics">
-          <image
-            v-for="(pic, index) in detail.reply.pics"
-            :key="pic + index"
-            class="review-pic"
-            :src="reviewImageSource(pic)"
-            mode="widthFix"
-            @tap="previewReview(index)"
-          />
-        </view>
-        <view class="review-meta">
-          <text>浏览 {{ detail.reply.views_num }} 次</text>
-          <view class="meta-actions">
-            <text :class="{ active: detail.is_praise }" @tap="toggleReviewPraise">
-              ♥ {{ detail.reply.praise }}
-            </text>
-            <text>回复 {{ detail.reply.comment_sum }}</text>
-          </view>
-        </view>
-      </view>
-
-      <view class="comments-card">
-        <view class="section-title">{{ detail.reply.comment_sum }} 条回复</view>
-        <view v-if="comments.length">
-          <view v-for="item in comments" :key="item.id" class="comment-row">
-            <image v-if="item.user.avatar" class="comment-avatar" :src="item.user.avatar" mode="aspectFill" />
-            <view v-else class="comment-avatar fallback">{{ (item.user.nickname || "用")[0] }}</view>
-            <view class="comment-body">
-              <view class="comment-head">
-                <view>
-                  <text class="comment-name">{{ item.user.nickname || "用户" }}</text>
-                  <text v-if="item.uid === 0" class="merchant">商家</text>
-                  <text v-if="item.user.level_name" class="level">V{{ item.user.level_name }}</text>
-                </view>
-                <text :class="['comment-praise', { active: item.is_praise }]" @tap="toggleCommentPraise(item)">
-                  ♥ {{ item.praise }}
-                </text>
-              </view>
-              <text class="time">{{ item.create_time }}</text>
-              <view class="comment-content">{{ item.content }}</view>
-              <view v-if="item.children" class="child-comment">
-                <text class="child-name">{{ item.children.user.nickname }}：</text>
-                <text>{{ item.children.content }}</text>
-              </view>
-            </view>
-          </view>
-        </view>
-        <view v-else class="empty">还没有回复</view>
-      </view>
-
-      <view class="composer-space" />
-      <view class="composer">
-        <textarea
-          v-model="content"
-          class="composer-input"
-          auto-height
-          :maxlength="150"
-          placeholder="说说你的看法吧"
-        />
-        <button class="send" size="mini" :disabled="submitting" @tap="submitComment">
-          {{ submitting ? "发送中" : "发送" }}
-        </button>
-      </view>
-    </template>
+<template><ThemePage><view class="page">
+ <view v-if="!auth.isLoggedIn" class="notice"><text>登录后查看评价与回复</text><button size="mini" @tap="login">登录并返回此评价</button></view>
+ <view v-if="state.loading" class="notice">正在读取评价…</view><view v-if="state.error" class="notice">{{ state.error }}</view><view v-if="state.message" class="notice">{{ state.message }}</view>
+ <view class="actions"><button size="mini" :disabled="state.loading||state.busy" @tap="load">刷新核对</button><button v-if="state.uncertain" size="mini" :disabled="!canFinish" @tap="finishUncertain">已核对，结束本次操作</button></view>
+ <template v-if="detail">
+  <view v-if="detail.product.id" class="product" @tap="openProduct"><image :src="reviewImageSource(detail.product.image)" mode="aspectFill"/><text>{{ detail.product.store_name }}</text><text>›</text></view>
+  <view class="card">
+   <view class="author"><image v-if="detail.reply.avatar" class="avatar" :src="reviewImageSource(detail.reply.avatar)" mode="aspectFill"/><text>{{ detail.reply.nickname || '匿名用户' }}</text><text v-if="detail.user.level_name" class="badge">{{ detail.user.level_name }}</text><text v-if="detail.user.vip_status" class="badge">SVIP</text></view>
+   <view class="stars">{{ starText(Number(detail.star)) }}</view><view class="meta">商品 {{ detail.reply.product_score }} · 服务 {{ detail.reply.service_score }} · 物流 {{ detail.reply.delivery_score }}</view><view class="meta">{{ detail.reply.add_time }} · {{ detail.reply.sku || detail.reply.suk || '默认规格' }}</view><view class="copy">{{ detail.reply.comment }}</view>
+   <view class="pictures"><image v-for="(pic,i) in detail.reply.pics" :key="pic" :src="reviewImageSource(pic)" mode="aspectFill" @tap="previewReview(i)"/></view>
+   <view v-if="detail.reply.merchant_reply_content" class="merchant"><text>商家回复</text><view>{{ detail.reply.merchant_reply_content }}</view><text class="meta">{{ detail.reply.merchant_reply_time }}</text></view>
+   <view class="foot"><text>浏览 {{ detail.reply.views_num }} · 回复 {{ state.commentsTotal }}</text><button size="mini" :disabled="!canWrite" @tap="toggleReviewPraise">{{ detail.is_praise?'取消点赞':'点赞' }} {{ detail.reply.praise }}</button></view>
   </view>
-  <DiySuspendedNavigation />
-  </ThemePage>
-</template>
-
+  <view class="card"><view class="title">全部回复 · {{ state.commentsTotal }}</view><view v-if="!state.comments.length" class="notice">暂无回复</view>
+   <view v-for="item in state.comments" :key="item.id" class="comment">
+    <view class="author"><image v-if="item.user.avatar" class="avatar" :src="reviewImageSource(item.user.avatar)" mode="aspectFill"/><text>{{ item.user.nickname || '用户' }}</text><text v-if="item.user.level_name" class="badge">{{ item.user.level_name }}</text><text v-if="item.user.vip_status" class="badge">SVIP</text></view>
+    <view class="copy">{{ item.content }}</view><view class="foot"><text>{{ item.create_time }}</text><button size="mini" :disabled="!canWrite" @tap="toggleCommentPraise(item.id)">{{ item.is_praise?'取消点赞':'点赞' }} {{ item.praise }}</button></view>
+    <view v-if="item.children" class="merchant"><text>商家回复</text><view>{{ item.children.content }}</view><view class="foot"><text>{{ item.children.create_time }}</text><button size="mini" :disabled="!canWrite" @tap="toggleCommentPraise(item.children.id)">{{ item.children.is_praise?'取消点赞':'点赞' }} {{ item.children.praise }}</button></view></view>
+   </view>
+   <button v-if="hasMore" :disabled="state.loading||state.loadingMore||state.busy" @tap="loadMore">{{ state.loadingMore?'正在读取…':'加载更多回复' }}</button>
+   <view class="composer"><text>发表回复</text><textarea v-model="state.content" :disabled="!canWrite" :maxlength="4000" placeholder="分享你的看法，最多1000字"/><text class="meta">{{ [...state.content].length }} / 1000 字</text><button :disabled="!canWrite||![...state.content.trim()].length||[...state.content.trim()].length>1000" @tap="submit">{{ state.busy?'正在提交…':'发表回复' }}</button></view>
+  </view>
+ </template>
+</view><DiySuspendedNavigation/></ThemePage></template>
 <script setup lang="ts">
-import { reviewImageSource,reviewImagePreview } from '@/utils/reviewImage';
 import ThemePage from '@/components/ThemePage.vue';
-import { ref } from "vue";
-import { onLoad, onShow } from "@dcloudio/uni-app";
-import {
-  apiCreateReplyComment,
-  apiPraiseProductReview,
-  apiPraiseReplyComment,
-  apiReplyComments,
-  apiReplyInfo,
-  apiUnpraiseProductReview,
-  apiUnpraiseReplyComment,
-} from "@/api/reply";
-import type { ProductReviewDetail, ReplyCommentItem } from "@/api/reply";
-import { useAuthStore } from "@/stores/auth";
-
-const authStore = useAuthStore();
-const reviewId = ref(0);
-const detail = ref<ProductReviewDetail | null>(null);
-const comments = ref<ReplyCommentItem[]>([]);
-const content = ref("");
-const loading = ref(true);
-const submitting = ref(false);
-const errorMessage = ref("");
-let loadedToken = "";
-
-const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
-
-function requireLogin(): boolean {
-  if (authStore.isLoggedIn) return true;
-  uni.navigateTo({ url: "/pages/auth/login" });
-  return false;
-}
-
-function starText(score: number): string {
-  const normalized = Math.min(5, Math.max(0, Math.trunc(score || 0)));
-  return "★".repeat(normalized) + "☆".repeat(5 - normalized);
-}
-
-async function loadAll() {
-  if (!reviewId.value || !requireLogin()) {
-    loading.value = false;
-    return;
-  }
-  loading.value = true;
-  errorMessage.value = "";
-  try {
-    const [info, list] = await Promise.all([
-      apiReplyInfo(reviewId.value),
-      apiReplyComments(reviewId.value, 1, 100),
-    ]);
-    detail.value = info;
-    comments.value = list;
-    loadedToken = authStore.token;
-  } catch (error) {
-    detail.value = null;
-    comments.value = [];
-    errorMessage.value = error instanceof Error ? error.message : "评价加载失败";
-  } finally {
-    loading.value = false;
-  }
-}
-
-async function reloadComments() {
-  comments.value = await apiReplyComments(reviewId.value, 1, 100);
-  if (detail.value) detail.value.reply.comment_sum = comments.value.length;
-}
-
-async function submitComment() {
-  if (!requireLogin() || submitting.value) return;
-  const value = content.value.trim();
-  if (!value) return uni.showToast({ title: "说点什么吧", icon: "none" });
-  submitting.value = true;
-  try {
-    await apiCreateReplyComment(reviewId.value, value);
-    content.value = "";
-    await reloadComments();
-    uni.showToast({ title: "回复成功", icon: "success" });
-  } catch (error) {
-    uni.showToast({ title: error instanceof Error ? error.message : "回复失败", icon: "none" });
-  } finally {
-    submitting.value = false;
-  }
-}
-
-async function toggleReviewPraise() {
-  if (!detail.value || !requireLogin()) return;
-  try {
-    if (detail.value.is_praise) {
-      await apiUnpraiseProductReview(reviewId.value);
-      detail.value.is_praise = false;
-      detail.value.reply.praise = Math.max(0, detail.value.reply.praise - 1);
-    } else {
-      await apiPraiseProductReview(reviewId.value);
-      detail.value.is_praise = true;
-      detail.value.reply.praise += 1;
-    }
-  } catch (error) {
-    uni.showToast({ title: error instanceof Error ? error.message : "操作失败", icon: "none" });
-  }
-}
-
-async function toggleCommentPraise(item: ReplyCommentItem) {
-  if (!requireLogin()) return;
-  try {
-    if (item.is_praise) await apiUnpraiseReplyComment(item.id);
-    else await apiPraiseReplyComment(item.id);
-    await reloadComments();
-  } catch (error) {
-    uni.showToast({ title: error instanceof Error ? error.message : "操作失败", icon: "none" });
-  }
-}
-
-function previewReview(index: number) {
-  if (!detail.value) return;
-  const preview=reviewImagePreview(detail.value.reply.pics,detail.value.reply.pics[index]??'');if(preview)uni.previewImage(preview);
-}
-
-function openProduct() {
-  const product = detail.value?.product;
-  if (!product?.id) return;
-  uni.navigateTo({ url: `/pages/goods/detail?id=${product.id}` });
-}
-
-onLoad((options) => {
-  reviewId.value = Number(options?.id ?? 0);
-  if (!Number.isSafeInteger(reviewId.value) || reviewId.value <= 0) {
-    loading.value = false;
-    errorMessage.value = "评价参数错误";
-    return;
-  }
-  void loadAll();
-});
-
-onShow(() => {
-  if (reviewId.value > 0 && authStore.isLoggedIn && !loading.value
-    && loadedToken !== authStore.token) void loadAll();
-});
+import { usePublicReviewDetail } from '@/composables/usePublicReviewDetail';
+import { reviewImageSource,reviewImagePreview } from '@/utils/reviewImage';
+const {auth,state,detail,load,loadMore,hasMore,canWrite,canFinish,submit,finishUncertain,toggleReviewPraise,toggleCommentPraise,login}=usePublicReviewDetail();
+const starText=(score:number)=>'★'.repeat(score)+'☆'.repeat(5-score);
+function previewReview(index:number){if(!detail.value)return;const preview=reviewImagePreview(detail.value.reply.pics,detail.value.reply.pics[index]??'');if(preview)uni.previewImage(preview);}
+function openProduct(){const product=detail.value?.product;if(product?.id)uni.navigateTo({url:(product.is_presale_product?'/pages/activity/presaleDetail?id=':'/pages/goods/detail?id=')+product.id});}
 </script>
-
 <style scoped>
-.page { min-height: 100vh; padding: 20rpx; background: #f5f5f5; box-sizing: border-box; }
-.state { padding: 160rpx 24rpx; text-align: center; color: #999; }
-.state.error { display: flex; flex-direction: column; align-items: center; gap: 24rpx; color: #666; }
-.product-card, .review-card, .comments-card { background: #fff; border-radius: 20rpx; }
-.product-card { display: flex; align-items: center; padding: 20rpx; margin-bottom: 20rpx; }
-.product-image { width: 104rpx; height: 104rpx; border-radius: 14rpx; background: #eee; }
-.product-name { flex: 1; padding: 0 20rpx; font-size: 28rpx; color: #333; line-height: 1.5; }
-.arrow { font-size: 44rpx; color: #bbb; }
-.review-card { padding: 28rpx; margin-bottom: 20rpx; }
-.author-row { display: flex; align-items: center; }
-.avatar, .comment-avatar { flex: none; border-radius: 50%; background: #eee; }
-.avatar { width: 68rpx; height: 68rpx; }
-.fallback { display: flex; align-items: center; justify-content: center; color: #fff; background: var(--view-theme, #e93323); }
-.author-copy { flex: 1; display: flex; flex-direction: column; gap: 5rpx; padding-left: 16rpx; }
-.author-name { display: flex; align-items: center; gap: 10rpx; font-size: 28rpx; color: #333; }
-.level, .vip, .merchant { display: inline-block; padding: 2rpx 8rpx; margin-left: 8rpx; border-radius: 8rpx; font-size: 18rpx; }
-.level { color: #8b5a2b; background: #fff0d9; }
-.vip { color: #fff; background: #222; }
-.merchant { color: var(--view-theme, #e93323); background: var(--view-minorColorT, rgba(233, 51, 35, 0.1)); }
-.time { font-size: 22rpx; color: #aaa; }
-.rating-row { display: flex; align-items: center; gap: 20rpx; margin-top: 24rpx; }
-.stars { color: #f5a623; letter-spacing: 3rpx; }
-.sku { font-size: 22rpx; color: #999; }
-.review-content { margin-top: 20rpx; font-size: 29rpx; color: #333; line-height: 1.65; white-space: pre-wrap; }
-.review-pics { display: flex; flex-direction: column; gap: 14rpx; margin-top: 20rpx; }
-.review-pic { width: 100%; border-radius: 14rpx; }
-.review-meta { display: flex; justify-content: space-between; margin-top: 24rpx; font-size: 22rpx; color: #999; }
-.meta-actions { display: flex; gap: 26rpx; }
-.active { color: var(--view-theme, #e93323) !important; }
-.comments-card { padding: 28rpx; }
-.section-title { padding-bottom: 8rpx; font-size: 29rpx; font-weight: 600; color: #333; }
-.comment-row { display: flex; padding: 26rpx 0; border-bottom: 1rpx solid #f1f1f1; }
-.comment-avatar { width: 60rpx; height: 60rpx; }
-.comment-body { flex: 1; min-width: 0; padding-left: 16rpx; }
-.comment-head { display: flex; justify-content: space-between; align-items: center; }
-.comment-name { font-size: 25rpx; color: #333; }
-.comment-praise { flex: none; font-size: 23rpx; color: #999; }
-.comment-content { margin-top: 14rpx; font-size: 27rpx; color: #333; line-height: 1.6; white-space: pre-wrap; }
-.child-comment { margin-top: 14rpx; padding: 14rpx; border-radius: 10rpx; background: #f7f7f7; font-size: 24rpx; color: #555; }
-.child-name { color: var(--view-theme, #e93323); }
-.empty { padding: 50rpx 0; text-align: center; font-size: 25rpx; color: #aaa; }
-.composer-space { height: 130rpx; }
-.composer { position: fixed; right: 0; bottom: 0; left: 0; display: flex; align-items: flex-end; gap: 16rpx; padding: 18rpx 22rpx; padding-bottom: calc(18rpx + env(safe-area-inset-bottom)); background: #fff; box-shadow: 0 -2rpx 12rpx rgba(0, 0, 0, .05); }
-.composer-input { flex: 1; min-height: 64rpx; max-height: 180rpx; padding: 15rpx 20rpx; box-sizing: border-box; border-radius: 32rpx; background: #f5f5f5; font-size: 26rpx; line-height: 1.35; }
-.send { margin: 0; color: #fff; border: 0; border-radius: 30rpx; background: var(--view-theme, #e93323); }
-.send[disabled] { opacity: .55; }
+.page{padding:24rpx;min-height:100vh;box-sizing:border-box;color:#333;overflow-wrap:anywhere}.card,.product{background:#fff;border-radius:18rpx;padding:26rpx;margin:20rpx 0}.product,.author,.foot,.actions{display:flex;align-items:center;gap:12rpx;flex-wrap:wrap}.product image{width:90rpx;height:90rpx;border-radius:8rpx}.product>text:nth-child(2){flex:1;font-size:27rpx}.author{font-size:28rpx}.avatar{width:60rpx;height:60rpx;border-radius:50%;flex:none}.badge{font-size:20rpx;color:#745025;background:#fff5df;padding:2rpx 8rpx}.stars{color:#916108;margin:18rpx 0 10rpx}.meta,.foot{color:#666;font-size:23rpx;margin:10rpx 0;line-height:1.6}.copy{white-space:pre-wrap;line-height:1.8;font-size:28rpx;margin:18rpx 0}.pictures{display:flex;gap:10rpx;flex-wrap:wrap}.pictures image{width:calc((100% - 20rpx)/3);height:180rpx;border-radius:8rpx}.merchant{background:#f5f5f5;padding:18rpx;border-radius:10rpx;font-size:25rpx;line-height:1.7;white-space:pre-wrap;margin:18rpx 0}.merchant>text:first-child{font-weight:600}.foot{justify-content:space-between}.foot button{margin:0;font-size:23rpx}.notice{text-align:center;padding:25rpx 0;color:#666;font-size:26rpx}.notice button{margin:18rpx auto}.title{font-size:31rpx;font-weight:600}.comment{border-top:1px solid #eee;padding:24rpx 0}.composer{margin-top:24rpx;display:flex;flex-direction:column;gap:14rpx}.composer textarea{box-sizing:border-box;width:100%;min-height:190rpx;border:1px solid #ccc;border-radius:10rpx;padding:18rpx;font-size:28rpx}.composer button{width:100%;color:var(--view-theme,#b82920)}.actions button{font-size:24rpx;margin:0}
 </style>

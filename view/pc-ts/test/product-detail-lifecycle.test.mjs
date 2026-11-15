@@ -144,11 +144,12 @@ export function registerProductDetailLifecycleTests(getContext) {
       } finally { wait.release({ status: 200, data: { id: 91 } }); f.close(); }
     });
   }
-  it('ordinary detail old review data cannot cross product navigation', async () => {
-    const wait = gate(); const f = await mount(config => config.url === '/reply/config/70' ? wait.promise : undefined);
-    try { await f.router.push('/goods/71'); await flush(); wait.release({ status: 200, data: { total: 99 } }); await flush();
-      assert.equal(f.view.replyStats.value.total, 0);
-    } finally { wait.release({ status: 200, data: { total: 99 } }); f.close(); }
+  it('ordinary detail delegates reviews without issuing legacy review requests on product navigation', async () => {
+    const f = await mount();
+    try { await f.router.push('/goods/71'); await flush();
+      assert.equal(f.view.detail.value.id, 71);
+      assert.equal(f.calls.some(call => call.url.startsWith('/reply/config/') || call.url.startsWith('/reply/list/')), false);
+    } finally { f.close(); }
   });
   it('ordinary detail discards a late product response after route replacement', async () => {
     const wait = gate(); const f = await mount(config => config.url === '/product/detail/70' ? wait.promise : undefined);

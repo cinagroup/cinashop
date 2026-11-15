@@ -1,3 +1,4 @@
+import { registerPublicProductReviewTests } from './public-product-reviews.test.mjs';
 import { registerBuyerReviewsTests } from './buyer-reviews.test.mjs';
 import { buyerInvoicesPlugin, registerBuyerInvoicesTests } from './buyer-invoices.test.mjs';
 import { buyerTrackingPlugin, registerBuyerTrackingTests } from './buyer-order-tracking.test.mjs';
@@ -108,6 +109,7 @@ describe("actual Axios + storage + Pinia auth-session isolation", { concurrency:
   registerCheckoutShippingTests(() => ({ server, authUtils, api, response }));
   registerCheckoutIntentRecoveryTests(() => ({ server, authUtils, api, response }));
   registerBuyerTrackingTests(() => ({ server, authUtils, api, response }));
+  registerPublicProductReviewTests(() => ({ server, authUtils, api, response }));
   registerBuyerReviewsTests(() => ({ server, authUtils, api, response }));
   registerBuyerInvoicesTests(() => ({ server, authUtils, api, location, navigation, response }));
   registerOrderDetailTests(() => ({ server, authUtils, api, response }));

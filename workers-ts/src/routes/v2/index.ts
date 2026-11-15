@@ -6,7 +6,7 @@ import * as AgentLevelController from "@/controllers/api/v1/AgentLevelController
 import * as OrderController from "@/controllers/api/v1/OrderController";
 import * as ProductController from "@/controllers/api/v1/ProductController";
 import * as PublicController from "@/controllers/api/v1/PublicController";
-import * as ReplyController from "@/controllers/api/v1/ReplyController";
+import * as PublicProductReviews from "@/controllers/api/v1/PublicProductReviewController";
 import * as UserBehaviorController from "@/controllers/api/v1/UserBehaviorController";
 import * as UserActivityController from "@/controllers/api/v1/UserActivityController";
 import * as UserFinanceController from "@/controllers/api/v1/UserFinanceController";
@@ -91,7 +91,7 @@ v2Routes.get("/order/invoice_detail/:uni", privateBuyerInvoiceResponse, authMidd
 
 v2Routes.get("/agent/level_list", authMiddleware({ force: true }), AgentLevelController.levelList);
 v2Routes.get("/agent/level_task_list", authMiddleware({ force: true }), AgentLevelController.levelTaskList);
-v2Routes.get("/reply/list/:id", authMiddleware({ force: false }), ReplyController.replyList);
+v2Routes.get("/reply/list/:id", authMiddleware({ force: false }), PublicProductReviews.legacyV2List);
 
 // PHP v2 shopping-cart and SKU-selection contracts used by the old UniApp.
 v2Routes.post("/reset_cart", authMiddleware({ force: true }), OrderController.cartResetV2);

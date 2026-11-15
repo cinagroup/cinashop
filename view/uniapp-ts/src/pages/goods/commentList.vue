@@ -1,269 +1,30 @@
-<template>
-  <ThemePage>
-  <view class="comment-page">
-    <!-- 评价统计 -->
-    <view class="stats-bar" v-if="stats">
-      <view class="stats-score">{{ stats.avgScore }}</view>
-      <view class="stars">{{ starText(Number(stats.avgScore)) }}</view>
-      <view class="stats-info">
-        <text>{{ stats.total }} 条评价</text>
-        <text>好评率 {{ stats.goodRate }}%</text>
-      </view>
-    </view>
-
-    <!-- 筛选 tabs -->
-    <view class="filter-bar">
-      <view class="filter-tab" :class="{ active: filter === 'all' }" @tap="filter = 'all'; load(1)">全部 {{ stats?.total || 0 }}</view>
-      <view class="filter-tab" :class="{ active: filter === 'pic' }" @tap="filter = 'pic'; load(1)">有图 {{ picCount }}</view>
-      <view class="filter-tab" :class="{ active: filter === 'good' }" @tap="filter = 'good'; load(1)">好评</view>
-    </view>
-
-    <!-- 评价列表 -->
-    <view class="comment-list">
-      <view class="comment-item" v-for="r in filteredList" :key="r.id" @tap="openDetail(r.id)">
-        <view class="comment-head">
-          <text class="avatar">{{ (r.nickname || "用")[0] }}</text>
-          <text class="nickname">{{ r.nickname || "匿名用户" }}</text>
-          <text class="stars">{{ starText(r.product_score) }}</text>
-        </view>
-        <view class="comment-text">{{ r.comment }}</view>
-        <view class="comment-pics" v-if="r.pics.length">
-          <image
-            v-for="(p, i) in r.pics"
-            :key="i"
-            class="comment-pic"
-            :src="reviewImageSource(p)"
-            mode="aspectFill"
-            @tap.stop="previewImage(r.pics, i)"
-          />
-        </view>
-        <view class="comment-foot">
-          <text class="sku">{{ r.sku || "默认规格" }}</text>
-          <text class="time">{{ r.add_time }}</text>
-        </view>
-      </view>
-    </view>
-    <view v-if="!list.length && !loading" class="empty">暂无评价</view>
-    <view v-if="list.length && hasMore" class="load-more" @tap="loadMore">加载更多</view>
-    <view v-if="list.length && !hasMore" class="load-more">没有更多了</view>
-  </view>
-  <DiySuspendedNavigation />
-  </ThemePage>
-</template>
-
+<template><ThemePage><view class="page">
+ <view class="stats" v-if="state.page"><text class="score">{{ state.page.stats.avgScore }} 分</text><text>{{ state.page.stats.total }} 条评价 · 好评率 {{ state.page.stats.goodRate }}%</text></view>
+ <button size="mini" :disabled="state.loading||state.loadingMore" @tap="load">刷新评价</button>
+ <view class="filters"><button v-for="filter in reviewFilters" :key="filter.value" size="mini" :class="{active:state.filter===filter.value}" @tap="selectFilter(filter.value)">{{ filter.label }} {{ counts[filter.value] ?? '—' }}</button></view>
+ <view v-if="state.loading" class="notice">正在读取评价…</view><view v-if="state.error" class="notice"><text>{{ state.error }}</text><button size="mini" :disabled="state.loading||state.loadingMore" @tap="state.page?loadMore():load()">重新读取</button></view>
+ <view v-for="review in state.items" :key="review.id" class="card">
+  <view class="author"><image v-if="review.avatar" class="avatar" :src="reviewImageSource(review.avatar)" mode="aspectFill"/><text v-else class="avatar fallback">{{ (review.nickname||'用')[0] }}</text><text>{{ review.nickname || '匿名用户' }}</text><text v-if="review.level_name" class="badge">{{ review.level_name }}</text><text v-if="review.vip_status" class="badge">SVIP</text></view>
+  <view class="stars">{{ starText(review.star) }}</view><view class="meta">商品 {{ review.product_score }} · 服务 {{ review.service_score }} · 物流 {{ review.delivery_score }}</view>
+  <view class="meta">{{ review.add_time }} · {{ review.sku || review.suk || '默认规格' }}</view><view class="copy">{{ review.comment }}</view>
+  <view class="pictures"><image v-for="(pic,i) in review.pics" :key="pic" :src="reviewImageSource(pic)" mode="aspectFill" @tap="previewImage(review.pics,i)"/></view>
+  <view v-if="review.merchant_reply_content||review.merchant_reply" class="merchant"><text>商家回复</text><view>{{ review.merchant_reply_content || review.merchant_reply }}</view><text class="meta">{{ review.merchant_reply_time }}</text></view>
+  <view v-if="review.replyComment" class="summary"><text>{{ review.replyComment.user.nickname || '用户' }}：{{ review.replyComment.content }}</text><view v-if="review.replyComment.children">商家回复：{{ review.replyComment.children.content }}</view></view>
+  <view class="meta">浏览 {{ review.views_num }} · {{ review.is_praise?'已赞':'赞' }} {{ review.praise }} · 回复 {{ review.comment_sum }}</view><button size="mini" @tap="openDetail(review.id)">查看评价与全部回复</button>
+ </view>
+ <view v-if="state.page&&!state.items.length&&!state.loading" class="notice">此分类暂无评价</view><button v-if="hasMore" :disabled="state.loading||state.loadingMore" @tap="loadMore">{{ state.loadingMore?'正在读取…':'加载更多评价' }}</button><view v-else-if="state.items.length" class="notice">已显示全部 {{ state.page?.total }} 条评价</view>
+</view><DiySuspendedNavigation/></ThemePage></template>
 <script setup lang="ts">
-import { reviewImageSource,reviewImagePreview } from '@/utils/reviewImage';
+import { computed } from 'vue';
 import ThemePage from '@/components/ThemePage.vue';
-import { ref, computed } from "vue";
-import { onLoad } from "@dcloudio/uni-app";
-import { apiReplyConfig, apiReplyList } from "@/api/reply";
-import type { ProductReviewListItem, ReplyStats } from "@/api/reply";
-
-const productId = ref(0);
-const list = ref<ProductReviewListItem[]>([]);
-const stats = ref<ReplyStats | null>(null);
-const page = ref(1);
-const loading = ref(true);
-const hasMore = ref(true);
-const filter = ref("all");
-
-const picCount = computed(() => list.value.filter((r) => r.pics && r.pics.length).length);
-
-const filteredList = computed(() => {
-  if (filter.value === "pic") return list.value.filter((r) => r.pics && r.pics.length);
-  if (filter.value === "good") return list.value.filter((r) => Number(r.product_score) >= 4);
-  return list.value;
-});
-
-function starText(score: number): string {
-  const n = Math.min(5, Math.max(1, Number(score) || 5));
-  return "★".repeat(n) + "☆".repeat(5 - n);
-}
-
-function previewImage(pics: string[], current: number) {
-  const preview=reviewImagePreview(pics,pics[current]??'');if(preview)uni.previewImage(preview);
-}
-
-async function loadStats() {
-  try {
-    stats.value = await apiReplyConfig(productId.value);
-  } catch {
-    stats.value = null;
-  }
-}
-
-async function load(p = 1) {
-  if (p === 1) {
-    list.value = [];
-    hasMore.value = true;
-  }
-  loading.value = true;
-  page.value = p;
-  try {
-    const data = await apiReplyList(productId.value, p, 20);
-    list.value = list.value.concat(data || []);
-    hasMore.value = (data || []).length >= 20;
-  } catch {
-    hasMore.value = false;
-  } finally {
-    loading.value = false;
-  }
-}
-
-function openDetail(id: number) {
-  uni.navigateTo({ url: `/pages/goods/commentDetail?id=${id}` });
-}
-
-function loadMore() {
-  if (hasMore.value && !loading.value) load(page.value + 1);
-}
-
-onLoad((options) => {
-  const id = Number(options?.productId ?? options?.id ?? 0);
-  if (id) {
-    productId.value = id;
-    loadStats();
-    load(1);
-  }
-});
+import { usePublicReviewList } from '@/composables/usePublicReviewList';
+import { reviewImageSource,reviewImagePreview } from '@/utils/reviewImage';
+import { reviewFilters } from '../../../../common/publicProductReviews';
+const {state,load,loadMore,selectFilter,hasMore,openDetail}=usePublicReviewList();
+const counts=computed(()=>state.page?[state.page.stats.total,state.page.stats.good_count,state.page.stats.in_count,state.page.stats.poor_count]:[]);
+const starText=(score:number)=>'★'.repeat(score)+'☆'.repeat(5-score);
+function previewImage(pics:string[],current:number){const preview=reviewImagePreview(pics,pics[current]??'');if(preview)uni.previewImage(preview);}
 </script>
-
 <style scoped>
-.comment-page {
-  padding: 20rpx;
-}
-
-.stats-bar {
-  display: flex;
-  align-items: center;
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 30rpx;
-  margin-bottom: 20rpx;
-}
-
-.stats-score {
-  font-size: 56rpx;
-  font-weight: 700;
-  color: #ff9900;
-  margin-right: 20rpx;
-}
-
-.stars {
-  font-size: 24rpx;
-  color: #ff9900;
-  margin-right: 20rpx;
-}
-
-.stats-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  font-size: 24rpx;
-  color: #999;
-  gap: 6rpx;
-}
-
-.filter-bar {
-  display: flex;
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 8rpx;
-  margin-bottom: 20rpx;
-}
-
-.filter-tab {
-  flex: 1;
-  text-align: center;
-  padding: 16rpx 0;
-  font-size: 26rpx;
-  color: #666;
-  border-radius: 12rpx;
-}
-
-.filter-tab.active {
-  background: var(--view-minorColorT, rgba(233, 51, 35, 0.1));
-  color: var(--view-theme, #e93323);
-  font-weight: 600;
-}
-
-.comment-item {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx;
-  margin-bottom: 16rpx;
-}
-
-.comment-head {
-  display: flex;
-  align-items: center;
-  margin-bottom: 14rpx;
-}
-
-.avatar {
-  width: 48rpx;
-  height: 48rpx;
-  background: var(--view-theme, #e93323);
-  color: #fff;
-  border-radius: 50%;
-  font-size: 24rpx;
-  text-align: center;
-  line-height: 48rpx;
-  margin-right: 14rpx;
-}
-
-.nickname {
-  font-size: 26rpx;
-  color: #333;
-  flex: 1;
-}
-
-.stars {
-  font-size: 22rpx;
-  color: #ff9900;
-}
-
-.comment-text {
-  font-size: 28rpx;
-  color: #444;
-  line-height: 1.6;
-}
-
-.comment-pics {
-  display: flex;
-  gap: 12rpx;
-  margin-top: 14rpx;
-}
-
-.comment-pic {
-  width: 160rpx;
-  height: 160rpx;
-  border-radius: 8rpx;
-}
-
-.comment-foot {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 14rpx;
-}
-
-.sku,
-.time {
-  font-size: 22rpx;
-  color: #bbb;
-}
-
-.empty {
-  text-align: center;
-  color: #999;
-  padding: 100rpx 0;
-  font-size: 26rpx;
-}
-
-.load-more {
-  text-align: center;
-  color: #999;
-  font-size: 24rpx;
-  padding: 30rpx 0;
-}
+.page{padding:24rpx;min-height:100vh;box-sizing:border-box;color:#333;overflow-wrap:anywhere}.stats,.card{background:#fff;border-radius:18rpx;padding:26rpx;margin-bottom:20rpx}.stats{display:flex;flex-direction:column;gap:12rpx;font-size:26rpx}.score{font-size:40rpx;color:#a16b0a;font-weight:700}.filters{display:flex;gap:8rpx;margin:24rpx 0}.filters button{flex:1;padding:0 8rpx;font-size:24rpx;white-space:nowrap}.filters .active{color:var(--view-theme,#b82920);background:#fff0ee}.author{display:flex;align-items:center;gap:12rpx;flex-wrap:wrap;font-size:28rpx}.avatar{width:60rpx;height:60rpx;border-radius:50%;flex:none}.fallback{display:flex;align-items:center;justify-content:center;background:#f3e8e6}.badge{font-size:20rpx;color:#745025;background:#fff5df;padding:2rpx 8rpx}.stars{color:#916108;margin:18rpx 0 10rpx}.meta{color:#666;font-size:23rpx;margin:10rpx 0;line-height:1.6}.copy{white-space:pre-wrap;line-height:1.8;font-size:28rpx;margin:18rpx 0}.pictures{display:flex;gap:10rpx;flex-wrap:wrap}.pictures image{width:calc((100% - 20rpx)/3);height:180rpx;border-radius:8rpx}.merchant,.summary{background:#f5f5f5;padding:18rpx;border-radius:10rpx;font-size:25rpx;line-height:1.7;white-space:pre-wrap;margin:18rpx 0}.merchant>text:first-child{font-weight:600}.notice{text-align:center;padding:30rpx 0;color:#666;font-size:26rpx}.notice button{margin:18rpx auto}.card>button{margin:16rpx 0 0;font-size:24rpx}
 </style>
