@@ -1,3 +1,4 @@
+import { pcMessageCenterPlugin, registerPcMessageCenterTests } from './pc-message-center.test.mjs';
 import { registerPublicProductReviewTests } from './public-product-reviews.test.mjs';
 import { productDetailContentPlugin, registerProductDetailContentTests } from './product-detail-content.test.mjs';
 import { registerBuyerReviewsTests } from './buyer-reviews.test.mjs';
@@ -44,7 +45,7 @@ before(async () => {
   localStorage.setItem("pc_token", "obsolete-persistent-token");
   localStorage.setItem("pc_uid", "99");
   server = await createServer({ configFile: false, root, envFile: false, logLevel: "error",
-    plugins: [vue(), seckillComponentPlugin(root), combinationComponentPlugin(root), presaleComponentPlugin(root), presaleCatalogPlugin(root), bargainComponentPlugin(root), checkoutShippingPlugin(root), productDetailComponentPlugin(root), productDetailContentPlugin(root), cartTemplatePlugin(root), orderDetailPlugin(root), orderListPlugin(root), refundApplyPlugin(root), refundRecordsPlugin(root), buyerTrackingPlugin(root), buyerInvoicesPlugin(root)],
+    plugins: [vue(), seckillComponentPlugin(root), combinationComponentPlugin(root), presaleComponentPlugin(root), presaleCatalogPlugin(root), bargainComponentPlugin(root), checkoutShippingPlugin(root), productDetailComponentPlugin(root), productDetailContentPlugin(root), pcMessageCenterPlugin(root), cartTemplatePlugin(root), orderDetailPlugin(root), orderListPlugin(root), refundApplyPlugin(root), refundRecordsPlugin(root), buyerTrackingPlugin(root), buyerInvoicesPlugin(root)],
     optimizeDeps: { noDiscovery: true, include: [] },
     resolve: { alias: { "@": fileURLToPath(new URL("../src", import.meta.url)) } },
     server: { middlewareMode: true, hmr: false, watch: null } });
@@ -112,6 +113,7 @@ describe("actual Axios + storage + Pinia auth-session isolation", { concurrency:
   registerBuyerTrackingTests(() => ({ server, authUtils, api, response }));
   registerPublicProductReviewTests(() => ({ server, authUtils, api, response }));
   registerProductDetailContentTests(() => ({ server, authUtils, api, response }));
+  registerPcMessageCenterTests(() => ({ server, authUtils, api, response }));
   registerBuyerReviewsTests(() => ({ server, authUtils, api, response }));
   registerBuyerInvoicesTests(() => ({ server, authUtils, api, location, navigation, response }));
   registerOrderDetailTests(() => ({ server, authUtils, api, response }));

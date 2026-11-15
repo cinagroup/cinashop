@@ -104,9 +104,9 @@ function messages(c:C,kind:MessageView){
   return {actor,query,service:new MessageCenterService(c.get('container'),c.env)};
 }
 /** PHP summary is distinct from the paginated consuming inbox. */
-export async function messageCenter(c:C){const {actor,query,service}=messages(c,'center');return jsonOk(c,await service.center(actor,query));}
+export async function messageCenter(c:C){const {actor,query,service}=messages(c,'center');return jsonOk(c,query.pc?await service.pcSummary(actor):await service.center(actor,query));}
 /** PHP-compatible GET intentionally consumes only this user's page read state. */
-export async function messageList(c:C){const {actor,query,service}=messages(c,'list');return jsonOk(c,await service.list(actor,query));}
+export async function messageList(c:C){const {actor,query,service}=messages(c,'list');return jsonOk(c,query.pc?await service.pcList(actor,query):await service.list(actor,query));}
 /** Modern id detail remains nullable for a hidden/foreign/missing record. */
 export async function messageDetail(c:C){const {actor,query,service}=messages(c,'detail');return jsonOk(c,await service.detail(actor,parseMessageId(c.req.param('id')),query));}
 

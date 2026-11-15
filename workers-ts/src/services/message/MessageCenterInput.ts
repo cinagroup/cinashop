@@ -1,7 +1,7 @@
 import { AuthException, ValidateException } from '@/utils/errors';
 
 export type MessageView = 'center' | 'list' | 'detail';
-export interface MessageQuery { modern: boolean; page: number; limit: number }
+export interface MessageQuery { modern: boolean; page: number; limit: number; pc?: true }
 export interface MessageActor { uid: number; pwd: string }
 const views: Record<MessageView,string> = {center:'message_center',list:'system_messages',detail:'system_message_detail'};
 export const MESSAGE_MAX_BYTES = 1024 * 1024;
@@ -15,11 +15,18 @@ export function messageActor(uid: unknown, account: unknown): MessageActor {
  return {uid,pwd:row.pwd};
 }
 export function parseMessageQuery(kind: MessageView, params: URLSearchParams): MessageQuery {
- let modern=false;const allowed=kind==='detail'?['view']:['view','page','limit'];
+ let modern=false,pc=false;const allowed=kind==='detail'?['view']:['view','page','limit'];
  for(const key of params.keys())if(!allowed.includes(key)||params.getAll(key).length!==1)throw new ValidateException('消息查询参数无效');
- if(params.has('view')){if(params.get('view')!==views[kind])throw new ValidateException('消息视图无效');modern=true;}
+ if(params.has('view')){
+  const value=params.get('view');
+  pc=kind==='center'&&value==='pc_message_summary'||kind==='list'&&value==='pc_system_messages';
+  if(value!==views[kind]&&!pc)throw new ValidateException('消息视图无效');modern=true;
+ }
  function number(key:string,fallback:number,max:number){const raw=params.get(key);if(raw===null)return fallback;if(!/^[1-9]\d*$/u.test(raw))throw new ValidateException('消息分页无效');const n=Number(raw);return messageInteger(n,'消息分页',1,max);}
- return {modern,page:kind==='detail'?1:number('page',1,1000),limit:kind==='detail'?1:number('limit',20,100)};
+ if(pc&&kind==='center'&&(params.has('page')||params.has('limit')))throw new ValidateException('消息摘要不接受分页');
+ const page=kind==='detail'?1:number('page',1,pc?2147483647:1000),limit=kind==='detail'?1:number('limit',pc?7:20,100);
+ if(pc&&kind==='list'&&limit!==7)throw new ValidateException('PC消息每页为7条');
+ return {modern,page,limit,...(pc?{pc:true as const}:{})};
 }
 export function parseMessageId(value: unknown): number {
  if(typeof value!=='string'||!/^[1-9]\d*$/u.test(value))throw new ValidateException('消息ID无效');return messageInteger(Number(value),'消息ID',1);

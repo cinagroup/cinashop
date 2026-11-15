@@ -16,6 +16,16 @@ describe('message center strict transport and immutable PHP time contract',()=>{
   expect(parseMessageQuery('list',new URLSearchParams('view=system_messages&page=1000&limit=100'))).toEqual({modern:true,page:1000,limit:100});
   expect(()=>parseMessageQuery('detail',new URLSearchParams('page=1'))).toThrow();
  });
+ it('opts PC into a narrow readonly summary and complete seven-row pagination without changing existing defaults',()=>{
+  expect(parseMessageQuery('center',new URLSearchParams('view=pc_message_summary'))).toEqual({modern:true,pc:true,page:1,limit:7});
+  expect(parseMessageQuery('list',new URLSearchParams('view=pc_system_messages&page=2147483647&limit=7'))).toEqual({modern:true,pc:true,page:2147483647,limit:7});
+  expect(parseMessageQuery('list',new URLSearchParams('view=pc_system_messages'))).toEqual({modern:true,pc:true,page:1,limit:7});
+  for(const query of ['view=pc_system_messages&limit=20','view=pc_system_messages&page=2147483648','view=pc_system_messages&limit=07','view=pc_system_messages&uid=22'])
+   expect(()=>parseMessageQuery('list',new URLSearchParams(query))).toThrow();
+  for(const query of ['view=pc_message_summary&page=1','view=pc_message_summary&limit=7','view=pc_message_summary&owner_uid=22'])
+   expect(()=>parseMessageQuery('center',new URLSearchParams(query))).toThrow();
+  expect(()=>parseMessageQuery('detail',new URLSearchParams('view=pc_system_messages'))).toThrow();
+ });
  it.each(['0','01','-1','1.0','1e1','2147483648',' 1','1/2'])('rejects a noncanonical path ID %s',id=>expect(()=>parseMessageId(id)).toThrow());
  it('requires a middleware-owned account matching UID, never a forged query identity',()=>{
   expect(messageActor(11,{uid:11,pwd:'hash'})).toEqual({uid:11,pwd:'hash'});

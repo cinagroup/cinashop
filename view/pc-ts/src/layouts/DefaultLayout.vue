@@ -36,6 +36,7 @@
             </el-badge>
           </router-link>
           <template v-if="authStore.isLoggedIn">
+            <PcMessageNav />
             <router-link to="/user" class="action-link">个人中心</router-link>
             <el-button link @click="handleLogout">退出</el-button>
           </template>
@@ -65,6 +66,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, onUnmounted, watch } from "vue";
+import PcMessageNav from '@/components/PcMessageNav.vue';
 import { useRouter, useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
 import { useAuthStore } from "@/stores/auth";
@@ -282,7 +284,9 @@ onMounted(() => {
 
   .actions {
     min-width: 0;
-    gap: 10px;
+    max-width: calc(100vw - 140px);
+    flex-wrap: wrap;
+    gap: 8px 10px;
   }
 
   .action-link {

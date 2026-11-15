@@ -1,0 +1,914 @@
+{
+  "batch": "pc-message-center",
+  "base": "7f7832674bb6d6dd40399d92e473fbdead4a19f7",
+  "sourceFiles": [
+    {
+      "path": "view/common/pcMessageCenter.ts",
+      "sha256": "3e7c8d1be01227c8914a4d322ee9e5b18b750c6318786d40fa44d58c184cd459"
+    },
+    {
+      "path": "view/pc-ts/src/api/pcMessages.ts",
+      "sha256": "828749b19853995d546cb5a0b3e0750f01e1041ff5c5ba0fc7f66d96ee853375"
+    },
+    {
+      "path": "view/pc-ts/src/components/PcMessageNav.vue",
+      "sha256": "a9cbb3f575fd6a229a293363aba0b4c2e73c691df0fe72179a6b02cb253e31ac"
+    },
+    {
+      "path": "view/pc-ts/src/composables/usePcMessageBadge.ts",
+      "sha256": "42abdffc8406e2d0a2c3bf94c3a5fd5b8f1ee62ec020120567b94d367b45b385"
+    },
+    {
+      "path": "view/pc-ts/src/composables/usePcMessages.ts",
+      "sha256": "48ba0c2656e9b89b111dd7e041cfe2ee59bb6db959ce1d098ba1ea3107a58628"
+    },
+    {
+      "path": "view/pc-ts/src/layouts/DefaultLayout.vue",
+      "sha256": "d50ff24a98f2b9ae02bd9372a1449f721acfb89cb8b973f67dbc2cb22af633bf"
+    },
+    {
+      "path": "view/pc-ts/src/pages/user/MessageCenter.vue",
+      "sha256": "7b44665e1c1f2a19df392767484dc7c372ea4a91bdd794adbf392d2c8aeff91a"
+    },
+    {
+      "path": "view/pc-ts/src/pages/user/UserCenter.vue",
+      "sha256": "fcb2fb4c13db4f377a80ca3db5a74910d8f269205480efb63947c02d34a4a1fb"
+    },
+    {
+      "path": "view/pc-ts/src/router/index.ts",
+      "sha256": "4fe093574511facb163d0eb6401b1615b803471e3bcd105bb6e1f78e4fea95fc"
+    },
+    {
+      "path": "view/pc-ts/test/auth-session.test.mjs",
+      "sha256": "6f7dcb10d12bc8e8b52468392bd15eee24af5af8832f64da7dcb29586fdc3664"
+    },
+    {
+      "path": "view/pc-ts/test/pc-message-center.test.mjs",
+      "sha256": "46dfda4a0c51459773c772ae9012bc8e9da5cad71758a35b14cbd3623d3a06f6"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "e8cf81acf3721437288752293e04eecf33bdda30c203861f407bc614ea2932f8"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/UserMessageController.ts",
+      "sha256": "7246464e07a0d25701a3777f77230ebc5e1d2cca2aa9af379d8dc01f65ea228f"
+    },
+    {
+      "path": "workers-ts/src/services/message/MessageCenterInput.ts",
+      "sha256": "97ea770dc42ec979ea8294c45696b168d64a2aed8f58721799e5ab4f46fa9199"
+    },
+    {
+      "path": "workers-ts/src/services/message/MessageCenterService.ts",
+      "sha256": "1325ad5392bd21101e635dbc683e481218cbac0e2fc1c53713bfcfa9b225b536"
+    },
+    {
+      "path": "workers-ts/test/browser/pc-message-center.acceptance.ts",
+      "sha256": "4bcd75846351f4eb29a327c4620eca8dffb8f04c1a460197cf832f4210467da0"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "715d5bd4aed24015e975bf9b1243c639ba613e08674d838233c4a0c982b6a781"
+    },
+    {
+      "path": "workers-ts/test/message-center-input.test.ts",
+      "sha256": "784e339f2eb3a0eff8928fca45f494399fa3d0e3c8034dd44c3a112a0d454c43"
+    },
+    {
+      "path": "workers-ts/test/pc-message-center-native.test.ts",
+      "sha256": "ea4742efb8c57d228ae63eb40087e64393c0825b42880365dc2ed38f88ae1ca1"
+    },
+    {
+      "path": "workers-ts/vitest.pc-message-center-browser.config.ts",
+      "sha256": "f0eb06ad6f3039441ead91e5a0d3c47b5596d7738e724010386221c91477f115"
+    }
+  ],
+  "sourceManifestSha256": "b4d643e8022e21318cc876d8ca3e9941b129e953ff3dff4e2d3ca646cca66ce9",
+  "protectedBaselineFiles": 9296,
+  "validation": {
+    "allRequiredGatesPassed": true,
+    "requiredValidationCommands": 11,
+    "historicalBinding": {
+      "files": 1,
+      "tests": 32,
+      "passed": 16,
+      "failed": 16,
+      "skipped": 0,
+      "identicalToBaselineFailures": true,
+      "passingGate": false
+    },
+    "unit": {
+      "files": 2,
+      "tests": 768,
+      "failed": 0,
+      "skipped": 0
+    },
+    "native": {
+      "files": 1,
+      "tests": 2,
+      "failed": 0,
+      "skipped": 0,
+      "resourcesCleaned": true,
+      "log": "/tmp/php-ts-pc-message-center-20261115/candidate-2-pc-native.log"
+    },
+    "legacyNative": {
+      "files": 1,
+      "tests": 1,
+      "failed": 0,
+      "skipped": 0,
+      "resourcesCleaned": true,
+      "log": "/tmp/php-ts-pc-message-center-20261115/candidate-2-legacy-native.log"
+    },
+    "workerd": {
+      "files": 30,
+      "tests": 410,
+      "failed": 0,
+      "skipped": 0,
+      "resourcesCleaned": true,
+      "log": "/tmp/php-ts-pc-message-center-20261115/candidate-2-workerd.log"
+    },
+    "pc": {
+      "tests": 547,
+      "auth": 538,
+      "images": 9,
+      "failed": 0,
+      "skipped": 0,
+      "typecheckAndBuild": true
+    },
+    "productionAuditFindings": 0,
+    "sourceSecretFindings": 0,
+    "browser": {
+      "native": {
+        "files": 1,
+        "tests": 1,
+        "failed": 0,
+        "skipped": 0,
+        "resourcesCleaned": true,
+        "log": "/tmp/php-ts-pc-message-center-20261115/browser-native.log"
+      },
+      "viewports": [
+        {
+          "width": 1280,
+          "height": 900
+        },
+        {
+          "width": 375,
+          "height": 812
+        }
+      ],
+      "stages": 14,
+      "tables": 283,
+      "sequences": 229,
+      "receiptAllocations": 22,
+      "updatedReceiptIds": [
+        9001,
+        9002
+      ],
+      "finalReceipts": 26,
+      "unexpectedConsoleErrors": 0,
+      "expectedConsoleMessages": 0,
+      "screenshots": [
+        {
+          "path": "/tmp/php-ts-pc-message-center-20261115/browser-desktop-first.jpg",
+          "sha256": "d8e370a5ad75a7715113a3aa9faa12f5e45cc48d5fd5b37211d2797aaf9b61cd"
+        },
+        {
+          "path": "/tmp/php-ts-pc-message-center-20261115/browser-mobile-detail.jpg",
+          "sha256": "b10e0bf0da0510d84df22e57256788f7d2a1fb5f4852961fedb0a1555cb3b6a5"
+        }
+      ]
+    }
+  },
+  "typeProof": {
+    "originalRoots": 4459,
+    "commonRoots": 1945,
+    "testRoots": 2514,
+    "shardTestCounts": [
+      1257,
+      1257
+    ],
+    "unionExactlyMatchesOriginal": true,
+    "optionsExactlyMatchOriginal": true,
+    "explicitTypeLibrariesResolveExactlyAsOriginal": true,
+    "generatedConfigs": [
+      "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts/.cache/pc-message-center-types-20261115/tsconfig.worker-pc-message-center-shard-1.generated.json",
+      "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts/.cache/pc-message-center-types-20261115/tsconfig.worker-pc-message-center-shard-2.generated.json"
+    ]
+  },
+  "candidate2Lineage": {
+    "previousCandidate": 1,
+    "changes": [
+      {
+        "path": "workers-ts/src/services/message/MessageCenterService.ts",
+        "beforeSha256": "7ffb6f005ffc108852e5001edb44eacd09d99bd4a39daadd5b483872b170c1bc",
+        "sha256": "1325ad5392bd21101e635dbc683e481218cbac0e2fc1c53713bfcfa9b225b536"
+      },
+      {
+        "path": "workers-ts/test/pc-message-center-native.test.ts",
+        "beforeSha256": "dc81a82cceb58cf59c7158b00f39b4a68db41a852ca62eb85fa1ccbc2d9e7065",
+        "sha256": "ea4742efb8c57d228ae63eb40087e64393c0825b42880365dc2ed38f88ae1ca1"
+      }
+    ],
+    "reason": "Original strict TypeScript rejected an unsupported 422 error constructor and two incomplete Hyperdrive test mocks/unused parameter; use supported400 and actual connection-string peer creation",
+    "failedAttemptPreserved": "/tmp/php-ts-pc-message-center-20261115/candidate-1-worker-types-1.log",
+    "rerun": "entire final validation driver"
+  },
+  "phpParity": {
+    "fixedRef": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+    "sources": [
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/PC/pages/user/messageCenter.vue",
+        "repositoryPath": "view/PC/pages/user/messageCenter.vue",
+        "bytes": 4142,
+        "sha256": "11fa129050e5b22a79f47f46ed1b12707c72d05d794583624560b13de2879bd7"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/PC/components/headers.vue",
+        "repositoryPath": "view/PC/components/headers.vue",
+        "bytes": 7980,
+        "sha256": "55188c0da91e05b4f8de23c126af94840c314e7ef22c369ecb38c8fdc3687c51"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/controller/api/v1/user/SystemMessage.php",
+        "repositoryPath": "app/controller/api/v1/user/SystemMessage.php",
+        "bytes": 2613,
+        "sha256": "1ea75cd7f594ae054a6362cb5fe96370854cc41e155beb8fe65b5a814e7f36a1"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/message/SystemMessageServices.php",
+        "repositoryPath": "app/services/message/SystemMessageServices.php",
+        "bytes": 3804,
+        "sha256": "7cbf5f78ec50b5867ca63286cb103139e604ca5fe2d999c94ccd5f1108c3a1ef"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/dao/message/SystemMessageDao.php",
+        "repositoryPath": "app/dao/message/SystemMessageDao.php",
+        "bytes": 1741,
+        "sha256": "02006fdfa9f5b906a90b42a39677593a432e5b7c34eb37e4d2acbcf3058df605"
+      }
+    ],
+    "contract": {
+      "pageSize": 7,
+      "listConsumesCurrentPage": true,
+      "detailConsumesOneVisibleMessage": true,
+      "expandCollapse": true,
+      "legacyAlias": "/user/messageCenter"
+    },
+    "tsDifferences": [
+      "Per-user installed capability replaces global look mutation; broadcast read is private to each UID",
+      "Navigation counts system messages only and does not mix customer-service unread history",
+      "Versioned PC page includes before-read flags and after-read count; legacy and Uni default DTOs remain unchanged",
+      "New PC projection supports full int32 page range; old view limits remain unchanged",
+      "Message bodies are escaped plaintext including arbitrary HTML-looking text"
+    ]
+  },
+  "independentReview": {
+    "createdAt": "2026-11-15T17:28:07.541154+00:00",
+    "reviewer": "/root/pc_message_review",
+    "worktree": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree",
+    "base": "7f7832674bb6d6dd40399d92e473fbdead4a19f7",
+    "phpHead": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+    "mode": "read-only source review; no heavy checks; no source changes",
+    "verdict": "one actionable frontend interaction defect pending root correction; no additional blocking findings in backend/fixture review",
+    "sources": [
+      {
+        "path": "view/common/pcMessageCenter.ts",
+        "bytes": 9417,
+        "sha256": "3e7c8d1be01227c8914a4d322ee9e5b18b750c6318786d40fa44d58c184cd459"
+      },
+      {
+        "path": "view/pc-ts/src/api/pcMessages.ts",
+        "bytes": 1180,
+        "sha256": "828749b19853995d546cb5a0b3e0750f01e1041ff5c5ba0fc7f66d96ee853375"
+      },
+      {
+        "path": "view/pc-ts/src/components/PcMessageNav.vue",
+        "bytes": 1411,
+        "sha256": "a9cbb3f575fd6a229a293363aba0b4c2e73c691df0fe72179a6b02cb253e31ac"
+      },
+      {
+        "path": "view/pc-ts/src/composables/usePcMessageBadge.ts",
+        "bytes": 3150,
+        "sha256": "42abdffc8406e2d0a2c3bf94c3a5fd5b8f1ee62ec020120567b94d367b45b385"
+      },
+      {
+        "path": "view/pc-ts/src/composables/usePcMessages.ts",
+        "bytes": 4923,
+        "sha256": "11ef49694843e2a972987af07bd420173cd6a70332af2bb082990410c0f92a11"
+      },
+      {
+        "path": "view/pc-ts/src/layouts/DefaultLayout.vue",
+        "bytes": 10140,
+        "sha256": "d50ff24a98f2b9ae02bd9372a1449f721acfb89cb8b973f67dbc2cb22af633bf"
+      },
+      {
+        "path": "view/pc-ts/src/pages/user/MessageCenter.vue",
+        "bytes": 7804,
+        "sha256": "7b44665e1c1f2a19df392767484dc7c372ea4a91bdd794adbf392d2c8aeff91a"
+      },
+      {
+        "path": "view/pc-ts/src/pages/user/UserCenter.vue",
+        "bytes": 5029,
+        "sha256": "fcb2fb4c13db4f377a80ca3db5a74910d8f269205480efb63947c02d34a4a1fb"
+      },
+      {
+        "path": "view/pc-ts/src/router/index.ts",
+        "bytes": 5910,
+        "sha256": "4fe093574511facb163d0eb6401b1615b803471e3bcd105bb6e1f78e4fea95fc"
+      },
+      {
+        "path": "view/pc-ts/test/auth-session.test.mjs",
+        "bytes": 38641,
+        "sha256": "6f7dcb10d12bc8e8b52468392bd15eee24af5af8832f64da7dcb29586fdc3664"
+      },
+      {
+        "path": "view/pc-ts/test/pc-message-center.test.mjs",
+        "bytes": 21069,
+        "sha256": "570b687b294fe2178520ddb5a06422a605ddcdb0ecf5fa5a12d46dec376ccb52"
+      },
+      {
+        "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+        "bytes": 147755,
+        "sha256": "e8cf81acf3721437288752293e04eecf33bdda30c203861f407bc614ea2932f8"
+      },
+      {
+        "path": "workers-ts/src/controllers/api/v1/UserMessageController.ts",
+        "bytes": 8341,
+        "sha256": "7246464e07a0d25701a3777f77230ebc5e1d2cca2aa9af379d8dc01f65ea228f"
+      },
+      {
+        "path": "workers-ts/src/services/message/MessageCenterInput.ts",
+        "bytes": 3572,
+        "sha256": "97ea770dc42ec979ea8294c45696b168d64a2aed8f58721799e5ab4f46fa9199"
+      },
+      {
+        "path": "workers-ts/src/services/message/MessageCenterService.ts",
+        "bytes": 11502,
+        "sha256": "7ffb6f005ffc108852e5001edb44eacd09d99bd4a39daadd5b483872b170c1bc"
+      },
+      {
+        "path": "workers-ts/test/browser/pc-message-center.acceptance.ts",
+        "bytes": 29657,
+        "sha256": "4bcd75846351f4eb29a327c4620eca8dffb8f04c1a460197cf832f4210467da0"
+      },
+      {
+        "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+        "bytes": 215068,
+        "sha256": "715d5bd4aed24015e975bf9b1243c639ba613e08674d838233c4a0c982b6a781"
+      },
+      {
+        "path": "workers-ts/test/message-center-input.test.ts",
+        "bytes": 4440,
+        "sha256": "784e339f2eb3a0eff8928fca45f494399fa3d0e3c8034dd44c3a112a0d454c43"
+      },
+      {
+        "path": "workers-ts/test/pc-message-center-native.test.ts",
+        "bytes": 10183,
+        "sha256": "275f184bef0f183356e5364db774efe36ad5dd48267e5b2295f2b38d7ec6e813"
+      },
+      {
+        "path": "workers-ts/vitest.pc-message-center-browser.config.ts",
+        "bytes": 556,
+        "sha256": "f0eb06ad6f3039441ead91e5a0d3c47b5596d7738e724010386221c91477f115"
+      }
+    ],
+    "findings": [
+      {
+        "id": "pc-detail-error-collapse",
+        "severity": "P2",
+        "file": "view/pc-ts/src/composables/usePcMessages.ts",
+        "line": 36,
+        "uiFile": "view/pc-ts/src/pages/user/MessageCenter.vue",
+        "issue": "Expanded error card header still labels its action 收起, but open(id) retries detail whenever detailError is nonempty. It sends another consuming GET instead of closing and duplicates the explicit retry action.",
+        "recommendation": "Make the header action close any expanded, non-loading card; have explicit retryDetail call a dedicated read helper or an explicit retry parameter. Cover closing after error with zero I/O, reopening, and explicit exact-ID retry."
+      }
+    ],
+    "reviewedInvariants": {
+      "phpBaseline": [
+        "PHP PC /user/messageCenter requests limit7 replacement pagination and escaped text",
+        "PHP SystemMessageServices.getMessageSystemList intentionally consumes the returned page on GET and reports the pre-consumption count",
+        "Modern TS extends before/after authoritative counter and per-UID receipts without updating global broadcast look"
+      ],
+      "backend": [
+        "Strict view-only PC summary; page/limit/owner authority rejected",
+        "PC list limit exactly7; page1..2147483647 canonical integer; safe integer OFFSET and untruncated count/page_count",
+        "Single SQL observation for page/read_before/unread_before; DTO bounded and validated before consuming writes",
+        "Same persisted UID/password share lock, advisory UID lock, credential-bound installed versioned receipt capability as existing list/detail",
+        "Post-consumption unread recomputed; concurrent new unread allowed rather than client subtraction",
+        "Old no-PC dispatch/DTO/SQL unchanged; no capability/schema/source migration edits"
+      ],
+      "frontend": [
+        "Pure DTO contracts have no network/auth/Vue dependencies",
+        "Replacement page errors retain last successful rows and exact failed target; no optimistic unread subtraction",
+        "Details same UID/ID, null explicit, escaped full multiline text, no v-html",
+        "Causal tickets fence earlier and overlapping summaries while active consume remains current",
+        "UID/bearer/auth generation/fullPath/visibility/disposal and local flow epochs discard late results",
+        "Legacy exact alias retains /user auth guard and exact redirect",
+        "Full int32 last page supported in DTO; no catalogue truncation"
+      ],
+      "native": [
+        "2 new broad cases call actual App/JWT through independently authenticated restricted PG16 LOGIN",
+        "Independent oracle checks every consuming action against all283tables/229sequences, exact receipts and only needed serial allocations",
+        "7/7/7/2 with23 visible, replay allocation0, foreign/staff/hidden/deleted detail null, B isolation, invalid query/no auth, empty state, password revoke",
+        "Oversize body rollback, installed-capability EXECUTE drift, two same UID readers blocked on existing advisory lock then one consumes and second reuses receipts",
+        "Prior message native suites still required to cover immutable broader capability/legacy contracts"
+      ],
+      "browser": [
+        "Actual production PC dist to createApp/JWT and restricted LOGIN; only createContainer context mocked",
+        "Finite loopback-only GET paths, owned actors/IDs/pages; no external fetch, Queue, storage write or read",
+        "Raw state oracle shared helper is independent of production visibility/unread/consume implementation; snapshots cover283tables229sequences",
+        "Only transport faults replace an already completed Worker response with503; null control temporarily hides one known broadcast and restores it",
+        "Final asserts22allocations, updates only9001/9002,26total receipts, A/B unread0, source/build manifests unchanged",
+        "Browser-ready14planned desktop/mobile observations include guest exact alias redirect,7 pages, full escaped body, detail error/retry/null, committed lost page/retry/readonly recovery, B isolation",
+        "JS/unhandled errors empty and no unsafe markup/overlay/overflow/nonblank; root still must execute actual browser and inspect screenshots"
+      ]
+    },
+    "validationObserved": {
+      "gitDiffCheck": "pass",
+      "heavyChecksRun": false,
+      "runtimeEvidenceNotYetReviewed": true
+    },
+    "guardrails": {
+      "sourceFilesEdited": false,
+      "providerCalls": false,
+      "credentialPathsRead": false,
+      "userSymlinkPathsRead": false
+    }
+  },
+  "independentReviewResolution": {
+    "createdAt": "2026-11-15T17:31:29.484209+00:00",
+    "reviewer": "/root/pc_message_review",
+    "sourceEditingStopped": true,
+    "mode": "independent readonly fix/source review; no heavy execution",
+    "originalReview": "/tmp/php-ts-pc-message-center-20261115/independent-review.json",
+    "finding": "pc-detail-error-collapse",
+    "status": "resolved in source with regression coverage; required final execution remains pending",
+    "files": [
+      {
+        "path": "view/pc-ts/src/composables/usePcMessages.ts",
+        "beforeSha256": "11ef49694843e2a972987af07bd420173cd6a70332af2bb082990410c0f92a11",
+        "sha256": "48ba0c2656e9b89b111dd7e041cfe2ee59bb6db959ce1d098ba1ea3107a58628"
+      },
+      {
+        "path": "view/pc-ts/test/pc-message-center.test.mjs",
+        "beforeSha256": "570b687b294fe2178520ddb5a06422a605ddcdb0ecf5fa5a12d46dec376ccb52",
+        "sha256": "46dfda4a0c51459773c772ae9012bc8e9da5cad71758a35b14cbd3623d3a06f6"
+      }
+    ],
+    "checks": [
+      "Default header open(id) closes the already-expanded non-loading card regardless of detailError. This branch exits before beginDetail/beginConsumption/api and performs zero I/O.",
+      "Explicit retryDetail alone sets retry=true and retains exact current detailId, passes ordinary state/session/visibility/owner guard and detail-flow validation.",
+      "Regression mounts actual SFC setup and real composable/Axios adapter: fail->header close0newcalls->reopen1newcall->explicit retry1newcall->header close0newcalls.",
+      "Existing nullable detail and successful close behavior remain intact.",
+      "Template calls open(item.id) explicitly, so native DOM event cannot accidentally populate retry flag.",
+      "Fixture and Runtime type aliases correctly resolve messageCenterFixture() and the explicit withApplication callback runtime type; f/r references match fixture/runtime members. No obvious new native type hazard observed.",
+      "Removed unused native userMessage import is harmless; final native hash included below.",
+      "git diff --check pass"
+    ],
+    "native": {
+      "path": "workers-ts/test/pc-message-center-native.test.ts",
+      "sha256": "dc81a82cceb58cf59c7158b00f39b4a68db41a852ca62eb85fa1ccbc2d9e7065",
+      "runtimeTypeAlias": "Parameters<Parameters<Fixture[withApplication]>[0]>[0]",
+      "staticReview": "No obvious mismatch; authoritative Worker original-config type gate and native run still required."
+    },
+    "remaining": {
+      "finalPcBuild": "required because two source/test files changed after pre-fix build",
+      "workerTypeGates": "required",
+      "native": "required",
+      "browser": "required"
+    },
+    "guardrails": {
+      "sourceFilesEdited": false,
+      "heavyChecksRun": false,
+      "providerCalls": false,
+      "credentialPathsRead": false
+    }
+  },
+  "detailCollapseFix": {
+    "finding": "detail error title collapse retried instead of closing",
+    "files": [
+      {
+        "path": "view/pc-ts/src/composables/usePcMessages.ts",
+        "beforeSha256": "11ef49694843e2a972987af07bd420173cd6a70332af2bb082990410c0f92a11",
+        "sha256": "48ba0c2656e9b89b111dd7e041cfe2ee59bb6db959ce1d098ba1ea3107a58628"
+      },
+      {
+        "path": "view/pc-ts/test/pc-message-center.test.mjs",
+        "beforeSha256": "570b687b294fe2178520ddb5a06422a605ddcdb0ecf5fa5a12d46dec376ccb52",
+        "sha256": "46dfda4a0c51459773c772ae9012bc8e9da5cad71758a35b14cbd3623d3a06f6"
+      }
+    ],
+    "newRegressionCases": 1,
+    "preFixFullBuildExitCode": 0,
+    "preFixLog": "/tmp/php-ts-pc-message-center-20261115/pc-build-attempt-1.log",
+    "finalFullBuild": "pending"
+  },
+  "reviewResolution": "The actionable collapse/error defect is corrected and executed in the final PC full build; candidate1 type errors are corrected with complete candidate2 validation. Historical16 failures remain identical and are not counted as passing.",
+  "historicalBindingComparison": {
+    "baselineFailed": 16,
+    "currentFailed": 16,
+    "identicalFailures": true,
+    "names": [
+      "exact message center CI tail preserves historical proofs and independently binds current consumers reads actual routes and requires exactly three authenticated GETs with no-store before auth",
+      "exact message center CI tail preserves historical proofs and independently binds current consumers recomputes the complete live API report and reverses only one source SHA scalar",
+      "exact message center CI tail preserves historical proofs and independently binds current consumers refuses unrelated complete report drift count",
+      "exact message center CI tail preserves historical proofs and independently binds current consumers refuses unrelated complete report drift extra",
+      "exact message center CI tail preserves historical proofs and independently binds current consumers refuses unrelated complete report drift handler",
+      "exact message center CI tail preserves historical proofs and independently binds current consumers refuses unrelated complete report drift line",
+      "exact message center CI tail preserves historical proofs and independently binds current consumers refuses unrelated complete report drift methodology",
+      "exact message center CI tail preserves historical proofs and independently binds current consumers refuses unrelated complete report drift missing",
+      "exact message center CI tail preserves historical proofs and independently binds current consumers refuses unrelated complete report drift order",
+      "exact message center CI tail preserves historical proofs and independently binds current consumers refuses unrelated complete report drift path",
+      "exact message center CI tail preserves historical proofs and independently binds current consumers refuses unrelated complete report drift source",
+      "exact message center CI tail preserves historical proofs and independently binds current consumers rejects unknown whole source workers-ts/src/routes/v1/index.ts crlf",
+      "exact message center CI tail preserves historical proofs and independently binds current consumers rejects unknown whole source workers-ts/src/routes/v1/index.ts extra",
+      "exact message center CI tail preserves historical proofs and independently binds current consumers rejects unknown whole source workers-ts/src/routes/v1/index.ts missing-line",
+      "exact message center CI tail preserves historical proofs and independently binds current consumers rejects unknown whole source workers-ts/src/routes/v1/index.ts same-size",
+      "exact message center CI tail preserves historical proofs and independently binds current consumers seals only two production inverses, seven harness adapters and seven live consumer sources"
+    ],
+    "passingGate": false
+  },
+  "restoredResources": 150,
+  "preservedUserSymlinks": 5,
+  "resourceCleanup": {
+    "allPortsClosed": true,
+    "allPostmasterPidsAbsent": true,
+    "clusters": [
+      {
+        "log": "browser-native.log",
+        "port": 40927,
+        "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-orFmcI",
+        "portClosed": true,
+        "postmasterPidAbsent": true
+      },
+      {
+        "log": "candidate-1-legacy-native.log",
+        "port": 37553,
+        "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-vcfVL8",
+        "portClosed": true,
+        "postmasterPidAbsent": true
+      },
+      {
+        "log": "candidate-1-pc-native.log",
+        "port": 35837,
+        "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-zcCBmA",
+        "portClosed": true,
+        "postmasterPidAbsent": true
+      },
+      {
+        "log": "candidate-2-legacy-native.log",
+        "port": 37029,
+        "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-GMjhY1",
+        "portClosed": true,
+        "postmasterPidAbsent": true
+      },
+      {
+        "log": "candidate-2-pc-native.log",
+        "port": 38083,
+        "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-LC1Pvp",
+        "portClosed": true,
+        "postmasterPidAbsent": true
+      },
+      {
+        "log": "candidate-2-workerd.log",
+        "port": 45585,
+        "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-TsAFsA",
+        "portClosed": true,
+        "postmasterPidAbsent": true
+      }
+    ],
+    "browserListenersClosed": true,
+    "browserPort": 34159,
+    "restoredResourcesVerified": 150,
+    "userSymlinksVerified": 5,
+    "uniPackageSha256": "8dadbccf7ae03c8b040267766eceb0dadcc9bb30cf29506db439790619273555"
+  },
+  "scope": {
+    "wholeMigrationComplete": false,
+    "schemaChanges": false,
+    "migrationChanges": false,
+    "permissionExpansion": false,
+    "deploy": false,
+    "phpUpload": false,
+    "fixedPhpRefChanged": false,
+    "externalProviderCalls": false,
+    "realPayments": false,
+    "realSms": false,
+    "externalQueue": false
+  },
+  "artifactHashes": [
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/accepted-counts.json",
+      "sha256": "66b0f00c78c9b965a02e1546521569cc1df6c37d52de927bb45314aa6e183611"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/baseline-files.json",
+      "sha256": "6e0ba843cbc43c8c7ea75f18b97a22ed1fe53ad3a37beb50f9c503e9539e6375"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/baseline-message-contract.json",
+      "sha256": "2a8cee5fb0ff468e83b8f5b575437bf5a69b47da92c39549fc6c1ce0001627a2"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/browser-cleanup.json",
+      "sha256": "de2240b31dd6e3e3b16525db9becdd94ad3ff596783e46734253e710fde976fa"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/browser-command.json",
+      "sha256": "ade2af2267861cf4d9cc3947c8c51419c1bef10a6a80d4f22a4127ff2d28ea4c"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/browser-desktop-first.jpg",
+      "sha256": "d8e370a5ad75a7715113a3aa9faa12f5e45cc48d5fd5b37211d2797aaf9b61cd"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/browser-desktop-last.jpg",
+      "sha256": "cf07950e1dc76169eef77dfa83dd0851b765d0dfe09631b8f02380296c5fe54f"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/browser-driver-steps.json",
+      "sha256": "18bea92e3fb53e1ca28fe3fe34d7093db0c5db5f785a7519e20fe60b3c05d176"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/browser-driver.log",
+      "sha256": "73f6c9ccd9161e9b19851de869addf0b934e2228d0b34163e1619642c12a0f29"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/browser-frozen-inputs.json",
+      "sha256": "972d7ae6011e7591f7aacee53329d04f5de4e93930daba217eebe99ff7904a26"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/browser-handoff.json",
+      "sha256": "0564245189c1b68883b5cfd62c0bdde48d8fe7d36e6de9419c96be4f8448f719"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/browser-mobile-detail.jpg",
+      "sha256": "b10e0bf0da0510d84df22e57256788f7d2a1fb5f4852961fedb0a1555cb3b6a5"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/browser-native.log",
+      "sha256": "c293c4ed0b14ff45996ee5bd69efac29d9b043bf50a98f339797622615cb1670"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/browser-ready.json",
+      "sha256": "4d90b48ff81356f2111a283da38e04c4e1310855cf783b4b4498419410288781"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/browser-result.json",
+      "sha256": "946b654ec8373de7a97d275a68f97d8077d367aa66e65043e366dbe2c27abcf0"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/browser-run.py",
+      "sha256": "895f62561dfcdafdbaa838a873d863274822ddc94b43e9b9e84569fdf1fdf9cf"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/browser-ui-evidence.json",
+      "sha256": "56622d368e644d85b94abbdaab8a1c460fe5cbeee30c74a3f65e75c4c8c5d792"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-1-dependencies.json",
+      "sha256": "42e3bfbddc79d53582b2af7515cd5a7019cf054a231005f3eb5b234c142b8971"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-1-legacy-native.log",
+      "sha256": "5e3393bae0786b83e51363c36cd63eda9a9bb30471c7fdf6b042e663e74aacb2"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-1-pc-build.log",
+      "sha256": "14aa0efe55a25d0a086e0b66e9efc172dcbc4364395d2adb04268644dd505ac9"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-1-pc-native.log",
+      "sha256": "aeedfce12196ec5ba732da0640ee6c304aea817b703d5ebc4f7a89b699f05e38"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-1-source.json",
+      "sha256": "88d29ce4b11b836f5a50f3daeda11950246f4eb984d2badafc538b24efda0f64"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-1-type-options.log",
+      "sha256": "f3afae18501c07ae9affbb300a7b2b96fad21964f74ceb86f8bbf84a33379165"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-1-type-partition.log",
+      "sha256": "07c8c4e6cdfdd0325521a83bc3314bd64009b18c9d4172263e5c0495e1d27838"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-1-unit.json",
+      "sha256": "7105e427fb78dacda97591a0944e95472ab1f705c4703c62e7981e256db92547"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-1-unit.log",
+      "sha256": "e1c66787c1afe16fcdc552887f0418e2f394531ad19cd366b2281ec8d01fe094"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-1-validation.json",
+      "sha256": "a7981132423e01a81bdf15f495616195eda5b3716c566e4b23b5efb9f0a42947"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-1-worker-types-1.log",
+      "sha256": "232f50695ebc85863e0091fe9a9112be245423d9e1fc0728b31c3519d0597b52"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-2-build-files.json",
+      "sha256": "8d42af594c1b6e5ee9339d917e3cd8f7ad7e2e473c11befd297d9df0ffdb58f5"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-2-dependencies.json",
+      "sha256": "42e3bfbddc79d53582b2af7515cd5a7019cf054a231005f3eb5b234c142b8971"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-2-historical-binding.json",
+      "sha256": "b4738350fb8b29f500e44cc71e513e454c6eb9815e8e072ba2371c2197f342c0"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-2-historical-binding.log",
+      "sha256": "86774986361f50de60c6970039596f4946ea5ff2ef0bcab3ff9675bf3a83e440"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-2-legacy-native.log",
+      "sha256": "75ecb123ecc3a93e97987c54788b3b43729fd678721603480739c13e29ca6ae4"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-2-lineage.json",
+      "sha256": "ff1f6fb65c9fc7992c8e8fbd845b363b17f6b4f3aa7979dd36b389358af0406c"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-2-pc-build.log",
+      "sha256": "05dab27db5d75c40c9922452970b39011a3d3107f07d11d3d81597db798ed989"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-2-pc-native.log",
+      "sha256": "4c2f0c7dd501513e571ab384782f38e38712c9f46a5f66470755e4266d0a8a5e"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-2-production-audit.log",
+      "sha256": "4ca0bc8f609b8cd4e43a18d0faebf8f0b05d91b15ee6386fb48a789c00393192"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-2-runtime-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-2-secret-scan-comparison.json",
+      "sha256": "4719855facc04d22e4c3233d19afb52fd60bc812ee2f74d1d2e55e7964ea5d23"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-2-source-baseline-secret-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-2-source-baseline-secret-scan.log",
+      "sha256": "2b9822330337a8839c09f1c25ac051ccf1aedbb2335cd7360d80114be3b7d339"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-2-source-secret-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-2-source-secret-scan.log",
+      "sha256": "ba9e4822182b374a5a59e6a8ee157edfb45d96c3bdf5d17f79374c3611feb614"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-2-source.json",
+      "sha256": "b4d643e8022e21318cc876d8ca3e9941b129e953ff3dff4e2d3ca646cca66ce9"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-2-type-options.log",
+      "sha256": "f3afae18501c07ae9affbb300a7b2b96fad21964f74ceb86f8bbf84a33379165"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-2-type-partition.log",
+      "sha256": "07c8c4e6cdfdd0325521a83bc3314bd64009b18c9d4172263e5c0495e1d27838"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-2-unit.json",
+      "sha256": "b00d8ef200346a8165752c9c4eda17909edda15b9096613154667bfd3df37705"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-2-unit.log",
+      "sha256": "61fb6f9d560d396edee707b862df73d4f028a1966566a52222195bf5c0a6a30a"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-2-validation.json",
+      "sha256": "031891d356db99c5b5621334b7000eeb170bc69bc861b84c28f077a86f30c3d6"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-2-worker-types-1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-2-worker-types-2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/candidate-2-workerd.log",
+      "sha256": "f7817081a17676da64ac7efb950f36d4c78d55851acd58fabe0ef421c89b370c"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/check-options-verified.cjs",
+      "sha256": "306bff7f26bf340e71cc101947fce9ceb57fd5823d667507bc3378c52e9f5493"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/delivery-doc.draft.md",
+      "sha256": "40041221fd0be155769e3582f702ea920e2dbf01bd0ecba7e3d1c1cb9263d7ea"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/detail-collapse-fix.json",
+      "sha256": "63d0980cc7884e66a3c8375d78eb3aa13f9f4be961757bb1d322f9648f59b69f"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/files.json",
+      "sha256": "d0afa08bbbfefb60405064219ecb80fca9529a324b61536c1a0db5f5b886c7e6"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/final-dependencies.json",
+      "sha256": "42e3bfbddc79d53582b2af7515cd5a7019cf054a231005f3eb5b234c142b8971"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/final-source.json",
+      "sha256": "b4d643e8022e21318cc876d8ca3e9941b129e953ff3dff4e2d3ca646cca66ce9"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/frontend-handoff.json",
+      "sha256": "e102b7530f96887dfbd08bdfca3c5d32d007d0a2597dc6773b9a38d6cf53c877"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/frontend-static-checks.json",
+      "sha256": "6f02294c996eda895dce663d59580589c76dbe1ba29363938f890fa8b3da807f"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/historical-binding-comparison.json",
+      "sha256": "434065a037d7f0f387b9512d21bd7303e04c03192d1add73f30ce9ad9eafb48f"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/independent-review-resolution.json",
+      "sha256": "3063f1a09bc9c34a79d02a91f62068ce6c52529132742dbb925f03c061542a90"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/independent-review.json",
+      "sha256": "9dafe0d724748f7c3b9b6bdf639875b155baa46de23493e2fd456bd91f265fdf"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/pc-build-attempt-1.log",
+      "sha256": "444ef56944efda28768be5d7f63d2794cc35911255af751644d473d6fa304d82"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/php-parity.json",
+      "sha256": "ca97d21d494925c5e94a11ba6020c4f89b70669f04917cf01a2fc761b1fff915"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/resource-cleanup.json",
+      "sha256": "fa8e52c4cf4da5970fa4898a8e41d3bd8b442984be1e62363a34fae9256e4ac0"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/restored-resources.json",
+      "sha256": "2805035753af768b74ac4b987581644a085a6b857765a6c19ac0a2a6cd8fdd57"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/run-validation-candidate-2.py",
+      "sha256": "2f5a559d10bb0450d28aafeb924023ffbec41eec9bb5f327708a105db0474bf4"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/run-validation.py",
+      "sha256": "4cb74d7968d19cf028ac9faa39364b3a4d00730307d57cffd7a964a99a4ac422"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/scan-final-files.py",
+      "sha256": "29213aa61c93bd03e5bc32490e81236fe876f1e5f7d452f3afbd63ed1152b921"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/scan-source.py",
+      "sha256": "7295687e2af3c8ecfed91a58152d49dc0508a52cb1a28940628da13851c1c602"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/source-files.json",
+      "sha256": "03a267d2f6004458ef10761f006abc3bbf0274c5c285890827bd10267da8012e"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/source-secrets.log",
+      "sha256": "8f850f9b644d04a0d9d64c197dc8621d6445e6fee316e99f7424a264661f7645"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/type-shards-verified.cjs",
+      "sha256": "2bb65f59dbcafaf6c5178e2dfbbe8140d240a8cf36d9300b09591c0e9a79e7a6"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/type-shards-verified.json",
+      "sha256": "5901e9ffe9e16c40dd9d90e4dbbbd140a9010af121debb3ead282b1651d04401"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/user-symlinks.json",
+      "sha256": "32f0ae750787e6bde76a8d6f60ab3e6f135ecff1c9e7cc3b06bd86a820fae4ca"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/validation-driver-2.log",
+      "sha256": "b7f226991af5fda6b45846e0e8426833da9cbfe62b51d6a8aa926bbbbc9ffc9f"
+    },
+    {
+      "path": "/tmp/php-ts-pc-message-center-20261115/validation-driver.log",
+      "sha256": "19f0c314d510650682e1f2617aed2626461b3d2c85110915940498db9e93e406"
+    }
+  ],
+  "finalCommitAndCI": "/tmp/php-ts-pc-message-center-20261115/completion.json"
+}

@@ -104,4 +104,44 @@ export class MessageCenterService {
    return q.modern?modern:message?{...message,add_time:phpMessageTime(message.add_time,now)}:null;
   });
  }
+ /** Narrow, read-only PC header projection; no customer-service history/media. */
+ async pcSummary(actor:MessageActor){
+  return this.transaction(actor,false,async tx=>{
+   const output={version:1 as const,owner_uid:actor.uid,unread:await this.unread(tx,actor.uid)};
+   assertMessageBytes(output);return output;
+  });
+ }
+ /** Same UID lock and installed receipt capability as the existing inbox.
+  * Keep the ordinary/Uni DTO and its historical SQL observation unchanged.
+  * PC additionally needs pre-read flags and the authoritative post-read count. */
+ async pcList(actor:MessageActor,q:MessageQuery){
+  messageInteger(q.page,'消息分页',1,2147483647);
+  if(q.limit!==7)throw new HttpApiException('PC消息每页为7条',400,400);
+  return this.transaction(actor,true,async tx=>{
+   const [snapshot]=await tx.execute<{total:number;unread:number;rows:{id:number;title:string;content:string|null;add_time:number;seen:boolean}[]}>(sql`
+    WITH visible AS MATERIALIZED (
+     SELECT m.id,m.title,m.content,m.add_time,
+      (m.look=1 OR EXISTS(SELECT 1 FROM public.user_message r WHERE r.uid=${actor.uid} AND r.message_id=m.id AND r.is_read=1)) AS seen
+     FROM public.system_message m WHERE m.status=1 AND m.is_del=0 AND m.type IN(0,1) AND m.user_id IN(0,${actor.uid})
+    ), page AS MATERIALIZED (
+     SELECT * FROM visible ORDER BY add_time DESC,id DESC LIMIT ${q.limit} OFFSET ${(q.page-1)*q.limit}
+    )
+    SELECT (SELECT count(*)::integer FROM visible) AS total,
+     (SELECT count(*)::integer FROM visible WHERE NOT seen) AS unread,
+     COALESCE((SELECT jsonb_agg(to_jsonb(p) ORDER BY p.add_time DESC,p.id DESC) FROM page p),'[]'::jsonb) AS rows`);
+   if(!snapshot||!Array.isArray(snapshot.rows))throw new HttpApiException('消息列表已变化，请重新读取',503,503);
+   const countValue=messageInteger(snapshot.total,'站内信数量'),unread=messageInteger(snapshot.unread,'未读消息数');
+   const list=snapshot.rows.map(value=>{
+    if(typeof value.seen!=='boolean')throw new HttpApiException('消息阅读状态无效',503,503);
+    return {...row({id:value.id,title:value.title,content:value.content,addTime:value.add_time}),read_before:value.seen};
+   });
+   const output={version:1 as const,owner_uid:actor.uid,query:{page:q.page,limit:q.limit},list,count:countValue,
+    page_count:pageCount(countValue,q.limit),unread_before:unread,unread_after:unread};
+   // Validate the entire bounded response before any receipt or serial writes.
+   assertMessageBytes(output);
+   await this.consume(tx,actor,list.map(value=>value.id));
+   output.unread_after=messageInteger(await this.unread(tx,actor.uid),'未读消息数');
+   assertMessageBytes(output);return output;
+  });
+ }
 }

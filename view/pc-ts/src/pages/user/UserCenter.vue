@@ -11,6 +11,7 @@
     </div>
 
     <div class="menu-grid">
+      <router-link to="/user/messages" class="menu-item"><span class="icon">✉</span><span>站内信</span></router-link>
       <router-link to="/user/offline-pay" class="menu-item"><span class="icon">¥</span><span>线下消费收银</span></router-link>
       <router-link to="/order" class="menu-item">
         <span class="icon">📦</span>

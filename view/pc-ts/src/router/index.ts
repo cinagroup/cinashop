@@ -36,6 +36,7 @@ const routes: RouteRecordRaw[] = [
       { path: "forgot-password", name: "forgot-password", component: () => import("@/pages/auth/ForgotPassword.vue"), meta: { title: "找回密码" } },
       // 用户中心
       { path: "user", name: "user", component: () => import("@/pages/user/UserCenter.vue") },
+      { path: "user/messages", alias: "/user/messageCenter", name: "user-messages", component: () => import("@/pages/user/MessageCenter.vue"), meta: { title: "站内信" } },
       { path: "user/offline-pay", name: "offline-cashier", component: () => import("@/pages/order/OfflineCashier.vue"), meta: { title: "线下消费收银" } },
       { path: "user/offline-result", name: "offline-result", component: () => import("@/pages/order/OfflineResult.vue"), meta: { title: "原消费支付结果" } },
       { path: "user/refunds", name: "refund-list", component: () => import("@/pages/order/RefundList.vue"), meta: { title: "售后退款记录" } },
