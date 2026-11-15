@@ -1118,13 +1118,30 @@ describe('local PostgreSQL runner command boundary', () => {
     });
 
   it.each(['test/bargain-admin-sku.test.ts', 'test/bargain-admin-sku-postgres.test.ts',
-    'test/bargain-cart-binding-concurrency-postgres.test.ts'])(
+    'test/bargain-admin-content.test.ts', 'test/bargain-cart-binding-concurrency-postgres.test.ts'])(
     'admits reviewed mature bargain fixture %s through exact maintenance admission', path => {
       const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', path],
         { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
       expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
       expect(result.stderr).toContain('ENOENT'); expect(result.stderr).not.toContain('Schema maintenance accepts only');
     });
+  it.each(['test/bargain-admin-content.test.ts.extra', 'test/bargain-admin-content.other.ts'])(
+    'rejects malformed bargain content fixture spelling %s before native setup', path => {
+      const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', path],
+        { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+      expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+      expect(result.stderr).toContain('Only explicit unit test paths are accepted'); expect(result.stderr).not.toContain('ENOENT');
+    });
+  it.each([
+    { args: ['--schema-maintenance', 'unused-bin', 'test/bargain-admin-content.test.ts', '--maxWorkers=2'], error: 'Only explicit unit test paths are accepted' },
+    { args: ['--schema-maintenance', 'unused-bin', 'test/bargain-admin-content.test.ts', '--config', 'vitest.config.ts'], error: 'Only explicit unit test paths are accepted' },
+    { args: ['unused-bin', '--schema-maintenance', 'test/bargain-admin-content.test.ts'], error: 'Only explicit unit test paths are accepted' },
+    { args: ['--schema-maintenance', 'unused-bin', 'test/bargain-admin-content.test.ts', 'test/price.test.ts'], error: 'Schema maintenance accepts only' },
+  ])('rejects bargain content fixture CLI widening $args before native setup', ({ args, error }) => {
+    const result = spawnSync(process.execPath, [script, ...args], { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain(error); expect(result.stderr).not.toContain('ENOENT');
+  });
 
   it('admits physical purchase origin in-app acceptance without external browser settings', () => {
     const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'audit:purchase-physical-origin-browser'],
@@ -2174,6 +2191,40 @@ describe('PC message center Browser exact owned runner admission', () => {
     { label: 'worker override', args: ['--schema-maintenance', bin, mode, '--maxWorkers=2'], error: 'Only explicit unit test paths are accepted' },
     { label: 'config override', args: ['--schema-maintenance', bin, mode, '--config', 'vitest.config.ts'], error: 'Only explicit unit test paths are accepted' },
     { label: 'raw browser filename', args: ['--schema-maintenance', bin, 'test/browser/pc-message-center.acceptance.ts'], error: 'Only explicit unit test paths are accepted' },
+  ])('rejects $label before native launch', ({ args, error }) => {
+    const output = admission(args); expect(output).toContain(error); expect(output).not.toContain(sentinel);
+  });
+});
+
+describe('Uni product coupons Browser exact owned runner admission', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'cinashop-uni-product-coupons-browser-admission-'));
+  const bin = join(directory, 'bin'), hook = join(directory, 'block-native-launch.mjs');
+  const sentinel = 'UNI_PRODUCT_COUPONS_BROWSER_NATIVE_COMMAND_BOUNDARY', mode = 'audit:uni-product-coupons-browser';
+  mkdirSync(bin);
+  for (const name of ['postgres', 'initdb', 'pg_ctl', 'psql']) writeFileSync(join(bin, `${name}${process.platform === 'win32' ? '.exe' : ''}`), 'Native launch must be intercepted');
+  writeFileSync(hook, `import childProcess from 'node:child_process';\nimport { syncBuiltinESMExports } from 'node:module';\nchildProcess.spawnSync = () => { throw new Error('${sentinel}'); };\nsyncBuiltinESMExports();\n`);
+  afterAll(() => rmSync(directory, { recursive: true, force: true }));
+  const admission = (args: string[]) => {
+    const result = spawnSync(process.execPath, ['--import', pathToFileURL(hook).href, script, ...args], {
+      cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000,
+      env: { ...process.env, TEST_FINANCE_LOCAL_CACHE_ROOT: directory },
+    });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    return result.stderr;
+  };
+  it('admits exactly the maintenance Browser mode up to its intercepted native boundary', () => {
+    expect(admission(['--schema-maintenance', bin, mode])).toContain(sentinel);
+  });
+  it.each([
+    { label: 'without maintenance', args: [bin, mode], error: 'Only explicit unit test paths are accepted' },
+    { label: 'in runtime mode', args: ['--runtime', bin, mode], error: '--runtime accepts only' },
+    { label: 'mixed native file', args: ['--schema-maintenance', bin, mode, 'test/uni-product-coupons-native.test.ts'], error: 'Only explicit unit test paths are accepted' },
+    { label: 'changed spelling', args: ['--schema-maintenance', bin, mode + '-other'], error: 'Only explicit unit test paths are accepted' },
+    { label: 'case filter', args: ['--schema-maintenance', '--case', 'review', bin, mode], error: 'Literal cases apply only to explicit test files' },
+    { label: 'verbose override', args: ['--schema-maintenance', '--verbose-tests', bin, mode], error: 'Verbose reporting applies only to explicit native test files' },
+    { label: 'worker override', args: ['--schema-maintenance', bin, mode, '--maxWorkers=2'], error: 'Only explicit unit test paths are accepted' },
+    { label: 'config override', args: ['--schema-maintenance', bin, mode, '--config', 'vitest.config.ts'], error: 'Only explicit unit test paths are accepted' },
+    { label: 'raw browser filename', args: ['--schema-maintenance', bin, 'test/browser/uni-product-coupons.acceptance.ts'], error: 'Only explicit unit test paths are accepted' },
   ])('rejects $label before native launch', ({ args, error }) => {
     const output = admission(args); expect(output).toContain(error); expect(output).not.toContain(sentinel);
   });

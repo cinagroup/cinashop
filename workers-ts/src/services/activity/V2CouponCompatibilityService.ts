@@ -333,11 +333,11 @@ function rawRows<T>(value: unknown): T[] {
 export class V2CouponCompatibilityService {
   constructor(private readonly container: Container) {}
 
-  /** Same legacy scope resolution, with a modern complete product directory.
-   * No sample-product media or unrelated issue rules are returned to this consumer. */
-  async productDirectoryIssues(productId: number, page: number, limit: number, now: Date) {
+  /** Complete directory, without sample-product media. The explicit Uni view
+   * preserves PHP's parent-product coupon scope; existing views keep theirs. */
+  async productDirectoryIssues(productId: number, page: number, limit: number, now: Date, includeRules = false) {
     const query = parseLegacyCouponQuery({product_id: productId});
-    const context = await this.productContext(productId);
+    const context = await this.productContext(productId, includeRules);
     const condition = and(validCouponCondition(now), listScopeCondition(query, context, now),
       eq(storeCouponIssue.receiveType, 1), eq(storeCouponIssue.appType, 0), inArray(storeCouponIssue.category, [0, 1, 2]));
     const [count] = await this.container.db.select({n:sql<number>`count(*)::int`}).from(storeCouponIssue).where(condition);
@@ -345,7 +345,8 @@ export class V2CouponCompatibilityService {
     const issues = await this.container.db.select({id:storeCouponIssue.id,title:storeCouponIssue.title,couponTitle:storeCouponIssue.couponTitle,
       category:storeCouponIssue.category,couponType:storeCouponIssue.couponType,type:storeCouponIssue.type,
       couponPrice:storeCouponIssue.couponPrice,useMinPrice:storeCouponIssue.useMinPrice,day:storeCouponIssue.day,
-      useStartTime:storeCouponIssue.useStartTime,useEndTime:storeCouponIssue.useEndTime,receiveLimit:storeCouponIssue.receiveLimit})
+      useStartTime:storeCouponIssue.useStartTime,useEndTime:storeCouponIssue.useEndTime,receiveLimit:storeCouponIssue.receiveLimit,
+      ...(includeRules ? {rule:sql<string|null>`left(${storeCouponIssue.rule},64001)`} : {})})
       .from(storeCouponIssue).where(condition).orderBy(desc(storeCouponIssue.sort),desc(storeCouponIssue.id)).limit(limit).offset((page-1)*limit);
     return {total:Number(count?.n ?? 0),issues};
   }
@@ -466,10 +467,11 @@ export class V2CouponCompatibilityService {
     };
   }
 
-  private async productContext(productId: number): Promise<ProductContext> {
+  private async productContext(productId: number, parentProductScope = false): Promise<ProductContext> {
     if (!productId) return { productId: 0, categoryIds: [], brandIds: [] };
     const products = await this.container.db
-      .select({ id: storeProduct.id, cateId: storeProduct.cateId, brandId: storeProduct.brandId })
+      .select({ id: storeProduct.id, cateId: storeProduct.cateId, brandId: storeProduct.brandId,
+        ...(parentProductScope ? {pid:storeProduct.pid} : {}) })
       .from(storeProduct)
       .where(eq(storeProduct.id, productId))
       .limit(1);
@@ -492,7 +494,7 @@ export class V2CouponCompatibilityService {
         : Promise.resolve([]),
     ]);
     return {
-      productId,
+      productId: parentProductScope && product.pid ? product.pid : productId,
       categoryIds: parseCouponScopeIds(directCategoryIds, categories.map((category) => category.pid)),
       brandIds: parseCouponScopeIds(brands[0]?.id, brands[0]?.pid),
     };

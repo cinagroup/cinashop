@@ -9,7 +9,7 @@ function service(c:C){const uid=c.get('uid')??0,actor=uid?{uid,authVersion:c.get
   return new ProductCouponDirectoryService(c.get('container'),actor,async()=>{if(actor){await authMiddleware({force:true})(c,async()=>{});if(c.get('uid')!==actor.uid||c.get('socketAuthVersion')!==actor.authVersion||c.get('socketTokenExp')!==actor.expiresAt)throw new ValidateException('登录状态已变化');}});}
 async function response(c:C,work:()=>Promise<unknown>){c.header('Cache-Control','private, no-store');c.header('Pragma','no-cache');c.header('Referrer-Policy','no-referrer');
   try{if(new URL(c.req.url).pathname.includes('%'))throw new ValidateException('商品优惠券参数无效');return jsonOk(c,await work());}catch(e){if(e instanceof ValidateException)return jsonFail(c,e.message);throw e;}}
-export const directory=(c:C)=>response(c,()=>{const {page,limit}=productCouponPage(c.req.url);return service(c).directory(productCouponId(c.req.param('productId')),page,limit);});
+export const directory=(c:C)=>response(c,()=>{const {page,limit}=productCouponPage(c.req.url),rules=new URL(c.req.url).searchParams.get('view')==='uni_product_coupons';return service(c).directory(productCouponId(c.req.param('productId')),page,limit,rules,c.env.APP_KEY);});
 export const receipt=(c:C)=>response(c,()=>{if(new URL(c.req.url).search)throw new ValidateException('领取状态不接受查询参数');return service(c).receipt(productCouponId(c.req.param('productId')),productCouponId(c.req.param('couponId')));});
 /** Legacy PC list had an array payload and a product_id query. */
 export const legacyProductList=(c:C)=>response(c,async()=>{const {page,limit}=productCouponPage(c.req.url,true),id=productCouponId(new URL(c.req.url).searchParams.get('product_id')??undefined),result=await service(c).directory(id,page,limit);

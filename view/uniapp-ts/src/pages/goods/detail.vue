@@ -50,7 +50,7 @@
 
       <view v-if="design.showSvip && displayVipPrice && selectedSku?.price_type!=='level'" class="detail-module svip-card" @tap="navigate('/pages/user/vipOpen')">开通 SVIP，所选规格专享 ¥{{displayVipPrice}} ›</view>
       <view v-if="design.showRank && display.rank>0 && display.rankType>0" class="detail-module rank-card" @tap="goRank">{{display.rankName || '商品排行榜'}} · 第 {{display.rank}} 名 ›</view>
-      <view v-if="design.showService.includes(0)" class="detail-module service-entry" @tap="marketingVisible=true">优惠与促销 <text>{{coupons.length?`${coupons.length}张可领优惠券`:'查看活动'}} ›</text></view>
+      <view v-if="design.showService.includes(0)" class="detail-module service-entry" @tap="marketingVisible=true">优惠与促销 <text>查看完整优惠券目录与活动 ›</text></view>
       <view v-if="design.showService.includes(2) && display.ensure.length" class="detail-module service-entry" @tap="servicePanel='ensure'">保障 <text>{{display.ensure.map(item=>item.name).join(' · ')}} ›</text></view>
       <view v-if="design.showService.includes(3) && display.specs.length" class="detail-module service-entry" @tap="servicePanel='specs'">商品参数 ›</view>
 
@@ -141,7 +141,7 @@
       </view>
 
       <view v-if="servicePanel" class="mask" @tap="servicePanel='' "><view class="sheet service-sheet" @tap.stop><view class="module-heading">{{servicePanel==='ensure'?'服务保障':'商品参数'}}<button size="mini" @tap="servicePanel=''">关闭</button></view><scroll-view scroll-y class="service-scroll"><template v-if="servicePanel==='ensure'"><view v-for="entry in display.ensure" :key="entry.id" class="ensure-row"><image v-if="entry.image" :src="entry.image"/><view><text>{{entry.name}}</text><view>{{entry.desc}}</view></view></view></template><view v-else v-for="(entry,i) in display.specs" :key="i" class="spec-row"><text>{{entry.name}}</text><text>{{entry.value}}</text></view></scroll-view></view></view>
-      <view v-if="marketingVisible" class="mask" @tap="marketingVisible=false"><view class="sheet" @tap.stop><view class="module-heading">优惠与促销<button size="mini" @tap="marketingVisible=false">关闭</button></view><view v-if="marketingError" role="alert">{{marketingError}}<button size="mini" @tap="retryMarketing">重新读取活动</button></view><view v-for="promotion in promotions" :key="promotion.id" class="promotion-row"><view>{{promotion.name}}</view><view>{{promotion.desc}}</view></view><view v-for="coupon in coupons" :key="coupon.id" class="coupon-row"><view>{{coupon.title}} · ¥{{coupon.price}}<view>满 ¥{{coupon.minimum}} 可用</view></view><button size="mini" :disabled="couponLoading===coupon.id || receivedCoupons.includes(coupon.id)" @tap="receiveCoupon(coupon.id)">{{receivedCoupons.includes(coupon.id)?'已处理领取':'领取'}}</button></view><view v-if="!coupons.length&&!promotions.length&&!marketingError" class="reply-empty">暂无可用优惠</view></view></view>
+      <view v-if="marketingVisible" class="mask" @tap="marketingVisible=false"><view class="sheet" @tap.stop><view class="module-heading">优惠与促销<button size="mini" @tap="marketingVisible=false">关闭</button></view><view v-if="marketingError" role="alert">{{marketingError}}<button size="mini" @tap="retryMarketing">重新读取活动</button></view><view v-for="promotion in promotions" :key="promotion.id" class="promotion-row"><view>{{promotion.name}}</view><view>{{promotion.desc}}</view></view><ProductCoupons :coupons="productCoupons" :owner-uid="authStore.uid" :product-id="detail.id"/></view></view>
       <view v-if="shareVisible" class="mask" @tap="shareVisible=false"><view class="sheet share-sheet" @tap.stop><view class="module-heading">分享商品<button size="mini" @tap="shareVisible=false">关闭</button></view>
         <!-- #ifdef MP-WEIXIN --><button open-type="share">发送给微信好友</button><!-- #endif -->
         <!-- #ifdef APP-PLUS --><button :disabled="sharing" @tap="appShare('WXSceneSession')">微信好友</button><button :disabled="sharing" @tap="appShare('WXSceneTimeline')">朋友圈</button><!-- #endif -->
@@ -252,9 +252,11 @@
 import { reviewImageSource,reviewImagePreview } from '@/utils/reviewImage';
 import ThemePage from '@/components/ThemePage.vue';
 import ProductMedia from '@/components/productDetail/ProductMedia.vue';
+import ProductCoupons from '@/components/productDetail/ProductCoupons.vue';
+import { useProductCoupons } from '@/composables/useProductCoupons';
 import ProductSharePoster from '@/components/productDetail/ProductSharePoster.vue';
 import LegacyShareCode from '@/components/LegacyShareCode.vue';
-import { ref, computed, watch } from "vue";
+import { ref, computed, reactive, watch } from "vue";
 import { onLoad, onShow, onHide, onUnload, onShareAppMessage, onShareTimeline } from "@dcloudio/uni-app";
 import { apiGoodsDetail } from "@/api/product";
 import {
@@ -275,7 +277,6 @@ import { ordinaryRecoveryKey, parseOrdinaryRecovery, type OrdinaryCartRecovery }
 import { cloneProductDetailDesign } from '../../../../common/productDetailDesign';
 import { quoteMoney } from '../../../../common/checkoutQuote';
 import { apiProductMarketing, apiProductShareCode, parseProductDetailDesignData } from '@/api/productDetailDesign';
-import { apiCouponReceive } from '@/api/activity';
 import { useOrdinaryCollection } from '@/composables/useOrdinaryCollection';
 import { useOrdinaryReferral } from '@/composables/useOrdinaryReferral';
 import { ordinaryReferral, ordinaryShareRoute, ordinarySharePath, ordinaryShareUrl, shareOrdinaryInApp } from '@/utils/ordinaryShare';
@@ -294,7 +295,8 @@ const navEntries=computed(()=>design.value.navList.map(id=>({id,name:navNames[id
 const footerEntries=computed(()=>design.value.menuList.map(id=>({id,name:footerNames[id],icon:footerIcons[id]})));
 const skuMedia=ref(false),mediaImages=computed(()=>skuMedia.value&&selectedSku.value?.image?[selectedSku.value.image]:detail.value?.slider_image??[]);
 const servicePanel=ref<''|'ensure'|'specs'>(''),marketingVisible=ref(false),marketingError=ref(''),replyError=ref(''),recommendError=ref('');
-const coupons=ref<Array<{id:number;title:string;price:string;minimum:string}>>([]),promotions=ref<Array<{id:number;name:string;desc:string}>>([]),receivedCoupons=ref<number[]>([]),couponLoading=ref(0),cartCount=ref(0);
+const promotions=ref<Array<{id:number;name:string;desc:string}>>([]),cartCount=ref(0);
+const productCoupons=reactive(useProductCoupons(computed(()=>detail.value?.id??0),computed(()=>visible.value&&marketingVisible.value&&design.value.showService.includes(0))));
 const shareVisible=ref(false),posterVisible=ref(false),shareNotice=ref(''),sharing=ref(false);
 const officialCode=ref(''),officialCodeLoading=ref(false),officialCodeError=ref('');let shareGeneration=0,codeGeneration=0;
 watch(()=>[shareVisible.value,posterVisible.value],()=>{if(!shareVisible.value){shareGeneration++;sharing.value=false;}if(!shareVisible.value||!posterVisible.value){codeGeneration++;officialCode.value='';officialCodeLoading.value=false;officialCodeError.value='';}},{flush:'sync'});
@@ -496,12 +498,7 @@ async function loadReplies(id: number, current: () => boolean) {
 }
 function retryReplies(){if(visible.value&&detail.value)void loadReplies(detail.value.id,currentView());}
 function retryRecommend(){recommendError.value='';void load();}
-async function retryMarketing(){if(!visible.value||!detail.value||!design.value.showService.includes(0))return;const current=currentView();marketingError.value='';try{const data=await apiProductMarketing(detail.value.id);if(current()){coupons.value=data.coupons;promotions.value=data.promotions;}}catch{if(current())marketingError.value='优惠活动读取失败，请重试';}}
-async function receiveCoupon(id:number){if(!visible.value||!detail.value||couponLoading.value||!coupons.value.some(row=>row.id===id)||receivedCoupons.value.includes(id))return;
-  if(!authStore.isLoggedIn)return navigate('/pages/auth/login');const current=currentView();couponLoading.value=id;
-  try{await apiCouponReceive(id);if(current()){receivedCoupons.value.push(id);uni.showToast({title:'优惠券领取已处理',icon:'success'});}}
-  catch{if(current())marketingError.value='优惠券领取未确认，可在优惠券页面核对后重新读取';}finally{if(current())couponLoading.value=0;}
-}
+async function retryMarketing(){if(!visible.value||!detail.value||!design.value.showService.includes(0))return;const current=currentView();marketingError.value='';try{const data=await apiProductMarketing(detail.value.id);if(current()){promotions.value=data.promotions;}}catch{if(current())marketingError.value='优惠活动读取失败，请重试';}}
 function previewReply(urls:string[],current:string){if(visible.value&&urls.includes(current)){const preview=reviewImagePreview(urls,current);if(preview)uni.previewImage(preview);}}
 function goProduct(id:number){if(recommendations.value.some(row=>row.id===id))navigate(`/pages/goods/detail?id=${id}`);}
 function goRank(){if(display.value.rank>0&&display.value.rankType>0)navigate(`/pages/columnGoods/rank/index?type=${display.value.rankType}`);}
@@ -560,7 +557,7 @@ function clearView() {
   loading.value = false; loadError.value = ''; buying.value = false; packageBuying.value = false; navigating.value = false;
   navigationGeneration++; preparedCart.value = null; checkoutError.value = ''; purchaseNeedsRefresh.value = false;
   ordinaryRecovery.value=null;ordinaryRecoveryInvalid.value=false;
-  servicePanel.value='';marketingVisible.value=false;marketingError.value='';replyError.value='';recommendError.value='';coupons.value=[];promotions.value=[];receivedCoupons.value=[];couponLoading.value=0;cartCount.value=0;
+  servicePanel.value='';marketingVisible.value=false;marketingError.value='';replyError.value='';recommendError.value='';promotions.value=[];cartCount.value=0;
   shareGeneration++;codeGeneration++;shareVisible.value=false;posterVisible.value=false;shareNotice.value='';sharing.value=false;officialCode.value='';officialCodeError.value='';officialCodeLoading.value=false;skuMedia.value=false;
 }
 function restoreOrdinaryRecovery(){

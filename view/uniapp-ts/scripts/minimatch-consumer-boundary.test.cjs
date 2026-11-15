@@ -97,7 +97,9 @@ function verifyOfficialInstalled(dir, version) {
       assert.equal(fs.statSync(filename).mode & 0o777, file.mode & ~installMask, file.path + ' official file mode');
     }
   }
-  const key = path.relative(H.installRoot, dir).replaceAll(path.sep, '/');
+  const installedRelative = path.relative(H.modules, H.confined(dir));
+  assert.ok(installedRelative && !installedRelative.split(path.sep).includes('..'));
+  const key = 'node_modules/' + installedRelative.replaceAll(path.sep, '/');
   const locked = lock.packages[key];
   assert.ok(locked, 'installed source must be represented in the actual lock: ' + key);
   assert.equal(locked.version, version, key);

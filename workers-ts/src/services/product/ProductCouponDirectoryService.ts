@@ -6,6 +6,7 @@ import { readMembershipCouponEligibility } from '@/services/activity/MembershipC
 import { actorInDatabase, type BuyerReviewActor } from '@/services/order/BuyerReviewSession';
 import { publicOrdinaryProductIdentitySql } from './OrdinaryProductReadData';
 import { NotFoundException, ValidateException } from '@/utils/errors';
+import { readProductCouponRules, renderProductCouponRules } from './ProductCouponRulePolicy';
 
 const invalid = () => new ValidateException('商品优惠券资料无效，请重新读取');
 export function productCouponId(raw: string | undefined): number {
@@ -14,7 +15,7 @@ export function productCouponId(raw: string | undefined): number {
 }
 export function productCouponPage(url: string, legacy = false) {
   const query = new URL(url).searchParams;
-  const keys = legacy ? ['product_id', 'page', 'limit'] : ['page', 'limit'];
+  const keys = legacy ? ['product_id', 'page', 'limit'] : ['page', 'limit', ...(query.get('view') === 'uni_product_coupons' ? ['view'] : [])];
   if ([...query.keys()].some(key => !keys.includes(key) || query.getAll(key).length !== 1)) throw invalid();
   const read = (key: string, fallback: number, max: number) => {
     const raw = query.get(key); if (raw === null) return fallback;
@@ -63,12 +64,13 @@ export class ProductCouponDirectoryService {
     return new Map(ids.map(id => { const row=owned.find(row=>row.id===id), log=evidence.find(row=>row.id===id);
       return [id,{receivedCount:Math.max(Number(row?.n??0),Number(log?.n??0)),latestCouponUserId:row?.latest??null}]; }));
   }
-  async directory(productId: number, page: number, limit: number) {
-    return this.snapshot(productId, async db => {
-      const now=new Date(), {issues,total}=await new V2CouponCompatibilityService(createContainerFromDb(db)).productDirectoryIssues(productId,page,limit,now);
+  async directory(productId: number, page: number, limit: number, includeRules = false, appKey?: string) {
+    const result = await this.snapshot(productId, async db => {
+      const now=new Date(), {issues,total}=await new V2CouponCompatibilityService(createContainerFromDb(db)).productDirectoryIssues(productId,page,limit,now,includeRules);
+      const rules=includeRules?await readProductCouponRules(db,issues.map(row=>row.rule)):[];
       const receipts=await this.receipts(db,issues.map(row=>row.id));
       const member=issues.some(row=>row.category===2)&&this.uid ? await readMembershipCouponEligibility(db,this.uid,Math.floor(now.getTime()/1000)) : null;
-      const items=issues.map(row=>{
+      const items=issues.map((row,index)=>{
         if (![0,1,2,3].includes(row.couponType)||![1,2].includes(row.type)||row.receiveLimit<0||row.day<0||row.day>36500) throw invalid();
         const benefitValue=money(row.couponPrice),minimum=money(row.useMinPrice);
         if(row.type===2&&(Number(benefitValue)<=0||Number(benefitValue)>100)) throw invalid();
@@ -80,10 +82,19 @@ export class ProductCouponDirectoryService {
         const claimReason=receivedCount?'已领取':!this.uid?'登录后领取':isMember&&!member?.eligible?member?.reason||'请先购买有效的付费会员后领取':'';
         return {id:row.id,title:(row.couponTitle||row.title).replace(/<[^>]*>/gu,'').slice(0,255),scopeType:row.couponType,
           benefitType:row.type,benefitValue,minimum,validity:{kind:row.day?'relative' as const:'fixed' as const,days:row.day,startTime,endTime},
-          receivedCount,receiveLimit:row.receiveLimit||1,claimable:!claimReason,claimReason,isMember};
+          receivedCount,receiveLimit:row.receiveLimit||1,claimable:!claimReason,claimReason,isMember,...(includeRules?{rule:rules[index]}:{})};
       });
-      return {version:1,uid:this.uid,productId,page,limit,total,items};
+      return {version:1,uid:this.uid,productId,page,limit,total,items,...(includeRules?{view:'uni_product_coupons' as const}:{})};
     });
+    if(includeRules){
+      const rules=await renderProductCouponRules(appKey,result.items.map(row=>row.rule!));
+      if(rules.some(rule=>rule.length>64000))throw new ValidateException('商品优惠券完整规则超过读取容量');
+      result.items.forEach((row,index)=>{row.rule=rules[index];});
+      if(new TextEncoder().encode(JSON.stringify(result)).byteLength>1048576)throw new ValidateException('商品优惠券整页资料超过完整读取容量');
+      await this.authorize();
+      if(this.actor)await actorInDatabase(this.container.db,this.actor);
+    }
+    return result;
   }
   async receipt(productId:number,couponId:number){
     if(!this.actor)throw invalid();

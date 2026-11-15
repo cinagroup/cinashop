@@ -1,6 +1,6 @@
 const assert = require("node:assert/strict");
 const { spawnSync } = require("node:child_process");
-const { existsSync, readFileSync } = require("node:fs");
+const { existsSync, readFileSync, realpathSync } = require("node:fs");
 const http = require("node:http");
 const https = require("node:https");
 const { createRequire } = require("node:module");
@@ -36,7 +36,9 @@ test("locked DCloud H5 CLI selects Express only for SSR and keeps the audited de
   // the later DCloud test still proves its original require-cache boundary.
   const fromBodyParser = createRequire(require.resolve("body-parser"));
   const parserQsPackage = fromBodyParser.resolve("qs/package.json");
-  assert.equal(parserQsPackage, resolve(__dirname, "../node_modules/qs/package.json"));
+  // Worktrees can share node_modules through a symlink. Compare the physical
+  // package identity, still rejecting a separate nested qs installation.
+  assert.equal(realpathSync(parserQsPackage), realpathSync(resolve(__dirname, "../node_modules/qs/package.json")));
   assert.equal(locked("body-parser/node_modules/qs"), undefined);
   assert.equal(fromBodyParser("qs/package.json").version, "6.16.2");
   assert.equal(locked("qs").version, "6.16.2");

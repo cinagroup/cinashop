@@ -47,8 +47,10 @@ function runtime({ storage = new Map(), send, navigationFails = false, modal, fe
     const exports = {}; cache.set(file, exports);
     let source = readFileSync(file, 'utf8');
     if (platform) {
-      const stack = [true], names = new Set([platform, ...(platform === 'MP-WEIXIN' ? ['MP'] : [])]);
-      source = source.split('\n').filter(line => {
+      const names = new Set([platform, ...(platform === 'MP-WEIXIN' ? ['MP'] : [])]);
+      function selectPlatform(content) {
+        const stack = [true];
+        const selected = content.split('\n').filter(line => {
         const directive = /(?:\/\/|<!--)\s*#(ifdef|ifndef|endif)\s*([^\n]*?)(?:-->)?\s*$/.exec(line);
         if (directive) {
           if (directive[1] === 'endif') { assert.ok(stack.length > 1); stack.pop(); }
@@ -56,8 +58,19 @@ function runtime({ storage = new Map(), send, navigationFails = false, modal, fe
           return false;
         }
         return stack.at(-1);
-      }).join('\n');
-      assert.equal(stack.length, 1, `unbalanced platform directives: ${file}`);
+        }).join('\n');
+        assert.equal(stack.length, 1, `unbalanced platform directives: ${file}`);
+        return selected;
+      }
+      // This runtime executes script setup. Template guards may be inline on
+      // one line and belong to Uni's template compiler, not this line-oriented
+      // script selector. Preserve the real template while selecting each real
+      // script block using its parser offsets.
+      if (file.endsWith('.vue')) {
+        const descriptor = require('@vue/compiler-sfc').parse(source, { filename: file }).descriptor;
+        const blocks = [descriptor.script, descriptor.scriptSetup].filter(Boolean).sort((a, b) => b.loc.start.offset - a.loc.start.offset);
+        for (const block of blocks) source = source.slice(0, block.loc.start.offset) + selectPlatform(block.content) + source.slice(block.loc.end.offset);
+      } else source = selectPlatform(source);
     }
     if (file.endsWith('.vue')) {
       const { parse, compileScript } = require('@vue/compiler-sfc');

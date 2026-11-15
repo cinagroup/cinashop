@@ -21,6 +21,10 @@ const TEXT_ATTRIBUTES = new Set(["alt", "title"]);
 const DIMENSION_ATTRIBUTES = new Set(["height", "width"]);
 const CELL_ATTRIBUTES = new Set(["colspan", "rowspan"]);
 
+export type ArticleRichTextNode =
+  | { type: "text"; text: string }
+  | { type: "node"; name: string; attrs: Record<string, string>; children: ArticleRichTextNode[] };
+
 const ALLOWED_ATTRIBUTES: Readonly<Record<string, ReadonlySet<string>>> = {
   a: new Set(["href", "title"]),
   bdo: new Set(["dir"]),
@@ -101,6 +105,11 @@ function safeAttribute(tag: string, name: string, rawValue: string): string | nu
   return null;
 }
 
+function articleAttributePattern(): RegExp {
+  // HTML retains '=' inside a bare value, including signed query strings.
+  return /([^\s"'=<>`]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'<>`]+)))?/g;
+}
+
 function sanitizeTag(source: string): string {
   if (/^<\s*(?:!|\?)/.test(source)) return "";
   const closing = source.match(/^<\s*\/\s*([a-z][a-z0-9]*)[^>]*>$/i);
@@ -117,8 +126,7 @@ function sanitizeTag(source: string): string {
   const allowed = ALLOWED_ATTRIBUTES[tag] ?? new Set<string>();
   const attributes = new Map<string, string>();
   const attributeSource = opening[2].replace(/\/?\s*$/, "");
-  // HTML retains '=' inside a bare value; splitting it truncates legitimate query strings.
-  const attributePattern = /([^\s"'=<>`]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'<>`]+)))?/g;
+  const attributePattern = articleAttributePattern();
   let match: RegExpExecArray | null;
   while ((match = attributePattern.exec(attributeSource)) !== null) {
     const name = match[1].toLowerCase();
@@ -143,20 +151,22 @@ function sanitizeTag(source: string): string {
   return `<${tag}${serialized ? ` ${serialized}` : ""}>`;
 }
 
-export function sanitizeArticleRichText(html: string): string {
+function* articleRichTextTokens(html: string): Generator<{ type: "text" | "tag"; value: string }> {
   // Rebuilding every markup token means active attributes are never copied by
   // default. This small tokenizer observes quotes so a legal `>` inside an
   // attribute cannot split a tag. An unterminated tag is escaped fail-closed.
-  let result = "";
   let cursor = 0;
   while (cursor < html.length) {
     const opening = html.indexOf("<", cursor);
-    if (opening < 0) return result + html.slice(cursor);
-    result += html.slice(cursor, opening);
+    if (opening < 0) {
+      yield { type: "text", value: html.slice(cursor) };
+      return;
+    }
+    if (opening > cursor) yield { type: "text", value: html.slice(cursor, opening) };
 
     if (html.startsWith("<!--", opening)) {
       const commentEnd = html.indexOf("-->", opening + 4);
-      if (commentEnd < 0) return result;
+      if (commentEnd < 0) return;
       cursor = commentEnd + 3;
       continue;
     }
@@ -175,12 +185,70 @@ export function sanitizeArticleRichText(html: string): string {
       }
     }
     if (closing < 0) {
-      result += "&lt;";
+      yield { type: "text", value: "&lt;" };
       cursor = opening + 1;
       continue;
     }
-    result += sanitizeTag(html.slice(opening, closing + 1));
+    yield { type: "tag", value: html.slice(opening, closing + 1) };
     cursor = closing + 1;
+  }
+}
+
+export function sanitizeArticleRichText(html: string): string {
+  let result = "";
+  for (const token of articleRichTextTokens(html)) {
+    result += token.type === "tag" ? sanitizeTag(token.value) : token.value;
+  }
+  return result;
+}
+
+/**
+ * Uni's string parser leaves escaped attribute entities in image URLs. Build
+ * its supported node form from the same sanitized HTML and tokenizer instead.
+ * Text stays encoded for rich-text's text renderer; it is never parsed as markup.
+ */
+export function articleRichTextNodes(html: string): ArticleRichTextNode[] {
+  const result: ArticleRichTextNode[] = [];
+  const parents: Extract<ArticleRichTextNode, { type: "node" }>[] = [];
+  const append = (node: ArticleRichTextNode) => {
+    (parents.length ? parents[parents.length - 1].children : result).push(node);
+  };
+  for (const token of articleRichTextTokens(sanitizeArticleRichText(html))) {
+    if (token.type === "text") {
+      append({ type: "text", text: token.value });
+      continue;
+    }
+    const closing = token.value.match(/^<\s*\/\s*([a-z][a-z0-9]*)[^>]*>$/i);
+    if (closing) {
+      const name = closing[1].toLowerCase();
+      for (let index = parents.length - 1; index >= 0; index -= 1) {
+        if (parents[index].name === name) {
+          parents.length = index;
+          break;
+        }
+      }
+      continue;
+    }
+    const opening = token.value.match(/^<\s*([a-z][a-z0-9]*)([\s\S]*?)>$/i);
+    if (!opening) continue;
+    const name = opening[1].toLowerCase();
+    if (!ALLOWED_TAGS.has(name)) continue;
+    const attrs: Record<string, string> = {};
+    const allowed = ALLOWED_ATTRIBUTES[name];
+    const attributes = articleAttributePattern();
+    let match: RegExpExecArray | null;
+    while ((match = attributes.exec(opening[2])) !== null) {
+      const attribute = match[1].toLowerCase();
+      const value = match[2] ?? match[3] ?? match[4];
+      if (value !== undefined && allowed?.has(attribute)) {
+        // Decode only after tokenizing. Encoded quotes remain inside this one
+        // attribute value and cannot introduce an event handler or another tag.
+        attrs[attribute] = decodeAttributeEntities(value);
+      }
+    }
+    const node: Extract<ArticleRichTextNode, { type: "node" }> = { type: "node", name, attrs, children: [] };
+    append(node);
+    if (!VOID_TAGS.has(name)) parents.push(node);
   }
   return result;
 }

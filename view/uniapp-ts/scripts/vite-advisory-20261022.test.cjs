@@ -40,7 +40,7 @@ async function fixture(t, options = {}) {
   await mkdir(root); await writeFile(join(root, 'package.json'), '{"type":"module"}');
   // A common gate must exercise this frontend's installation even when no
   // other frontend has node_modules in a fresh matrix job.
-  assert.equal(appRequire.resolve('vite/package.json'), resolve('node_modules/vite/package.json'));
+  assert.equal(fs.realpathSync(appRequire.resolve('vite/package.json')), fs.realpathSync(resolve('node_modules/vite/package.json')));
   const lock = JSON.parse(fs.readFileSync(resolve('package-lock.json'), 'utf8'));
   assert.equal(appRequire('vite/package.json').version, lock.packages['node_modules/vite'].version);
   const { createServer } = appRequire('vite');

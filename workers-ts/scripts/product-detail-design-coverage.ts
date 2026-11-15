@@ -43,12 +43,16 @@ export function productDetailDesignSourceFiles(): Record<string, string> {
     newcomer: 'workers-ts/src/services/activity/StoreNewcomerService.ts', mobileData: 'view/uniapp-ts/src/api/productDetailDesign.ts',
     mobileDecoder: 'view/uniapp-ts/src/utils/productDetailDesign.ts',
     mobileProduct: 'view/uniapp-ts/src/api/productDetail.ts', orderApi: 'view/uniapp-ts/src/api/order.ts', activityApi: 'view/uniapp-ts/src/api/activity.ts', ordinary: 'view/uniapp-ts/src/pages/goods/detail.vue',
+    couponFlow: 'view/uniapp-ts/src/composables/useProductCoupons.ts', couponApi: 'view/uniapp-ts/src/api/productCoupons.ts',
+    couponCard: 'view/uniapp-ts/src/components/productDetail/ProductCoupons.vue', couponRequests: 'view/uniapp-ts/src/api/userCenter.ts',
+    couponContract: 'view/common/pcProductDetailContent.ts',
     community: 'view/uniapp-ts/src/pages/goods/productCommunity.vue', media: 'view/uniapp-ts/src/components/productDetail/ProductMedia.vue',
     activityContent: 'view/uniapp-ts/src/components/productDetail/ActivityDetailContent.vue',
     poster: 'view/uniapp-ts/src/components/productDetail/ProductSharePoster.vue', canvas: 'view/uniapp-ts/src/components/IntegralSharePoster.vue',
     share: 'view/uniapp-ts/src/utils/ordinaryShare.ts', h5Share: 'view/uniapp-ts/src/utils/ordinaryWechatShare.ts', referral: 'view/uniapp-ts/src/composables/useOrdinaryReferral.ts',
     shareCode: 'workers-ts/src/services/product/ProductShareCodeService.ts', shareCodeController: 'workers-ts/src/controllers/api/v1/ProductShareCodeController.ts',
     officialQrcode: 'workers-ts/src/services/wechat/OfficialAccountQrcodeService.ts', miniQrcode: 'workers-ts/src/services/wechat/WechatMiniProgramCodeService.ts',
+    miniProvider: 'workers-ts/src/services/other/LegacyShareProviderRead.ts',
     shareScene: 'workers-ts/src/services/product/ProductShareScene.ts', wechatCallback: 'workers-ts/src/services/wechat/WechatCallbackService.ts',
     collection: 'view/uniapp-ts/src/composables/useOrdinaryCollection.ts', activityDesign: 'view/uniapp-ts/src/composables/useActivityDetailDesign.ts',
     activityMenu: 'view/uniapp-ts/src/components/productDetail/ActivityDetailMenu.vue',
@@ -346,7 +350,36 @@ export function inspectProductDetailDesignCoverage(screens: readonly string[], s
     && s('shareScene').in('verifyProductShareScene','expires<=now','expires>now+PRODUCT_SHARE_TTL_SECONDS','difference===0?{id,uid,expires}:null')
     && s('wechatCallback').in('resolveReply',"callback.source !== 'official'", "['subscribe','scan'].includes(callback.eventType)",'new ProductShareCodeService(this.container,this.env).news(callback.payload.eventKey)','if(news)return news')
     && s('officialQrcode').in('requestTemporaryProduct','boundedProductShareFetch(this.fetcher)','https://api.weixin.qq.com/cgi-bin/qrcode/create',"action_name:'QR_STR_SCENE'",'scene_str:scene','readBoundedJson(response)','https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=')
-    && s('miniQrcode').in('createOrdinaryProductDataUrl','const scene=`id=${productId}&spid=${uid}`','new TextEncoder().encode(scene).byteLength>32','boundedProductShareFetch(this.fetcher)', "fetchUnlimitedCode(token,scene,'pages/goods/detail'", 'bytesToBase64(code.bytes)')
+    && s('miniQrcode').in('createOrdinaryProductDataUrl','const scene=`id=${productId}&spid=${uid}`','new TextEncoder().encode(scene).byteLength>32',
+      '!Number.isSafeInteger(productId)||productId<=0||productId>2147483647', '!Number.isSafeInteger(uid)||uid<=0||uid>2147483647')
+    && s('miniQrcode').call('createOrdinaryProductDataUrl','this.codeDataUrl','credentials','null', "token=>this.fetchUnlimitedCode(token,scene,'pages/goods/detail','商品详情')")
+    && s('miniQrcode').call('createOrdinaryProductDataUrl','readRoutineCredentialsIfConfigured','this.container','this.env')
+    && s('miniQrcode').call('codeDataUrl','this.fetchWithTokenRefresh','credentials','load')
+    && s('miniQrcode').ordered('codeDataUrl','const code=await this.fetchWithTokenRefresh(credentials,load)', 'bytesToBase64(code.bytes)', 'legacyShareDataImage(image)', 'await this.assertSource(credentials)', 'return image')
+    && s('miniQrcode').call('assertSource','withRoutineCredentials','this.container','this.env','credentials.stamp')
+    && s('miniQrcode').call('fetchWithTokenRefresh','getRoutineAccessToken','this.container','this.env','credentials','{fetcher:this.fetcher}')
+    && s('miniQrcode').call('fetchWithTokenRefresh','load','accessToken')
+    && s('miniQrcode').ordered('fetchWithTokenRefresh','code=await load(accessToken)', 'await this.assertSource(credentials)', 'return code')
+    && s('miniQrcode').call('fetchUnlimitedCode','this.fetchCode', "'getwxacodeunlimit'", 'token', "{scene,page,check_path:true,env_version:'release',width:430}", 'label')
+    && s('miniQrcode').imports('@/services/other/LegacyShareProviderRead','readLegacyShareProvider')
+    && s('miniQrcode').call('fetchCode','readLegacyShareProvider','this.fetcher','url', "{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}", '{json:32*1024,image:MAX_CODE_BYTES,timeout:8_000}')
+    && s('miniQrcode').in('fetchCode','new URL(`https://api.weixin.qq.com/wxa/${endpoint}`)', "url.searchParams.set('access_token',token)", '!response.ok', 'legacyShareDataImage(`data:${contentType};base64,${bytesToBase64(bytes)}`)')
+    && s('miniQrcode').body('MAX_CODE_BYTES') === compact('1024*1024')
+    && s('miniProvider').call('readLegacyShareProvider','fetcher','input', "{...init,signal:controller.signal,redirect:'manual'}")
+    && s('miniProvider').call('readLegacyShareProvider','response.body.getReader')
+    && s('miniProvider').call('readLegacyShareProvider','reader.read')
+    && s('miniProvider').call('timeout','setTimeout') && s('miniProvider').call('timeout','reject')
+    && s('miniProvider').in('readLegacyShareProvider','new AbortController()', 'limits.timeout??10000', 'timedOut=true;controller.abort()', 'reader?.cancel()',
+      'if(timedOut)', 'response.redirected||response.status>=300&&response.status<400', 'response.body?.cancel()',
+      "['image/png','image/jpeg','image/gif'].includes(mime)", 'limit=image?limits.image:limits.json',
+      "response.headers.get('Content-Length')", '!response.body||length!==null&&(!/^\\d+$/.test(length)||Number(length)>limit)',
+      'reader=response.body.getReader()', 'size+=value.length', 'if(size>limit)', 'reader.cancel()', 'reader.releaseLock()')
+    && s('miniProvider').in('readLegacyShareProvider',
+      'if(response.redirected||response.status>=300&&response.status<400){void response.body?.cancel().catch(()=>undefined);throw new ServiceUnavailableException(',
+      'if(!response.body||length!==null&&(!/^\\d+$/.test(length)||Number(length)>limit)){void response.body?.cancel().catch(()=>undefined);throw new ValidateException(',
+      'if(size>limit){void reader.cancel().catch(()=>undefined);throw new ValidateException(',
+      'finally{if(timer!==undefined)clearTimeout(timer);controller.abort();}')
+    && s('miniProvider').call('readLegacyShareProvider','Promise.race','[operation,timeout]')
     && s('h5Share').in('signingUrl',"current.protocol!=='https:'", "current.hash=''")
     && s('h5Share').in('configureOrdinaryWechatShare',"http.get<unknown>('/wechat/config',{url:signatureUrl})", 'signingUrl()!==signatureUrl','sdk.error(', 'sdk.ready(', 'sdk.config(',
       'sdk.updateAppMessageShareData(options)','sdk.updateTimelineShareData(options)','sdk.onMenuShareAppMessage?.(options)','sdk.onMenuShareTimeline?.(options)','fail:()=>{if(same())complete(')
@@ -364,10 +397,42 @@ export function inspectProductDetailDesignCoverage(screens: readonly string[], s
     && ordinary.in('currentView','owner.version === authStore.sessionVersion','owner.token === authStore.token','owner.uid === authStore.uid','visible.value')
     && s('recovery').in('parseOrdinaryRecovery','row.actor !== actor',"row.state === 'unknown' && row.cartId !== null", "row.state === 'acknowledged' && (!Number.isSafeInteger(row.cartId)")
     && !ordinary.body('clearView').includes('removeStorageSync(') && ordinary.has('onHide(', 'onUnload(')
-    && ordinary.ordered('receiveCoupon','await apiCouponReceive(id)','receivedCoupons.value.push(id)')
-    && ordinary.in('receiveCoupon','const current=currentView()', 'if(current())')
+    && ordinary.imports('@/composables/useProductCoupons','useProductCoupons')
+    && ordinary.call('productCoupons','useProductCoupons','computed(()=>detail.value?.id??0)', 'computed(()=>visible.value&&marketingVisible.value&&design.value.showService.includes(0))')
+    && ordinary.html('<ProductCoupons', ':coupons="productCoupons"', ':owner-uid="authStore.uid"', ':product-id="detail.id"')
+    && s('couponCard').html(':disabled="!coupons.canClaim(item)"', '@tap="coupons.claim(item.id)"', '@tap="coupons.check"')
+    && s('couponFlow').imports('@/api/productCoupons','createProductCouponRequests')
+    && s('couponFlow').call('scope','createProductCouponRequests','()=>current()&&epoch===generation&&id===productId.value')
+    && s('couponFlow').in('current','!disposed&&active.value&&browserVisible&&validId(productId.value)&&persisted()')
+    && s('couponFlow').in('persisted', "String(uni.getStorageSync('uni_token')||'')===auth.token", "(Number(uni.getStorageSync('uni_uid'))||0)===auth.uid")
+    && s('couponFlow').in('canClaim','!current()','!loggedIn.value','state.pending','state.journalBlocked','!item.claimable','received(item)','journal(auth.uid)===null')
+    && s('couponFlow').in('journal','row.uid!==uid','!validId(row.productId)','!validId(row.couponId)')
+    && s('couponFlow').ordered('save','uni.setStorageSync(productCouponClaimKey(row.uid),raw)','uni.getStorageSync(productCouponClaimKey(row.uid))!==raw')
+    && s('couponFlow').call('save','uni.setStorageSync','productCouponClaimKey(row.uid)','raw')
+    && s('couponFlow').call('save','uni.getStorageSync','productCouponClaimKey(row.uid)')
+    && s('couponFlow').in('sameJournal','journal(row.uid)','live.attempt===row.attempt','live.couponId===row.couponId','live.productId===row.productId')
+    && s('couponFlow').in('claim','!canClaim(item)','uid=r.owner.uid','productId:id','if(!r.active())return','if(journal(uid))throw')
+    && s('couponFlow').ordered('claim','save(row);state.pending=row','const ownedId=await r.claim(couponId)','if(!r.active()||!sameJournal(row))return','confirmed(row,ownedId)')
+    && s('couponFlow').call('claim','exclusive','uid') && s('couponFlow').call('claim','r.claim','couponId')
+    && s('couponFlow').call('claim','save','row') && s('couponFlow').call('claim','confirmed','row','ownedId')
+    && s('couponFlow').call('check','r.receipt','row.productId','row.couponId')
+    && s('couponFlow').call('check','confirmed','row','receipt.latestCouponUserId')
+    && s('couponFlow').ordered('check','const row=state.pending','await r.receipt(row.productId,row.couponId)','if(!r.active()||!sameJournal(row))return','if(receipt.receivedCount>0)','confirmed(row,receipt.latestCouponUserId)')
+    && !s('couponFlow').body('check').includes('r.claim(')
+    && s('couponFlow').ordered('remove','if(!sameJournal(row))throw','uni.removeStorageSync(productCouponClaimKey(row.uid))')
+    && s('couponApi').imports('@/api/userCenter','createUserCenterRequests')
+    && s('couponApi').imports('../../../common/pcProductDetailContent','normalizeProductDetailCouponReceipt')
+    && s('couponApi').imports('../../../common/pcProductDetailContent','normalizeProductDetailCouponClaim')
+    && s('couponApi').call('createProductCouponRequests','createUserCenterRequests','current')
+    && s('couponApi').call('createProductCouponRequests','r.request', "'coupon/receive'", "'POST'", '{id:couponId}', 'true')
+    && s('couponApi').call('createProductCouponRequests','normalizeProductDetailCouponClaim', "await r.request('coupon/receive','POST',{id:couponId},true)")
+    && s('couponApi').call('createProductCouponRequests','normalizeProductDetailCouponReceipt', "await r.request(`product/detail/${productId}/coupons/${couponId}/receipt`,'GET',{},true)", '{uid:r.owner.uid,productId,couponId}')
+    && s('couponContract').in('normalizeProductDetailCouponReceipt','row.uid!==expected.uid','row.productId!==expected.productId','row.couponId!==expected.couponId')
+    && s('couponRequests').in('active','!disposed&&current()','auth.uid===owner.uid','auth.token===owner.token','auth.sessionVersion===owner.version')
+    && s('couponRequests').in('request','if(!active())return Promise.reject(', 'if(force&&(!owner.token||owner.uid<1))return Promise.reject(', 'if(!active()){cancel();return;}', 'owner.token', 'Bearer ${owner.token}')
+    && s('couponRequests').call('request','uni.request')
     && s('orderApi').call('apiCartAdd','http.post',"'/cart/add'",'params as Record<string,unknown>')
-    && s('activityApi').call('apiCouponReceive','http.post',"'/coupon/receive'",'{id}');
+    && s('couponFlow').in('useProductCoupons','return{state,loggedIn,load,claim,check,');
   const activityConsumers = data.in('readActivityDetailDesign','publicOrdinaryProductIdentitySql()','readProductDetailDesignSnapshot(tx)',
     '(activityType===6?design.showService.includes(3):!design.showService.includes(3))?integralDetailSpecs(activity.specs??base.specs,[]):[]',
     'replyService.replyList(base.id,1,design.replyNum,uid,0,false)','replyService.replyConfig(base.id)','activityType===6||activityType===7',
