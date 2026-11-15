@@ -33,6 +33,7 @@ async function eligibility(tx:DbClient,uid:number,now:number,lock=false):Promise
  const reason=!member_enabled?'会员功能暂未开启':!coupon_right_enabled?'会员优惠券权益暂未开启':!is_svip?'请先购买有效的付费会员后领取':'';
  return{member_enabled,coupon_right_enabled,is_svip,eligible,reason};
 }
+export async function readMembershipCouponEligibility(tx:DbClient,uid:number,now:number){return eligibility(tx,uid,now);}
 function admission(issue:Issue,now:Date):string{
  if(issue.category!==2||issue.receiveType!==1||issue.appType!==0)return'该优惠券不允许手动领取';
  if(issue.status!==1||issue.isDel!==0)return'优惠券不存在或已停发';

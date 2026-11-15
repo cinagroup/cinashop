@@ -1,3 +1,4 @@
+import * as ProductCouponDirectory from '@/controllers/api/v1/ProductCouponDirectoryController';
 import { buyerReviewOrder, buyerReviewSubmit, buyerReviewCommunityRetry } from '@/controllers/api/v1/BuyerReviewController';
 import { buyerInvoiceView, privateBuyerInvoiceResponse } from '@/controllers/api/v1/BuyerInvoiceController';
 import * as UserExtractController from '@/controllers/api/v1/UserExtractController';
@@ -422,6 +423,8 @@ v1Routes.get("/search/filter", authMiddleware({ force: false }), ProductControll
 v1Routes.get("/brand", authMiddleware({ force: false }), ProductController.brand);
 v1Routes.get("/product/rank/category", authMiddleware({ force: false }), ProductController.rankCategory);
 v1Routes.get("/product/rank/:type", authMiddleware({ force: false }), ProductController.rankList);
+v1Routes.get('/product/detail/:productId/coupons',authMiddleware({force:false}),ProductCouponDirectory.directory);
+v1Routes.get('/product/detail/:productId/coupons/:couponId/receipt',authMiddleware({force:true}),ProductCouponDirectory.receipt);
 v1Routes.get("/product/detail/recommend/:id", authMiddleware({ force: false }), ProductController.detailRecommend);
 v1Routes.get("/product/:id/community", authMiddleware({ force: false }), ProductController.productCommunity);
 v1Routes.get('/product/code/:id', authMiddleware({ force: true }), ProductShareCode.code);

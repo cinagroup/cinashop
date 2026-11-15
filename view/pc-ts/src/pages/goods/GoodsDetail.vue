@@ -161,6 +161,7 @@
         </template>
       </el-dialog>
 
+      <ProductDetailContent :key="detail.id" :product-id="detail.id" :description="detail.description" :recommendations="detail.recommendations" />
       <PublicProductReviews :product-id="detail.id" />
     </template>
     <el-empty v-else description="商品不存在或已下架" />
@@ -169,6 +170,7 @@
 
 <script setup lang="ts">
 import PublicProductReviews from "@/components/PublicProductReviews.vue";
+import ProductDetailContent from '@/components/ProductDetailContent.vue';
 import ProductPhoneBuy from "@/components/ProductPhoneBuy.vue";
 import ProductImage from "@/components/ProductImage.vue";
 import { computed, onBeforeUnmount, ref, watch } from "vue";

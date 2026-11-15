@@ -1,4 +1,5 @@
 import type { SkuMembershipPrice } from "../../../common/skuMembershipPrice";
+import type { DetailRecommendation } from '../../../common/pcProductDetailContent';
 
 /**
  * 商品相关类型
@@ -91,6 +92,8 @@ export interface GoodsDetail {
   userCollect: boolean;
   userLike: number;
   uid: number;
+  description: string;
+  recommendations: DetailRecommendation[];
 }
 
 /** 分页列表结果 */

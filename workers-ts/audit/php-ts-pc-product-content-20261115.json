@@ -1,0 +1,1158 @@
+{
+  "batch": "pc-product-content",
+  "base": "9a60d183f86cc2d0217b09a3762286c0562b9973",
+  "sourceFiles": [
+    {
+      "path": "view/common/pcProductDetailContent.ts",
+      "sha256": "2dbabbc837d4a9abdbb0e64dd9e40e29a5b2c9b331d5e0ed3d369a1f4d9da172"
+    },
+    {
+      "path": "view/pc-ts/src/api/productDetail.ts",
+      "sha256": "c8b0cd9310676ee9e93d3d457b5687883c0366bba0011a674d6cdc36ef60fcc9"
+    },
+    {
+      "path": "view/pc-ts/src/api/productDetailContent.ts",
+      "sha256": "4e6b51722ed7a10f91ba7fe6e328eb99659ba2da7245e578aaf57c0e7aacd74a"
+    },
+    {
+      "path": "view/pc-ts/src/components/ProductDetailContent.vue",
+      "sha256": "b3bc233a1e5e7b2bf1418473e23482ba15846aa1f95174657e6854098c1d5e80"
+    },
+    {
+      "path": "view/pc-ts/src/composables/useProductDetailContent.ts",
+      "sha256": "4b3cb329ade6f93c88463f316d4eadb931ad8aeb2c1a5d8260ac16753452c074"
+    },
+    {
+      "path": "view/pc-ts/src/pages/goods/GoodsDetail.vue",
+      "sha256": "5585c00fe704669da0431d9f2b02c32db69a1060242b4cca2a2bb68f34aa4b18"
+    },
+    {
+      "path": "view/pc-ts/src/types/product.ts",
+      "sha256": "27200acf80a11fa19410109e3693ea1f8e5a527e31aec660fb420fd9981ef142"
+    },
+    {
+      "path": "view/pc-ts/test/auth-session.test.mjs",
+      "sha256": "cc9ab95c0918623975b5912963103b695542f5da7444147a0ee40849e946a8a2"
+    },
+    {
+      "path": "view/pc-ts/test/product-detail-content.test.mjs",
+      "sha256": "c2fea4be0459ca71dae65104154235f7437c1f82f39a21f719eebf9dc717931b"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "aec6c273304839d6a4b52bd11f7d305865fec8578cc4cb3aec5c4d6d824ee4a2"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/ProductCouponDirectoryController.ts",
+      "sha256": "06ac432af06ae39b367e7a7df14879070da8405896d192786d696b6a46f69287"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/UserActivityController.ts",
+      "sha256": "8c1910fe7e3826bacd7aa222db3f145f7a9fefcba69e60d2221be90b66a563af"
+    },
+    {
+      "path": "workers-ts/src/routes/v1/index.ts",
+      "sha256": "06dbafcd2803cf66e38b71d360e56718f2f7a5081568c16f3e289ada976325bb"
+    },
+    {
+      "path": "workers-ts/src/services/activity/MembershipCouponService.ts",
+      "sha256": "0d3c9e0eb2553fb9270a9691d48458dbc053244a4c02cf1afaed070c18eeeb81"
+    },
+    {
+      "path": "workers-ts/src/services/activity/V2CouponCompatibilityService.ts",
+      "sha256": "aaf5cb640cee2a832bbba14687588ef60b3b14be342524155d2d532c3a9233ca"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductCouponDirectoryService.ts",
+      "sha256": "687934cd5448cf0232d7092d99e2eb0ce79b1c1428088c368c35d52b5845ba2d"
+    },
+    {
+      "path": "workers-ts/test/browser/pc-product-content.acceptance.ts",
+      "sha256": "507f736637322e21b96cd173545ed8d8fa160d24cf56f64711551be792b62f70"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "3c088d9a2ef78801c607f969142d5755da33709b1a013384b572fa1c2f9ec1b9"
+    },
+    {
+      "path": "workers-ts/test/pc-product-content-contract.test.ts",
+      "sha256": "f05336cde1796839f6276822817fa79dbc83e1689ad7fc306a34928350b5825b"
+    },
+    {
+      "path": "workers-ts/test/pc-product-content-native.test.ts",
+      "sha256": "be2457d0762bc1914574f40a4c09b2acccfe064dea010660f7787adc57596afa"
+    },
+    {
+      "path": "workers-ts/vitest.pc-product-content-browser.config.ts",
+      "sha256": "1fb598b43fbe0ab0dc6fc78a7e38a82ce73ac640fd2395a3a232ce3df2e4e5d0"
+    }
+  ],
+  "sourceManifestSha256": "9b930819208e6f9e866646e812cf9ca004ebb3c93534a575e2d475b61dd99c25",
+  "protectedBaselineFiles": 9283,
+  "validation": {
+    "allRequiredGatesPassed": true,
+    "unit": {
+      "files": 6,
+      "tests": 765,
+      "failed": 0,
+      "skipped": 0,
+      "initialNativeOnlySkipNotCounted": 14,
+      "nativeOnlyFileProvedBy": "design-native.log"
+    },
+    "native": {
+      "files": 1,
+      "tests": 5,
+      "failed": 0,
+      "skipped": 0,
+      "resourcesCleaned": true
+    },
+    "membershipNative": {
+      "files": 1,
+      "tests": 57,
+      "failed": 0,
+      "skipped": 0,
+      "resourcesCleaned": true
+    },
+    "productDetailNative": {
+      "files": 1,
+      "tests": 14,
+      "failed": 0,
+      "skipped": 0,
+      "resourcesCleaned": true
+    },
+    "workerd": {
+      "files": 30,
+      "tests": 410,
+      "failed": 0,
+      "skipped": 0,
+      "resourcesCleaned": true
+    },
+    "pc": {
+      "tests": 489,
+      "auth": 480,
+      "images": 9,
+      "failed": 0,
+      "skipped": 0,
+      "typecheckAndBuild": true
+    },
+    "productionAuditFindings": 0,
+    "browser": {
+      "native": {
+        "files": 1,
+        "tests": 1,
+        "failed": 0,
+        "skipped": 0,
+        "resourcesCleaned": true
+      },
+      "viewports": [
+        {
+          "width": 1280,
+          "height": 900
+        },
+        {
+          "width": 375,
+          "height": 812
+        }
+      ],
+      "recommendationCards": 5,
+      "claims": 2,
+      "duplicateGrants": 0,
+      "consoleErrors": 0,
+      "tables": 283,
+      "protectedSequences": 226
+    }
+  },
+  "typeProof": {
+    "originalRoots": 4457,
+    "commonRoots": 1945,
+    "testRoots": 2512,
+    "shardTestCounts": [
+      1256,
+      1256
+    ],
+    "unionExactlyMatchesOriginal": true,
+    "optionsExactlyMatchOriginal": true,
+    "explicitTypeLibrariesResolveExactlyAsOriginal": true,
+    "generatedConfigs": [
+      "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts/.cache/pc-product-content-types-20261115/tsconfig.worker-pc-product-content-shard-1.generated.json",
+      "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts/.cache/pc-product-content-types-20261115/tsconfig.worker-pc-product-content-shard-2.generated.json"
+    ]
+  },
+  "candidate5Lineage": {
+    "changed": [
+      "workers-ts/test/browser/pc-product-content.acceptance.ts"
+    ],
+    "affectedOriginalTypeConfig": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts/.cache/pc-product-content-types-20261115/tsconfig.worker-pc-product-content-shard-1.generated.json",
+    "unchangedProductionAndFrontend": true,
+    "retainedValidation": "candidate-4-validation.json",
+    "retainedNative": "candidate-3-native.log",
+    "reason": "Finite Browser read family includes declared recommendation products own content/recommend routes; no application source or dist changes."
+  },
+  "phpParity": {
+    "phpRef": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+    "sources": [
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/PC/pages/goods_detail/_id/index.vue",
+        "sha256": "1aac380500a5e470803623968f2dcc33c6de9c29c688eff5dc64c94327e2d3c0"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/controller/api/v1/activity/StoreCoupons.php",
+        "sha256": "9200aa2908a9293134ea180a2b9d5e538a7182f1ff5d1ca7391231d327ed5665"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/activity/coupon/StoreCouponIssueServices.php",
+        "sha256": "7d9a2861828ddb233c885ed85bc29885f5cc873d8d218133b1397eba57e948c2"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/dao/activity/coupon/StoreCouponIssueDao.php",
+        "sha256": "d216691392c2ffb14b70ca76eaf5dc4d1fdd2b512bf98fb5774020427f1f26ea"
+      }
+    ],
+    "coverage": [
+      "PC ordinary product rich description",
+      "product_id scoped coupon catalogue with categories/brand parent",
+      "fixed and relative validity, amount/discount, prior receive state",
+      "at most five recommended products with canonical target"
+    ],
+    "differences": [
+      "Full bounded coupon pagination and explicit unknown-claim receipt recovery strengthen PHP first-page UX",
+      "Current TS self-claim authority requires public receiveType=1, appType=0, category 0/1/2; paid category2 genuine membership replaces the PHP template moneyLevel branch",
+      "PC disables already-received issue even when backend configured repeat limit remains available to other callers",
+      "Historical issue evidence survives a removed owned coupon; receipt may prove received with no current owned coupon ID",
+      "Existing product HTML sanitization/media signing and public-product visibility policy remain authoritative; physical browser validation is PC web only"
+    ]
+  },
+  "independentReview": {
+    "createdAt": "2026-11-15T13:40:44.078958+00:00",
+    "reviewer": "/root/next_migration_discovery",
+    "reviewMode": "static read-only final review, except parent-authorized pure-common frontend structural repair and its exact auth validation",
+    "worktree": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree",
+    "baseMain": "9a60d183f86cc2d0217b09a3762286c0562b9973",
+    "phpHead": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+    "sourceFileCount": 21,
+    "sourceSha256": [
+      {
+        "path": "view/common/pcProductDetailContent.ts",
+        "sha256": "2dbabbc837d4a9abdbb0e64dd9e40e29a5b2c9b331d5e0ed3d369a1f4d9da172"
+      },
+      {
+        "path": "view/pc-ts/src/api/productDetail.ts",
+        "sha256": "c8b0cd9310676ee9e93d3d457b5687883c0366bba0011a674d6cdc36ef60fcc9"
+      },
+      {
+        "path": "view/pc-ts/src/api/productDetailContent.ts",
+        "sha256": "4e6b51722ed7a10f91ba7fe6e328eb99659ba2da7245e578aaf57c0e7aacd74a"
+      },
+      {
+        "path": "view/pc-ts/src/components/ProductDetailContent.vue",
+        "sha256": "b3bc233a1e5e7b2bf1418473e23482ba15846aa1f95174657e6854098c1d5e80"
+      },
+      {
+        "path": "view/pc-ts/src/composables/useProductDetailContent.ts",
+        "sha256": "4b3cb329ade6f93c88463f316d4eadb931ad8aeb2c1a5d8260ac16753452c074"
+      },
+      {
+        "path": "view/pc-ts/src/pages/goods/GoodsDetail.vue",
+        "sha256": "5585c00fe704669da0431d9f2b02c32db69a1060242b4cca2a2bb68f34aa4b18"
+      },
+      {
+        "path": "view/pc-ts/src/types/product.ts",
+        "sha256": "27200acf80a11fa19410109e3693ea1f8e5a527e31aec660fb420fd9981ef142"
+      },
+      {
+        "path": "view/pc-ts/test/auth-session.test.mjs",
+        "sha256": "cc9ab95c0918623975b5912963103b695542f5da7444147a0ee40849e946a8a2"
+      },
+      {
+        "path": "view/pc-ts/test/product-detail-content.test.mjs",
+        "sha256": "c2fea4be0459ca71dae65104154235f7437c1f82f39a21f719eebf9dc717931b"
+      },
+      {
+        "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+        "sha256": "aec6c273304839d6a4b52bd11f7d305865fec8578cc4cb3aec5c4d6d824ee4a2"
+      },
+      {
+        "path": "workers-ts/src/controllers/api/v1/UserActivityController.ts",
+        "sha256": "8c1910fe7e3826bacd7aa222db3f145f7a9fefcba69e60d2221be90b66a563af"
+      },
+      {
+        "path": "workers-ts/src/controllers/api/v1/ProductCouponDirectoryController.ts",
+        "sha256": "06ac432af06ae39b367e7a7df14879070da8405896d192786d696b6a46f69287"
+      },
+      {
+        "path": "workers-ts/src/routes/v1/index.ts",
+        "sha256": "06dbafcd2803cf66e38b71d360e56718f2f7a5081568c16f3e289ada976325bb"
+      },
+      {
+        "path": "workers-ts/src/services/activity/MembershipCouponService.ts",
+        "sha256": "0d3c9e0eb2553fb9270a9691d48458dbc053244a4c02cf1afaed070c18eeeb81"
+      },
+      {
+        "path": "workers-ts/src/services/activity/V2CouponCompatibilityService.ts",
+        "sha256": "aaf5cb640cee2a832bbba14687588ef60b3b14be342524155d2d532c3a9233ca"
+      },
+      {
+        "path": "workers-ts/src/services/product/ProductCouponDirectoryService.ts",
+        "sha256": "687934cd5448cf0232d7092d99e2eb0ce79b1c1428088c368c35d52b5845ba2d"
+      },
+      {
+        "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+        "sha256": "3c088d9a2ef78801c607f969142d5755da33709b1a013384b572fa1c2f9ec1b9"
+      },
+      {
+        "path": "workers-ts/test/browser/pc-product-content.acceptance.ts",
+        "sha256": "d20cf1e0c15ebc76656088a39d7ff7f5731efc7dc90898ad6666fe84bba23677"
+      },
+      {
+        "path": "workers-ts/test/pc-product-content-contract.test.ts",
+        "sha256": "f05336cde1796839f6276822817fa79dbc83e1689ad7fc306a34928350b5825b"
+      },
+      {
+        "path": "workers-ts/test/pc-product-content-native.test.ts",
+        "sha256": "7cc406034a3ae206fc3520f1a50fe6b5b7203791a0bc1ea104e3ebae5e0d4464"
+      },
+      {
+        "path": "workers-ts/vitest.pc-product-content-browser.config.ts",
+        "sha256": "1fb598b43fbe0ab0dc6fc78a7e38a82ce73ac640fd2395a3a232ce3df2e4e5d0"
+      }
+    ],
+    "phpSourceSha256": [
+      {
+        "path": "view/PC/pages/goods_detail/_id/index.vue",
+        "sha256": "1aac380500a5e470803623968f2dcc33c6de9c29c688eff5dc64c94327e2d3c0"
+      },
+      {
+        "path": "app/controller/api/v1/activity/StoreCoupons.php",
+        "sha256": "9200aa2908a9293134ea180a2b9d5e538a7182f1ff5d1ca7391231d327ed5665"
+      },
+      {
+        "path": "app/services/activity/coupon/StoreCouponIssueServices.php",
+        "sha256": "7d9a2861828ddb233c885ed85bc29885f5cc873d8d218133b1397eba57e948c2"
+      },
+      {
+        "path": "app/dao/activity/coupon/StoreCouponIssueDao.php",
+        "sha256": "d216691392c2ffb14b70ca76eaf5dc4d1fdd2b512bf98fb5774020427f1f26ea"
+      }
+    ],
+    "businessBlockingFindings": [],
+    "verificationBlockingFindings": [],
+    "readiness": "Static source review complete with no unresolved business or verification blocker; root-owned native/unit/type/build/browser runtime evidence remains required.",
+    "coverage": [
+      {
+        "area": "PHP PC body",
+        "result": "Complete description and empty state exposed in GoodsDetail via a keyed ProductDetailContent component; existing purchase flow untouched. Common allowlist sanitizer removes active HTML, body error handler accepts only images in the current body, manual readonly refresh retries body/images without grants. Backend published-attachment signing remains authority.",
+        "files": [
+          "view/pc-ts/src/pages/goods/GoodsDetail.vue",
+          "view/pc-ts/src/components/ProductDetailContent.vue",
+          "view/common/pcProductDetailContent.ts"
+        ]
+      },
+      {
+        "area": "PHP PC recommendation",
+        "result": "Reads existing safe recommend projection, validates all bounded returned rows before showing first five; duplicate/invalid identities rejected. Canonical /goods/:id links, safe media and explicit readonly refresh. Browser fixture returns six server cards; five rendered cards must be checked through Browser DOM independently.",
+        "files": [
+          "view/common/pcProductDetailContent.ts",
+          "view/pc-ts/src/components/ProductDetailContent.vue"
+        ]
+      },
+      {
+        "area": "Complete coupon directory",
+        "result": "Modern directory has stable scalar projection and 10/page PC reads, full total and continuation. On continuation, changed totals or duplicate IDs invalidate append until explicit refresh; a transient page failure preserves rows/page and retries that page. All four scope kinds, full reduction/discount, fixed/relative dates, membership reason and complete title render as text. Anonymous links carry exact login redirect.",
+        "files": [
+          "workers-ts/src/services/activity/V2CouponCompatibilityService.ts",
+          "workers-ts/src/services/product/ProductCouponDirectoryService.ts",
+          "view/pc-ts/src/composables/useProductDetailContent.ts",
+          "view/pc-ts/src/components/ProductDetailContent.vue"
+        ]
+      },
+      {
+        "area": "Membership and historical receipt nulls",
+        "result": "Category2 eligibility comes from existing SQL membership authority (feature enabled, coupon right enabled, genuine paid/lifetime entitlement). Ordinary actor receives a human Chinese reason. Readback is strictly authenticated UID-only, receivedCount=max(owned rows,evidence rows), latest owned id may be null when only historical evidence survives; parser permits that case and no invented id is displayed. Existing grant API remains sole write authority.",
+        "files": [
+          "workers-ts/src/services/activity/MembershipCouponService.ts",
+          "workers-ts/src/services/product/ProductCouponDirectoryService.ts",
+          "view/common/pcProductDetailContent.ts"
+        ]
+      },
+      {
+        "area": "Unknown claim, exhausted/retired directory and lifecycle",
+        "result": "Module ledger keyed by current UID/bearer/issuer is created before POST, conservatively retains uncertain outcomes, never automatically repeats writes. Explicit readonly receipt resolves ownership; a zero-record read requires explicit end before a new user claim. Unlisted pending region retains original operation when exhaustion removes issuer; account/route/query/hidden/unmount epoch guards stop late private responses. Any known received issue remains disabled on PC even if receiveLimit>1.",
+        "files": [
+          "view/pc-ts/src/composables/useProductDetailContent.ts",
+          "view/pc-ts/src/components/ProductDetailContent.vue",
+          "view/pc-ts/test/product-detail-content.test.mjs"
+        ]
+      },
+      {
+        "area": "Backend identity, confidentiality, scope and no writes",
+        "result": "Visible product owner and platform parent predicates are checked in a repeatable-read READ ONLY snapshot, actor verified before/inside/after. IDs/selectors bounded, duplicates/unknown query keys rejected. Product scope exact ID/CSV/relation, category/direct-parent and brand/direct-parent preserved. Response selects no private coupon rules, stock internals, users or sample-product media. Receipt intentionally need not require current issuer scope/status so own historical claims remain recoverable; it returns only own count and max owned id.",
+        "files": [
+          "workers-ts/src/controllers/api/v1/ProductCouponDirectoryController.ts",
+          "workers-ts/src/services/product/ProductCouponDirectoryService.ts",
+          "workers-ts/src/services/activity/V2CouponCompatibilityService.ts"
+        ]
+      },
+      {
+        "area": "Browser exact receipt and SQL accounting",
+        "result": "Actual App/JWT runs as independently commissioned restricted PG LOGIN. Fault performs a real successful POST first, stores its actual returned couponUserId, then replaces delivered acknowledgement with HTTP503 once. Receipt must match that actual returned id/count after SPA recommendation navigation and return. Only two permitted explicit issuer IDs can POST once each. s.f.state omits coupons, but verify separately compares every issue field allowing only exact remain decrement, owned rows/evidence exact count/UID/issue/source/benefit/relative7-day validity/time bounds, signed R2 bytes/read-only operations, exact product view logs/20-second visit aggregate, and changed sequence final values. Full snapshot protects every other public table and sequence; this is not a hardcoded success boolean.",
+        "files": [
+          "workers-ts/test/browser/pc-product-content.acceptance.ts",
+          "workers-ts/test/helpers/buyerInvoices.ts",
+          "workers-ts/test/helpers/refundRuntimeFixture.ts"
+        ]
+      },
+      {
+        "area": "Owned runner",
+        "result": "Exact maintenance-only audit literal, fixed config/env/95min outer timeout, one worker/no file parallelism; native filename in both explicit whitelist sets. Ten new admission cases intercept genuine native command boundary and reject altered/mixed/overridden/raw browser invocations. Browser listener uses own finite 127.0.0.1 routes, finite static local SVG/PNG, no arbitrary URL/SQL controls. Global external fetch and Queue throw in helper. Finally clears flags, closes listener and writes cleanup.",
+        "files": [
+          "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "workers-ts/vitest.pc-product-content-browser.config.ts"
+        ]
+      }
+    ],
+    "intentionalDifferencesFromPhp": [
+      "PHP PC ordinary /coupons goes StoreCoupons::lst -> getIssueCouponList -> getIssueCouponListNew, whose DAO already limits receive_type=1. The PC template also has a legacy receive_type=4/moneyLevel member-popup branch, but this ordinary DAO does not return type4. The new modern directory does not implement that old popup capability.",
+      "PHP ordinary DAO does not apply the exact new TS category/app filters. New directory deliberately follows existing hardened TS manual grant authority: receiveType=1, appType=0, category in 0/1/2; category2 genuine entitlement is read from existing membership SQL. This is an authorized compatibility boundary, not a claim of full legacy category/receiveType equivalence.",
+      "PHP PC more button merely expands its currently fetched array; TS adds complete total-bound paging. PHP type labels switch only 0/1/2; TS also labels matching brand scope3.",
+      "PHP PC is_use comes from owned relation and disables any prior receipt; TS additionally treats surviving issue_user evidence as received and uses authenticated readonly recovery for unknown outcomes. Server grant repeat-limit behavior is intentionally left unchanged.",
+      "Published attachment ownership/signature checks, active-HTML sanitization, current visible product predicates, safe media normalization and lifecycle isolation intentionally exceed the legacy raw v-html/render behavior."
+    ],
+    "nonBlockingNotes": [
+      {
+        "id": "rendered-ui-evidence-external",
+        "note": "Browser finish validates real backend/SQL flow, not DOM. expectedUI.recommendationCards=5 is an explicit expected constant only. Root Browser must separately record actual five cards, canonical navigation/return, visible member reason, preserved rows on failed/retried page and confirmed readback notice; this reviewer does not claim those DOM observations."
+      },
+      {
+        "id": "exhausted-readback-confirmation-wording",
+        "note": "After exhausted issuer readback confirms, its unlisted pending row disappears and current notice says 已核对当前账号领取记录，请到我的优惠券查看. This is a confirmed outcome, but exact DOM text 已领取 is not present for the retired row. Root has been informed to choose explicit wording or record the existing confirmation notice accurately."
+      },
+      {
+        "id": "memory-lifetime",
+        "note": "Unknown journal is same-tab JavaScript memory across component rebuild/product navigation; no claim of persistence across full document reload, process restart or a different bearer."
+      },
+      {
+        "id": "review-authorship",
+        "note": "Reviewer authored this batch frontend and browser fixture earlier; backend review is independent of its author, but an independent reviewer should still examine frontend/fixture plus runtime evidence before final delivery."
+      }
+    ],
+    "architectureRepair": {
+      "status": "completed-parent-authorized",
+      "reason": "Worker fixed-role startup rejected PC @/api runtime dependency imported through normalizeGoodsDetail",
+      "pureModule": "view/common/pcProductDetailContent.ts",
+      "networkFacade": "view/pc-ts/src/api/productDetailContent.ts",
+      "noWorkerAliasOrConfigRelaxation": true,
+      "finalAuthEvidence": "/tmp/php-ts-pc-product-content-20261115/pc-auth-common-final.json",
+      "finalAuthCounts": {
+        "tests": 480,
+        "pass": 480,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "sourceStable": true
+      }
+    },
+    "validationByReviewer": {
+      "staticSourceAndDiffRead": true,
+      "heavyChecksDuringReadOnlyReview": false,
+      "exceptionExplicitlyAuthorizedByParent": "After native startup failure, complete PC npm run test:auth was requested and executed via single outer validate-serial.sh with Node24 heap8192. Final log/hash proof retained.",
+      "nativeOrWorkerUnitOrTypeBuildRun": false,
+      "browserExecutionRun": false,
+      "notClaimed": "No runtime native/build/browser pass is inferred from this static review."
+    },
+    "guardrails": {
+      "noBackendSourceEditsByReviewerThisTurn": true,
+      "noRunnerEditsByReviewerThisTurn": true,
+      "noCommitOrPush": true,
+      "noReadonlyCredentialPathRead": true,
+      "userNodeModuleSymlinksAndRecoveredResourcesPreserved": true
+    },
+    "updatedAt": "2026-11-15T13:41:09.177338+00:00",
+    "resolvedReviewFindings": [
+      {
+        "id": "review-native-evidence-order-column",
+        "severity": "verification-blocker",
+        "resolution": "Root replaced nonexistent evidence id sort with actual uid/issueCouponId/addTime tuple; reread source confirms.",
+        "file": "workers-ts/test/pc-product-content-native.test.ts:34"
+      },
+      {
+        "id": "review-native-optional-auth-expiration",
+        "severity": "verification-blocker",
+        "resolution": "Root now asserts optional-auth public directory returns uid0 for stale bearer and force-auth receipt rejects it; reread source confirms.",
+        "file": "workers-ts/test/pc-product-content-native.test.ts:74"
+      },
+      {
+        "id": "review-frontend-pure-contract-boundary",
+        "severity": "validation-startup-blocker",
+        "resolution": "Parent-authorized repair moved pure DTO/normalizers to view/common; Worker-facing detail types/adapters no longer import PC Axios/auth module. Final auth 480/480; root owns renewed native startup proof."
+      }
+    ]
+  },
+  "secondIndependentReview": {
+    "createdAt": "2026-11-15T13:48:19.054766+00:00",
+    "reviewer": "/root/pc_content_independent",
+    "mode": "read-only independent static review of final business/frontend/test source; no source edits and no validation runs",
+    "base": "9a60d183f86cc2d0217b09a3762286c0562b9973",
+    "phpHead": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+    "reviewedFileCount": 21,
+    "reviewedSourceSha256": [
+      {
+        "path": "view/common/pcProductDetailContent.ts",
+        "sha256": "2dbabbc837d4a9abdbb0e64dd9e40e29a5b2c9b331d5e0ed3d369a1f4d9da172"
+      },
+      {
+        "path": "view/pc-ts/src/api/productDetail.ts",
+        "sha256": "c8b0cd9310676ee9e93d3d457b5687883c0366bba0011a674d6cdc36ef60fcc9"
+      },
+      {
+        "path": "view/pc-ts/src/api/productDetailContent.ts",
+        "sha256": "4e6b51722ed7a10f91ba7fe6e328eb99659ba2da7245e578aaf57c0e7aacd74a"
+      },
+      {
+        "path": "view/pc-ts/src/components/ProductDetailContent.vue",
+        "sha256": "b3bc233a1e5e7b2bf1418473e23482ba15846aa1f95174657e6854098c1d5e80"
+      },
+      {
+        "path": "view/pc-ts/src/composables/useProductDetailContent.ts",
+        "sha256": "4b3cb329ade6f93c88463f316d4eadb931ad8aeb2c1a5d8260ac16753452c074"
+      },
+      {
+        "path": "view/pc-ts/src/pages/goods/GoodsDetail.vue",
+        "sha256": "5585c00fe704669da0431d9f2b02c32db69a1060242b4cca2a2bb68f34aa4b18"
+      },
+      {
+        "path": "view/pc-ts/src/types/product.ts",
+        "sha256": "27200acf80a11fa19410109e3693ea1f8e5a527e31aec660fb420fd9981ef142"
+      },
+      {
+        "path": "view/pc-ts/test/auth-session.test.mjs",
+        "sha256": "cc9ab95c0918623975b5912963103b695542f5da7444147a0ee40849e946a8a2"
+      },
+      {
+        "path": "view/pc-ts/test/product-detail-content.test.mjs",
+        "sha256": "c2fea4be0459ca71dae65104154235f7437c1f82f39a21f719eebf9dc717931b"
+      },
+      {
+        "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+        "sha256": "aec6c273304839d6a4b52bd11f7d305865fec8578cc4cb3aec5c4d6d824ee4a2"
+      },
+      {
+        "path": "workers-ts/src/controllers/api/v1/ProductCouponDirectoryController.ts",
+        "sha256": "06ac432af06ae39b367e7a7df14879070da8405896d192786d696b6a46f69287"
+      },
+      {
+        "path": "workers-ts/src/controllers/api/v1/UserActivityController.ts",
+        "sha256": "8c1910fe7e3826bacd7aa222db3f145f7a9fefcba69e60d2221be90b66a563af"
+      },
+      {
+        "path": "workers-ts/src/routes/v1/index.ts",
+        "sha256": "06dbafcd2803cf66e38b71d360e56718f2f7a5081568c16f3e289ada976325bb"
+      },
+      {
+        "path": "workers-ts/src/services/activity/MembershipCouponService.ts",
+        "sha256": "0d3c9e0eb2553fb9270a9691d48458dbc053244a4c02cf1afaed070c18eeeb81"
+      },
+      {
+        "path": "workers-ts/src/services/activity/V2CouponCompatibilityService.ts",
+        "sha256": "aaf5cb640cee2a832bbba14687588ef60b3b14be342524155d2d532c3a9233ca"
+      },
+      {
+        "path": "workers-ts/src/services/product/ProductCouponDirectoryService.ts",
+        "sha256": "687934cd5448cf0232d7092d99e2eb0ce79b1c1428088c368c35d52b5845ba2d"
+      },
+      {
+        "path": "workers-ts/test/browser/pc-product-content.acceptance.ts",
+        "sha256": "d20cf1e0c15ebc76656088a39d7ff7f5731efc7dc90898ad6666fe84bba23677"
+      },
+      {
+        "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+        "sha256": "3c088d9a2ef78801c607f969142d5755da33709b1a013384b572fa1c2f9ec1b9"
+      },
+      {
+        "path": "workers-ts/test/pc-product-content-contract.test.ts",
+        "sha256": "f05336cde1796839f6276822817fa79dbc83e1689ad7fc306a34928350b5825b"
+      },
+      {
+        "path": "workers-ts/test/pc-product-content-native.test.ts",
+        "sha256": "7cc406034a3ae206fc3520f1a50fe6b5b7203791a0bc1ea104e3ebae5e0d4464"
+      },
+      {
+        "path": "workers-ts/vitest.pc-product-content-browser.config.ts",
+        "sha256": "1fb598b43fbe0ab0dc6fc78a7e38a82ce73ac640fd2395a3a232ce3df2e4e5d0"
+      }
+    ],
+    "matchesCandidate2": true,
+    "sourceDeltasFromCandidate2": [],
+    "phpSourceSha256": [
+      {
+        "path": "view/PC/pages/goods_detail/_id/index.vue",
+        "sha256": "1aac380500a5e470803623968f2dcc33c6de9c29c688eff5dc64c94327e2d3c0"
+      },
+      {
+        "path": "app/controller/api/v1/activity/StoreCoupons.php",
+        "sha256": "9200aa2908a9293134ea180a2b9d5e538a7182f1ff5d1ca7391231d327ed5665"
+      },
+      {
+        "path": "app/services/activity/coupon/StoreCouponIssueServices.php",
+        "sha256": "7d9a2861828ddb233c885ed85bc29885f5cc873d8d218133b1397eba57e948c2"
+      },
+      {
+        "path": "app/dao/activity/coupon/StoreCouponIssueDao.php",
+        "sha256": "d216691392c2ffb14b70ca76eaf5dc4d1fdd2b512bf98fb5774020427f1f26ea"
+      }
+    ],
+    "businessBlockingFindings": [],
+    "verificationBlockingFindings": [
+      {
+        "id": "native-missing-membership-right-fixture",
+        "severity": "verification-blocker",
+        "path": "workers-ts/test/pc-product-content-native.test.ts",
+        "line": 60,
+        "observedEvidence": "/tmp/php-ts-pc-product-content-20261115/candidate-2-native.log",
+        "result": "candidate-2 native terminal exit 1: 4 passed, 1 failed; line 66 expected claimable true but actual membership coupon right disabled",
+        "cause": "Test only updates memberRight coupon status; fixture need not contain any coupon right, so zero-row UPDATE does not enable entitlement. Browser seed already inserts an explicit coupon right when absent.",
+        "requiredResolution": "Declare/insert actual coupon right fixture, retain business eligibility checks, rerun affected native suite and bind final hash."
+      }
+    ],
+    "coverage": [
+      {
+        "area": "PHP primary content and five recommendations",
+        "conclusion": "Core PHP v-html description, empty state, five-card cap, product title/image/price/sales and canonical recommendation navigation are restored. Full bounded recommendations validated before first five are chosen; body is allowlist sanitized and signed published attachments stay under existing backend media authority."
+      },
+      {
+        "area": "Complete applicable coupon directory",
+        "conclusion": "All four PHP applicability kinds preserved, including category and brand immediate parents and CSV/relation product matches. Directory uses visible-product predicates, bounded unique selectors, repeatable-read READ ONLY and explicit minimized projection. Authenticated actor rechecked before, inside and after; anonymous uid0 is intentional. Coupon issue internals/rules/foreign users are absent."
+      },
+      {
+        "area": "Claim authority and membership",
+        "conclusion": "Only preexisting ActivityService receive API grants. Directory category/app/receive filters match hardened manual grant domain. Category2 eligibility calls existing paid membership authority; no member bypass. Previously received issuer disabled on PC even when existing grant receiveLimit permits repeats."
+      },
+      {
+        "area": "Uncertain outcomes and lifecycle",
+        "conclusion": "Ledger created before POST; uid/token/issuer key blocks repeats and follows same-tab SPA remount or product return. Explicit receipt GET recovers exhausted issuer through unlisted pending section. Any stale identity/generation/route/query/hidden/unmount response cannot refill current content. Zero record requires explicit end then another user action; no automatic repeated POST."
+      },
+      {
+        "area": "Native and browser test authenticity",
+        "conclusion": "Native uses actual App/JWT/restricted PG16 LOGIN. Browser serves built PC bundle and actual App responses, mutates only finite declared local fixtures, loses acknowledgement only after actual grant, records exact couponUserId, enforces two unique permitted POSTs, compares all other tables/sequences and exact coupon fields/stocks/logs/R2. Tests do not prove DOM: rendered five cards, visible membership reason, pagination retry and notices still require root Browser observations."
+      }
+    ],
+    "nonBlockingNotes": [
+      {
+        "id": "receipt-scope",
+        "note": "Receipt intentionally accepts any issuer id under a valid visible product, returns only current actor own count and owned max id. This retains historical/exhausted issuer recovery and gives no foreign user or coupon issue details. Do not describe receipt as current product-scope eligibility proof."
+      },
+      {
+        "id": "unknown-memory-lifetime",
+        "note": "Journal is same-tab JS module memory; no claim of cross-document reload/restart persistence. This boundary is explicit in code."
+      },
+      {
+        "id": "pagination-equal-total",
+        "note": "Offset continuation detects changed total or overlapping ids. Same-total nonoverlapping reorder can still move items; do not claim a durable cross-request snapshot cursor."
+      },
+      {
+        "id": "legacy-route-bounded-contract",
+        "note": "Legacy /coupons product_id branch intentionally narrows selectors to old PC needed product_id/page/limit, follows hardened TS self-claim categories and maps member category2 to legacy type4 display marker. Full PHP raw-selector/category equivalence is not claimed."
+      },
+      {
+        "id": "browser-evidence",
+        "note": "No Browser run or final build/type/unit pass was performed or inferred by this independent static review."
+      }
+    ],
+    "guardrails": {
+      "noSourceEdits": true,
+      "noHeavyValidation": true,
+      "noCommitPush": true,
+      "noCredentialPathReads": true
+    }
+  },
+  "reviewResolution": "Native membership fixture blocker fixed in candidate3 and 5/5 passed; candidate5 changes only browser sample admission.",
+  "restoredResources": 150,
+  "preservedUserSymlinks": 5,
+  "scope": {
+    "wholeMigrationComplete": false,
+    "schemaChanges": false,
+    "migrationChanges": false,
+    "permissionExpansion": false,
+    "deploy": false,
+    "phpUpload": false
+  },
+  "artifactHashes": [
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/accepted-counts.json",
+      "sha256": "d4cce43823b7de962eb644ec81a45b7bd8b17360797d6d5f6d68e53e64e3746d"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/baseline-files.json",
+      "sha256": "dae9304394cff10ec00fc351cc5d27fb3c300f78cb5776c96b74aa9428b57713"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/browser-attempt-1-cleanup.json",
+      "sha256": "ed5c9b3c6c976666d15c06a9d21a998bb2b5fbb6e40f722fe80bb967e1da0262"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/browser-attempt-1-command.json",
+      "sha256": "d3edac814a0d0b13196e7bb6df8bdd90382347f3866087765d8416be67b42f14"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/browser-attempt-1-desktop-body.jpg",
+      "sha256": "814d00644f8479488d0b4475913bbbf41f6b01e8947c23de689d1a22e244ba35"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/browser-attempt-1-driver.log",
+      "sha256": "08b4a02a2819a94ec76173f1f8f0faddb2142721b3f9043f4aceb6495be2c0b7"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/browser-attempt-1-frozen-inputs.json",
+      "sha256": "cbc33426742a0bb425866ca0ccb16be34e9f8d596be28086d262c10b0056dacf"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/browser-attempt-1-native.log",
+      "sha256": "a1d4b579144d9cd1d6574246ae5c86cce2fe5275aec6d4d363c7b6c055560a65"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/browser-attempt-1-ready.json",
+      "sha256": "38888d7a384f2e905f1b686efacd6ca85f79dbbf392fe60d704bade2a1bef2c0"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/browser-cleanup.json",
+      "sha256": "d3c73ad31f08747785742c4b4568d78f643c073c13128fa9299956c3d2723077"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/browser-command.json",
+      "sha256": "d66c2c97e77de0a76d396bf1d73bd816fe145bafff9328150ba1f19d76d288d2"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/browser-desktop-coupons.jpg",
+      "sha256": "8fa2a0f930e5642dad85745bb77de29fabb9bd0350660e48c339596b32abb577"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/browser-desktop-recommendations.jpg",
+      "sha256": "08fb7ea3bb3186860f72b03468ab6e75fd7673674c15962992724ad28ca1a494"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/browser-driver-pid.json",
+      "sha256": "a17ab6ff46e99edfafc4de75f2c660b2d27913068c34de7f84672bc557d43893"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/browser-driver.log",
+      "sha256": "6762aadf206f5d2dc2574cad83e6055d53f879682777d42f8f363db9be0a235f"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/browser-fixture-handoff.json",
+      "sha256": "4b782215b4abc0198c3bd38d5a79386e2f542d3b2c92ec09b1caa8f553eb0268"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/browser-frozen-inputs.json",
+      "sha256": "c12c3fa08062971f6a57f6d4f83e1bf3cd00c69caaf76e7c6f093b12fb1ff665"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/browser-mobile-coupons.jpg",
+      "sha256": "7d4ba6ed9c76e95856434a3fed7ee3758c1f46bca384f8b020b0e704fde37d2d"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/browser-native.log",
+      "sha256": "cf291addfb169ccc3bb7c02f7422ae382025a69e27410a8b9bac4a67dc6578de"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/browser-ready.json",
+      "sha256": "a44d95efdb04ca602de122a09c9a37543e1fe09b44b7590f2e198b904d142732"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/browser-result.json",
+      "sha256": "dfd5f4c90de92ccba00f1e1702529f2e25f74d81d568ce911a357180511e0138"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/browser-run.py",
+      "sha256": "7044b66b3724a0257c147832fe1c1488302f3d082b2733ca46b885d1a40fd66e"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/browser-ui-evidence.json",
+      "sha256": "3efa30d68d8b6d5b3e81aee7a607618d073fce342f33368b81eae1397654e684"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-1-dependencies.json",
+      "sha256": "62dcb3020026b90994141cd55bd68e88c56ee2fd2768b4293ead062ec20da7ab"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-1-native.log",
+      "sha256": "8aa88b2d363570a4d6836c5a8a7f66b1a9ec5a06ef6c08ac250a45ffb71903e9"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-1-source.json",
+      "sha256": "a01e4f42101e61b683379b843dd574b79da779664eb6ea790f122626f0b42f45"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-1-validation.json",
+      "sha256": "39742077f212728d8f6503757af015b0b99974d8e4f824ee2a4f762a687522b5"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-2-dependencies.json",
+      "sha256": "62dcb3020026b90994141cd55bd68e88c56ee2fd2768b4293ead062ec20da7ab"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-2-native.log",
+      "sha256": "4399680a18ce5899017212a55edba84165c96abc00344d59570ccb2950c8d928"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-2-source.json",
+      "sha256": "792da2f0f69a52153ebfc915d48dc2e28e4940c14112ddd6323d1fb09bd4a490"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-2-validation.json",
+      "sha256": "dd9773cdb10c0dc702f7143327863f2877b51b9f7c9f8172ff07ae0343123ad0"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-3-dependencies.json",
+      "sha256": "62dcb3020026b90994141cd55bd68e88c56ee2fd2768b4293ead062ec20da7ab"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-3-lineage.json",
+      "sha256": "6d966ed69bbb2a950f851730ca2cff18a801ab228b6b53b30e2405e4a7ae5a59"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-3-native.log",
+      "sha256": "2c8e57e0bfebcde094c591cc9944ee866c6e010170c23e58261f8fac257498a3"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-3-source.json",
+      "sha256": "bc3c0f03b8bd70d8164d7849a11c643a9d30911a2d2a3478123c6d431da36c81"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-3-unit.json",
+      "sha256": "a98447001b1ba5fbec12e96f9d59f62f9f020b75c8a2a069263bff264456ed19"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-3-unit.log",
+      "sha256": "8c916ca089e771999d014a5963c5f77616658b421ad0c50f22949ed954e06507"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-3-validation.json",
+      "sha256": "973dedb0e2ec9c9c9b460d5518bd7a16ba068aa7f5e2b7e4a1292dbd081137b0"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-4-build-files.json",
+      "sha256": "0ac2dd3e898d7574ef96884c15a0546f1e24e255f3ca8a7693d719c04022b22a"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-4-dependencies.json",
+      "sha256": "62dcb3020026b90994141cd55bd68e88c56ee2fd2768b4293ead062ec20da7ab"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-4-lineage.json",
+      "sha256": "3afa079c9600255f0e3318542629bfa9eb978be112bbbb016b50368fe0aefb63"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-4-membership-native.log",
+      "sha256": "898a921655c17f8e3645e636b292b818be42dcf9c87d2a6a8323de3b0a9ddb3e"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-4-pc-build.log",
+      "sha256": "ae0d7e4963904a1d4cf2a93f62abcc2fd1bd6ef1b1b49322aebc1dfc9befadbe"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-4-production-audit.log",
+      "sha256": "4ca0bc8f609b8cd4e43a18d0faebf8f0b05d91b15ee6386fb48a789c00393192"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-4-runtime-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-4-secret-scan-comparison.json",
+      "sha256": "d794bf0ba26770a204839db73a622ea19e4ee84134f41775eb60731c84d85c32"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-4-source-baseline-secret-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-4-source-baseline-secret-scan.log",
+      "sha256": "db3fe65fa608a57ff1bcd73c7769a7a556f252620defc1a5f54feb74601d3434"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-4-source-secret-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-4-source-secret-scan.log",
+      "sha256": "4b417a97414c3dcc0ce207881b3196b2960ae07039f6bd159fbae7994f307a48"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-4-source.json",
+      "sha256": "f222d34ec59d889de55ad67049f6cf677f7f6f5b6e9ffe2e450cad7dd7e61fdb"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-4-type-options.log",
+      "sha256": "719fb39e5ea00c4ab788456c91895f3ce4ae5d4aa24db31b7d830f550aba0eaf"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-4-type-partition.log",
+      "sha256": "971cfaf626cfc92726f40dd8c6f0a00c1bcb38c2216f488d8f05f5b5cf44428c"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-4-unit.json",
+      "sha256": "4dc88837d2b10b3a11941010f31d70edac8d1f891275cbd20c9ab0fe6b79f732"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-4-unit.log",
+      "sha256": "e5ab5f4864332160eda478abd97d7acf812037110649ec776b0ae66b34326ab9"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-4-validation.json",
+      "sha256": "2d7f5b62f7c2b909f783754778ff79ebce13fb1449e12be45ab56574f99b2a7c"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-4-worker-types-1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-4-worker-types-2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-4-workerd.log",
+      "sha256": "942d6cb81ccc7f176a59be8519a1161d408f1561b9fe963811add7594d47e7fb"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-5-dependencies.json",
+      "sha256": "62dcb3020026b90994141cd55bd68e88c56ee2fd2768b4293ead062ec20da7ab"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-5-lineage.json",
+      "sha256": "5ae2f8465fe56113bd451587e678ed766d4a1f54c00265c1ed8a47d84446b6f8"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-5-secret-scan-comparison.json",
+      "sha256": "d794bf0ba26770a204839db73a622ea19e4ee84134f41775eb60731c84d85c32"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-5-secrets.log",
+      "sha256": "de0b4a7decb74863cde9ed931581fc8cb3b64938928b8579aadbf8b388aa8c82"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-5-source-baseline-secret-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-5-source-baseline-secret-scan.log",
+      "sha256": "02efc07e9ff3f912b0f75d77b30c18b3edb75d6cde1629f9e1180ca2993c9882"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-5-source-secret-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-5-source-secret-scan.log",
+      "sha256": "a8b040310c114556a37beaa6fc599dcee17f55ce4429c7516f1ecbe06fa8a127"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-5-source.json",
+      "sha256": "9b930819208e6f9e866646e812cf9ca004ebb3c93534a575e2d475b61dd99c25"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-5-stabilization.json",
+      "sha256": "7078fce0da7ab4fa4708306abed37867c63d88e405405be9ed39a8de37d98e9c"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/candidate-5-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/check-options-verified.cjs",
+      "sha256": "d48353668487bf2d490f781fe69d5a859a2bc2c9fa36a04ae4368116d044a490"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/design-native.log",
+      "sha256": "5ac02dce3635029c993eb9860926c71cec39f751fdf359d5588f2a036a8891dd"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/files.json",
+      "sha256": "12b10e66e4bf0801c9e5532df9e05b430b576ec2dcfe90f5a36ff6903098034d"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/final-dependencies.json",
+      "sha256": "62dcb3020026b90994141cd55bd68e88c56ee2fd2768b4293ead062ec20da7ab"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/final-source.json",
+      "sha256": "9b930819208e6f9e866646e812cf9ca004ebb3c93534a575e2d475b61dd99c25"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/frontend-common-refactor-handoff.json",
+      "sha256": "f14b8643709c15a041d656c1eb5adc51e2c5832ddc6621efca4217add25439b0"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/frontend-handoff.json",
+      "sha256": "f57addeb6c964d9932d338b53a01634094fbf163f72c9bd8e66576889eef9bab"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/full-file-attempt-1-resolution.json",
+      "sha256": "d067ffb5f82cfadfe255b4825bf4dacf84a125173fc3278d13f623d333782240"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/full-file-attempt-1-secret-scan.json",
+      "sha256": "c48c2fcb7a894813b3a2536b14cfdf4b7329929611e6d3544e0afcbd70dff69b"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/full-file-attempt-1-secret-scan.log",
+      "sha256": "02b03019da28034081a2cfb85c70764b9928cd2c0dd0a087a0cde4919c7d3ef5"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/independent-review.json",
+      "sha256": "05ad43c1f3eafd708d58a3bd351054aec991dc366d19ab2ff977e403d40d6141"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/independent-second-review.json",
+      "sha256": "4d241a6b2b596bbdc88bf6a191626bc9157e0868ee99c672468b269081cc305b"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/pc-auth-attempt-1.json",
+      "sha256": "f1ec274286389e9a6d0c28643888afdfe5ab4f79d305a50625398fd9c1fc3c5b"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/pc-auth-attempt-1.log",
+      "sha256": "9c65a44f5c27677d8895c537c818e46b24e5bc86f1a624103b9a58ecf3898d18"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/pc-auth-attempt-2.json",
+      "sha256": "a841d0b1d101332b049ea546aa386e6f10dc99dfa9a7fd0ad4891cdab2f60000"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/pc-auth-attempt-2.log",
+      "sha256": "807c3175a74c748f7d5a22482da1d6cd8c5e2a21a013c3a68ab56213d161e1cb"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/pc-auth-attempt-3.json",
+      "sha256": "57204e99137de3d6bdf30ef08e6fac80a8f4a4b5a67a85a296cbf1c58dc2f4d3"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/pc-auth-attempt-3.log",
+      "sha256": "52c27e13a9fab12fb5fd1cd5cd0281c969799609bc00d89dcab3c6a353d9576c"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/pc-auth-common-final.json",
+      "sha256": "e1d09ce86b3d77cc6e82439b89b493b5ffc8c6caea57a9aacd78f7c9d1b6a3a0"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/pc-auth-common-final.log",
+      "sha256": "d9003842ba19018d403ea5ec5a8fec83ee4addbbdc8aff6a6ab3d7dbbe988e3e"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/pc-auth-common-refactor.json",
+      "sha256": "a4eee2247cd60d7d98c38184a9f609d32e1f364ed5be83a9c4cc313ce98e2680"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/pc-auth-common-refactor.log",
+      "sha256": "6a93a044d5ff6bce58023bb2a4f7c883a5b407e55ecd92646e3890bbf5acb078"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/pc-auth-final.json",
+      "sha256": "fdd979f3ca310a9ff5f9ec3e627310787bae5f0757177b0a31ae294b8b91e511"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/pc-auth-final.log",
+      "sha256": "f3bf5012e94859118a1700b4a90b46037a647340918c9bf6cbea89ad1471c35a"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/php-parity.json",
+      "sha256": "ca9c723d792797955400de605c66f22e439d735b50d66c8960d4a31d872b0bfd"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/post-validation-driver.log",
+      "sha256": "799026bd490434b020d482898b210642a4bf26f8ba281e238c87494a42f76086"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/post-validation-pid.json",
+      "sha256": "af8ff1c1e296d6bdc53e600f0a609a69d1b38f3789b50c8a6450fe056d99d358"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/post-validation-result.json",
+      "sha256": "f39359c27398861d69935b5b8f721256d47f6147fa7987ee6ed6b059398b2e61"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/post-validation.py",
+      "sha256": "f836c64760d226e593ecbbecdfccf3d4590f842f76c89a213a00d160cbe3d258"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/prepare-attempt-1.json",
+      "sha256": "ef869740e4e72b7a0eecc02cff2c7a62a15b8d9f169583b5c8df150f56bff7a6"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/prepare-attempt-2.json",
+      "sha256": "cfe108692695accc2bc5342b6164a97c31d9f1f4b82e3c86aed608267c5e6272"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/resource-cleanup.json",
+      "sha256": "6665b074eec1b96285da4580eba18893270db0113a1e6ae1c59dbb0aeb798849"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/restored-resources.json",
+      "sha256": "2805035753af768b74ac4b987581644a085a6b857765a6c19ac0a2a6cd8fdd57"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/run-validation.py",
+      "sha256": "51a9830612bbbb75c78e46c55da8b41936e2440374c18e1a2f2ad2269af1d00d"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/scan-final-files.py",
+      "sha256": "1d2b5080f7e92fde2f943b88155049216ab6341e14491ea2794d98713746b4bd"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/scan-source.py",
+      "sha256": "4b87530111bdc9db4a468557dd18fec42f35bdd9ad0c277ec9cdc902161991fd"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/source-secrets.log",
+      "sha256": "812cb9240ed20be61fd2b7b4ddbc69b1fbd351e850e29489b9af3d17b3298b8e"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/stabilization-driver.log",
+      "sha256": "d7ee18328c855191c5080a09f22eca4e89971566a6a94b0cdffb8f09e5bcedbb"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/stabilization-pid.json",
+      "sha256": "5d8e1cd4c0bec7f475b8270cb52a164e5d403020dd03796862c79048244ceb53"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/stabilize-browser.py",
+      "sha256": "1877c2765928f4ebd8c2dce7e6fc18b54b28c1d97e9f425974d9a7ee3e0b99bb"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/type-shards-verified.cjs",
+      "sha256": "5ed250d5b2646be24db5fd881bb270eafe73e741b6b0210e9463ed6acfc1a515"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/type-shards-verified.json",
+      "sha256": "4c35ee9a46fd8a779b8e3b0f5bc74ea1a3490c3e7f11e5595db1433e76fa0f85"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/user-symlinks.json",
+      "sha256": "32f0ae750787e6bde76a8d6f60ab3e6f135ecff1c9e7cc3b06bd86a820fae4ca"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/validation-driver-2.log",
+      "sha256": "fb77a3eff5be8575dc0ad83621f2c05d375935b610e60e71a2f60eae85d4de68"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/validation-driver-3.log",
+      "sha256": "8d4d5d84955d0c8c6c94eef16edbb6a5f532f6ca8cbc0d52a0a435a7d24bf9a7"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/validation-driver-4.log",
+      "sha256": "dcd128dc329be6ce6f45699439b6eb6d007f4673c8df1f161c658f8087eed669"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/validation-driver-attempt-1.log",
+      "sha256": "380d68e25ce44d33c417239f1c9b89dd097805196ff891ea806f38cc63865143"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/validation-driver.log",
+      "sha256": "c5f9548698423c5765e744ca90e160414ca633edc9c9f00e9449a1b712d22e15"
+    },
+    {
+      "path": "/tmp/php-ts-pc-product-content-20261115/validation-pid.json",
+      "sha256": "ab09197c249f0670c243e6d6cd0f8c6e126b4eb112acb2dbbe0ca0ec84d866f8"
+    }
+  ],
+  "finalCommitAndCI": "/tmp/php-ts-pc-product-content-20261115/completion.json"
+}

@@ -1,3 +1,4 @@
+import { legacyProductList } from './ProductCouponDirectoryController';
 /**
  * 用户中心 + 营销活动控制器 (M5)
  */
@@ -374,6 +375,7 @@ export async function signCalendar(c: C) {
 // ─── 营销活动: 优惠券 ───────────────────────────────────────
 
 export async function couponList(c: C) {
+  if (new URL(c.req.url).searchParams.has("product_id")) return legacyProductList(c);
   const svc = new ActivityService(c.get("container"));
   return jsonOk(c, await svc.couponList());
 }

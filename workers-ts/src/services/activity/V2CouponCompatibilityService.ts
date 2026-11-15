@@ -333,6 +333,23 @@ function rawRows<T>(value: unknown): T[] {
 export class V2CouponCompatibilityService {
   constructor(private readonly container: Container) {}
 
+  /** Same legacy scope resolution, with a modern complete product directory.
+   * No sample-product media or unrelated issue rules are returned to this consumer. */
+  async productDirectoryIssues(productId: number, page: number, limit: number, now: Date) {
+    const query = parseLegacyCouponQuery({product_id: productId});
+    const context = await this.productContext(productId);
+    const condition = and(validCouponCondition(now), listScopeCondition(query, context, now),
+      eq(storeCouponIssue.receiveType, 1), eq(storeCouponIssue.appType, 0), inArray(storeCouponIssue.category, [0, 1, 2]));
+    const [count] = await this.container.db.select({n:sql<number>`count(*)::int`}).from(storeCouponIssue).where(condition);
+    if (Number(count?.n ?? 0) > 10000) throw new ValidateException('商品优惠券超过完整读取容量');
+    const issues = await this.container.db.select({id:storeCouponIssue.id,title:storeCouponIssue.title,couponTitle:storeCouponIssue.couponTitle,
+      category:storeCouponIssue.category,couponType:storeCouponIssue.couponType,type:storeCouponIssue.type,
+      couponPrice:storeCouponIssue.couponPrice,useMinPrice:storeCouponIssue.useMinPrice,day:storeCouponIssue.day,
+      useStartTime:storeCouponIssue.useStartTime,useEndTime:storeCouponIssue.useEndTime,receiveLimit:storeCouponIssue.receiveLimit})
+      .from(storeCouponIssue).where(condition).orderBy(desc(storeCouponIssue.sort),desc(storeCouponIssue.id)).limit(limit).offset((page-1)*limit);
+    return {total:Number(count?.n ?? 0),issues};
+  }
+
   async available(uid: number, rawQuery: Record<string, unknown>, now = new Date()) {
     const query = parseLegacyCouponQuery(rawQuery);
     const context = await this.productContext(query.productId);

@@ -1,5 +1,6 @@
 import type { GoodsDetail } from "../types/product";
 import { normalizeGoodsSkus } from "./productPurchase";
+import { normalizeProductDescription, normalizeDetailRecommendations } from '../../../common/pcProductDetailContent';
 
 /** The detail endpoint uses ORM camelCase plus computed snake_case fields;
  * older clients/responses use snake_case. Keep that wire format out of views. */
@@ -72,5 +73,7 @@ export function normalizeGoodsDetail(value: unknown): GoodsDetail {
     userCollect: field("userCollect") === true || field("userCollect") === 1,
     userLike: integer("userLike"),
     uid: integer("uid"),
+    description: normalizeProductDescription(field('description')),
+    recommendations: normalizeDetailRecommendations(field('recommend')),
   };
 }
