@@ -388,9 +388,16 @@ export async function assertRegisteredDatabaseCohort(db:Pick<DbClient,'execute'>
   assertCashierAuditManualRedNoteCatalog(manual.rows,scope==='current-bare-orm'?'orm':path==='orm'?'embedded':path);
 }
 export function assertExternalMigrationCohort(files:string[]) {
-  assert.equal(files.length,182);
-  assert.equal(digest(JSON.stringify(files)),"65a24b56d6a6bb81538d593cf104b7cf404d953ce26105433de3ae0f14ede67a");
-  const beforePhysical=files.filter(file=>file!==additions.store_order_purchase_physical_origin.file);
+  assert.equal(files.length,183);
+  assert.equal(digest(JSON.stringify(files)),"9ad342010daa53020f653132021d9710da785ca45869ddf6d3bd5c277be574aa");
+  const reviewFile='0185_review_community_sync.sql';
+  const reviewSource=readFileSync(resolve(root,'migrations',reviewFile),'utf8').replace(/\r\n?/g,'\n');
+  assert.equal(digest(reviewSource),'53e3c1bb763b453addc7d0048ff2b253b8aeaa23a9c9425bfe2eed6f74566d75');
+  assert.deepEqual([...parseCreateTables(reviewSource,'postgres').keys()],[]);
+  const beforeReview=files.filter(file=>file!==reviewFile);
+  assert.equal(beforeReview.length,182);
+  assert.equal(digest(JSON.stringify(beforeReview)),"65a24b56d6a6bb81538d593cf104b7cf404d953ce26105433de3ae0f14ede67a");
+  const beforePhysical=beforeReview.filter(file=>file!==additions.store_order_purchase_physical_origin.file);
   assert.equal(beforePhysical.length,181);
   assert.equal(digest(JSON.stringify(beforePhysical)),"c05f257ea765a374894d35542df54a709cdea7935529178f2f139d8562e0cb07");
   // These two registered CHECK successors add no table. Preserve every older

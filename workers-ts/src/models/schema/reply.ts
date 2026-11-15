@@ -71,6 +71,10 @@ export const storeProductReply = pgTable(
     viewsNum: integer("views_num").default(0).notNull(),
     /** 0=未审核 1=已通过 (审核后展示) */
     status: smallint("status").default(1).notNull(),
+    /** Explicit opt-in, immutable payload digest and durable one-post receipt. */
+    communitySyncRequested: smallint("community_sync_requested").default(0).notNull(),
+    communitySyncDigest: varchar("community_sync_digest", { length: 64 }).default("").notNull(),
+    communitySyncPostId: integer("community_sync_post_id").default(0).notNull(),
     /** 0=普通 1=置顶 */
     top: smallint("top").default(0).notNull(),
     /** 删除标记 */

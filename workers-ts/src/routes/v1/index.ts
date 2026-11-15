@@ -1,4 +1,4 @@
-import { buyerReviewOrder, buyerReviewSubmit } from '@/controllers/api/v1/BuyerReviewController';
+import { buyerReviewOrder, buyerReviewSubmit, buyerReviewCommunityRetry } from '@/controllers/api/v1/BuyerReviewController';
 import { buyerInvoiceView, privateBuyerInvoiceResponse } from '@/controllers/api/v1/BuyerInvoiceController';
 import * as UserExtractController from '@/controllers/api/v1/UserExtractController';
 import * as AdminWechatOpen from "@/controllers/api/v1/AdminWechatOpenController";
@@ -862,6 +862,7 @@ v1Routes.get("/order/data", authMiddleware({ force: true }), OrderController.ord
 v1Routes.post("/order/prize/:orderId", authMiddleware({ force: true }), OrderController.orderPrize);
 v1Routes.get("/order/write/records/:id", authMiddleware({ force: true }), OrderController.orderWriteoffRecords);
 v1Routes.get("/order/reviews/:uni", authMiddleware({ force: true }), buyerReviewOrder);
+v1Routes.post("/order/reviews/:uni/community-sync", authMiddleware({ force: true }), buyerReviewCommunityRetry);
 v1Routes.post("/order/product", authMiddleware({ force: true }), OrderController.orderProduct);
 v1Routes.get("/order/pay_cashier", authMiddleware({ force: true }), OrderController.orderPayCashier);
 v1Routes.get("/order/system_form/:id", authMiddleware({ force: true }), OrderController.orderSystemForm);

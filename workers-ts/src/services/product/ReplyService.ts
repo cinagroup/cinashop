@@ -1,3 +1,4 @@
+import { reviewSyncRequested, reviewSyncDigest, verifyReviewSyncIntent } from './ReviewCommunitySyncIntent';
 /**
  * 商品评价 Service
  *
@@ -42,6 +43,7 @@ export interface BuyerReviewMutationPolicy {
 }
 
 export interface SubmitReplyInput {
+  isSync?: unknown;
   unique: string;
   comment: string;
   productScore: unknown;
@@ -52,6 +54,7 @@ export interface SubmitReplyInput {
 }
 
 export interface NormalizedReplyInput {
+  isSync?: true;
   unique: string;
   comment: string;
   productScore: number;
@@ -96,6 +99,7 @@ export function normalizeReplyInput(input: SubmitReplyInput): NormalizedReplyInp
     throw new ValidateException(`评价内容不能超过 ${MAX_COMMENT_LENGTH} 个字符`);
   }
   return {
+    ...(reviewSyncRequested(input.isSync)?{isSync:true as const}:{}),
     unique,
     comment,
     productScore: normalizeScore(input.productScore, "商品评分", 1, 5),
@@ -675,7 +679,7 @@ export class ReplyService {
     uid: number,
     rawInput: SubmitReplyInput,
     policy?: BuyerReviewMutationPolicy,
-  ): Promise<{ id: number; oid: number; completed: boolean; to_lottery: boolean }> {
+  ): Promise<{ id: number; oid: number; completed: boolean; to_lottery: boolean; communitySyncDigest?:string }> {
     const input = normalizeReplyInput(rawInput);
     const c = this.container;
     const [matches, user] = await Promise.all([
@@ -710,9 +714,11 @@ export class ReplyService {
       const mediaProof = await validateBuyerReplyMedia(tx, uid, input.pics);
       await policy?.check(tx,order,cart);
       const now = Math.floor(Date.now() / 1_000);
+      const values=replyValues(order,cart,user,input,now);
+      const syncDigest=input.isSync?await reviewSyncDigest(values):'';
       const inserted = await tx
         .insert(storeProductReply)
-        .values(replyValues(order, cart, user, input, now))
+        .values({...values,...(input.isSync?{communitySyncRequested:1,communitySyncDigest:syncDigest,communitySyncPostId:0}:{})})
         .onConflictDoNothing()
         .returning({ id: storeProductReply.id });
       if (!inserted[0]) throw new ValidateException("该商品已评价");
@@ -730,7 +736,8 @@ export class ReplyService {
       if (rating) await verifyReviewProductSnapshot(tx, rating);
       await verifyBuyerReplyMedia(tx, mediaProof);
       await policy?.verify(tx,order,cart,completed);
-      return { id: inserted[0].id, oid: order.id, completed, to_lottery: entitlement.activityId > 0 };
+      if(input.isSync)await verifyReviewSyncIntent(tx,inserted[0].id,syncDigest);
+      return { id: inserted[0].id, oid: order.id, completed, to_lottery: entitlement.activityId > 0,...(syncDigest?{communitySyncDigest:syncDigest}:{}) };
     });
   }
 

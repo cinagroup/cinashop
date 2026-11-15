@@ -1,3 +1,5 @@
+import { REVIEW_COMMUNITY_SYNC_SQL } from '@/migrations/reviewCommunitySync';
+import { runReviewCommunitySync } from '@/migrations/runReviewCommunitySync';
 /**
  * 迁移执行 Service (一次性, 部署后调用一次)
  *
@@ -115,6 +117,8 @@ import { runProductAutoShelf } from '@/migrations/runProductAutoShelf';
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
+
+  reviewCommunitySyncSqlForVerification(): string { return this.migration_0185(); }
 
   purchasePhysicalOriginEvidenceSqlForVerification(): string { return this.migration_0184(); }
 
@@ -621,10 +625,16 @@ export class MigrationService {
       this.migration_0182(),
       this.migration_0183(),
       this.migration_0184(),
+      this.migration_0185(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
       try {
+        if (i === 185) {
+          await runReviewCommunitySync(this.container.db);
+          executed.push('0185');
+          continue;
+        }
         if (i === 184) {
           await runPurchasePhysicalOriginEvidenceSchema(this.container.db);
           executed.push('0184');
@@ -8928,6 +8938,7 @@ $work_member_resolved_rename_fence$;
 
   private migration_0182(): string { return PRODUCT_RECYCLE_EFFECTS_SQL; }
   private migration_0183(): string { return PRODUCT_SAVE_EFFECTS_SQL; }
+  private migration_0185(): string { return REVIEW_COMMUNITY_SYNC_SQL; }
   private migration_0184(): string { return PURCHASE_PHYSICAL_ORIGIN_INSTALLATION_SQL; }
 
   private migration_0181(): string {

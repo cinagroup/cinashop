@@ -123,7 +123,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('maintenance Rout
     const f = await checkoutPricingMigrationDatabase();
     try {
       expect(await new MigrationService(createContainerFromDb(f.db)).runAll()).toEqual({
-        executed: Array.from({ length: 185 }, (_, i) => String(i).padStart(4, '0')), errors: [],
+        executed: Array.from({ length: 186 }, (_, i) => String(i).padStart(4, '0')), errors: [],
       });
       await assertRegisteredDatabaseCohort(f.db, 'embedded');
       const names = registeredTableNames('embedded'), client = f.db.$client as unknown as Sql;

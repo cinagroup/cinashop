@@ -1,0 +1,1406 @@
+{
+  "batch": "review-community-sync",
+  "base": "366dcafd0fd0dcd1f2e2f0692139514fe5e27f2f",
+  "phpRef": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "sourceFiles": [
+    {
+      "path": "view/common/buyerReview.ts",
+      "sha256": "5b8218ac14efb86cbf4305f49cf17bdad972e3eba26e90ee2b0b14b736ce6f70"
+    },
+    {
+      "path": "view/common/buyerReviewCommunitySync.ts",
+      "sha256": "babe2b459b8d08f9bd3c3b63c56f83f94e7a91fba8eaa6729f1736c662fbe7ca"
+    },
+    {
+      "path": "view/common/buyerReviewFlow.ts",
+      "sha256": "8274592fdb05ae026e6a9b6eff992109906e071c10c78d569a1381d00846381e"
+    },
+    {
+      "path": "view/pc-ts/src/api/buyerReview.ts",
+      "sha256": "dd6489846f6f2eb89547ce2d7759031d1eacd683eccc51ea7dea0c0a2e6ba220"
+    },
+    {
+      "path": "view/pc-ts/src/components/BuyerReviewPanel.vue",
+      "sha256": "da274f59edae56fe2eb9bf1682bc60ee97ea806d7983defd1bf4379a4b9a2cc8"
+    },
+    {
+      "path": "view/pc-ts/src/composables/useBuyerReviews.ts",
+      "sha256": "da9e513a32f4d27051fef5780b2ff8874ae5de134ab9b23f7e74d96374e0abf1"
+    },
+    {
+      "path": "view/pc-ts/test/buyer-reviews.test.mjs",
+      "sha256": "24afbee3a586b4b0350962b476ba4c16b26508283df3060acd5462a251f515d7"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/buyer-reviews-lifecycle.test.cjs",
+      "sha256": "69ca5f1005f774cbe4fc2ea6fc2dc8b2af1aefbcf8a967d75eb36d43295986ce"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/buyerReview.ts",
+      "sha256": "1856bd09472d280a79f65cfb9941492bde28efd8d6b53c2ac71463cd750cfd3e"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useBuyerReviews.ts",
+      "sha256": "3e39b95fa921b6cac37363cdd616949428be0df5e8ef9d6486496f85350ab3ef"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/order/reply.vue",
+      "sha256": "8f9a5623907a1592f4f340d7acb3b6fb0916377a7dc65bbcd301f17e9b0db9a6"
+    },
+    {
+      "path": "workers-ts/migrations/0185_review_community_sync.sql",
+      "sha256": "53e3c1bb763b453addc7d0048ff2b253b8aeaa23a9c9425bfe2eed6f74566d75"
+    },
+    {
+      "path": "workers-ts/scripts/installed-construction-audit.ts",
+      "sha256": "7bb010d5d90c4d6c27d9ba5b9939ae4e7dbf8dfc8e5972a7f5b998c47f1a1d1a"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "4fc09421687d96f560f66b7f841a1d9fd57f38800f4bd7963aa474cf7c865207"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/BuyerReviewController.ts",
+      "sha256": "0efc9298765f4e5ebce78e2c96e0c86ea4a0981c725e32611c54e1c250e165ae"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/ReplyController.ts",
+      "sha256": "80351aac3a1ed0c72b21f56d3a76c3828e1bc0eb287d7e100a0386c8d53841c7"
+    },
+    {
+      "path": "workers-ts/src/migrations/reviewCommunitySync.ts",
+      "sha256": "cd75c3fa0f3cde10ff00c3f55b724cefb76ee752dc0f3fc972c9441ec0a06591"
+    },
+    {
+      "path": "workers-ts/src/migrations/runReviewCommunitySync.ts",
+      "sha256": "62921d14537a876946c91bc1ca33db736223cbc5dad67d689f520ebecad9cb94"
+    },
+    {
+      "path": "workers-ts/src/models/schema/reply.ts",
+      "sha256": "1bef9c9b50f8ec7b04ffacf2e3d05489c7386bcf40a65579bf63e784225d8e2c"
+    },
+    {
+      "path": "workers-ts/src/routes/v1/index.ts",
+      "sha256": "4b423740b6d8bde8a43c3f0b9df4ad35b7e13de61b8b43871e0a7b0ec72acca3"
+    },
+    {
+      "path": "workers-ts/src/services/MigrationService.ts",
+      "sha256": "4500cf83290516f98d19b4969b8dc369230349b809ac217273a86034fee07d1f"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminProductFictitiousReplyService.ts",
+      "sha256": "bee576600dfa4324afdca8a0bc5fba2c9908badd0724b8be070a4187d9a1633f"
+    },
+    {
+      "path": "workers-ts/src/services/order/BuyerReviewService.ts",
+      "sha256": "0ac4ec6447f34f56ddb1bc4e968bd4576c28522b2474b9c5ae703d971e6d4d81"
+    },
+    {
+      "path": "workers-ts/src/services/order/BuyerReviewSession.ts",
+      "sha256": "4031ce19a027a3bb7c09f01918f4cf996c4e0be7bc165ff948f76fbc3756753d"
+    },
+    {
+      "path": "workers-ts/src/services/product/ReplyService.ts",
+      "sha256": "82d09565958c5c7c3c07b9cac8702292c80207c604255097fdd95f30d4a01709"
+    },
+    {
+      "path": "workers-ts/src/services/product/ReviewCommunitySyncIntent.ts",
+      "sha256": "94f8671d118953adfcab55a61af38cf5dcf766fee1b78992ee67658c2a9ce648"
+    },
+    {
+      "path": "workers-ts/src/services/product/ReviewCommunitySyncService.ts",
+      "sha256": "ef0310e7efd52c4986ab45b90d84e1789d7f211904dd3e492024cb60af4f101f"
+    },
+    {
+      "path": "workers-ts/test/admin-product-fictitious-reply.test.ts",
+      "sha256": "fa84b7dbb795c846f88653e7ce4623c4fd2b40c880560ffdfb3aea14a809a6fa"
+    },
+    {
+      "path": "workers-ts/test/admin-refund-creation-migration.test.ts",
+      "sha256": "a661cb496323e9a81f432d13ecb236b031b62ce0a7df6bc2897a20d7b6d5247e"
+    },
+    {
+      "path": "workers-ts/test/admin-refund-operation-migration.test.ts",
+      "sha256": "6bf8ef915c8b7d4797af311753d84ed6e27757f6294b9ce9c00523879dabacb3"
+    },
+    {
+      "path": "workers-ts/test/brokerage-paid-order-migration.test.ts",
+      "sha256": "edfb04577cee4602c033128c8ef2bf17e5bb60be077c59ab129a7cf0cec084b3"
+    },
+    {
+      "path": "workers-ts/test/browser/review-community-sync.acceptance.ts",
+      "sha256": "d56dc6312504cff05be3a6a3f3f548e4dcc018e6d03ea7e6416af20e86e0d5ad"
+    },
+    {
+      "path": "workers-ts/test/coupon-product-scope-migration.test.ts",
+      "sha256": "1147add1dfe14a2d850159e89cd33e20e10a5234f14fcfe234c511cefeb146c3"
+    },
+    {
+      "path": "workers-ts/test/data-migration.test.ts",
+      "sha256": "7770b89fb3d772d4fa079f2cc5af6c168691a5937bf8a5a65a07f3075eaa3f02"
+    },
+    {
+      "path": "workers-ts/test/helpers/customerFinancialCanonicalFixtureDatabase.ts",
+      "sha256": "b8dfa449380e98d3f2042c2312dd2ab9112616f771bef889fe3a81333e05d636"
+    },
+    {
+      "path": "workers-ts/test/helpers/refundRuntimeFixture.ts",
+      "sha256": "3ac51c24ff991c35e3ca725a0b44465ab677df567489b6cc22d48981fc73ffe9"
+    },
+    {
+      "path": "workers-ts/test/helpers/registeredCatalogCohort.ts",
+      "sha256": "7e51f2b6023d368acb4d6864d7a8ed03ae7caaa006a21b8ea5ae2d1d60e9c466"
+    },
+    {
+      "path": "workers-ts/test/installed-public-catalog-native.test.ts",
+      "sha256": "d7a002e99d9f2f2b9e58fcb772632c5b08b8c27d8c2cf1e27cb91dbd32b4b50c"
+    },
+    {
+      "path": "workers-ts/test/invoice-evidence-migration.test.ts",
+      "sha256": "d677f3d3e271d06b22a2c0769301b2a1088e2ee2c10c273cbe3e0a45f32c6aa5"
+    },
+    {
+      "path": "workers-ts/test/invoice-evidence-registration.test.ts",
+      "sha256": "52786c9153eb0b9fe4b35661a4ed5265a1467fd4bd6e147bee6041c8d6a9c6ab"
+    },
+    {
+      "path": "workers-ts/test/kefu-sequence-registration.test.ts",
+      "sha256": "8394e4cdea05490806cdc44fe367565e959a1576b10b23796138afc6b81ef304"
+    },
+    {
+      "path": "workers-ts/test/offline-order-installation.test.ts",
+      "sha256": "5264ef7ea72c418d0cb90b27964f6a006b6101fb366383b56b6180db03701708"
+    },
+    {
+      "path": "workers-ts/test/pink-success-notice-migration.test.ts",
+      "sha256": "90fc74397f9ff97002a7d32296584ed607c78f3b23018d013328802a0f1066f1"
+    },
+    {
+      "path": "workers-ts/test/recharge-quota-seed-upgrade.test.ts",
+      "sha256": "21a4b20b35cf1724a6bde563d7c82ecc893e910900f19d6a96a27102fcf8702a"
+    },
+    {
+      "path": "workers-ts/test/refund-split-migration.test.ts",
+      "sha256": "f1ef8684479317d45a64e4fdcc8c7c7885169111ae19dae3a5f667293ddb33b3"
+    },
+    {
+      "path": "workers-ts/test/review-community-sync-edge.test.ts",
+      "sha256": "45fa85d43d0d6746ba71b6a96bd2b66eca52f03697c2046d514a79ab2b83ebdf"
+    },
+    {
+      "path": "workers-ts/test/review-community-sync-migration.test.ts",
+      "sha256": "936f08426775590abefef434c74a076d89cc36c89e72f5bb505c257b5cdcc4a6"
+    },
+    {
+      "path": "workers-ts/test/review-community-sync-native.test.ts",
+      "sha256": "2f7afa864175870d5005fb5792a9d6d09b82ebdf6ea04fc0c42787faa9c1d96b"
+    },
+    {
+      "path": "workers-ts/test/routine-ownership-inventory-native.test.ts",
+      "sha256": "f7d98a25a7f9aaa9fd2b489e71c00d710808707f1bfc9f28909f6b724525a642"
+    },
+    {
+      "path": "workers-ts/test/seckill-time-reference-lock-upgrade.test.ts",
+      "sha256": "a3f3bb7321c1979e444edcfb092f29df734ab8ee9e804ae11ec632e376c416b6"
+    },
+    {
+      "path": "workers-ts/test/shipping-lifecycle-indexes.test.ts",
+      "sha256": "6fbd78f6e9f8aec41ae4e76e0c637d7694b18e81ed3dae7dfd7a74cca0da11d3"
+    },
+    {
+      "path": "workers-ts/test/shipping-lifecycle-interactions.test.ts",
+      "sha256": "5357665c9da254767431065f06d4cb13a99f35e37b38a2a0eaaefc3a0504948e"
+    },
+    {
+      "path": "workers-ts/test/shipping-lifecycle-migration.test.ts",
+      "sha256": "29389c76e0c6b6f40c23a64c6331ed2cb244580f3e6d65be9afafc022f3f76e7"
+    },
+    {
+      "path": "workers-ts/vitest.review-community-sync-browser.config.ts",
+      "sha256": "cb6bf14354f66097738fed8fe139d50268e8005cb421dfb084ca0b9861e0a153"
+    }
+  ],
+  "sourceManifestSha256": "1363c873ef4eb6f1d151f932f5d943040625817ae7030c162f6c20d041e7128a",
+  "protectedBaselineFiles": 9213,
+  "restoredResources": 150,
+  "preservedUserSymlinks": 5,
+  "typeProof": {
+    "originalRoots": 4447,
+    "commonRoots": 1941,
+    "testRoots": 2506,
+    "shardTestCounts": [
+      1253,
+      1253
+    ],
+    "unionExactlyMatchesOriginal": true,
+    "optionsExactlyMatchOriginal": true,
+    "explicitTypeLibrariesResolveExactlyAsOriginal": true,
+    "generatedConfigs": [
+      "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts/.cache/review-community-sync-types-20261114/tsconfig.worker-review-community-sync-shard-1.generated.json",
+      "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts/.cache/review-community-sync-types-20261114/tsconfig.worker-review-community-sync-shard-2.generated.json"
+    ]
+  },
+  "finalFixtureTypeCheck": {
+    "exitCode": 0,
+    "affectedOriginalShard": 2,
+    "seconds": 184.49
+  },
+  "finalFixtureLineage": {
+    "backendRetainedFromCandidate": 6,
+    "frontendRetainedFromCandidate": 4,
+    "changedSinceCandidate7": [
+      "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "workers-ts/test/browser/review-community-sync.acceptance.ts",
+      "workers-ts/vitest.review-community-sync-browser.config.ts"
+    ],
+    "scope": "Only local browser fixture MIME/state/deadlines; runner timeout changes only this explicit browser mode; no business, SQL or shared protocol changes",
+    "browserDeadlineMinutes": 90,
+    "testDeadlineMinutes": 92,
+    "parentDeadlineMinutes": 95,
+    "originalOtherRunnerModeTimeoutsUnchanged": true
+  },
+  "finalStabilization": [
+    {
+      "name": "type-partition",
+      "exitCode": 0,
+      "seconds": 1.6
+    },
+    {
+      "name": "type-options",
+      "exitCode": 0,
+      "seconds": 1.53
+    },
+    {
+      "name": "worker-types-1",
+      "exitCode": 0,
+      "seconds": 228.96
+    },
+    {
+      "name": "worker-types-2",
+      "exitCode": 0,
+      "seconds": 219.77
+    },
+    {
+      "name": "runner-unit",
+      "exitCode": 0,
+      "seconds": 54.6
+    },
+    {
+      "name": "source-proof",
+      "exitCode": 0,
+      "seconds": 112.28
+    },
+    {
+      "name": "runner-syntax",
+      "exitCode": 0,
+      "seconds": 1.11
+    }
+  ],
+  "runnerUnitReplacement": {
+    "tests": 707,
+    "addedToTotal": false
+  },
+  "validation": {
+    "allRequiredGatesPassed": true,
+    "unit": {
+      "files": 134,
+      "tests": 3364,
+      "failed": 0,
+      "skipped": 0
+    },
+    "native": {
+      "native-community-sync": {
+        "files": 2,
+        "tests": 25,
+        "failed": 0,
+        "skipped": 0,
+        "resourcesCleaned": true
+      },
+      "native-installed-catalog": {
+        "files": 1,
+        "tests": 4,
+        "failed": 0,
+        "skipped": 0,
+        "resourcesCleaned": true
+      },
+      "native-buyer-reviews": {
+        "files": 1,
+        "tests": 14,
+        "failed": 0,
+        "skipped": 0,
+        "resourcesCleaned": true
+      },
+      "native-review-regression": {
+        "files": 3,
+        "tests": 61,
+        "failed": 0,
+        "skipped": 0,
+        "resourcesCleaned": true
+      }
+    },
+    "nativeTotal": 104,
+    "workerd": {
+      "files": 30,
+      "tests": 410,
+      "failed": 0,
+      "skipped": 0,
+      "resourcesCleaned": true
+    },
+    "productionAuditFindings": 0,
+    "pc": {
+      "invocations": 2,
+      "tests": 439,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "perInvocation": [
+        430,
+        9
+      ]
+    },
+    "uniFullToolchain": {
+      "invocations": 25,
+      "tests": 3871,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "perInvocation": [
+        2820,
+        38,
+        29,
+        42,
+        94,
+        18,
+        26,
+        46,
+        42,
+        47,
+        60,
+        30,
+        39,
+        38,
+        42,
+        47,
+        87,
+        34,
+        48,
+        84,
+        72,
+        20,
+        17,
+        29,
+        22
+      ]
+    },
+    "builds": [
+      "PC",
+      "H5",
+      "MP-WEIXIN",
+      "App"
+    ],
+    "frontendSourceAnd2418BundlesUnchangedAfterCandidate4": true,
+    "browser": {
+      "native": {
+        "files": 1,
+        "tests": 1,
+        "failed": 0,
+        "skipped": 0,
+        "resourcesCleaned": true
+      },
+      "reviews": 4,
+      "syncRequests": 2,
+      "posts": 2,
+      "uploads": 2,
+      "r2Reads": 6,
+      "defaultUnchecked": true,
+      "preservedOtherDraft": true,
+      "lostSyncAckManualReadbackWithoutReplay": true,
+      "actualPngBytes": 68,
+      "outerAndInnerExitZero": true,
+      "consoleErrors": 0,
+      "viewports": {
+        "pc": {
+          "width": 1280,
+          "height": 820
+        },
+        "uni": {
+          "width": 375,
+          "height": 812
+        }
+      }
+    },
+    "historicalSourceBinding": {
+      "passed": 178,
+      "failed": 10,
+      "skipped": 0,
+      "passingGate": false
+    },
+    "historicalDataBinding": {
+      "profiles": [
+        {
+          "profile": "baseline",
+          "exitCode": 1,
+          "passed": 35,
+          "failed": 1,
+          "skipped": 0,
+          "failedNames": [
+            "MySQL to PostgreSQL schema audit keeps the explicit manifest aligned with all currently shared repository tables"
+          ]
+        },
+        {
+          "profile": "current",
+          "exitCode": 1,
+          "passed": 35,
+          "failed": 1,
+          "skipped": 0,
+          "failedNames": [
+            "MySQL to PostgreSQL schema audit keeps the explicit manifest aligned with all currently shared repository tables"
+          ]
+        }
+      ],
+      "sameFailure": true,
+      "isPassingGate": false,
+      "historicalHashesUnchanged": true
+    }
+  },
+  "scope": {
+    "schemaChanges": true,
+    "embeddedMigrations": 186,
+    "externalMigrations": 183,
+    "productionPermissionExpansion": false,
+    "externalQueue": false,
+    "deploy": false,
+    "phpUpload": false,
+    "wholeMigrationComplete": false,
+    "modernPerLineCommunitySyncComplete": true,
+    "legacyBulkOnePostSemanticsClaimed": false,
+    "physicalMpAppDeviceAcceptance": false
+  },
+  "phpParity": {
+    "phpRef": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+    "source": [
+      {
+        "path": "app/services/order/StoreOrderCommentServices.php",
+        "sha256": "ba5fce2bb50eff500149fb15194a678e3bbf117798e819d5e8ff905522b6661f"
+      },
+      {
+        "path": "app/listener/product/Reply.php",
+        "sha256": "21ea905fe9384c466f5474046c2ed709cac7d8aba81fb6a43f841dec20a76339"
+      },
+      {
+        "path": "app/jobs/community/CommunityJob.php",
+        "sha256": "51cf6c7ef0103130b003f1c4bbce148e33742e651452870ca9625bf158c83372"
+      }
+    ],
+    "aligned": [
+      "Original evaluation commits before optional publication",
+      "Publisher failure does not undo saved evaluation",
+      "Explicit opt-in only",
+      "First picture as cover; product relation and user author",
+      "community_verify default requires moderation"
+    ],
+    "explicitScopeDifferences": [
+      "Modern migrated per-line evaluation creates one post per opted-in line; original PHP optional bulk evaluation can share one post across several products",
+      "Local persisted intent/digest/receipt and user retry replace external Queue for this bounded chain"
+    ],
+    "wholePhpMigrationComplete": false,
+    "legacyBulkBatchSemanticsClaimed": false
+  },
+  "independentReviews": [
+    "independent-final-review.json",
+    "independent-admin-default-review.json",
+    "independent-browser-harness-review.json"
+  ],
+  "sourceSecretFindings": {
+    "baseline": 0,
+    "current": 0,
+    "ignoreRulesChanged": false
+  },
+  "artifactHashes": [
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/accepted-counts.json",
+      "sha256": "addd9728ce371916c5eb8f234e07f3ce8a36098dbd300157ba2eaafe1256c84e"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/baseline.json",
+      "sha256": "cbc2a70488cefce5364b539d9f41f4eb82128c309c829cba70a97edb2bf101ed"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-agent-attempt3-cua-blocker.json",
+      "sha256": "76b35f76fc369b2cee46f0a0ef790d86561d8149f087b88c69b595528a7fc327"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-agent-cleanup.json",
+      "sha256": "a01c0f8c769e166866653fc27b0ad4ce104013d57d051e2127c8d740750e0e17"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-agent-command.json",
+      "sha256": "26df866107e5a7743cf2a81544a32d47cee9d3bafb86458ae26faef8aec06ed6"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-agent-delivery.json",
+      "sha256": "006b88cf48512f4c8d129eabdead5660a2b80ca2bb9964f3cde341861badf438"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-agent-native.log",
+      "sha256": "8f063d6f33003854fa73c6c62f5cd4706decdd52c03293c1d2d1bb86f61c4e81"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-agent-ready.json",
+      "sha256": "26d0d8c86ffa87bc93c56fe7f448614e9dce9c526b801f6b2052a89fddc6e2e2"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-agent-result.json",
+      "sha256": "27e22e81c981e42444ca76f1caa5165d81440a17e78c7145ba8c2f41dbaae09b"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-agent-run.py",
+      "sha256": "5529610fd2df671b8531bb71ca3c3bd5040ed7dc0d3b0e1d61372cdfdcf5c022"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-attempt-1-cleanup.json",
+      "sha256": "d95ddee3ec76b349644f8021d302770a1c14239bfe12e4b98f47c455bf707eea"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-attempt-1-command.json",
+      "sha256": "00b9182805516b5c2f844c7fbc2af7ac76a81db02eebde66646c724a27d4c786"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-attempt-1-frozen-inputs.json",
+      "sha256": "f757a53bd07b5ec5bcc6a3a0e23988be9ec77ee3b70d04acbb1305a558baea27"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-attempt-1-native.log",
+      "sha256": "38859e098c136c64e57eda3f45bc6092fa3ebd7b79b01fd5461224aec0a583d8"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-attempt-1-pc-failure.png",
+      "sha256": "057690b7ce0d5c371db04c746e3c26cba300f0283e571420a4e47962e28d7a76"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-attempt-1-preserved.json",
+      "sha256": "9161f095f238d02637e1211905a1e98ecbd7b8573727abf0f134b9826920201d"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-attempt-1-ready.json",
+      "sha256": "2e1995d56a9d9bc8cd7991b674b494dbc130a55439ca9c8eb3e1d0b0d5419d72"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-attempt-2-agent-command.json",
+      "sha256": "67c72b34b8f40f32446de5bb87f91a59b6ae189896147e6fc5a7723a2622666e"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-attempt-2-agent-native.log",
+      "sha256": "1aab50dec6eb49cbc9b328492157de4508a40e1f3d47748fb0b28ce0d4396454"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-attempt-2-agent-ready.json",
+      "sha256": "93218b45eb49ac3d2b76ded2b16fb814de0b827b19309a2c0e929aa9ff497de5"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-attempt-2-cleanup.json",
+      "sha256": "d95ddee3ec76b349644f8021d302770a1c14239bfe12e4b98f47c455bf707eea"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-attempt-2-frozen-inputs.json",
+      "sha256": "5f5f268bf45051eaa425254d936783ff2c86fa863ef324a203da98f62dff7d9e"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-attempt-2-h5-lost-ui.json",
+      "sha256": "db57743dbf0664e188ff69664b5165e403ce1b2e5fc65aca7fc71eec83e33b17"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-attempt-2-pc-accepted.png",
+      "sha256": "a7bf2f467e3587c28fdb8264eaf9fe9f8e1111eb9055c485c9cd9dd00c49ee59"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-attempt-2-pc-product.png",
+      "sha256": "b2f4bad5d8d3cc3ba637221d31af127594e6a2c246b5053fa97797d939d330bd"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-attempt-2-pc-ui.json",
+      "sha256": "0b57d9314771e8d37fb90e5d98886389feabbc0dd0ea0c600393844bd1819ebc"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-attempt-2-preserved.json",
+      "sha256": "bb5a6713b60c0fcc636c73420780da872cee6f5f6bdf240f6b16ee3e97f01b52"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-attempt-3-agent-command.json",
+      "sha256": "167136893b6fc2009706408c27069e3775654e4de62e876833c00f72a1b22c4f"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-attempt-3-agent-native.log",
+      "sha256": "81dd74bfa4c7a784b4776ccae2430ea6e0b12b605ff8dfcb787042f1837bd130"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-attempt-3-agent-ready.json",
+      "sha256": "e51ce0ff852af9745705b3a8e28b5def565709c341a86c259ffee2e9744aa0cc"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-attempt-3-cleanup.json",
+      "sha256": "d95ddee3ec76b349644f8021d302770a1c14239bfe12e4b98f47c455bf707eea"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-attempt-3-frozen-inputs.json",
+      "sha256": "5f5f268bf45051eaa425254d936783ff2c86fa863ef324a203da98f62dff7d9e"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-attempt-3-pc-accepted.png",
+      "sha256": "e1d14e1fb39578c81a6e975049ea70fcb765290425cc506d88768d3a78e061c9"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-attempt-3-pc-ui.json",
+      "sha256": "602c1c364e31f4bbec16e86206d4acc3cff8f22edf69a0203a528476aa0a0ffc"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-attempt-3-preserved.json",
+      "sha256": "ac34259d363cfabe6ee0954aefc268a8903dbd9c9fc8b97e355ea9c2bcc3f9b8"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-community-sync-image.json",
+      "sha256": "ea6ddab6ea8cce88c8d6d4b2ebb8783af440b88f13d50da4e9ceb6c4a9cd7252"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-community-sync-sample.png",
+      "sha256": "431ced6916a2a21a156e38701afe55bbd7f88969fbbfc56d7fe099d47f265460"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-frontend-gates.json",
+      "sha256": "6ed23fa0f91dcaf7542d539db0a4a79df0a9494cf5ee5ea2c60e8ea6c1a0e702"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-frozen-inputs-pre-admin-fix.json",
+      "sha256": "12a7f2f9527f078c5133a8cacb2292158b2cd1f766817f41bf8a9b0ef80c19cb"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-frozen-inputs-pre-test-expectation.json",
+      "sha256": "02e2145cde5c5901ddfa6fbe48b7d2fbe5882acf6669b4ead075ac5138e3083e"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-frozen-inputs.json",
+      "sha256": "7b7070f5558d96e5e1a654e0c4599df145a7a5397d8a14c6f6999cc5138236aa"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-pc-accepted.png",
+      "sha256": "1c5ebfeba938b0fc3d013dfc11ac3cb9c388444bdb50cacb5f4b0ef0ae89754b"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-pc-product.png",
+      "sha256": "b2f4bad5d8d3cc3ba637221d31af127594e6a2c246b5053fa97797d939d330bd"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-pc-ui.json",
+      "sha256": "023de73c0f541f79ffc03cf285d99fa9ea75f0765e83031cf7385d9eff03cda1"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-ui-evidence.json",
+      "sha256": "05542cb0a414a152622420756631d82ecdfbd620b466d09f1c125aa3449a9bd8"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-uni-accepted.png",
+      "sha256": "b7178a2d9737c0c5ab4dbec429ad2ed072e72f3ce2da8d9756ae2212ad18a8d6"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-uni-functional-desktop-ui.json",
+      "sha256": "d60a7ee19041a429888795e1ca41ab58f9c434a7d6e927acd767d128515660bd"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-uni-functional-desktop.png",
+      "sha256": "8629126b8778be10d433207f4edd69785d6ca16ba9d7e223942df06c2e856d1c"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/browser-uni-ui.json",
+      "sha256": "3779b02ab6ed3448ee361baebe54fbc5faca8448344d7fee4ee94dcb2482008f"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-1-dependencies.json",
+      "sha256": "54b3040ee29b3de6e998a6f81923074dbdc36e2a233ed821781ae52343952ec0"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-1-native-result.json",
+      "sha256": "09cb9dcecbacf88259471c701ad4032fd639479d20cae09e793e9f162a0516b5"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-1-native.log",
+      "sha256": "6c9ed87d2f1b2c7cbc0111610d7df174f698e6bb38d59865a04894687b532c76"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-1-source.json",
+      "sha256": "72aa3d27fc5d708672d67035f737549713c67c806bed2a6004878fe6fda6f9a7"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-2-frontend-agent-pc-review-focused.log",
+      "sha256": "0081deea9a8063ee47d78740f177d798b35c938ddec56c377655f4f8d91af7c5"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-2-frontend-agent-uni-review-whole-file.log",
+      "sha256": "9a5f87b91ada3af6a88643ce6b06d079c6e194fea837dca02fcf3fc6c50eef63"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-2-frontend-agent-validation.json",
+      "sha256": "533b0f2273c2b3769205f013e7ec3a83a05645c9f8a6949167b6c5e2574da915"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-2-native-result.json",
+      "sha256": "eabc8eba7c3b939289826b46a4d9bd4f0ffe241bacb9402e630a8ca41857ff0f"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-2-native.log",
+      "sha256": "23469253eee10f8ec4a1ef700280f9f81f7302c1994581793c446458c5a9e826"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-3-cleanup-inventory.log",
+      "sha256": "b46cbf34161e2d6d7670a1d15dfefcdfbf89f6cace9890dd3c8be3d89097d754"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-3-cleanup-result.json",
+      "sha256": "d547d8bbc1f1355124b5505d74d5dd4aeb50d1cfcbb0b3841b986eea9228402c"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-3-cleanup.log",
+      "sha256": "e3b9ecd89e2e0c060b315d9139e4af7a32584b8bb3fb31574e2172ffd0828bec"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-3-front-pc-review-focused.log",
+      "sha256": "abf8c73325c43235c25a9e0f3b1f83f2db72e97c41dc32aea0b6578ce2d5f713"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-3-front-result.json",
+      "sha256": "74b983f903e6791fbf0c358ec9db105729ebe0f7c10a5fc32c688662425df2e1"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-3-front-uni-review-whole-file.log",
+      "sha256": "c0d188750b19c2be081b7c127826fbc86d8f8224052768dac82ca81d12b6428c"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-3-native-result.json",
+      "sha256": "11e87d2a9526866defeaff706fb7178da15ee5a775de59d71b18fc3b17145322"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-3-native.log",
+      "sha256": "551ec8e1273b6df2c0f3f8345ac26c806e3ed784ef477ef0e60ae6f1597f5a76"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-4-back-result.json",
+      "sha256": "6ea8cd1c31d0fb8d252ea142ff4b0eb9d45fd797c7935b1a1d0fcc2db42cdfd9"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-4-dependencies.json",
+      "sha256": "715710ef5b29c4cdbfb80859d3594073c2fc59bb83654b2734f64ab5b534d770"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-4-front-build-files.json",
+      "sha256": "ef11d85e1d14f91a3d92902185f160df9e3ee942a85b2a6f38522d17f15670dd"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-4-front-pc-build.log",
+      "sha256": "7076360f436ae7f8611fac59bf1d7a278b4ed4c3ee429fefd0467d85084a6660"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-4-front-result.json",
+      "sha256": "b7117b0dbde76142b26f39181c3d4a5cc2a7d619def424e7af0b462348be0227"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-4-front-uni-build-app.log",
+      "sha256": "a2051cd401599570aeafd694ace38af58a716eaa441c4dab1c75b80b0fa76800"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-4-front-uni-build-h5.log",
+      "sha256": "6ea803fa6f742b157a6ce4f591844095b3d537b3ab29fd07e083cce32746ab8c"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-4-front-uni-build-mp-weixin.log",
+      "sha256": "e8741d81e50dbaf6580d232c46390dc304746a337fac6e4970d3efb56ed595ac"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-4-front-uni-toolchain.log",
+      "sha256": "7d3e5077223fdc4f7fb5d3ea616a93245a915dc7911e72aebbd18af709204e46"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-4-front-uni-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-4-native-result.json",
+      "sha256": "3879f87ff48da91d06ecc27b689ca3addccf84fde022c56bd5fbc3ac52eadf99"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-4-native.log",
+      "sha256": "964062057390be084d605cd7a991871ef0d04f9d8a542e393e94df47a2fdeaae"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-4-source.json",
+      "sha256": "f37c2c565aaa9675633a43ff3a48cb54a8e45bc12a6715015135dfd3fe4c17b3"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-4-type-options.log",
+      "sha256": "b19c415e173dae1db1c14406dd7323ee35d0df1f2477168a6dc5dcc948a91916"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-4-type-partition.log",
+      "sha256": "9609419f9d4c6327321af3e137df5c9fd365db3cbe62817c3f04a9d3b26cefa4"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-4-worker-types-1.log",
+      "sha256": "5b3c2cd00628b5f4dffe6f42e56733726ed39c1634b011c933248036e32de87b"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-5-back-result.json",
+      "sha256": "0ecfc9682b5b859845caa63d06a5f6eff0b25f57e72b6d1a64df00fa3f3dbba7"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-5-dependencies.json",
+      "sha256": "ede51926488a3f847f2dbe0ecc72a33244638d910e4ebef89b7db6fee08d6551"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-5-source.json",
+      "sha256": "ffa4c5f99b0ad415302f24cb71c21b7548d9a1f7e0194d7d60e68a1077469f30"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-5-type-options.log",
+      "sha256": "b19c415e173dae1db1c14406dd7323ee35d0df1f2477168a6dc5dcc948a91916"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-5-type-partition.log",
+      "sha256": "9609419f9d4c6327321af3e137df5c9fd365db3cbe62817c3f04a9d3b26cefa4"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-5-unit.json",
+      "sha256": "3f9dbdc515c2c6b78affb335f3e811e185daa4902f6d98ee571df1acd0a5f3d5"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-5-unit.log",
+      "sha256": "9ad70c0feec014fc8c10574131ae912a48c6c8057eca73fd09a1482f04d03275"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-5-worker-runtime-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-5-worker-types-1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-5-worker-types-2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-6-back-result.json",
+      "sha256": "adfdc0923087d4c2c4e94eed999eeffbdf7fab77c4897aeaf63ef7d5d3a40a8d"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-6-data-binding-baseline.json",
+      "sha256": "ee43b1c400090d4d9fb096da0870a388a412cd673e0e428801d608a111f1ee8f"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-6-data-binding-baseline.log",
+      "sha256": "5193f6e3bdf4f9ab7cc42fe28da127f66ef45f5b1c4ac5052a025f2fd5875765"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-6-data-binding-comparison.json",
+      "sha256": "c5cec44bda154d7ce022907ffdc406e3968edd229673759d3e629406560e4922"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-6-data-binding-current.json",
+      "sha256": "0924d26f1373b6c3ec02259a45ff4fa47d6be65065247a3764491beb2a0de055"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-6-data-binding-current.log",
+      "sha256": "c4496a2ed63ea7cdab2f40b37983c03a6984b41a69e62b5b480aac0e158b5a57"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-6-dependencies.json",
+      "sha256": "f18558f2d9b6ed060685e435da037a82ffead7344e6c7afadd65027f7e03b45c"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-6-native-buyer-reviews.log",
+      "sha256": "bbd28e3cf56daa82b1dad1f82a1b9c5e319793e4d99f84bd8538edfc3df9cd07"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-6-native-community-sync.log",
+      "sha256": "86c886a0c71322f1db90b20c9a14871ab955c787550860d29b386c4d8d408a51"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-6-native-installed-catalog.log",
+      "sha256": "bf5e6fc67f6f8ee68ab188942b1fbb9a9b967c120de39c4202a0c7c6668db06d"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-6-native-review-regression.log",
+      "sha256": "b458540f61baa8b5cb6c0b9cf31c325e33db9d8a8e4b6bee07a22f90805cedbc"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-6-production-audit.log",
+      "sha256": "4ca0bc8f609b8cd4e43a18d0faebf8f0b05d91b15ee6386fb48a789c00393192"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-6-source-baseline.json",
+      "sha256": "bcbb54120e85beb1add7a3d1d33166dd6df7d18d9783256012c49e406e5ca0bc"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-6-source-baseline.log",
+      "sha256": "51828875247bce613dcb75cf9dc931303a29d071f6006cce8b4fd033b17cb049"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-6-source-current.json",
+      "sha256": "f2dd8247eeebe03667d6d3eb28b653473560fe0f71b91ca2ebaefb56e244abd3"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-6-source-current.log",
+      "sha256": "02a2980638ae194387850bb5db14b2943e5dae96bf9d496129cc2997d3e92550"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-6-source-proof-comparison.json",
+      "sha256": "05cb0b2abe65094909c504a41eec9f816ac9713c9e8e084949fa2c057f509d96"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-6-source-proof.log",
+      "sha256": "ab9b9d75fc70270bbc0f4ef31451b3825401a4934124bff84162d3267165b39e"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-6-source.json",
+      "sha256": "96fe809339f8b22526b31426d57c58f3db642e46d8a9d331cac7c2e422433b20"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-6-type-options.log",
+      "sha256": "b19c415e173dae1db1c14406dd7323ee35d0df1f2477168a6dc5dcc948a91916"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-6-type-partition.log",
+      "sha256": "9609419f9d4c6327321af3e137df5c9fd365db3cbe62817c3f04a9d3b26cefa4"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-6-unit.json",
+      "sha256": "428f02c78cd9729d7e1f38574de6321608cdd66264b2413e970ab1dae8415891"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-6-unit.log",
+      "sha256": "03c05d15dff94b68f1db37388352fa5b764710e8c63f0dfbe6851226e61572bf"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-6-worker-runtime-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-6-worker-types-1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-6-worker-types-2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-6-workerd.log",
+      "sha256": "6ec1a0ce2f86b93b458a4775802aa4f9f66cc8576c312c0d30ed54c2a9f8c9dd"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-7-browser-fixture-type-result.json",
+      "sha256": "32c56b4c6dd181aac7c72eb9c0b47ce8fa54eae3c78adcd832b9c6a150d8184d"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-7-browser-fixture-type.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-7-dependencies.json",
+      "sha256": "f18558f2d9b6ed060685e435da037a82ffead7344e6c7afadd65027f7e03b45c"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-7-lineage.json",
+      "sha256": "79133b8064b99cfaea44be9bbc4d80217b76e47a46ed2bc8641776d661c80b7c"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-7-secret-scan-comparison.json",
+      "sha256": "ed8bec071792974aa0a9bbafd201e0dbe9454209afb6e310ca0292e0c0709cf6"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-7-source-baseline-secret-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-7-source-baseline-secret-scan.log",
+      "sha256": "97ade59f94825a257ac248b1b4e19827e48ce865459166e4abfc323b2378d272"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-7-source-secret-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-7-source-secret-scan.log",
+      "sha256": "a44c1a2f4bf5f1c1ed7918a900662e9e14107a6fd10585422b17c1c1901affcf"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-7-source.json",
+      "sha256": "960a2556a4ddd3be05db921a63f4100795d89b44ab56076acbba7c7eddd24b43"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-8-data-binding-baseline.json",
+      "sha256": "7d75ab8843e29d3e5fc8c4f4e3290157617af80a5132b70bf6c672380d163e26"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-8-data-binding-baseline.log",
+      "sha256": "d5749db829e364e5a9de39e4436c621c964ddb4e1145ad0fe0656df149b02ea2"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-8-data-binding-comparison.json",
+      "sha256": "c5cec44bda154d7ce022907ffdc406e3968edd229673759d3e629406560e4922"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-8-data-binding-current.json",
+      "sha256": "236414651d9cd71c7092287edc3ea904095ed769a23f9941a2ff401a97dadf80"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-8-data-binding-current.log",
+      "sha256": "29459ceeeea4f8471f0455bafe554a809aad8ef094308759e8e53cdd4a7fe3f3"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-8-dependencies.json",
+      "sha256": "f18558f2d9b6ed060685e435da037a82ffead7344e6c7afadd65027f7e03b45c"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-8-lineage.json",
+      "sha256": "db169a1e9f221f90f0ce3285fdbfc9a61e1a1937b0cf32227440bba83c1bc8bb"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-8-runner-syntax.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-8-runner-unit.json",
+      "sha256": "2c7f4464eea4f63530730144f75d9e595e3442a03513a6022a15c62709716a54"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-8-runner-unit.log",
+      "sha256": "8f7555728612a609b3b2fb39ceb066d29bcedfe99627895081cd9e1fb34b197c"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-8-secret-scan-comparison.json",
+      "sha256": "ed8bec071792974aa0a9bbafd201e0dbe9454209afb6e310ca0292e0c0709cf6"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-8-source-baseline-secret-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-8-source-baseline-secret-scan.log",
+      "sha256": "acf819808cee29d3d111d30eb7cd3c88e093d4f1a45fcc530c3a62f23d90f266"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-8-source-baseline.json",
+      "sha256": "ebf0c73039077006570d7e596ce021128fc6d8c64078e5c9aa55917182e56bf0"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-8-source-baseline.log",
+      "sha256": "e842e5ba8132d7a6fd497ec4abb04cfef196b4b2fcef9c8604f228498adc4bf5"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-8-source-current.json",
+      "sha256": "4ad558d17874c5d57d38f50ea72456b442cdd1169a276267127d9e67f4e1b314"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-8-source-current.log",
+      "sha256": "2aa5df5279b6c715fa014712762d5b08442301c29cf7cd41c3ed9b47bfbaf23c"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-8-source-proof-comparison.json",
+      "sha256": "6f5702b41a4ae3d7a9fc617c8863bb6d54a61478dda41d7f9748ff099441ccda"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-8-source-proof.log",
+      "sha256": "acc13d449c77e26ef316c989f06a4430f04640ea48d729b95ccfbc203fa93889"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-8-source-secret-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-8-source-secret-scan.log",
+      "sha256": "8d1a0d225fb9d3ac489951a9f7c64d04c5946437bed479d49fa3154e5a7a4816"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-8-source.json",
+      "sha256": "1363c873ef4eb6f1d151f932f5d943040625817ae7030c162f6c20d041e7128a"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-8-stabilization-result.json",
+      "sha256": "16497a1bceb456f225d23f51dae861ec10374b887f60bf2c8b8691613c21127c"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-8-type-options.log",
+      "sha256": "b19c415e173dae1db1c14406dd7323ee35d0df1f2477168a6dc5dcc948a91916"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-8-type-partition.log",
+      "sha256": "9609419f9d4c6327321af3e137df5c9fd365db3cbe62817c3f04a9d3b26cefa4"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-8-worker-types-1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/candidate-8-worker-types-2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/check-options-verified.cjs",
+      "sha256": "049d73ae1408ded7b7a66797907f90f1072ec24da7101d82028cde11f9de5080"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/cleanup-candidate-3.py",
+      "sha256": "76ec2bb921a31e7a81d7487881d98d68aeb79a6596a4ab937460c623c1d0a4e8"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/frontend-agent-pc-review-focused.log",
+      "sha256": "0081deea9a8063ee47d78740f177d798b35c938ddec56c377655f4f8d91af7c5"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/frontend-agent-preprotocol-pc.log",
+      "sha256": "dc84841475aa9c7af45b1b973f4563f86693e36529da87ab7c1f8669d7cffde0"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/frontend-agent-preprotocol-result.json",
+      "sha256": "25c9b64f4c7a4f5182e6789d32c77465fd0b8134cc6cb7cdb2c7df0202095711"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/frontend-agent-uni-review-whole-file.log",
+      "sha256": "9a5f87b91ada3af6a88643ce6b06d079c6e194fea837dca02fcf3fc6c50eef63"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/frontend-agent-validation.json",
+      "sha256": "533b0f2273c2b3769205f013e7ec3a83a05645c9f8a6949167b6c5e2574da915"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/frontend-agent-validation.py",
+      "sha256": "1325d1a38f1dba5dd65d9f81d2d3ad8ecc565b2572c838b83519e6a1fe34b62c"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/implement-schema.py",
+      "sha256": "a935106aa1106c7e96a73e04b0624086fa9882956d86c07f6f39e62f03c14ba5"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/independent-admin-default-review.json",
+      "sha256": "cfc0d09f2b4f103c43085585d53f074b18be12bca096caf294d8afa78477295e"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/independent-browser-harness-review.json",
+      "sha256": "a92e05da7bf338e3fcbb1220a2abc7a69e1c49f99655ca7662d8819c8302216a"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/independent-business-review.json",
+      "sha256": "d6f6dbd3f3fb12e11c392d4393fdc0460fbdb7f76f2ea76a8e75aad3b344ec92"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/independent-edge-vitest.json",
+      "sha256": "91abd6b1beaefa2daecc07bc7121edcce16bb3233b6970b455f0fa0f3a0edac1"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/independent-edge-vitest.log",
+      "sha256": "1c8b5dd9fe455baa6c8d9375883836dbd876deaa979f1ddaa20b0be7581b10f7"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/independent-final-review.json",
+      "sha256": "6d2566a979bb5643abbadbfc4cefd6fa15c550f8661f62fe6d8f64283a5e9c5e"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/migration-agent-delivery.json",
+      "sha256": "4866961ba03402ab55b873316db3d95bbdea5a0b37e6641780727a0e862dbfca"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/migration-agent-final-registration.json",
+      "sha256": "eff3e8433eef2e02f52c894785e61e442420947b401de75c1d86f30452f5e7bd"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/migration-agent-results-narrow.json",
+      "sha256": "f8bcfcc296470314cfb3af731f673138627fc39a3cff851ffa8ed21fd54e1bca"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/migration-agent-results.json",
+      "sha256": "bcbb305dd702e59fc0fb53d5d2637efc74cd2a5458d99d5587d1669a25ddda2d"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/migration-registration-count-edits.json",
+      "sha256": "87cac8e9b2ba676204df499037574497f1509285ca1c87c3f64c7442eda8acfb"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/migration-registration-orchestration-narrow.json",
+      "sha256": "7ff559b03e29d893d35c81a67ed3a9c311a3c28d3825487b909057406ea8c8e0"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/migration-registration-orchestration-narrow.log",
+      "sha256": "19399a5f0c59b2b24033753b89dddaf2df3d26c9eadd64c88051b79b8ba63a9d"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/migration-registration-orchestration.json",
+      "sha256": "daa72f52a40e603851c742431c08169b91cd731a360a3e96b0961cb814170dbc"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/migration-registration-orchestration.log",
+      "sha256": "959e31193fc7a54b30d326eb18ee7f527ce5f829f776bf13a73e3ef02d01c5a2"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/php-parity.json",
+      "sha256": "feb1e66f642b390b20e52105f95f639c13d06016bb4fbba011be239d6e8607cd"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/restored-resources.json",
+      "sha256": "2805035753af768b74ac4b987581644a085a6b857765a6c19ac0a2a6cd8fdd57"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/review-community-sync-migration-native.log",
+      "sha256": "96252180a3b83e420364fd930a3372affb8300ce2927c06d30339c7243db8cb2"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/scan-final-files-candidate-4.py",
+      "sha256": "2542b9722c23e20a4721c39dc66e9e4ce98e229b8f5b75ba7d359b3978c0d417"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/scan-final-files-candidate-5.py",
+      "sha256": "539540bba3e0f1a926e411c087402b83c1a27f3efa3deaaab8a152bfce778851"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/scan-final-files-candidate-6.py",
+      "sha256": "b8ce93a14a37fb18d0b7ed9a4a47db07cc5786ab15efc1fd44663a39baef7a07"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/scan-final-files-candidate-7.py",
+      "sha256": "d02a0e81dc5e60d72c4edf10db705c9545890ab4726390b4ff1c56aea0721bab"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/scan-final-files-candidate-8.py",
+      "sha256": "fb4b830b72620e46ac41cbcebccb850e8c516798a32dbf28afae147d84502cd2"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/scan-source-candidate-4.py",
+      "sha256": "bd1d26e80846cb80c6b1da97d007f48dc0effd620270408683d9e0f266710efc"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/scan-source-candidate-5.py",
+      "sha256": "8a8cc97e0483d484a572dc7ea6ab625b0596a4ad457797e2d8f0355817249f9d"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/scan-source-candidate-6.py",
+      "sha256": "35716a8b903d7e761c63cd39ef6f9daba7c7a4090392c665f790011e1d6afc3b"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/scan-source-candidate-7.py",
+      "sha256": "d60894c7d181c3345f8388eda953099c2c3783aceaf120afea53c6de8fb27e19"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/scan-source-candidate-8.py",
+      "sha256": "0b8e11e4d9862d2c432905ce26d1825b8d6f84d813996044689fd19b0c995e17"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/secret-scan-comparison.json",
+      "sha256": "ed8bec071792974aa0a9bbafd201e0dbe9454209afb6e310ca0292e0c0709cf6"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/source-baseline-secret-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/source-baseline-secret-scan.log",
+      "sha256": "6a2b3cd48955a55c95d2e07e544f435d7ba1665da491e1c6f18b540cc97ca051"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/source-proof-candidate-4.py",
+      "sha256": "764d8bca03e5f5630c8531925ed358df1f73dedc1393c96f0ec3f23da5eb1d55"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/source-proof-candidate-5.py",
+      "sha256": "b812b9a0565564bac690562fcf632994fe3bb11ff8e8bd18027868206c6015af"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/source-proof-candidate-6.py",
+      "sha256": "344b2944d003c6872518363cdcd4f930627f9a64aa84f392788f790f26deda74"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/source-proof-candidate-8.py",
+      "sha256": "119fecb8a8fe778fe32bc6a0066b9276330c036e758ba46972f4b28be545efe2"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/source-secret-scan.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/source-secret-scan.log",
+      "sha256": "006d1bb765c9e9a04e21011e15a5302669f63f1c9969f4cbf61a0806c9c0b414"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/type-shards-verified.cjs",
+      "sha256": "319ed3a94c26bca5a07807726025b5e6c02cca5e2c5419ab7d966247d72b1199"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/type-shards-verified.json",
+      "sha256": "b483c5a0e11a2381f9989b7d4f687cc548e5d3884866a76af4c6cd3ecc00525a"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/unit-files.json",
+      "sha256": "1f1cac11d10058975599a345debbe39e85df5e306f51e912d5425d905a81ad68"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/update-migration-registrations.py",
+      "sha256": "10f254b2cc0e335730ce2312b4efa4b99a2b10c574ad4f6cff7181db56eba249"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/user-symlinks.json",
+      "sha256": "32f0ae750787e6bde76a8d6f60ab3e6f135ecff1c9e7cc3b06bd86a820fae4ca"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/validate-back-candidate-4.py",
+      "sha256": "051335ea85029b1031a3540ccf37cdbfefaa914c55a293450046e7f941b2a25e"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/validate-back-candidate-5.py",
+      "sha256": "1387a2ec2852ec25bfcf050fe3a7a8fdd5ef36ff0fb341cf41684e5bed9c4584"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/validate-back-candidate-6.py",
+      "sha256": "28d2c96a4473ef52f04845680417c0cfeb9c7d61f1504ace70680f4649bc0c20"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/validate-browser-fixture-type-7.py",
+      "sha256": "2b9f98581b9029ecd008d264843a4bda7fe9117b2fa8fd3d3050ec8cabfc74d2"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/validate-front-candidate-3.py",
+      "sha256": "9822bde47ab3fb9e88be157c022cc07f6992fc82946d4d9b8e79bb5a39a05087"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/validate-front-candidate-4.py",
+      "sha256": "3e5fca47e9c06f119b988c7a95845611d70e3fd35ffd76eda5c9ab03b6737fe8"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/validate-migration-agent-narrow.py",
+      "sha256": "9de296635ebce1ad433f0d4758d595cca44c0d3aea328c415f3b0fb194424584"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/validate-migration-agent.py",
+      "sha256": "f6a63edcef6a11be8dab5c603d978c099b13015eed1bfa0e4bf8d9e38eb4849e"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/validate-native-candidate-1.py",
+      "sha256": "7e7dc5ce1fe21093d81f5e15bcce2dc92590fef9d9e5f92de2a36fa0691ae430"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/validate-native-candidate-2.py",
+      "sha256": "df3dc294d79b9186834de76a79b3f69d82c61fc4435bd8ebf04d83e0aceeb071"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/validate-native-candidate-3.py",
+      "sha256": "362424f2142c5181b03f61e4516fa217d61a6611176743508adc9cd9ff54e7d8"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/validate-native-candidate-4.py",
+      "sha256": "59b1e868a4468a4fa8180e784f60cbdcb02661a7152da52df9b897f2596d76d0"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/validate-stabilization-8.py",
+      "sha256": "931f4c0d4c6ebbce21a5b913825b7c9149c1d0cbedf430cc5c93ababa0e5d66c"
+    },
+    {
+      "path": "/tmp/php-ts-review-community-sync-20261114/write-browser-agent-delivery.py",
+      "sha256": "f0d13a0443e0d49a390d30adbb448c89d26d279b85b266b5874b8802f8cf0aaf"
+    }
+  ],
+  "finalCommitAndCI": "/tmp/php-ts-review-community-sync-20261114/completion.json"
+}

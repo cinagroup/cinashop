@@ -7,7 +7,7 @@ import { ValidateException } from '@/utils/errors';
 import { jsonFail, jsonOk } from '@/utils/json';
 type C=Context<{Bindings:Env;Variables:AppVariables}>;
 const invalid=()=>new ValidateException('评价参数无效，请重新读取');
-function service(c:C) {
+export function buyerReviewService(c:C) {
   const actor={uid:c.get('uid')??0,authVersion:c.get('socketAuthVersion')??'',expiresAt:c.get('socketTokenExp')??0};
   const authorize=async()=>{await authMiddleware({force:true})(c,async()=>{});
     if(c.get('uid')!==actor.uid||c.get('socketAuthVersion')!==actor.authVersion||c.get('socketTokenExp')!==actor.expiresAt)throw invalid();};
@@ -23,13 +23,19 @@ async function response(c:C,run:()=>Promise<unknown>) {
 }
 export async function buyerReviewOrder(c:C){return response(c,async()=>{
   if([...new URL(c.req.url).searchParams.keys()].length)throw invalid();
-  return service(c).order(c.req.param('uni')??'');
+  return buyerReviewService(c).order(c.req.param('uni')??'');
 });}
 /** Explicit versioned authoring view; existing PHP response/aliases remain intact. */
 export function buyerReviewSubmit(legacy:(c:C)=>Promise<Response>):(c:C)=>Promise<Response>{return c=>{
   const query=new URL(c.req.url).searchParams;if(!query.has('view'))return legacy(c);
   return response(c,async()=>{if(query.get('view')!=='buyer'||query.getAll('view').length!==1||[...query.keys()].some(k=>k!=='view'))throw invalid();
     let body:unknown;try{body=JSON.parse(await readBoundedUtf8Text(c.req.raw,8192));}catch(e){if(e instanceof ValidateException)throw e;throw invalid();}
-    return service(c).submit(body);
+    return buyerReviewService(c).submit(body);
   });
 };}
+
+export async function buyerReviewCommunityRetry(c:C){return response(c,async()=>{
+  if([...new URL(c.req.url).searchParams.keys()].length)throw invalid();
+  let body:unknown;try{body=JSON.parse(await readBoundedUtf8Text(c.req.raw,4096));}catch{throw invalid();}
+  return buyerReviewService(c).retryCommunity(c.req.param('uni')??'',body);
+});}

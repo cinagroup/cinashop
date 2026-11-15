@@ -18,7 +18,7 @@ import { readInstalledPublicCatalog, compareInstalledPublicCatalogs, summarizeIn
   type InstalledPublicCatalog } from './data-migration/installed-public-catalog';
 import type { CatalogRow } from './data-migration/postgres-catalog-audit';
 
-export const INSTALLED_CONSTRUCTION_PROFILE = 'pg16-public-external0184-runall0184-city0173-abandon0174-raw-v1';
+export const INSTALLED_CONSTRUCTION_PROFILE = 'pg16-public-external0185-runall0185-city0173-abandon0174-raw-v1';
 const root = resolve(import.meta.dirname, '..');
 const digest = (value: Uint8Array | string) => createHash('sha256').update(value).digest('hex');
 
@@ -106,7 +106,7 @@ export async function auditInstalledPublicConstruction(raw: string | undefined, 
         executed = [...migrationNames];
       } else {
         const result = await new MigrationService(createContainerFromDb(db)).runAll();
-        assert.deepEqual(result, { executed: Array.from({ length: 185 }, (_, index) => String(index).padStart(4, '0')), errors: [] });
+        assert.deepEqual(result, { executed: Array.from({ length: 186 }, (_, index) => String(index).padStart(4, '0')), errors: [] });
         executed = result.executed;
       }
       await assertRegisteredDatabaseCohort(db, path);

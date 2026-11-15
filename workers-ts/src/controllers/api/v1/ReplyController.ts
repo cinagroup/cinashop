@@ -1,3 +1,5 @@
+import { buyerReviewService } from './BuyerReviewController';
+import { reviewSyncRequested } from '@/services/product/ReviewCommunitySyncIntent';
 /**
  * 商品评价控制器
  *
@@ -98,9 +100,12 @@ export async function submitReply(c: C) {
     replyScore?: unknown;
     reply_score?: unknown;
     pics?: unknown;
+    is_sync?:unknown;
+    isSync?:unknown;
   };
   const svc = new ReplyService(c.get("container"));
   try {
+    if(body.is_sync!==undefined&&body.isSync!==undefined&&reviewSyncRequested(body.is_sync)!==reviewSyncRequested(body.isSync))throw new ValidateException('同步社区选项冲突');
     const result = await svc.submitReply(uid, {
       unique: body.unique ?? "",
       comment: body.comment ?? "",
@@ -110,8 +115,11 @@ export async function submitReply(c: C) {
         body.logisticsScore ?? body.logistics_score ?? body.delivery_score ?? 5,
       replyScore: body.replyScore ?? body.reply_score ?? 3,
       pics: body.pics,
+      isSync:body.is_sync!==undefined?body.is_sync:body.isSync,
     });
-    return jsonOk(c, result, "评价成功");
+    const {communitySyncDigest,...publicResult}=result;
+    const communitySync=communitySyncDigest?await buyerReviewService(c).syncReview(result.id,communitySyncDigest):undefined;
+    return jsonOk(c, {...publicResult,...(communitySync?{community_sync:communitySync}:{})}, "评价成功");
   } catch (e) {
     if (e instanceof ValidateException) return jsonFail(c, e.message);
     throw e;

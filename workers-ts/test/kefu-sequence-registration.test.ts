@@ -73,6 +73,8 @@ import { PRODUCT_SAVE_EFFECTS_SQL } from '../src/migrations/productSaveEffects';
 import { runProductSaveEffects } from '../src/migrations/runProductSaveEffects';
 import { runPurchasePhysicalOriginEvidenceSchema } from '../src/migrations/runPurchasePhysicalOriginEvidence';
 import { PURCHASE_PHYSICAL_ORIGIN_INSTALLATION_SQL } from '../src/migrations/purchasePhysicalOriginEvidenceInstallation';
+import { REVIEW_COMMUNITY_SYNC_SQL } from '../src/migrations/reviewCommunitySync';
+import { runReviewCommunitySync } from '../src/migrations/runReviewCommunitySync';
 
 // These tests cover orchestration only. The real unmocked runner and fresh
 // MigrationService.runAll execute against dedicated PG16 databases in CI.
@@ -110,6 +112,8 @@ vi.mock('../src/migrations/runProductAutoShelf', () => ({ runProductAutoShelf: v
 vi.mock('../src/migrations/runProductRecycleEffects', () => ({ runProductRecycleEffects: vi.fn() }));
 vi.mock('../src/migrations/runProductSaveEffects', () => ({ runProductSaveEffects: vi.fn() }));
 vi.mock('../src/migrations/runPurchasePhysicalOriginEvidence', () => ({ runPurchasePhysicalOriginEvidenceSchema: vi.fn() }));
+vi.mock('../src/migrations/runReviewCommunitySync', () => ({ runReviewCommunitySync: vi.fn() }));
+const reviewSyncRunner = vi.mocked(runReviewCommunitySync);
 const runner = vi.mocked(runKefuSequenceAlignment);
 const pinkRunner = vi.mocked(runPinkRecoveryIndex);
 const childRunner = vi.mocked(runForeignKeyChildIndexes);
@@ -146,7 +150,7 @@ const saveEffectsRunner = vi.mocked(runProductSaveEffects);
 const physicalOriginRunner = vi.mocked(runPurchasePhysicalOriginEvidenceSchema);
 const dialect = new PgDialect();
 const root = resolve(import.meta.dirname, "..");
-const names = Array.from({ length: 185 }, (_, i) => String(i).padStart(4, "0"));
+const names = Array.from({ length: 186 }, (_, i) => String(i).padStart(4, "0"));
 
 function harness(failure?: { index: number; error: unknown }, superseded = false) {
   let depth = 0, index = 0;
@@ -316,6 +320,10 @@ function harness(failure?: { index: number; error: unknown }, superseded = false
     expect(db).toBe(container.db); expect(depth, '0184 must receive the root DB').toBe(0);
     expect(saveEffectsRunner).toHaveBeenCalledExactlyOnceWith(container.db);
   });
+  reviewSyncRunner.mockImplementation(async db => {
+    expect(db).toBe(container.db); expect(depth, '0185 must receive the root DB').toBe(0);
+    expect(physicalOriginRunner).toHaveBeenCalledExactlyOnceWith(container.db);
+  });
   return { service: new MigrationService(container), transaction, sqlCalls, db: container.db };
 }
 
@@ -354,10 +362,11 @@ beforeEach(() => {
   recycleEffectsRunner.mockReset();
   saveEffectsRunner.mockReset();
   physicalOriginRunner.mockReset();
+  reviewSyncRunner.mockReset();
 });
 
 describe("embedded 0151 sequence registration", () => {
-  it("retains 0151 once, followed by 0152–0184, with the unchanged numeric 0000–0150 registry", () => {
+  it("retains 0151 once, followed by 0152–0185, with the unchanged numeric 0000–0150 registry", () => {
     const source = readFileSync(resolve(root, "src/services/MigrationService.ts"), "utf8");
     const file = ts.createSourceFile("MigrationService.ts", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
     const service = file.statements.find(s => ts.isClassDeclaration(s) && s.name?.text === "MigrationService");
@@ -442,6 +451,9 @@ describe("embedded 0151 sequence registration", () => {
     expect(PRODUCT_SAVE_EFFECTS_SQL).toBe(readFileSync(resolve(root,'migrations/0178_product_save_effects.sql'),'utf8'));
     expect(saveEffectsRunner).not.toHaveBeenCalled();
     expect(physicalOriginRunner).not.toHaveBeenCalled();
+    expect(setup.service.reviewCommunitySyncSqlForVerification()).toBe(REVIEW_COMMUNITY_SYNC_SQL);
+    expect(REVIEW_COMMUNITY_SYNC_SQL).toBe(readFileSync(resolve(root,'migrations/0185_review_community_sync.sql'),'utf8'));
+    expect(reviewSyncRunner).not.toHaveBeenCalled();
     expect(CHECKOUT_PRICING_LOCK_INSTALLATION_SQL.trim()).toBe(readFileSync(resolve(root,'migrations/0160_checkout_pricing_lock.sql'),'utf8').trim());
     expect(OFFLINE_INSTALLATION_SQL.trim()).toBe(readFileSync(resolve(root,'migrations/0159_offline_order.sql'),'utf8').trim());
     expect(REFUND_SPLIT_INSTALLATION_SQL.trim()).toBe(readFileSync(resolve(root,'migrations/0158_refund_order_split.sql'),'utf8').trim());
@@ -454,7 +466,7 @@ describe("embedded 0151 sequence registration", () => {
     expect(couponRunner).not.toHaveBeenCalled();
   });
 
-  it("executes all 185 steps in order and dispatches 0151–0184 to independent root transaction runners", async () => {
+  it("executes all 186 steps in order and dispatches 0151–0185 to independent root transaction runners", async () => {
     const setup = harness();
     expect(await setup.service.runAll()).toEqual({ executed: names, errors: [] });
     expect(setup.transaction).toHaveBeenCalledTimes(151);
@@ -487,12 +499,14 @@ describe("embedded 0151 sequence registration", () => {
     expect(recycleEffectsRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(saveEffectsRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(physicalOriginRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(reviewSyncRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(pinkNoticeRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(couponCatalogRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(quotaSeedRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(promotionGiftRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(cancellationGiftRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(setup.sqlCalls.filter(c => c.sql === "SET LOCAL search_path TO public, pg_temp")).toHaveLength(151);
+    expect(setup.sqlCalls.some(c => c.sql === REVIEW_COMMUNITY_SYNC_SQL)).toBe(false);
     expect(setup.sqlCalls.some(c => c.sql === KEFU_SEQUENCE_ALIGNMENT_SQL)).toBe(false);
     expect(setup.sqlCalls.some(c => c.sql === PINK_RECOVERY_INDEX_SQL)).toBe(false);
     expect(setup.sqlCalls.some(c => c.sql === FOREIGN_KEY_CHILD_INDEX_SQL)).toBe(false);
@@ -866,6 +880,9 @@ describe("embedded 0151 sequence registration", () => {
     expect(recycleEffectsRunner).not.toHaveBeenCalled();
     expect(saveEffectsRunner).not.toHaveBeenCalled();
     expect(physicalOriginRunner).not.toHaveBeenCalled();
+    expect(setup.service.reviewCommunitySyncSqlForVerification()).toBe(REVIEW_COMMUNITY_SYNC_SQL);
+    expect(REVIEW_COMMUNITY_SYNC_SQL).toBe(readFileSync(resolve(root,'migrations/0185_review_community_sync.sql'),'utf8'));
+    expect(reviewSyncRunner).not.toHaveBeenCalled();
     expect(setup.transaction).toHaveBeenCalledTimes(151);
   });
   it.each([new Error('owner missing'), new Error('recycle CHECK drift'), 'raw rejection'])('fails closed at 0182 without retry or false success (%s)', async error => {
@@ -875,6 +892,9 @@ describe("embedded 0151 sequence registration", () => {
     expect(autoShelfRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(saveEffectsRunner).not.toHaveBeenCalled();
     expect(physicalOriginRunner).not.toHaveBeenCalled();
+    expect(setup.service.reviewCommunitySyncSqlForVerification()).toBe(REVIEW_COMMUNITY_SYNC_SQL);
+    expect(REVIEW_COMMUNITY_SYNC_SQL).toBe(readFileSync(resolve(root,'migrations/0185_review_community_sync.sql'),'utf8'));
+    expect(reviewSyncRunner).not.toHaveBeenCalled();
     expect(setup.transaction).toHaveBeenCalledTimes(151);
   });
   it.each([new Error('owner missing'), new Error('save CHECK drift'), 'raw rejection'])('fails closed at 0183 without retry or false success (%s)', async error => {
@@ -884,4 +904,12 @@ describe("embedded 0151 sequence registration", () => {
     expect(recycleEffectsRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(setup.transaction).toHaveBeenCalledTimes(151);
   });
+  it.each([new Error('review owner missing'), new Error('review column drift'), 'raw rejection'])('fails closed at 0185 without retry or false success (%s)', async error => {
+    const setup = harness(); reviewSyncRunner.mockRejectedValue(error);
+    expect(await setup.service.runAll()).toEqual({ executed: names.slice(0,185), errors: [`0185: ${error instanceof Error ? error.message : error}`] });
+    expect(physicalOriginRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(reviewSyncRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(setup.transaction).toHaveBeenCalledTimes(151);
+  });
+
 });

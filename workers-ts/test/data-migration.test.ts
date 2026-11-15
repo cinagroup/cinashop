@@ -77,10 +77,10 @@ afterEach(() => {
 });
 
 describe("MySQL to PostgreSQL schema audit", () => {
-  it('binds the exact 182-file root migration cohort and refuses renamed, reordered, omitted or addon files',()=>{
+  it('binds the exact 183-file root migration cohort and refuses renamed, reordered, omitted or addon files',()=>{
     const files=readdirSync(resolve(import.meta.dirname,'../migrations')).filter(name=>name.endsWith('.sql')).sort();
     expect(()=>assertExternalMigrationCohort(files)).not.toThrow();
-    expect(files.at(-1)).toBe('0184_purchase_physical_origin_evidence.sql');
+    expect(files.at(-1)).toBe('0185_review_community_sync.sql');
     for(const invalid of [
       files.filter(name=>name!=='0177_product_recycle_effects.sql'),
       files.map(name=>name==='0178_product_save_effects.sql'?'0178_unregistered.sql':name),

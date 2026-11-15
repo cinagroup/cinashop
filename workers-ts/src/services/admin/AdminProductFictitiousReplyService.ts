@@ -320,7 +320,8 @@ export class AdminProductFictitiousReplyService {
         nickname: input.nickname, avatar: input.avatar, comment: input.comment, sku: sku?.suk ?? '', skuUnique: input.skuUnique,
         type: 0, relationId: 0, replyType: 'product', replyScore: input.replyScore, productScore: input.productScore,
         serviceScore: input.serviceScore, logisticsScore: input.deliveryScore, deliveryScore: input.deliveryScore, pics: JSON.stringify(input.pics),
-        isReply: 0, merchantReply: '', merchantReplyContent: '', merchantReplyTime: 0, praise: 0, viewsNum: 0, status: 1, top: 0, isDel: 0, addTime: timestamp };
+        isReply: 0, merchantReply: '', merchantReplyContent: '', merchantReplyTime: 0, praise: 0, viewsNum: 0, status: 1, top: 0, isDel: 0, addTime: timestamp,
+        communitySyncRequested: 0, communitySyncDigest: '', communitySyncPostId: 0 };
       const rows = await tx.insert(storeProductReply).values(expected).returning(), reply = rows[0];
       if (rows.length !== 1 || !reply || !Number.isSafeInteger(reply.id) || reply.id <= 0 || !sameRow(reply, { id: reply.id, ...expected })) throw new Error('虚拟评价新增回执不完整');
       await this.verifyReply(tx, reply);

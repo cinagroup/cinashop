@@ -1,9 +1,12 @@
+import { ReviewCommunitySyncService, reviewCommunitySyncState, reviewCommunitySyncColumns } from '@/services/product/ReviewCommunitySyncService';
+import { validateBuyerReviewCommunityRetry } from '../../../../view/common/buyerReviewCommunitySync';
+import { actorInDatabase, type BuyerReviewActor } from './BuyerReviewSession';
+export type { BuyerReviewActor } from './BuyerReviewSession';
 import { and, eq, inArray, or, sql } from 'drizzle-orm';
 import type { Container, DbClient } from '@/lib/di';
 import type { Env } from '@/env';
-import { storeOrder, storeOrderCartInfo, storeProductReply, systemAttachment, user } from '@/models/schema';
-import { AuthException, ApiErrorCode, NotFoundException, ValidateException } from '@/utils/errors';
-import { md5 } from '@/utils/jwt';
+import { storeOrder, storeOrderCartInfo, storeProductReply, community, systemAttachment } from '@/models/schema';
+import { NotFoundException, ValidateException } from '@/utils/errors';
 import { checkoutFingerprint } from './CheckoutConfirmation';
 import { lifecycleTime, withOrderLifecycleSnapshot } from './OrderLifecycleTimeline';
 import { ReplyService } from '@/services/product/ReplyService';
@@ -14,7 +17,6 @@ import { orderDetailId } from '../../../../view/common/orderDetailIdentity';
 import { parseBuyerReviewPage, validateBuyerReviewBody, type BuyerReviewPage, type BuyerReviewLine, type BuyerReviewRecord, type BuyerReviewAck } from '../../../../view/common/buyerReview';
 type Order = typeof storeOrder.$inferSelect;
 type Cart = typeof storeOrderCartInfo.$inferSelect;
-export interface BuyerReviewActor { uid:number; authVersion:string; expiresAt:number }
 const invalid = (message='评价资料已变化，请重新读取') => new ValidateException(message);
 const orderColumns = { id:storeOrder.id,orderId:storeOrder.orderId,uid:storeOrder.uid,paid:storeOrder.paid,status:storeOrder.status,
   pid:storeOrder.pid,supplierId:storeOrder.supplierId,storeId:storeOrder.storeId,refundStatus:storeOrder.refundStatus,isDel:storeOrder.isDel,isSystemDel:storeOrder.isSystemDel,supplierAllocationStatus:storeOrder.supplierAllocationStatus,payType:storeOrder.payType };
@@ -27,14 +29,6 @@ export const buyerReviewLineRevision = (order:ReadOrder,cart:ReadCart) => checko
   refundStatus:order.refundStatus,isDel:order.isDel,isSystemDel:order.isSystemDel,supplierAllocationStatus:order.supplierAllocationStatus,payType:order.payType},
   cart:{id:cart.id,oid:cart.oid,uid:cart.uid,unique:cart.unique,productId:cart.productId,type:cart.type,relationId:cart.relationId,productType:cart.productType,
     skuUnique:cart.skuUnique,cartInfo:cart.cartInfo,isGift:cart.isGift,cartNum:cart.cartNum,refundNum:cart.refundNum} });
-async function actorInDatabase(db:DbClient,actor:BuyerReviewActor,lock=false) {
-  if (!Number.isInteger(actor.uid)||actor.uid<=0||actor.uid>2147483647||!actor.authVersion||!Number.isInteger(actor.expiresAt)||actor.expiresAt<=Math.floor(Date.now()/1000))
-    throw new AuthException('登录已过期，请重新登录',ApiErrorCode.ERR_EXPIRED);
-  const query=db.select({pwd:user.pwd,status:user.status,isDel:user.isDel,deleteTime:user.deleteTime}).from(user).where(eq(user.uid,actor.uid)).limit(1);
-  const [row]=await (lock?query.for('share',{noWait:true}):query);
-  if (!row||row.status!==1||row.isDel||row.deleteTime!==null||![md5(row.pwd),row.pwd].includes(actor.authVersion))
-    throw new AuthException('登录状态已变化，请重新登录',ApiErrorCode.ERR_EXPIRED);
-}
 function orderReason(order:ReadOrder) {
   if (order.pid===-1||order.supplierAllocationStatus===1) return '请评价拆分后的履约订单';
   if (order.paid!==1) return '请在支付并确认收货后评价';
@@ -60,6 +54,7 @@ async function replies(db:DbClient,order:ReadOrder,carts:ReadCart[]) {
     comment:sql<string|null>`CASE WHEN octet_length(${storeProductReply.comment})<=16384 THEN ${storeProductReply.comment} ELSE NULL END`,
     pics:sql<string|null>`CASE WHEN coalesce(octet_length(${storeProductReply.pics}),0)<=20000 THEN coalesce(${storeProductReply.pics},'[]') ELSE NULL END`,
     replyScore:storeProductReply.replyScore,productScore:storeProductReply.productScore,serviceScore:storeProductReply.serviceScore,logisticsScore:storeProductReply.logisticsScore,
+    communitySyncRequested:storeProductReply.communitySyncRequested,communitySyncDigest:storeProductReply.communitySyncDigest,communitySyncPostId:storeProductReply.communitySyncPostId,
     addTime:storeProductReply.addTime,status:storeProductReply.status}).from(storeProductReply).where(and(eq(storeProductReply.isDel,0),or(eq(storeProductReply.oid,order.id),inArray(storeProductReply.orderCartInfoId,carts.map(c=>c.id))))).limit(201);
   if (rows.length>200||rows.some(r=>r.uid!==order.uid||r.oid!==order.id||r.comment===null||r.pics===null)) throw invalid('订单评价关联或资料异常，请联系商家核对');
   return rows;
@@ -92,6 +87,9 @@ export class BuyerReviewService {
       for(const cart of carts){const matches=records.filter(r=>r.orderCartInfoId!==null&&knownIds.has(r.orderCartInfoId)?r.orderCartInfoId===cart.id:r.unique===cart.unique);
         if(matches.length>1||matches.some(r=>r.unique!==cart.unique))throw invalid('商品存在多个评价关联，请联系商家核对');byCart.set(cart.id,matches);}
       const selected=[...new Map([...byCart.values()].flat().map(r=>[r.id,r])).values()],sourcePictures=new Map(selected.map(r=>[r.id,pictures(r.pics!)]));
+      const postIds=[...new Set(selected.map(r=>r.communitySyncPostId).filter(id=>id>0))];
+      const syncPosts=postIds.length?await db.select(reviewCommunitySyncColumns).from(community).where(inArray(community.id,postIds)).limit(200):[];
+      const byPost=new Map(syncPosts.map(p=>[p.id,p]));
       const pictureRefs=[...new Set([...sourcePictures.values()].flat())],pictureIds=[...new Set(pictureRefs.map(parseCanonicalAttachmentId).filter((id):id is number=>id!==null))];
       if(pictureIds.some(id=>id>2147483647))throw invalid('历史评价图片标识异常');
       const assets=pictureIds.length?await db.select(buyerReplyImageColumns).from(systemAttachment).where(inArray(systemAttachment.attId,pictureIds)):[],byAsset=new Map(assets.map(a=>[a.attId,a]));
@@ -106,7 +104,7 @@ export class BuyerReviewService {
         let review:BuyerReviewRecord|null=null;const saved=matching[0];
         if(saved){const pics=(sourcePictures.get(saved.id)??[]).map(ref=>byPicture.get(ref)??'');
           const score=(v:number|null,max:number)=>v===null||v===0?null:v>=1&&v<=max?v:(()=>{throw invalid('历史评价评分异常');})();
-          review={id:saved.id,uid:this.actor.uid,orderId:order.id,cartInfoId:cart.id,unique:cart.unique,comment:saved.comment!,replyScore:score(saved.replyScore,3),productScore:score(saved.productScore,5),serviceScore:score(saved.serviceScore,5),logisticsScore:score(saved.logisticsScore,5),pics,addTime:saved.addTime?lifecycleTime(saved.addTime,false):'',visible:saved.status===1};
+          review={...(saved.communitySyncRequested===1||saved.communitySyncPostId>0||saved.communitySyncDigest?{communitySync:reviewCommunitySyncState(saved,byPost.get(saved.communitySyncPostId))}:{}),id:saved.id,uid:this.actor.uid,orderId:order.id,cartInfoId:cart.id,unique:cart.unique,comment:saved.comment!,replyScore:score(saved.replyScore,3),productScore:score(saved.productScore,5),serviceScore:score(saved.serviceScore,5),logisticsScore:score(saved.logisticsScore,5),pics,addTime:saved.addTime?lifecycleTime(saved.addTime,false):'',visible:saved.status===1};
         }
         const lineReason=review?'该商品已提交评价':cart.isGift?'赠品无需评价':!cart.unique?'商品评价标识缺失':reason;
         lines.push({id:cart.id,unique:cart.unique,productId:cart.productId,name:data.name,sku:data.sku,price:data.price,image:rendered[index]??'',isGift:cart.isGift===1,
@@ -115,9 +113,23 @@ export class BuyerReviewService {
       return parseBuyerReviewPage({version:1,uid:this.actor.uid,orderId:order.id,orderNo:order.orderId,paid:order.paid===1,status:order.status,canReview:!reason,reason,lines},reference,this.actor.uid);
     });await this.fresh();return result;
   }
+  async syncReview(replyId:number,digest:string) {
+    await this.fresh();
+    const [row]=await this.container.db.select({orderId:storeProductReply.oid,orderNo:storeOrder.orderId,cartInfoId:storeProductReply.orderCartInfoId,unique:storeProductReply.unique})
+      .from(storeProductReply).innerJoin(storeOrder,eq(storeOrder.id,storeProductReply.oid))
+      .where(and(eq(storeProductReply.id,replyId),eq(storeProductReply.uid,this.actor.uid),eq(storeOrder.uid,this.actor.uid),eq(storeProductReply.communitySyncDigest,digest))).limit(1);
+    if(!row||!row.cartInfoId)throw new NotFoundException('评价不存在或不属于当前用户');
+    return new ReviewCommunitySyncService(this.container,this.actor,this.authorize).attempt({...row,cartInfoId:row.cartInfoId,replyId,syncRevision:digest});
+  }
+  async retryCommunity(reference:string,raw:unknown) {
+    let body;try{body=validateBuyerReviewCommunityRetry(raw);}catch{throw invalid('社区同步参数无效');}
+    if(body.orderNo!==orderDetailId(reference))throw invalid();
+    const communitySync=await new ReviewCommunitySyncService(this.container,this.actor,this.authorize).attempt(body);
+    return {...body,uid:this.actor.uid,communitySync};
+  }
   async submit(raw:unknown):Promise<BuyerReviewAck> {
     const body=validateBuyerReviewBody(raw);await this.fresh();
-    const result=await new ReplyService(this.container,this.env.APP_KEY).submitReply(this.actor.uid,body,{
+    const result=await new ReplyService(this.container,this.env.APP_KEY).submitReply(this.actor.uid,{...body,isSync:body.syncToCommunity},{
       prepare:async(db,order,carts)=>{if(order.id!==body.orderId||order.orderId!==body.orderNo)throw invalid();await boundedCarts(db,order.id);await replies(db,order,carts);},
       check:async(db,order,cart)=>{await actorInDatabase(db,this.actor,true);await parent(db,order,true);
         if(cart.id!==body.cartInfoId||cart.unique!==body.unique||cart.isGift!==0||await buyerReviewLineRevision(order,cart)!==body.revision)throw invalid();},
@@ -127,6 +139,8 @@ export class BuyerReviewService {
         if(!currentOrder||!currentCart||currentOrder.status!==(completed?3:2)||await buyerReviewLineRevision({...currentOrder,status:order.status},currentCart)!==body.revision)throw invalid('评价提交后的订单凭据已变化');
         await parent(db,currentOrder,true);
       },
-    });await this.fresh();return {version:1,uid:this.actor.uid,orderId:body.orderId,orderNo:body.orderNo,cartInfoId:body.cartInfoId,unique:body.unique,replyId:result.id,completed:result.completed,toLottery:result.to_lottery};
+    });await this.fresh();
+    const communitySync=result.communitySyncDigest?await this.syncReview(result.id,result.communitySyncDigest):undefined;
+    return {...(communitySync?{communitySync}:{}),version:1,uid:this.actor.uid,orderId:body.orderId,orderNo:body.orderNo,cartInfoId:body.cartInfoId,unique:body.unique,replyId:result.id,completed:result.completed,toLottery:result.to_lottery};
   }
 }

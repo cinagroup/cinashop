@@ -149,10 +149,10 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual extended 
     } finally { await f.close(); }
   }, 120000);
 
-  it('actually constructs both complete paths and preserves raw differences before verified owned cleanup', async () => {
+  it('actually constructs external183 and embedded186 complete paths and preserves raw differences before verified owned cleanup', async () => {
     const report = await auditInstalledPublicConstruction(process.env.TEST_FINANCE_POSTGRES_URL, profile);
     expect(report.paths.map(path => [path.path, path.bareTables, path.tables, path.executed.length]))
-      .toEqual([['external', 287, 287, 182], ['embedded', 283, 287, 185]]);
+      .toEqual([['external', 287, 287, 183], ['embedded', 283, 287, 186]]);
     expect(report.inputSnapshotUnchanged).toBe(true);
     expect(report.cleanupConfirmed).toBe(true); expect(report.cleanup).toHaveLength(2);
     expect(report.diagnosticCompleted).toBe(true); expect(report.observedCatalogsEqual).toBe(false);

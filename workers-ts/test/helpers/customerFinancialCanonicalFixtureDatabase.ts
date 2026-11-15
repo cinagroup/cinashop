@@ -58,7 +58,7 @@ export async function customerFinancialCanonicalFixtureDatabase(_tables: PgTable
     try {
       const migration = await new MigrationService(createContainerFromDb(db)).runAll();
       if (migration.errors.length || JSON.stringify(migration.executed)
-        !== JSON.stringify(Array.from({ length: 185 }, (_, i) => String(i).padStart(4, '0'))))
+        !== JSON.stringify(Array.from({ length: 186 }, (_, i) => String(i).padStart(4, '0'))))
         throw Error('Complete canonical migration sequence refused');
       const [after] = await db.execute<{ pid: number; count: number; pricing: string }>(sql`SELECT pg_backend_pid() AS pid,
         (SELECT count(*)::integer FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r') AS count,

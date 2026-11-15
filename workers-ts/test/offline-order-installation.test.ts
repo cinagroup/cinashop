@@ -221,9 +221,9 @@ describe('offline controlled PG16 installation', () => {
       } else {
         await whole.exec('SET client_min_messages=warning');
         const result = await new MigrationService(createContainerFromDb(whole.db)).runAll();
-        expect(result.errors).toEqual([]); expect(result.executed).toHaveLength(185);
-        expect(result.executed.at(-1)).toBe('0184');
-        expect(result.executed).toEqual(Array.from({length:185},(_,i)=>String(i).padStart(4,'0')));
+        expect(result.errors).toEqual([]); expect(result.executed).toHaveLength(186);
+        expect(result.executed.at(-1)).toBe('0185');
+        expect(result.executed).toEqual(Array.from({length:186},(_,i)=>String(i).padStart(4,'0')));
       }
       await assertRegisteredDatabaseCohort(whole.db,path as 'external'|'embedded');
       const inspected = await whole.db.transaction(tx => inspectReviewedOfflineGiftCatalog(tx,{requireOwner:true}));

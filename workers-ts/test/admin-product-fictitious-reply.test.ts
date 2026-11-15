@@ -101,6 +101,7 @@ describe('Admin virtual reviews and real PHP commodity selector with SQL busines
       serviceScore: 4, logisticsScore: 3, deliveryScore: 3, pics: '["/uploads/virtual-review.png"]',
       isReply: 0, merchantReply: '', merchantReplyContent: '', merchantReplyTime: 0,
       praise: 0, viewsNum: 0, status: 1, top: 0, isDel: 0,
+      communitySyncRequested: 0, communitySyncDigest: '', communitySyncPostId: 0,
       addTime: Math.floor(Date.parse('2026-08-02T12:00:00+08:00') / 1000) });
     const after = await snapshot();
     expect(after.reviews.filter(item => item.id !== 1000)).toEqual(before.reviews);
