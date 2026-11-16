@@ -1,0 +1,233 @@
+{
+  "sourceRef": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "sourceExpressions": "Actual fixed PHP public/checkout coupon BCMath operations, separate first-order and scale4 line ratio; standalone oracle executed, not framework services",
+  "oracleProgramSha256": "86a565931f92fdd46c0cf5b984bf2453c3bfda7c8323a7a19230513391097552",
+  "arithmetic": [
+    {
+      "price": "0.01",
+      "percent": "85.00",
+      "coupon": {
+        "pay": "0.00",
+        "discount": "0.01"
+      },
+      "first_order_before_cap": "0.00"
+    },
+    {
+      "price": "0.02",
+      "percent": "85.00",
+      "coupon": {
+        "pay": "0.01",
+        "discount": "0.01"
+      },
+      "first_order_before_cap": "0.00"
+    },
+    {
+      "price": "10.00",
+      "percent": "85.00",
+      "coupon": {
+        "pay": "8.50",
+        "discount": "1.50"
+      },
+      "first_order_before_cap": "1.50"
+    },
+    {
+      "price": "10.01",
+      "percent": "85.00",
+      "coupon": {
+        "pay": "8.50",
+        "discount": "1.51"
+      },
+      "first_order_before_cap": "1.50"
+    },
+    {
+      "price": "19.99",
+      "percent": "85.00",
+      "coupon": {
+        "pay": "16.99",
+        "discount": "3.00"
+      },
+      "first_order_before_cap": "2.99"
+    },
+    {
+      "price": "19.99",
+      "percent": "85.99",
+      "coupon": {
+        "pay": "16.99",
+        "discount": "3.00"
+      },
+      "first_order_before_cap": "2.99"
+    },
+    {
+      "price": "20.00",
+      "percent": "85.00",
+      "coupon": {
+        "pay": "17.00",
+        "discount": "3.00"
+      },
+      "first_order_before_cap": "3.00"
+    },
+    {
+      "price": "39.98",
+      "percent": "85.99",
+      "coupon": {
+        "pay": "33.98",
+        "discount": "6.00"
+      },
+      "first_order_before_cap": "5.99"
+    },
+    {
+      "price": "20.02",
+      "percent": "85.00",
+      "coupon": {
+        "pay": "17.01",
+        "discount": "3.01"
+      },
+      "first_order_before_cap": "3.00"
+    },
+    {
+      "price": "19.99",
+      "percent": "99.99",
+      "coupon": {
+        "pay": "19.79",
+        "discount": "0.20"
+      },
+      "first_order_before_cap": "0.19"
+    },
+    {
+      "price": "19.99",
+      "percent": "100.00",
+      "coupon": {
+        "pay": "19.99",
+        "discount": "0.00"
+      },
+      "first_order_before_cap": "0.00"
+    },
+    {
+      "price": "19.99",
+      "percent": "0.99",
+      "coupon": {
+        "pay": "0.00",
+        "discount": "19.99"
+      },
+      "first_order_before_cap": "19.99"
+    },
+    {
+      "price": "0.12",
+      "percent": "85.00",
+      "coupon": {
+        "pay": "0.10",
+        "discount": "0.02"
+      },
+      "first_order_before_cap": "0.01"
+    }
+  ],
+  "quantity": [
+    {
+      "unitCents": 1,
+      "quantity": 2,
+      "storedPayPercent": "85.00",
+      "expectedCouponDiscountCents": 1,
+      "incorrectPerUnitDiscountCents": 2
+    },
+    {
+      "unitCents": 1001,
+      "quantity": 2,
+      "storedPayPercent": "85.00",
+      "expectedCouponDiscountCents": 301,
+      "incorrectPerUnitDiscountCents": 302
+    },
+    {
+      "unitCents": 1999,
+      "quantity": 2,
+      "storedPayPercent": "85.99",
+      "expectedCouponDiscountCents": 600,
+      "expectedPayCents": 3398
+    }
+  ],
+  "allocations": [
+    {
+      "eligibleWeightsCents": [
+        6,
+        6
+      ],
+      "couponDiscountCents": 2,
+      "phpRawEligibleLineSharesCents": [
+        1,
+        1
+      ],
+      "expectedBoundedPhpSharesCents": [
+        1,
+        1
+      ]
+    },
+    {
+      "eligibleWeightsCents": [
+        1,
+        1
+      ],
+      "couponDiscountCents": 1,
+      "phpRawEligibleLineSharesCents": [
+        0,
+        1
+      ],
+      "expectedBoundedPhpSharesCents": [
+        0,
+        1
+      ]
+    },
+    {
+      "eligibleWeightsCents": [
+        1001,
+        1001
+      ],
+      "couponDiscountCents": 301,
+      "phpRawEligibleLineSharesCents": [
+        150,
+        151
+      ],
+      "expectedBoundedPhpSharesCents": [
+        150,
+        151
+      ]
+    },
+    {
+      "eligibleWeightsCents": [
+        10001,
+        1
+      ],
+      "couponDiscountCents": 10002,
+      "phpRawEligibleLineSharesCents": [
+        10000,
+        2
+      ],
+      "expectedBoundedPhpSharesCents": [
+        10001,
+        1
+      ]
+    },
+    {
+      "eligibleWeightsCents": [
+        0,
+        6,
+        0,
+        6,
+        0
+      ],
+      "couponDiscountCents": 2,
+      "phpRawEligibleLineSharesCents": [
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "expectedBoundedPhpSharesCents": [
+        0,
+        1,
+        0,
+        1,
+        0
+      ]
+    }
+  ]
+}

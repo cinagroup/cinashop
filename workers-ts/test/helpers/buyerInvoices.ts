@@ -18,6 +18,7 @@ const app = createApp();
 type Fixture = Awaited<ReturnType<typeof refundRuntimeFixture>>;
 export async function withBuyerInvoices(work: (s: {
   f: Fixture; env: Env; appPid: number; appRole: string; appContainer: Container;
+  appConnectionString: string; adminRole: string; adminConnectionString: string; adminContainer: Container;
   fetch(request: Request): Promise<Response>;
   token(uid?: number): Promise<string>;
   request(path: string, body?: unknown, bearer?: string | null, method?: string): Promise<{ status: number; msg: string; data: any; headers: Headers; httpStatus: number }>;
@@ -38,7 +39,7 @@ export async function withBuyerInvoices(work: (s: {
     await owned.withRuntimeRole(appRole => owned.withRuntimeRole!(async adminRole => {
       const [database] = await owned.exec('SELECT current_database() AS name');
       await runRuntimeBusinessCommissioning(owned.db, { app: appRole.role, admin: adminRole.role, maintenance: 'finance_test', database: String(database.name), pricingOwner: owned.pricingOwner });
-      const appContainer = createContainerFromDb(appRole.db); wiring.container = appContainer;
+      const appContainer = createContainerFromDb(appRole.db), adminContainer = createContainerFromDb(adminRole.db); wiring.container = appContainer;
       const token = async (uid = 11) => { const [row] = await owned.db.select().from(user).where(eq(user.uid, uid)); if (!row) throw Error('Owned user missing'); return (await createToken(uid, 'api', md5(row.pwd), env.APP_KEY)).token; };
       const flags = async (enabled = '1', special = '1') => {
         for (const [key, value] of [['invoice_func_status', enabled], ['special_invoice_status', special]]) {
@@ -53,6 +54,10 @@ export async function withBuyerInvoices(work: (s: {
       const fetch = async (request: Request) => { const tasks: Promise<unknown>[] = []; const response = await app.fetch(request, env,
         { waitUntil: task => { tasks.push(task); }, passThroughOnException() {}, props: {} }); await Promise.all(tasks); return response; };
       await work({ f: owned, env, appPid: appRole.pid, appRole: appRole.role, appContainer, token, flags, fetch,
+        // Original commissioned peers, alive for this callback only. Transport
+        // callers must never log these temporary credential-bearing URLs.
+        appConnectionString: appRole.connectionString, adminRole: adminRole.role,
+        adminConnectionString: adminRole.connectionString, adminContainer,
         request: async (path, body, bearer, method = body === undefined ? 'GET' : 'POST') => {
           const value = bearer === undefined ? await token() : bearer;
           const headers = new Headers({ 'content-type': 'application/json' }); if (value) headers.set('Authorization', 'Bearer ' + value);

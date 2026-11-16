@@ -9,8 +9,8 @@ import { isPaidMembershipActive } from './StoreOrderCreateService';
 import { readMembershipPricingPolicy } from '@/services/user/MembershipPricingPolicy';
 import { evaluateOrderCoupon, prepareCouponScope, type PricedCouponItem } from '@/services/activity/OrderCouponService';
 import { legacyCouponProjection } from '@/services/activity/V2CouponCompatibilityService';
-import { allocateLegacyDiscountCents, quoteFirstOrderDiscount } from '@/services/activity/StoreNewcomerService';
-import { fitCheckoutLineCapacities } from './CheckoutLineAllocation';
+import { quoteFirstOrderDiscount } from '@/services/activity/StoreNewcomerService';
+import { allocateCheckoutLineUnits, fitCheckoutLineCapacities } from './CheckoutLineAllocation';
 import { quoteOrderPromotionGifts } from '@/services/activity/OrderPromotionGiftService';
 import type { OrderPromotionQuoteLine } from '@/services/activity/OrderPromotionQuoteService';
 import { resolveDiscountPackageSelection } from '@/services/activity/StoreDiscountService';
@@ -209,7 +209,7 @@ export class CartComputationService {
     }
     const discount = best?.priceCents ?? 0, pay = Math.max(0,total-discount-firstOrder);
     const gross = rows.map(row => cents(row.trueSumPrice)), capacities = best?.lineEligibleCents ?? gross;
-    const apportioned = discount ? fitCheckoutLineCapacities(allocateLegacyDiscountCents(discount,capacities),capacities) : gross.map(()=>0);
+    const apportioned = discount ? fitCheckoutLineCapacities(allocateCheckoutLineUnits(discount,capacities,4),capacities) : gross.map(()=>0);
     const pricePromotions = [...new Map(rows.flatMap(row => (row.promotion?.promotionAllocations ?? []).map(allocation =>
       [allocation.rootId,{id:allocation.rootId,label_id:allocation.labelIds,name:allocation.name}] as const))).values()];
     const gift = normal ? await quoteOrderPromotionGifts(container,{ uid,firstOrderEligible:first?.eligible,shippingType:input.shippingType,pricePromotions,

@@ -84,14 +84,14 @@ describe('registered cart/compute with actual customer JWT, SQL and read-only pr
   it('selects the largest read-only claimable saving, preserves its not-owned shape, then accepts only real explicitly claimed ownership',async()=>{
     await issue(10);await issue(11,{type:2,couponPrice:'85.99'});const before=await f.snapshot();
     const result=await request();expect(result.body.status,result.body.msg).toBe(200);
-    expect(result.body.data).toMatchObject({coupon:{id:11,coupon_type:2,true_coupon_price:5.99},deduction:{coupon_price:5.99,pay_price:33.99},budget:{requiresCouponClaim:true,couponIssueId:11,couponUserId:0}});
+    expect(result.body.data).toMatchObject({coupon:{id:11,coupon_type:2,true_coupon_price:6},deduction:{coupon_price:6,pay_price:33.98},budget:{requiresCouponClaim:true,couponIssueId:11,couponUserId:0}});
     expect(result.body.data.coupon).not.toHaveProperty('used');expect(await f.snapshot()).toEqual(before);expect(f.writes).toEqual([]);
     const response=await app.request('/api/coupon/receive',{method:'POST',headers:{'Authori-zation':`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({id:11})},env);
     const claim=await response.json<{status:number;msg:string;data:{couponUserId:number}}>();expect(claim.status,claim.msg).toBe(200);
     const owned=await request();expect(owned.body.status,owned.body.msg).toBe(200);
     expect(owned.body.data).toMatchObject({coupon:{used:{id:claim.data.couponUserId,cid:11}},budget:{requiresCouponClaim:false,couponUserId:claim.data.couponUserId}});
     const quote=await new StoreOrderCreateService(f.container,f.env).quoteOrder({uid:11,cartIds:[1],type:0,couponId:claim.data.couponUserId,addressId:11});
-    expect(quote.couponPriceCents).toBe(599);expect(quote.payCents).toBe(3399);
+    expect(quote.couponPriceCents).toBe(600);expect(quote.payCents).toBe(3398);
   });
   it('prefers already owned equally valuable coupons, never another UID or reserved/used/revoked rows',async()=>{
     await issue(10);await issue(11);await issue(12,{couponPrice:'30.00'});

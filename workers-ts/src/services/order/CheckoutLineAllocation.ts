@@ -1,7 +1,8 @@
 import { ValidateException } from '@/utils/errors';
 
 /** Allocate an already admitted total in stable cart order. Null precision is
- * an exact truncated ratio; PHP points use a four-place truncated weight ratio.
+ * an exact truncated ratio; PHP coupons and points truncate each weight ratio
+ * to four places before multiplying the admitted total.
  * Template postage uses six places then rounds to cents (PHP sprintf). Cap each
  * rounded share at the still-unallocated total to prevent PHP's aggregate
  * rounding overflow. The last positive-weight line owns all residue. */

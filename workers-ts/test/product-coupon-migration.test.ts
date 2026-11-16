@@ -75,12 +75,12 @@ describe("product coupon migration", () => {
       discountType: 2,
       couponPrice: "85.00",
       eligibleSubtotalCents: 1_001,
-    })).toBe(150);
+    })).toBe(151);
     expect(calculateCouponDiscountCents({
       discountType: 2,
       couponPrice: "85.99",
       eligibleSubtotalCents: 1_001,
-    })).toBe(150);
+    })).toBe(151);
     expect(calculateCouponDiscountCents({
       discountType: 2,
       couponPrice: "100.00",

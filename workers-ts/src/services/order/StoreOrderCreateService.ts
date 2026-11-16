@@ -1714,7 +1714,7 @@ export class StoreOrderCreateService {
       const gross = orderItems.map(orderItemGrossCents);
       const couponEligible = couponResolution.lineEligibleCents ?? gross;
       const apportioned = fitCheckoutLineCapacities(
-        allocateLegacyDiscountCents(couponPriceCents, couponEligible), couponEligible);
+        allocateCheckoutLineUnits(couponPriceCents, couponEligible, 4), couponEligible);
       return { uid, firstOrderEligible, shippingType, pricePromotions: giftPricePromotions,
         lines: orderItems.map((item, index) => ({ key: item.cart.id, productId: item.product.id,
           skuUnique: item.sku.unique.trimEnd(), quantity: item.cart.cartNum,
@@ -2806,7 +2806,7 @@ export class StoreOrderCreateService {
       const itemGrossCents = orderItems.map(orderItemGrossCents);
       const couponEligibleCents = couponResolution.lineEligibleCents ?? itemGrossCents;
       const couponAllocations = fitCheckoutLineCapacities(
-        allocateLegacyDiscountCents(couponPriceCents, couponEligibleCents), couponEligibleCents);
+        allocateCheckoutLineUnits(couponPriceCents, couponEligibleCents, 4), couponEligibleCents);
       const afterCouponCents = itemGrossCents.map((amount, index) => amount - couponAllocations[index]);
       const firstOrderAllocations = fitCheckoutLineCapacities(
         allocateLegacyDiscountCents(firstOrderPriceCents, itemGrossCents), afterCouponCents);

@@ -128,9 +128,10 @@ export function calculateCouponDiscountCents(input: {
     // PHP uses bcdiv(coupon_price, 100, 2), which truncates the stored
     // percentage to a whole percent before multiplying the subtotal.
     const payPercent = Math.floor(storedHundredths / 100);
-    return Number(
-      BigInt(input.eligibleSubtotalCents) * BigInt(100 - payPercent) / 100n,
-    );
+    // PHP truncates the payable amount first, then subtracts it. Truncating
+    // the saving instead would lose a cent when the percentage has a residue.
+    const subtotal = BigInt(input.eligibleSubtotalCents);
+    return Number(subtotal - subtotal * BigInt(payPercent) / 100n);
   }
   const faceValueCents = decimalToHundredths(input.couponPrice, "优惠券面额");
   return Math.min(faceValueCents, input.eligibleSubtotalCents);

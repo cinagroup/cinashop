@@ -1,0 +1,483 @@
+{
+  "version": 1,
+  "batch": "coupon-rounding-parity",
+  "date": "2026-11-15",
+  "baseCommit": "41f4d25ae1daab3067f5ea745d30cabd77c93b80",
+  "phpFixedCommit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "sourceCount": 13,
+  "sourceFiles": {
+    "workers-ts/scripts/run-local-finance-postgres.mjs": "01937722fa5ad5f5dc26c0820a7f4d0704ede9d4ba851ded90ccf6c328422b06",
+    "workers-ts/src/services/activity/ProductCouponService.ts": "20b9a91da0db37aa984d071136f14bc475129b11ce48e29063beb2a803871819",
+    "workers-ts/src/services/order/CartComputationService.ts": "e227e726854328f7e74363bcab932f4b1e0b2e486d475b325cad8eb5ad9781b0",
+    "workers-ts/src/services/order/CheckoutLineAllocation.ts": "23f0fbf1cf7c740a58dc58557bb99b867296d421f271086f498a390f018eefc2",
+    "workers-ts/src/services/order/StoreOrderCreateService.ts": "18cefa944abe4781d804d071222ea5800652b92033e885fe846902d5e0e70589",
+    "workers-ts/test/cart-computation-http.test.ts": "a13c0b59fdb8ea6a84d97fd42c9d6d598931e1db004aac4289f1278772a260fb",
+    "workers-ts/test/coupon-rounding-native.test.ts": "f187ff474679c2195054da8f7f2e34814fd955ce53e246ce811a99322e332210",
+    "workers-ts/test/coupon-rounding-php-parity.test.ts": "14bcf614a18d1569069a7832b1875e173b25f487e02a364371485b9ad1954cac",
+    "workers-ts/test/fixtures/php-coupon-rounding-goldens.json": "12b22d16be5292e3d4c3b0a055b5d705c7323e1ac207f001abfbce2334b46b7b",
+    "workers-ts/test/helpers/buyerInvoices.ts": "33ce19dfa4593ed5182d4363d4421c5d99ce898b695bb1dee93519198b4b2290",
+    "workers-ts/test/helpers/couponLegacyRuntimeQuote.ts": "e26028f19e63d03fdf40cc471988664cb823de1d65933c0f9a367225ab285161",
+    "workers-ts/test/helpers/couponLegacyRuntimeSource.ts": "030192c8be30f1abcaa02b92085b88d47e38210b0c8118826c3f572ae3438874",
+    "workers-ts/test/product-coupon-migration.test.ts": "3108996d19607d31d54502ee0e7adc62dcbe085ef3add365eef5529855ccc8a7"
+  },
+  "protectedDependencyCount": 9331,
+  "proofs": [
+    {
+      "path": "/tmp/php-ts-coupon-rounding-20261115/candidate-source.json",
+      "sha256": "5c8a35a6adeb21131099e5421c6b70c70a09a6d5e19516f90a8c94bfea86b33c"
+    },
+    {
+      "path": "/tmp/php-ts-coupon-rounding-20261115/candidate-dependencies.json",
+      "sha256": "347645181baea09a33430f292130fab360b82ad2eaf6530787264ba378f9f977"
+    },
+    {
+      "path": "/tmp/php-ts-coupon-rounding-20261115/candidate-freeze.json",
+      "sha256": "d6a795a2f0de37899977c2a5c7aab210d766f0f68661834d46be2978b991c771"
+    },
+    {
+      "path": "/tmp/php-ts-coupon-rounding-20261115/oracle-review.json",
+      "sha256": "83891e1538ad5521e900e4162ec87637a11b330ab6ce281734cfdd621ddf4f63"
+    },
+    {
+      "path": "/tmp/php-ts-coupon-rounding-20261115/php-oracle-execution.json",
+      "sha256": "a69f8d6af697315c1c1bb501c5123abf0349f7672bc7e51db71609522a734696"
+    },
+    {
+      "path": "/tmp/php-ts-coupon-rounding-20261115/php-runtime-packages.json",
+      "sha256": "558f655ccfed4b6810f56b264a1dd2667d728747c56fcf0d454691e9cdb6b1de"
+    },
+    {
+      "path": "/tmp/php-ts-coupon-rounding-20261115/php-coupon-oracle.php",
+      "sha256": "86a565931f92fdd46c0cf5b984bf2453c3bfda7c8323a7a19230513391097552"
+    },
+    {
+      "path": "/tmp/php-ts-coupon-rounding-20261115/php-coupon-oracle-result.json",
+      "sha256": "988e2656900456b9ed887446b9e59b584e955f9acd8cb229debd91eba4d4b2cf"
+    },
+    {
+      "path": "/tmp/php-ts-coupon-rounding-20261115/current-native-old-runtime-proofs.json",
+      "sha256": "3a08c298e8dd47014e5bf90ebb098c8db5e56dcc06b00a1192dff5f4e8c32582"
+    },
+    {
+      "path": "/tmp/php-ts-coupon-rounding-20261115/legacy-source-provisioning-mode.json",
+      "sha256": "f5f2cc4165e8ff2b5e22a7f4a4430461ae5737c1d98ab3b13f8f6959b0eeb499"
+    },
+    {
+      "path": "/tmp/php-ts-coupon-rounding-20261115/worker-validation.json",
+      "sha256": "ae1e746edc38d753d55c9b41e20347236999e2b2653f1124079e0cc2c9dd01ca"
+    },
+    {
+      "path": "/tmp/php-ts-coupon-rounding-20261115/worker-validation-manifest.json",
+      "sha256": "6f73e12e4c3a2b5cf631f4493965f8e06e0d61acff845605672e98e0b5f50a8f"
+    },
+    {
+      "path": "/tmp/php-ts-coupon-rounding-20261115/worker-outer-terminal.json",
+      "sha256": "b2825fbff669edc9bd325c2a6c4d985ee5fdba84cfe40de3d409d1dffcaf62e6"
+    },
+    {
+      "path": "/tmp/php-ts-coupon-rounding-20261115/source-secret-scan-result.json",
+      "sha256": "4a8f35c967367462548793bed7e3b2a75184e5cd6a7213d73f73a813097e3bb4"
+    },
+    {
+      "path": "/tmp/php-ts-coupon-rounding-20261115/old-import-diagnostic-command.json",
+      "sha256": "1e3a16d202cd854aeefab9dbb2f67b830c2d0c650c5853317beda7ed072d4c93"
+    },
+    {
+      "path": "/tmp/php-ts-coupon-rounding-20261115/old-di-jwt-import-diagnostic-command.json",
+      "sha256": "0f85604e905fcd5faeb61e87d553d2be6a53b51860cba7e788d03f5deebd6986"
+    },
+    {
+      "path": "/tmp/php-ts-coupon-rounding-20261115/final-independent-review.json",
+      "sha256": "5fb975e44b5b24fb91c47fc2fb5e9c073544bde442416c0e412c95e27a3b4018"
+    }
+  ],
+  "worker": [
+    {
+      "name": "type-partition",
+      "exitCode": 0,
+      "seconds": 0.43,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "/tmp/php-ts-coupon-rounding-20261115/type-shards-verified.cjs"
+      ],
+      "log": "/tmp/php-ts-coupon-rounding-20261115/worker-type-partition.log",
+      "logSha256": "414eea0990d0647577122c6de58bcc3d036016e15686d11dfb299fe3bd9af418",
+      "frozenBefore": true,
+      "frozenAfter": true,
+      "accepted": true
+    },
+    {
+      "name": "type-options",
+      "exitCode": 0,
+      "seconds": 0.44,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "/tmp/php-ts-coupon-rounding-20261115/check-options-verified.cjs"
+      ],
+      "log": "/tmp/php-ts-coupon-rounding-20261115/worker-type-options.log",
+      "logSha256": "2bcccfd9243b88ec53f152551289ce74f0d8f32c8d957575ee9c3f72b1555b42",
+      "frozenBefore": true,
+      "frozenAfter": true,
+      "result": {
+        "originalRoots": 4469,
+        "commonRoots": 1947,
+        "testRoots": 2522,
+        "shardTestCounts": [
+          1261,
+          1261
+        ],
+        "unionExactlyMatchesOriginal": true,
+        "optionsExactlyMatchOriginal": true,
+        "explicitTypeLibrariesResolveExactlyAsOriginal": true,
+        "generatedConfigs": [
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts/.cache/coupon-rounding-types-20261115/tsconfig.worker-coupon-rounding-shard-1.generated.json",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts/.cache/coupon-rounding-types-20261115/tsconfig.worker-coupon-rounding-shard-2.generated.json"
+        ]
+      },
+      "accepted": true
+    },
+    {
+      "name": "worker-types-2",
+      "exitCode": 0,
+      "seconds": 206.75,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts/.cache/coupon-rounding-types-20261115/tsconfig.worker-coupon-rounding-shard-2.generated.json"
+      ],
+      "log": "/tmp/php-ts-coupon-rounding-20261115/worker-worker-types-2.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "frozenBefore": true,
+      "frozenAfter": true,
+      "accepted": true
+    },
+    {
+      "name": "worker-types-1",
+      "exitCode": 0,
+      "seconds": 215.34,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts/.cache/coupon-rounding-types-20261115/tsconfig.worker-coupon-rounding-shard-1.generated.json"
+      ],
+      "log": "/tmp/php-ts-coupon-rounding-20261115/worker-worker-types-1.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "frozenBefore": true,
+      "frozenAfter": true,
+      "accepted": true
+    },
+    {
+      "name": "runtime-types",
+      "exitCode": 0,
+      "seconds": 136.12,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "tsconfig.runtime-test.json"
+      ],
+      "log": "/tmp/php-ts-coupon-rounding-20261115/worker-runtime-types.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "frozenBefore": true,
+      "frozenAfter": true,
+      "accepted": true
+    },
+    {
+      "name": "unit",
+      "exitCode": 0,
+      "seconds": 91.93,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "test/coupon-rounding-php-parity.test.ts",
+        "test/product-coupon-migration.test.ts",
+        "test/local-finance-postgres-runner.test.ts",
+        "test/v2-coupon-compatibility-migration.test.ts",
+        "test/order-coupon-picker.test.ts",
+        "test/first-order-discount.test.ts",
+        "test/checkout-line-allocation.test.ts",
+        "test/admin-assisted-order-migration.test.ts",
+        "test/customer-cashier-ordinary-contract.test.ts",
+        "test/order-legacy-migration.test.ts",
+        "test/order-cart-pink-migration.test.ts",
+        "test/order-auxiliary-migration.test.ts",
+        "test/admin-coupon-issue-input.test.ts",
+        "--maxWorkers=1",
+        "--no-file-parallelism",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile=/tmp/php-ts-coupon-rounding-20261115/worker-unit.json"
+      ],
+      "log": "/tmp/php-ts-coupon-rounding-20261115/worker-unit.log",
+      "logSha256": "86c4dfbe25260750474f2e4ad241b7af9bdc997af6fe1b6e1efa63dcafcd7fa5",
+      "frozenBefore": true,
+      "frozenAfter": true,
+      "result": {
+        "files": 13,
+        "tests": 905,
+        "failed": 0,
+        "skipped": 0
+      },
+      "accepted": true
+    },
+    {
+      "name": "coupon-native",
+      "exitCode": 0,
+      "seconds": 270.36,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/coupon-rounding-native.test.ts",
+        "test/cart-computation-http.test.ts",
+        "test/checkout-line-finance.test.ts",
+        "test/order-full-gift-checkout.test.ts",
+        "test/checkout-confirmation.test.ts"
+      ],
+      "log": "/tmp/php-ts-coupon-rounding-20261115/worker-coupon-native.log",
+      "logSha256": "9389f70023e0488d00fbd894c1599dc1f7bf35f22091b6db89b393d6a17ff539",
+      "frozenBefore": true,
+      "frozenAfter": true,
+      "result": {
+        "files": 5,
+        "tests": 104,
+        "failed": 0,
+        "skipped": 0
+      },
+      "cleanup": {
+        "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-CONt4e",
+        "port": 43195,
+        "fixturesRemaining": 0,
+        "postmasterPidAbsent": true,
+        "pgCtlExitCode": 3,
+        "portClosed": true
+      },
+      "accepted": true
+    },
+    {
+      "name": "uni-native",
+      "exitCode": 0,
+      "seconds": 100.09,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/uni-coupon-buy-native.test.ts"
+      ],
+      "log": "/tmp/php-ts-coupon-rounding-20261115/worker-uni-native.log",
+      "logSha256": "e43213a0d256a6cfdb809b25e3193626c7609337ae51182662ffd71a9b520296",
+      "frozenBefore": true,
+      "frozenAfter": true,
+      "result": {
+        "files": 1,
+        "tests": 4,
+        "failed": 0,
+        "skipped": 0
+      },
+      "cleanup": {
+        "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-QqSbNn",
+        "port": 41801,
+        "fixturesRemaining": 0,
+        "postmasterPidAbsent": true,
+        "pgCtlExitCode": 3,
+        "portClosed": true
+      },
+      "accepted": true
+    },
+    {
+      "name": "legacy-pc-native",
+      "exitCode": 0,
+      "seconds": 99.35,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/pc-product-content-native.test.ts"
+      ],
+      "log": "/tmp/php-ts-coupon-rounding-20261115/worker-legacy-pc-native.log",
+      "logSha256": "5e7a603a4443c333f104487416e2edae9061a2a4814ba4e3d0b78efdb657346b",
+      "frozenBefore": true,
+      "frozenAfter": true,
+      "result": {
+        "files": 1,
+        "tests": 5,
+        "failed": 0,
+        "skipped": 0
+      },
+      "cleanup": {
+        "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-3RgBEU",
+        "port": 36787,
+        "fixturesRemaining": 0,
+        "postmasterPidAbsent": true,
+        "pgCtlExitCode": 3,
+        "portClosed": true
+      },
+      "accepted": true
+    },
+    {
+      "name": "shared-bargain-native",
+      "exitCode": 0,
+      "seconds": 53.63,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/bargain-admin-content.test.ts"
+      ],
+      "log": "/tmp/php-ts-coupon-rounding-20261115/worker-shared-bargain-native.log",
+      "logSha256": "182fac1a41dc3a9c52e0344326b9de09d7219a11614c634688376105fb397131",
+      "frozenBefore": true,
+      "frozenAfter": true,
+      "result": {
+        "files": 1,
+        "tests": 24,
+        "failed": 0,
+        "skipped": 0
+      },
+      "cleanup": {
+        "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-l9nYIQ",
+        "port": 33323,
+        "fixturesRemaining": 0,
+        "postmasterPidAbsent": true,
+        "pgCtlExitCode": 3,
+        "portClosed": true
+      },
+      "accepted": true
+    },
+    {
+      "name": "workerd",
+      "exitCode": 0,
+      "seconds": 235.35,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--runtime",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "audit:runtime"
+      ],
+      "log": "/tmp/php-ts-coupon-rounding-20261115/worker-workerd.log",
+      "logSha256": "4a052f045879e3c3ee7fa92f4de6a87ac4f386d630d2b24b51494e7a338da972",
+      "frozenBefore": true,
+      "frozenAfter": true,
+      "result": {
+        "files": 30,
+        "tests": 410,
+        "failed": 0,
+        "skipped": 0
+      },
+      "cleanup": {
+        "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-QJPyi6",
+        "port": 42769,
+        "fixturesRemaining": 0,
+        "postmasterPidAbsent": true,
+        "pgCtlExitCode": 3,
+        "portClosed": true
+      },
+      "accepted": true
+    },
+    {
+      "name": "production-audit",
+      "exitCode": 0,
+      "seconds": 4.44,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/npm",
+        "run",
+        "audit:prod"
+      ],
+      "log": "/tmp/php-ts-coupon-rounding-20261115/worker-production-audit.log",
+      "logSha256": "4ca0bc8f609b8cd4e43a18d0faebf8f0b05d91b15ee6386fb48a789c00393192",
+      "frozenBefore": true,
+      "frozenAfter": true,
+      "result": {
+        "vulnerabilities": {
+          "info": 0,
+          "low": 0,
+          "moderate": 0,
+          "high": 0,
+          "critical": 0,
+          "total": 0
+        }
+      },
+      "accepted": true
+    },
+    {
+      "name": "pc-build",
+      "exitCode": 0,
+      "seconds": 38.33,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/npm",
+        "run",
+        "build"
+      ],
+      "log": "/tmp/php-ts-coupon-rounding-20261115/worker-pc-build.log",
+      "logSha256": "09d5a834887c64d80cb01d5b2146a59444b5b064d1d161a1a6fa89469a26de0b",
+      "frozenBefore": true,
+      "frozenAfter": true,
+      "result": {
+        "tests": 547,
+        "nodeTestInvocations": [
+          {
+            "tests": 538,
+            "pass": 538,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          },
+          {
+            "tests": 9,
+            "pass": 9,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        ],
+        "vueTscAndViteExitCode": 0
+      },
+      "accepted": true
+    }
+  ],
+  "phpOracle": {
+    "terminalExitCode": 0,
+    "standaloneBcmathExecuted": true,
+    "frameworkServicesExecuted": false,
+    "arithmeticCases": 13,
+    "allocationCases": 5,
+    "binary": "/tmp/php-ts-coupon-rounding-20261115/php-runtime/usr/bin/php8.4",
+    "binarySha256": "4f3c2fed8c6f8be275e61bcbf731e407c073d17c980da16069e8777548c6edd9",
+    "extensionSha256": "adb800a25ba41372fdfbca4bb74408c9687c37ac78eaa62621c6c02e0031fe9d",
+    "programSha256": "86a565931f92fdd46c0cf5b984bf2453c3bfda7c8323a7a19230513391097552",
+    "resultSha256": "988e2656900456b9ed887446b9e59b584e955f9acd8cb229debd91eba4d4b2cf",
+    "officialAptPackagesProof": "/tmp/php-ts-coupon-rounding-20261115/php-runtime-packages.json"
+  },
+  "phpFrameworkExecuted": false,
+  "browserExecutedForThisBatch": false,
+  "wholeMigrationComplete": false,
+  "publicEstimateRemaining": true,
+  "globalBestCouponRemaining": true,
+  "firstOrderSqlKvUnificationRemaining": true,
+  "rawPhpAllocationOverflowReproduced": false,
+  "deployed": false,
+  "historicalMessageBindingFailuresCountedAsPass": false,
+  "ciBaseline": {
+    "head": "41f4d25ae1daab3067f5ea745d30cabd77c93b80",
+    "runId": 43788761894,
+    "workerUnitSkippedIsNotPass": true
+  }
+}
