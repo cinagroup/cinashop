@@ -1,0 +1,2283 @@
+{
+  "schema": "public-product-estimate-source-continuity/v1",
+  "predecessorCommit": "a9157320e351cfeb5ecdb50817e45ecf3ede4a06",
+  "boundary": "Historical source views only. Reconstruct the complete fixed a915 predecessor; production, native SQL/App and Browser acceptance always use the physical current source.",
+  "sources": [
+    {
+      "file": "view/uniapp-ts/scripts/product-coupons-runtime.test.cjs",
+      "current": {
+        "bytes": 33496,
+        "sha256": "6ec521f362d10ed70ffb925a3bdccf4d8225e435d5a1a9110d94d2b7b7ad9f29",
+        "gitBlobSha1": "8a13b01b3e7a23483bd1e7f4d658093772efa032"
+      },
+      "predecessor": {
+        "bytes": 32949,
+        "sha256": "bef9071219ca221f1ce0bc86cb6363eb3f02eabec1f1f379b1b65ae18f3d07da",
+        "gitBlobSha1": "1b887644e305b92e57992dedcb791640938dc8b5"
+      },
+      "inverseEdits": [
+        {
+          "start": 262,
+          "after": [
+            "// A browser dispatches every listener. Independent estimate and coupon hooks\n",
+            "// share these events; a one-function Map would silently replace the first hook.\n",
+            "function listenerRegistry() {\n",
+            "  const entries = new Map();\n",
+            "  return { get size() { return entries.size; },\n",
+            "    add(name, fn) { const list = entries.get(name) ?? new Set(); list.add(fn); entries.set(name, list); },\n",
+            "    remove(name, fn) { const list = entries.get(name); list?.delete(fn); if (!list?.size) entries.delete(name); },\n",
+            "    get(name) { return () => { for (const fn of [...(entries.get(name) ?? [])]) fn(); }; },\n",
+            "  };\n",
+            "}\n"
+          ],
+          "before": [],
+          "anchorStart": 259,
+          "anchor": [
+            "    assert.equal(writes(r).length, 0); assert.equal(r.storage.get(key(11)), undefined); assert.match(r.c.state.actionError, /另一页面/u);\n",
+            "  } finally { r.stop(); assert.equal(events.size, 0); if (saved) Object.defineProperty(globalThis, 'window', saved); else delete globalThis.window; }\n",
+            "});\n",
+            "// A browser dispatches every listener. Independent estimate and coupon hooks\n",
+            "// share these events; a one-function Map would silently replace the first hook.\n",
+            "function listenerRegistry() {\n",
+            "  const entries = new Map();\n",
+            "  return { get size() { return entries.size; },\n",
+            "    add(name, fn) { const list = entries.get(name) ?? new Set(); list.add(fn); entries.set(name, list); },\n",
+            "    remove(name, fn) { const list = entries.get(name); list?.delete(fn); if (!list?.size) entries.delete(name); },\n",
+            "    get(name) { return () => { for (const fn of [...(entries.get(name) ?? [])]) fn(); }; },\n",
+            "  };\n",
+            "}\n",
+            "test('H5 lock, browser visibility, storage and disposal fence the actual pending native request', async () => {\n",
+            "  const saved = Object.fromEntries(['window', 'document'].map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)])), events = listenerRegistry(), documentEvents = listenerRegistry(), locks = [], gate = deferred();\n",
+            "  const doc = { visibilityState: 'visible', addEventListener: (name, fn) => documentEvents.add(name, fn), removeEventListener: (name, fn) => { documentEvents.remove(name, fn); } };\n"
+          ]
+        },
+        {
+          "start": 273,
+          "after": [
+            "  const saved = Object.fromEntries(['window', 'document'].map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)])), events = listenerRegistry(), documentEvents = listenerRegistry(), locks = [], gate = deferred();\n",
+            "  const doc = { visibilityState: 'visible', addEventListener: (name, fn) => documentEvents.add(name, fn), removeEventListener: (name, fn) => { documentEvents.remove(name, fn); } };\n"
+          ],
+          "before": [
+            "  const saved = Object.fromEntries(['window', 'document'].map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)])), events = new Map(), documentEvents = new Map(), locks = [], gate = deferred();\n",
+            "  const doc = { visibilityState: 'visible', addEventListener: (name, fn) => documentEvents.set(name, fn), removeEventListener: (name, fn) => { if (documentEvents.get(name) === fn) documentEvents.delete(name); } };\n"
+          ],
+          "anchorStart": 270,
+          "anchor": [
+            "  };\n",
+            "}\n",
+            "test('H5 lock, browser visibility, storage and disposal fence the actual pending native request', async () => {\n",
+            "  const saved = Object.fromEntries(['window', 'document'].map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)])), events = listenerRegistry(), documentEvents = listenerRegistry(), locks = [], gate = deferred();\n",
+            "  const doc = { visibilityState: 'visible', addEventListener: (name, fn) => documentEvents.add(name, fn), removeEventListener: (name, fn) => { documentEvents.remove(name, fn); } };\n",
+            "  Object.defineProperty(globalThis, 'document', { configurable: true, value: doc });\n",
+            "  Object.defineProperty(globalThis, 'window', { configurable: true, value: { location: { hash: '' }, navigator: { locks: { request: async (name, options, action) => { locks.push([name, options]); return action({}); } } },\n",
+            "    addEventListener: (name, fn) => events.add(name, fn), removeEventListener: (name, fn) => { events.remove(name, fn); } } });\n"
+          ]
+        },
+        {
+          "start": 277,
+          "after": [
+            "    addEventListener: (name, fn) => events.add(name, fn), removeEventListener: (name, fn) => { events.remove(name, fn); } } });\n"
+          ],
+          "before": [
+            "    addEventListener: (name, fn) => events.set(name, fn), removeEventListener: (name, fn) => { if (events.get(name) === fn) events.delete(name); } } });\n"
+          ],
+          "anchorStart": 274,
+          "anchor": [
+            "  const doc = { visibilityState: 'visible', addEventListener: (name, fn) => documentEvents.add(name, fn), removeEventListener: (name, fn) => { documentEvents.remove(name, fn); } };\n",
+            "  Object.defineProperty(globalThis, 'document', { configurable: true, value: doc });\n",
+            "  Object.defineProperty(globalThis, 'window', { configurable: true, value: { location: { hash: '' }, navigator: { locks: { request: async (name, options, action) => { locks.push([name, options]); return action({}); } } },\n",
+            "    addEventListener: (name, fn) => events.add(name, fn), removeEventListener: (name, fn) => { events.remove(name, fn); } } });\n",
+            "  const r = setup({ claim: (call, commit) => { const result = commit(); return gate.promise.then(() => result); } });\n",
+            "  try { await r.open(); const claim = r.c.claim(130001); await tick(); assert.equal(writes(r).length, 1); assert.equal(locks.length, 1);\n",
+            "    doc.visibilityState = 'hidden'; documentEvents.get('visibilitychange')(); assert.deepEqual(r.c.state.items, []); gate.resolve(); await claim;\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "a9157320e351cfeb5ecdb50817e45ecf3ede4a06",
+        "path": "view/uniapp-ts/scripts/product-coupons-runtime.test.cjs",
+        "gitBlobSha1": "1b887644e305b92e57992dedcb791640938dc8b5"
+      }
+    },
+    {
+      "file": "view/uniapp-ts/scripts/product-detail-design-runtime.test.cjs",
+      "current": {
+        "bytes": 36324,
+        "sha256": "0ff797c5e57d2ac388499673cf25a9b82a2a2f864001cf3fa29ffff761121d12",
+        "gitBlobSha1": "067f3ed874bd73abe68f91b3de5ccf1f7ea323bb"
+      },
+      "predecessor": {
+        "bytes": 36235,
+        "sha256": "98676f9fcab4fc000c6f80d244eb12ae0b48226e4cb03149edc6f43a4c1b6285",
+        "gitBlobSha1": "e2c1850771f45791da5d280061d9607ac2db4423"
+      },
+      "inverseEdits": [
+        {
+          "start": 29,
+          "after": [
+            "test('disabled modules do not fetch hidden marketing reviews or expose hidden service/menu/add-cart controls',async()=>{const r=setup({product:goods({navList:[],showService:[],showReply:0,showMatch:0,showRecommend:0,showCommunity:0,menuList:[],showCart:0,showSvip:0,showRank:0,isOpen:[],openShare:0})});try{await r.start({id:'70'});const p=r.checkout;render(r,'components/ThemePage.vue');const html=await render(r,'pages/goods/detail.vue',p);for(const text of ['商品评价','商品晒单','搭配购','为你推荐','加入购物车','库存 ','已售 ','购物车</'])assert.ok(!html.includes(text),text);p.openSku('cart');await p.confirmSku();assert.equal(posts(r).length,0);p.openSku('buy');await p.confirmSku();assert.equal(posts(r).length,1);assert.ok(!r.calls.some(c=>c.url.includes('/product/detail/activity/')&&c.data.view!=='uni_product_estimate_v1'));}finally{r.stop();}});\n"
+          ],
+          "before": [
+            "test('disabled modules do not fetch hidden marketing reviews or expose hidden service/menu/add-cart controls',async()=>{const r=setup({product:goods({navList:[],showService:[],showReply:0,showMatch:0,showRecommend:0,showCommunity:0,menuList:[],showCart:0,showSvip:0,showRank:0,isOpen:[],openShare:0})});try{await r.start({id:'70'});const p=r.checkout;render(r,'components/ThemePage.vue');const html=await render(r,'pages/goods/detail.vue',p);for(const text of ['商品评价','商品晒单','搭配购','为你推荐','加入购物车','库存 ','已售 ','购物车</'])assert.ok(!html.includes(text),text);p.openSku('cart');await p.confirmSku();assert.equal(posts(r).length,0);p.openSku('buy');await p.confirmSku();assert.equal(posts(r).length,1);assert.ok(!r.calls.some(c=>c.url.includes('/product/detail/activity/')));}finally{r.stop();}});\n"
+          ],
+          "anchorStart": 26,
+          "anchor": [
+            "  const positions=['商品评价','商品晒单','搭配购','为你推荐'].map(value=>html.indexOf(value));assert.ok(positions.every((value,i)=>i===0||value>positions[i-1]));assert.doesNotMatch(html,/<script>bad/u);assert.equal(posts(r).length,0);\n",
+            "}finally{r.stop();}});\n",
+            "\n",
+            "test('disabled modules do not fetch hidden marketing reviews or expose hidden service/menu/add-cart controls',async()=>{const r=setup({product:goods({navList:[],showService:[],showReply:0,showMatch:0,showRecommend:0,showCommunity:0,menuList:[],showCart:0,showSvip:0,showRank:0,isOpen:[],openShare:0})});try{await r.start({id:'70'});const p=r.checkout;render(r,'components/ThemePage.vue');const html=await render(r,'pages/goods/detail.vue',p);for(const text of ['商品评价','商品晒单','搭配购','为你推荐','加入购物车','库存 ','已售 ','购物车</'])assert.ok(!html.includes(text),text);p.openSku('cart');await p.confirmSku();assert.equal(posts(r).length,0);p.openSku('buy');await p.confirmSku();assert.equal(posts(r).length,1);assert.ok(!r.calls.some(c=>c.url.includes('/product/detail/activity/')&&c.data.view!=='uni_product_estimate_v1'));}finally{r.stop();}});\n",
+            "\n",
+            "test('all four display selections change each SKU visible quote while real trading quote remains unchanged',async()=>{\n",
+            "  for(const [showPrice,visible,type]of [[[], '10.00',''],[[0],'8.00','level'],[[1],'9.00','member'],[[0,1],'8.00','level']]){const data=goods({showPrice});data.attr_value[0].display_price=hint(visible,type,!!showPrice.length);const r=setup({product:data});try{await r.start({id:'70'});const p=r.checkout;assert.equal(p.displayPrice.value,visible);assert.equal(p.selectedSku.value.member_price,'8.00');assert.equal(p.selectedSku.value.price_type,'level');p.openSku('buy');await p.confirmSku();assert.deepEqual(r.calls.find(c=>c.url.endsWith('/cart/add')).data,{productId:70,unique:'red001',cartNum:1,new:1});assert.match(r.navigations[0],/cartId=91/);}finally{r.stop();}}\n"
+          ]
+        },
+        {
+          "start": 176,
+          "after": [
+            "require('./product-estimate-runtime.test.cjs');\n"
+          ],
+          "before": [],
+          "anchorStart": 173,
+          "anchor": [
+            "require('./product-coupons-runtime.test.cjs');\n",
+            "require('./product-coupon-buy-runtime.test.cjs');\n",
+            "require('./product-coupon-buy-checkout-runtime.test.cjs');\n",
+            "require('./product-estimate-runtime.test.cjs');\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "a9157320e351cfeb5ecdb50817e45ecf3ede4a06",
+        "path": "view/uniapp-ts/scripts/product-detail-design-runtime.test.cjs",
+        "gitBlobSha1": "e2c1850771f45791da5d280061d9607ac2db4423"
+      }
+    },
+    {
+      "file": "view/uniapp-ts/scripts/product-sku-runtime.test.cjs",
+      "current": {
+        "bytes": 6251,
+        "sha256": "83c47e4c84549ba4e4091fc1149a96114ed7d12d8187504dd0833f30c0e22404",
+        "gitBlobSha1": "3ab233995f320571b596b44ad9f02b97dbae4fa0"
+      },
+      "predecessor": {
+        "bytes": 6133,
+        "sha256": "84c64e4f3a0d7f9e43c2e36f74e4aacc3d78121217c067dbea799dd88796b2b6",
+        "gitBlobSha1": "3e916158aeb87e4d84c16957837740488aa789ce"
+      },
+      "inverseEdits": [
+        {
+          "start": 3,
+          "after": [
+            "const { runtime, tick } = require('./uni-store-runtime.cjs');\n"
+          ],
+          "before": [
+            "const { runtime } = require('./uni-store-runtime.cjs');\n"
+          ],
+          "anchorStart": 0,
+          "anchor": [
+            "const test = require('node:test');\n",
+            "const assert = require('node:assert/strict');\n",
+            "const path = require('node:path');\n",
+            "const { runtime, tick } = require('./uni-store-runtime.cjs');\n",
+            "const base = () => ({ id: 70, price: '10.00', stock: 8, isVip: 1, vipPrice: '0.00', otPrice: '99.00',cart_button:1,\n",
+            "  attr_value: [\n",
+            "    { unique: 'red001', suk: '红色', price: '10', ot_price: '12.00', vip_price: '9.00', stock: 8 },\n"
+          ]
+        },
+        {
+          "start": 28,
+          "after": [
+            "    // Settle the selected-SKU advisory read before isolating confirmation I/O.\n",
+            "    await tick();\n",
+            "    const calls = r.calls.length; await p.confirmSku(); await tick(); assert.equal(r.calls.length, calls); assert.match(r.toasts.at(-1).title, /库存不足/);\n"
+          ],
+          "before": [
+            "    const calls = r.calls.length; await p.confirmSku(); assert.equal(r.calls.length, calls); assert.match(r.toasts.at(-1).title, /库存不足/);\n"
+          ],
+          "anchorStart": 25,
+          "anchor": [
+            "    assert.equal(p.displayVipPrice.value, '18.00'); assert.equal(p.maxNum.value, 2); assert.equal(p.num.value, 2);\n",
+            "    p.pickSku({ ...p.skuList.value[0], vip_price: '1.00' }); assert.equal(p.selectedSku.value.unique, 'blue001');\n",
+            "    p.pickSku(p.skuList.value[2]); assert.equal(p.selectedSku.value.vip_price, '0.00'); assert.equal(p.displayVipPrice.value, null); assert.equal(p.maxNum.value, 0);\n",
+            "    // Settle the selected-SKU advisory read before isolating confirmation I/O.\n",
+            "    await tick();\n",
+            "    const calls = r.calls.length; await p.confirmSku(); await tick(); assert.equal(r.calls.length, calls); assert.match(r.toasts.at(-1).title, /库存不足/);\n",
+            "    p.pickSku(p.skuList.value[0]); assert.equal(p.num.value, 1); assert.equal(p.displayVipPrice.value, '9.00');\n",
+            "    p.buying.value = true; p.pickSku(p.skuList.value[1]); assert.equal(p.selectedSku.value.unique, 'red001');\n",
+            "    assert.ok(r.calls.every(c => !/cart\\/add|order\\/create|pay/.test(c.url)));\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "a9157320e351cfeb5ecdb50817e45ecf3ede4a06",
+        "path": "view/uniapp-ts/scripts/product-sku-runtime.test.cjs",
+        "gitBlobSha1": "3e916158aeb87e4d84c16957837740488aa789ce"
+      }
+    },
+    {
+      "file": "view/uniapp-ts/src/pages/goods/detail.vue",
+      "current": {
+        "bytes": 59785,
+        "sha256": "75541e72552e48df6d518b31329632f30054cc838c9cde0634bcacb53ec4ac38",
+        "gitBlobSha1": "285c71f80815cf49066b9f54a8a52c57821f08a6"
+      },
+      "predecessor": {
+        "bytes": 59244,
+        "sha256": "5d70ecf79f906664ac3039f0f581590f97001fcfb6b68b2f9726b241482ca3fd",
+        "gitBlobSha1": "73d2a0fd56b5571cc3d961922426b14bfbd4c503"
+      },
+      "inverseEdits": [
+        {
+          "start": 44,
+          "after": [
+            "\n",
+            "      <ProductEstimate v-if=\"!detail.is_presale_product\" :estimate=\"productEstimate\" :quantity=\"num\" />\n"
+          ],
+          "before": [],
+          "anchorStart": 41,
+          "anchor": [
+            "          <text v-if=\"design.isOpen.includes(2)\" class=\"product-stock\">库存 {{ selectedSku?.stock ?? detail.stock }}{{ detail.unit_name }}</text>\n",
+            "        </view>\n",
+            "      </view>\n",
+            "\n",
+            "      <ProductEstimate v-if=\"!detail.is_presale_product\" :estimate=\"productEstimate\" :quantity=\"num\" />\n",
+            "\n",
+            "      <!-- 商品信息 -->\n",
+            "      <view class=\"info-section\">\n"
+          ]
+        },
+        {
+          "start": 264,
+          "after": [
+            "import ProductEstimate from '@/components/productDetail/ProductEstimate.vue';\n",
+            "import { useProductEstimate } from '@/composables/useProductEstimate';\n"
+          ],
+          "before": [],
+          "anchorStart": 261,
+          "anchor": [
+            "import ThemePage from '@/components/ThemePage.vue';\n",
+            "import ProductMedia from '@/components/productDetail/ProductMedia.vue';\n",
+            "import ProductCoupons from '@/components/productDetail/ProductCoupons.vue';\n",
+            "import ProductEstimate from '@/components/productDetail/ProductEstimate.vue';\n",
+            "import { useProductEstimate } from '@/composables/useProductEstimate';\n",
+            "import { useProductCoupons } from '@/composables/useProductCoupons';\n",
+            "import { useProductCouponBuy } from '@/composables/useProductCouponBuy';\n",
+            "import type { ProductCoupon } from '@/api/productCoupons';\n"
+          ]
+        },
+        {
+          "start": 349,
+          "after": [
+            "const productEstimate = reactive(useProductEstimate(computed(() => detail.value?.id ?? 0),\n",
+            "  computed(() => selectedSku.value?.unique ?? ''), computed(() => visible.value && !loading.value && !!detail.value && !detail.value.is_presale_product), currentView));\n"
+          ],
+          "before": [],
+          "anchorStart": 346,
+          "anchor": [
+            "const skuList = ref<SkuItem[]>([]);\n",
+            "const selectedSku = ref<SkuItem | null>(null);\n",
+            "const num = ref(1);\n",
+            "const productEstimate = reactive(useProductEstimate(computed(() => detail.value?.id ?? 0),\n",
+            "  computed(() => selectedSku.value?.unique ?? ''), computed(() => visible.value && !loading.value && !!detail.value && !detail.value.is_presale_product), currentView));\n",
+            "const buying = ref(false);\n",
+            "const preparedCart = ref<PreparedProductCart | null>(null), checkoutError = ref(''), purchaseNeedsRefresh = ref(false);\n",
+            "const ordinaryRecovery = ref<OrdinaryCartRecovery | null>(null), ordinaryRecoveryInvalid = ref(false);\n"
+          ]
+        },
+        {
+          "start": 580,
+          "after": [
+            "  productEstimate.clear();\n"
+          ],
+          "before": [],
+          "anchorStart": 577,
+          "anchor": [
+            "    && owner.version === authStore.sessionVersion && owner.token === authStore.token && owner.uid === authStore.uid;\n",
+            "}\n",
+            "function clearView() {\n",
+            "  productEstimate.clear();\n",
+            "  couponBuy.reset();\n",
+            "  revision++; detail.value = null; skuList.value = []; selectedSku.value = null; num.value = 1; skuVisible.value = false;\n",
+            "  discountPackages.value = []; selectedPackage.value = null; packageChoices.value = {}; packageVisible.value = false;\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "a9157320e351cfeb5ecdb50817e45ecf3ede4a06",
+        "path": "view/uniapp-ts/src/pages/goods/detail.vue",
+        "gitBlobSha1": "73d2a0fd56b5571cc3d961922426b14bfbd4c503"
+      }
+    },
+    {
+      "file": "workers-ts/package.json",
+      "current": {
+        "bytes": 14348,
+        "sha256": "ca7e8c5e962e53faae33051d4260acfe8ee12f363805d660aabafc51495f1b65",
+        "gitBlobSha1": "7db6af5034e87aa2eeec98d47a90e126536818f0"
+      },
+      "predecessor": {
+        "bytes": 14231,
+        "sha256": "50fcc5b21ab0a2330841880e37751af3bb09d991005400c9046b9f579f640923",
+        "gitBlobSha1": "c2aff6097f5d8078d47fe0dc251a568db8deef1f"
+      },
+      "inverseEdits": [
+        {
+          "start": 8,
+          "after": [
+            "    \"audit:public-product-estimate-browser\": \"vitest run --config vitest.public-product-estimate-browser.config.ts\",\n"
+          ],
+          "before": [],
+          "anchorStart": 5,
+          "anchor": [
+            "  \"main\": \"src/index.ts\",\n",
+            "  \"type\": \"module\",\n",
+            "  \"scripts\": {\n",
+            "    \"audit:public-product-estimate-browser\": \"vitest run --config vitest.public-product-estimate-browser.config.ts\",\n",
+            "    \"test:express-author\": \"vitest run --maxWorkers=1 --no-file-parallelism test/admin-express-author.test.ts test/admin-express-provider.test.ts test/admin-express-operation.test.ts test/admin-express-source-binding.test.ts\",\n",
+            "    \"test:diy-live-broadcast-author\": \"vitest run --maxWorkers=1 test/diy-live-broadcast-author-catalog.test.ts test/diy-live-broadcast-author-source-binding.test.ts\",\n",
+            "    \"test:diy-seckill-author\": \"vitest run --maxWorkers=1 test/diy-seckill-author-media.test.ts test/diy-seckill-author-catalog.test.ts test/diy-seckill-author-source-binding.test.ts\",\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "a9157320e351cfeb5ecdb50817e45ecf3ede4a06",
+        "path": "workers-ts/package.json",
+        "gitBlobSha1": "c2aff6097f5d8078d47fe0dc251a568db8deef1f"
+      }
+    },
+    {
+      "file": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "current": {
+        "bytes": 149903,
+        "sha256": "a0dbe43d51e3a52dcc1c7412aa85b4cedf26be7662c823e205d36f7871e63408",
+        "gitBlobSha1": "a2e513f1c19e228b1f89c3650f77dc8705e3d00e"
+      },
+      "predecessor": {
+        "bytes": 149183,
+        "sha256": "01937722fa5ad5f5dc26c0820a7f4d0704ede9d4ba851ded90ccf6c328422b06",
+        "gitBlobSha1": "ba20491b81cec2fdb3691d5a1cf992c8db9fcc2e"
+      },
+      "inverseEdits": [
+        {
+          "start": 75,
+          "after": [
+            "const publicProductEstimateBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:public-product-estimate-browser';\n"
+          ],
+          "before": [],
+          "anchorStart": 72,
+          "anchor": [
+            "const pcProductContentBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:pc-product-content-browser';\n",
+            "const uniProductCouponsBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:uni-product-coupons-browser';\n",
+            "const uniCouponBuyBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:uni-coupon-buy-browser';\n",
+            "const publicProductEstimateBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:public-product-estimate-browser';\n",
+            "const publicProductReviewsBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:public-product-reviews-browser';\n",
+            "const checkoutInvoicesBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:checkout-invoices-browser';\n",
+            "const orderTimelineBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:order-lifecycle-timeline-browser';\n"
+          ]
+        },
+        {
+          "start": 193,
+          "after": [
+            "if (verboseTests) assert.ok(!purchasedLabelOperationsBrowser && !assignedFulfillmentBrowser && !catalogAudit && !unitShard && !browserAcceptance && !offlineAdminBrowser && !productEditorBrowser && !supplierVideoBrowser && !supplierRecycleBrowser && !supplierCopyBrowser && !supplierReviewBrowser && !supplierDetailBrowser && !supplierScheduleBrowser && !supplierBrandBrowser && !supplierEnsuresBrowser && !supplierParametersBrowser && !supplierSystemFormBrowser && !supplierSkuBatchBrowser && !supplierRecommendImageBrowser && !supplierUnitBrowser && !supplierShippingEditorBrowser && !supplierOrderTrackingBrowser && !supplierOrderDistributionBrowser && !supplierOrderFiltersBrowser && !supplierOrderReviewBrowser && !supplierOrderInvoiceReviewBrowser && !supplierOrderPromotionsReviewBrowser && !supplierOrderGiftIdentityBrowser && !supplierOrderVirtualReviewBrowser && !supplierRefundApplicationReviewBrowser && !refundApplicationEvidenceBrowser && !customerOrderRepurchaseBrowser && !integralPurchaseOriginBrowser && !integralPurchaseLimitsBrowser && !productPurchaseAdmissionBrowser && !supplierRuleInlineBrowser && !supplierOrderEditBrowser && !adminOrderEditBrowser && !adminOrderHistoryBrowser && !buyerTrackingBrowser && !buyerInvoicesBrowser && !buyerReviewsBrowser && !reviewCommunitySyncBrowser && !pcProductContentBrowser && !uniProductCouponsBrowser && !uniCouponBuyBrowser && !publicProductEstimateBrowser && !pcMessageCenterBrowser && !publicProductReviewsBrowser && !checkoutInvoicesBrowser && !orderTimelineBrowser && !supplierCashBrowser && !supplierProactiveRefundBrowser && !supplierRefundSettlementBrowser && !supplierBillBrowser && !supplierBillExportBrowser && !supplierFlowBrowser && !supplierExtractBrowser && !supplierExtractApplicationBrowser && !supplierFinanceAccountsBrowser && !supplierExtractMediaBrowser && !supplierExtractApplicationMediaBrowser,\n"
+          ],
+          "before": [
+            "if (verboseTests) assert.ok(!purchasedLabelOperationsBrowser && !assignedFulfillmentBrowser && !catalogAudit && !unitShard && !browserAcceptance && !offlineAdminBrowser && !productEditorBrowser && !supplierVideoBrowser && !supplierRecycleBrowser && !supplierCopyBrowser && !supplierReviewBrowser && !supplierDetailBrowser && !supplierScheduleBrowser && !supplierBrandBrowser && !supplierEnsuresBrowser && !supplierParametersBrowser && !supplierSystemFormBrowser && !supplierSkuBatchBrowser && !supplierRecommendImageBrowser && !supplierUnitBrowser && !supplierShippingEditorBrowser && !supplierOrderTrackingBrowser && !supplierOrderDistributionBrowser && !supplierOrderFiltersBrowser && !supplierOrderReviewBrowser && !supplierOrderInvoiceReviewBrowser && !supplierOrderPromotionsReviewBrowser && !supplierOrderGiftIdentityBrowser && !supplierOrderVirtualReviewBrowser && !supplierRefundApplicationReviewBrowser && !refundApplicationEvidenceBrowser && !customerOrderRepurchaseBrowser && !integralPurchaseOriginBrowser && !integralPurchaseLimitsBrowser && !productPurchaseAdmissionBrowser && !supplierRuleInlineBrowser && !supplierOrderEditBrowser && !adminOrderEditBrowser && !adminOrderHistoryBrowser && !buyerTrackingBrowser && !buyerInvoicesBrowser && !buyerReviewsBrowser && !reviewCommunitySyncBrowser && !pcProductContentBrowser && !uniProductCouponsBrowser && !uniCouponBuyBrowser && !pcMessageCenterBrowser && !publicProductReviewsBrowser && !checkoutInvoicesBrowser && !orderTimelineBrowser && !supplierCashBrowser && !supplierProactiveRefundBrowser && !supplierRefundSettlementBrowser && !supplierBillBrowser && !supplierBillExportBrowser && !supplierFlowBrowser && !supplierExtractBrowser && !supplierExtractApplicationBrowser && !supplierFinanceAccountsBrowser && !supplierExtractMediaBrowser && !supplierExtractApplicationMediaBrowser,\n"
+          ],
+          "anchorStart": 190,
+          "anchor": [
+            "const customerCashierCapabilitiesBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:customer-cashier-capabilities-browser';\n",
+            "const customerCashierImagesBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:customer-cashier-images-browser';\n",
+            "const browserAcceptance = adminBrowserAcceptance || customerBrowserAcceptance || adminOrderBrowserAcceptance || customerCashierCapabilitiesBrowser || customerCashierImagesBrowser;\n",
+            "if (verboseTests) assert.ok(!purchasedLabelOperationsBrowser && !assignedFulfillmentBrowser && !catalogAudit && !unitShard && !browserAcceptance && !offlineAdminBrowser && !productEditorBrowser && !supplierVideoBrowser && !supplierRecycleBrowser && !supplierCopyBrowser && !supplierReviewBrowser && !supplierDetailBrowser && !supplierScheduleBrowser && !supplierBrandBrowser && !supplierEnsuresBrowser && !supplierParametersBrowser && !supplierSystemFormBrowser && !supplierSkuBatchBrowser && !supplierRecommendImageBrowser && !supplierUnitBrowser && !supplierShippingEditorBrowser && !supplierOrderTrackingBrowser && !supplierOrderDistributionBrowser && !supplierOrderFiltersBrowser && !supplierOrderReviewBrowser && !supplierOrderInvoiceReviewBrowser && !supplierOrderPromotionsReviewBrowser && !supplierOrderGiftIdentityBrowser && !supplierOrderVirtualReviewBrowser && !supplierRefundApplicationReviewBrowser && !refundApplicationEvidenceBrowser && !customerOrderRepurchaseBrowser && !integralPurchaseOriginBrowser && !integralPurchaseLimitsBrowser && !productPurchaseAdmissionBrowser && !supplierRuleInlineBrowser && !supplierOrderEditBrowser && !adminOrderEditBrowser && !adminOrderHistoryBrowser && !buyerTrackingBrowser && !buyerInvoicesBrowser && !buyerReviewsBrowser && !reviewCommunitySyncBrowser && !pcProductContentBrowser && !uniProductCouponsBrowser && !uniCouponBuyBrowser && !publicProductEstimateBrowser && !pcMessageCenterBrowser && !publicProductReviewsBrowser && !checkoutInvoicesBrowser && !orderTimelineBrowser && !supplierCashBrowser && !supplierProactiveRefundBrowser && !supplierRefundSettlementBrowser && !supplierBillBrowser && !supplierBillExportBrowser && !supplierFlowBrowser && !supplierExtractBrowser && !supplierExtractApplicationBrowser && !supplierFinanceAccountsBrowser && !supplierExtractMediaBrowser && !supplierExtractApplicationMediaBrowser,\n",
+            "  'Verbose reporting applies only to explicit native test files');\n",
+            "if (browserAcceptance) {\n",
+            "  for (const key of ['TEST_BROWSER_PACKAGE_JSON', 'TEST_BROWSER_EXECUTABLE', 'TEST_BROWSER_OUTPUT_DIR']) {\n"
+          ]
+        },
+        {
+          "start": 204,
+          "after": [
+            "for (const test of purchasedLabelOperationsBrowser || assignedFulfillmentBrowser || runtimeMode || catalogAudit || browserAcceptance || offlineAdminBrowser || productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser || supplierCopyBrowser || supplierReviewBrowser || supplierDetailBrowser || supplierScheduleBrowser || supplierBrandBrowser || supplierEnsuresBrowser || supplierParametersBrowser || supplierSystemFormBrowser || supplierSkuBatchBrowser || supplierRecommendImageBrowser || supplierUnitBrowser || supplierShippingEditorBrowser || supplierOrderTrackingBrowser || supplierOrderDistributionBrowser || supplierOrderFiltersBrowser || supplierOrderReviewBrowser || supplierOrderInvoiceReviewBrowser || supplierOrderPromotionsReviewBrowser || supplierOrderGiftIdentityBrowser || supplierOrderVirtualReviewBrowser || supplierRefundApplicationReviewBrowser || refundApplicationEvidenceBrowser || customerOrderRepurchaseBrowser || integralPurchaseOriginBrowser || integralPurchaseLimitsBrowser || productPurchaseAdmissionBrowser || supplierRuleInlineBrowser || supplierOrderEditBrowser || adminOrderEditBrowser || adminOrderHistoryBrowser || buyerTrackingBrowser || buyerInvoicesBrowser || buyerReviewsBrowser || reviewCommunitySyncBrowser || pcProductContentBrowser || uniProductCouponsBrowser || uniCouponBuyBrowser || publicProductEstimateBrowser || pcMessageCenterBrowser || publicProductReviewsBrowser || checkoutInvoicesBrowser || orderTimelineBrowser || supplierCashBrowser || supplierProactiveRefundBrowser || supplierRefundSettlementBrowser || supplierBillBrowser || supplierBillExportBrowser || supplierFlowBrowser || supplierExtractBrowser || supplierExtractApplicationBrowser || supplierFinanceAccountsBrowser || supplierExtractMediaBrowser || supplierExtractApplicationMediaBrowser || unitShard ? [] : tests) {\n"
+          ],
+          "before": [
+            "for (const test of purchasedLabelOperationsBrowser || assignedFulfillmentBrowser || runtimeMode || catalogAudit || browserAcceptance || offlineAdminBrowser || productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser || supplierCopyBrowser || supplierReviewBrowser || supplierDetailBrowser || supplierScheduleBrowser || supplierBrandBrowser || supplierEnsuresBrowser || supplierParametersBrowser || supplierSystemFormBrowser || supplierSkuBatchBrowser || supplierRecommendImageBrowser || supplierUnitBrowser || supplierShippingEditorBrowser || supplierOrderTrackingBrowser || supplierOrderDistributionBrowser || supplierOrderFiltersBrowser || supplierOrderReviewBrowser || supplierOrderInvoiceReviewBrowser || supplierOrderPromotionsReviewBrowser || supplierOrderGiftIdentityBrowser || supplierOrderVirtualReviewBrowser || supplierRefundApplicationReviewBrowser || refundApplicationEvidenceBrowser || customerOrderRepurchaseBrowser || integralPurchaseOriginBrowser || integralPurchaseLimitsBrowser || productPurchaseAdmissionBrowser || supplierRuleInlineBrowser || supplierOrderEditBrowser || adminOrderEditBrowser || adminOrderHistoryBrowser || buyerTrackingBrowser || buyerInvoicesBrowser || buyerReviewsBrowser || reviewCommunitySyncBrowser || pcProductContentBrowser || uniProductCouponsBrowser || uniCouponBuyBrowser || pcMessageCenterBrowser || publicProductReviewsBrowser || checkoutInvoicesBrowser || orderTimelineBrowser || supplierCashBrowser || supplierProactiveRefundBrowser || supplierRefundSettlementBrowser || supplierBillBrowser || supplierBillExportBrowser || supplierFlowBrowser || supplierExtractBrowser || supplierExtractApplicationBrowser || supplierFinanceAccountsBrowser || supplierExtractMediaBrowser || supplierExtractApplicationMediaBrowser || unitShard ? [] : tests) {\n"
+          ],
+          "anchorStart": 201,
+          "anchor": [
+            "  const inside = relative(checkout, output);\n",
+            "  assert.ok(inside.startsWith('..') || isAbsolute(inside), 'Browser output must be outside the repository');\n",
+            "}\n",
+            "for (const test of purchasedLabelOperationsBrowser || assignedFulfillmentBrowser || runtimeMode || catalogAudit || browserAcceptance || offlineAdminBrowser || productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser || supplierCopyBrowser || supplierReviewBrowser || supplierDetailBrowser || supplierScheduleBrowser || supplierBrandBrowser || supplierEnsuresBrowser || supplierParametersBrowser || supplierSystemFormBrowser || supplierSkuBatchBrowser || supplierRecommendImageBrowser || supplierUnitBrowser || supplierShippingEditorBrowser || supplierOrderTrackingBrowser || supplierOrderDistributionBrowser || supplierOrderFiltersBrowser || supplierOrderReviewBrowser || supplierOrderInvoiceReviewBrowser || supplierOrderPromotionsReviewBrowser || supplierOrderGiftIdentityBrowser || supplierOrderVirtualReviewBrowser || supplierRefundApplicationReviewBrowser || refundApplicationEvidenceBrowser || customerOrderRepurchaseBrowser || integralPurchaseOriginBrowser || integralPurchaseLimitsBrowser || productPurchaseAdmissionBrowser || supplierRuleInlineBrowser || supplierOrderEditBrowser || adminOrderEditBrowser || adminOrderHistoryBrowser || buyerTrackingBrowser || buyerInvoicesBrowser || buyerReviewsBrowser || reviewCommunitySyncBrowser || pcProductContentBrowser || uniProductCouponsBrowser || uniCouponBuyBrowser || publicProductEstimateBrowser || pcMessageCenterBrowser || publicProductReviewsBrowser || checkoutInvoicesBrowser || orderTimelineBrowser || supplierCashBrowser || supplierProactiveRefundBrowser || supplierRefundSettlementBrowser || supplierBillBrowser || supplierBillExportBrowser || supplierFlowBrowser || supplierExtractBrowser || supplierExtractApplicationBrowser || supplierFinanceAccountsBrowser || supplierExtractMediaBrowser || supplierExtractApplicationMediaBrowser || unitShard ? [] : tests) {\n",
+            "  assert.match(test, /^test\\/[a-z0-9-]+\\.test\\.ts$/, 'Only explicit unit test paths are accepted');\n",
+            "  assert.ok(existsSync(resolve(workerRoot, test)), `Test does not exist: ${test}`);\n",
+            "}\n"
+          ]
+        },
+        {
+          "start": 247,
+          "after": [
+            "    'test/public-product-estimate-native.test.ts',\n"
+          ],
+          "before": [],
+          "anchorStart": 214,
+          "anchor": [
+            "    'test/supplier-product-video-upload-catalog-native.test.ts',\n",
+            "    'test/product-video-gc-catalog-native.test.ts',\n",
+            "    'test/product-video-gc-native.test.ts',\n",
+            "    'test/supplier-product-recycle-native.test.ts',\n",
+            "    'test/supplier-product-copy-native.test.ts',\n",
+            "    'test/supplier-product-reply-native.test.ts',\n",
+            "    'test/supplier-product-detail-native.test.ts',\n",
+            "    'test/supplier-product-schedule-native.test.ts',\n",
+            "    'test/supplier-product-brand-native.test.ts',\n",
+            "    'test/supplier-product-ensures-native.test.ts',\n",
+            "    'test/supplier-product-parameters-native.test.ts',\n",
+            "    'test/supplier-product-system-form-native.test.ts',\n",
+            "    'test/supplier-sku-batch-native.test.ts',\n",
+            "    'test/supplier-product-recommend-image-native.test.ts',\n",
+            "    'test/supplier-product-spu-native.test.ts',\n",
+            "    'test/product-creation-defaults-native.test.ts',\n",
+            "    'test/product-erp-code-native.test.ts',\n",
+            "    'test/admin-order-remark-native.test.ts',\n",
+            "    'test/admin-order-price-native.test.ts',\n",
+            "    'test/admin-order-price-catalog-native.test.ts',\n",
+            "    'test/admin-order-edit-catalog-native.test.ts',\n",
+            "    'test/admin-order-edit-native.test.ts',\n",
+            "    'test/admin-order-history-native.test.ts',\n",
+            "    'test/order-creation-history-native.test.ts',\n",
+            "    'test/order-lifecycle-timeline-native.test.ts',\n",
+            "    'test/buyer-order-tracking-native.test.ts',\n",
+            "    'test/buyer-invoices-native.test.ts',\n",
+            "    'test/buyer-reviews-native.test.ts',\n",
+            "    'test/public-product-reviews-native.test.ts',\n",
+            "    'test/pc-product-content-native.test.ts',\n",
+            "    'test/pc-message-center-native.test.ts',\n",
+            "    'test/uni-product-coupons-native.test.ts',\n",
+            "    'test/uni-coupon-buy-native.test.ts',\n",
+            "    'test/public-product-estimate-native.test.ts',\n",
+            "    'test/coupon-rounding-native.test.ts',\n",
+            "    'test/review-community-sync-native.test.ts',\n",
+            "    'test/review-community-sync-migration.test.ts',\n",
+            "    'test/checkout-invoices-native.test.ts',\n",
+            "    'test/admin-order-edit-legacy-native.test.ts',\n",
+            "    'test/supplier-product-unit-native.test.ts',\n",
+            "    'test/supplier-product-shipping-editor-native.test.ts',\n",
+            "    'test/supplier-product-rule-inline-native.test.ts',\n",
+            "    'test/supplier-order-tracking-native.test.ts',\n",
+            "    'test/supplier-order-distribution-native.test.ts',\n",
+            "    'test/supplier-order-filters-native.test.ts',\n",
+            "    'test/supplier-order-review-native.test.ts',\n",
+            "    'test/supplier-order-invoice-review-native.test.ts',\n",
+            "    'test/supplier-order-promotions-review-native.test.ts',\n",
+            "    'test/supplier-order-gift-identity-native.test.ts',\n",
+            "    'test/supplier-order-virtual-review-native.test.ts',\n",
+            "    'test/supplier-refund-application-review-native.test.ts',\n",
+            "    'test/refund-application-evidence-native.test.ts',\n",
+            "    'test/customer-refund-request-images-native.test.ts',\n",
+            "    'test/customer-refund-quantities-native.test.ts',\n",
+            "    'test/customer-order-repurchase-native.test.ts',\n",
+            "    'test/customer-order-repurchase-short-sku-native.test.ts',\n",
+            "    'test/presale-short-sku-native.test.ts',\n",
+            "    'test/newcomer-short-sku-native.test.ts',\n",
+            "    'test/seckill-short-sku-native.test.ts',\n",
+            "    'test/bargain-short-sku-native.test.ts',\n",
+            "    'test/bargain-friend-help-native.test.ts',\n",
+            "    'test/bargain-admin-sku.test.ts',\n",
+            "    'test/bargain-admin-sku-postgres.test.ts',\n",
+            "    'test/bargain-admin-content.test.ts',\n",
+            "    'test/bargain-cart-binding-concurrency-postgres.test.ts',\n",
+            "    'test/presale-cart-postgres.test.ts',\n",
+            "    // Existing selector/creation/concurrency contracts run against the same owned native host.\n"
+          ]
+        },
+        {
+          "start": 1086,
+          "after": [
+            "    'audit:public-product-estimate-browser',\n"
+          ],
+          "before": [],
+          "anchorStart": 1083,
+          "anchor": [
+            "    'audit:pc-product-content-browser',\n",
+            "    'audit:uni-product-coupons-browser',\n",
+            "    'audit:uni-coupon-buy-browser',\n",
+            "    'audit:public-product-estimate-browser',\n",
+            "    'audit:pc-message-center-browser',\n",
+            "    'audit:checkout-invoices-browser',\n",
+            "    'audit:supplier-cash-browser',\n"
+          ]
+        },
+        {
+          "start": 1335,
+          "after": [
+            "    : publicProductEstimateBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.public-product-estimate-browser.config.ts', '--maxWorkers=1', '--no-file-parallelism']\n"
+          ],
+          "before": [],
+          "anchorStart": 1332,
+          "anchor": [
+            "    : pcProductContentBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.pc-product-content-browser.config.ts', '--maxWorkers=1', '--no-file-parallelism']\n",
+            "    : uniProductCouponsBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.uni-product-coupons-browser.config.ts', '--maxWorkers=1', '--no-file-parallelism']\n",
+            "    : uniCouponBuyBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.uni-coupon-buy-browser.config.ts', '--maxWorkers=1', '--no-file-parallelism']\n",
+            "    : publicProductEstimateBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.public-product-estimate-browser.config.ts', '--maxWorkers=1', '--no-file-parallelism']\n",
+            "    : publicProductReviewsBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.public-product-reviews-browser.config.ts', '--maxWorkers=1', '--no-file-parallelism']\n",
+            "    : reviewCommunitySyncBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.review-community-sync-browser.config.ts', '--maxWorkers=1', '--no-file-parallelism']\n",
+            "    : buyerReviewsBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.buyer-reviews-browser.config.ts', '--maxWorkers=1', '--no-file-parallelism']\n"
+          ]
+        },
+        {
+          "start": 1482,
+          "after": [
+            "    'test/public-product-estimate-native.test.ts',\n"
+          ],
+          "before": [],
+          "anchorStart": 1449,
+          "anchor": [
+            "        'test/supplier-product-video-upload-catalog-native.test.ts',\n",
+            "    'test/product-video-gc-catalog-native.test.ts',\n",
+            "    'test/product-video-gc-native.test.ts',\n",
+            "    'test/supplier-product-recycle-native.test.ts',\n",
+            "    'test/supplier-product-copy-native.test.ts',\n",
+            "    'test/supplier-product-reply-native.test.ts',\n",
+            "    'test/supplier-product-detail-native.test.ts',\n",
+            "    'test/supplier-product-schedule-native.test.ts',\n",
+            "    'test/supplier-product-brand-native.test.ts',\n",
+            "    'test/supplier-product-ensures-native.test.ts',\n",
+            "    'test/supplier-product-parameters-native.test.ts',\n",
+            "    'test/supplier-product-system-form-native.test.ts',\n",
+            "    'test/supplier-sku-batch-native.test.ts',\n",
+            "    'test/supplier-product-recommend-image-native.test.ts',\n",
+            "    'test/supplier-product-spu-native.test.ts',\n",
+            "    'test/product-creation-defaults-native.test.ts',\n",
+            "    'test/product-erp-code-native.test.ts',\n",
+            "    'test/admin-order-remark-native.test.ts',\n",
+            "    'test/admin-order-price-native.test.ts',\n",
+            "    'test/admin-order-price-catalog-native.test.ts',\n",
+            "    'test/admin-order-edit-catalog-native.test.ts',\n",
+            "    'test/admin-order-edit-native.test.ts',\n",
+            "    'test/admin-order-history-native.test.ts',\n",
+            "    'test/order-creation-history-native.test.ts',\n",
+            "    'test/order-lifecycle-timeline-native.test.ts',\n",
+            "    'test/buyer-order-tracking-native.test.ts',\n",
+            "    'test/buyer-invoices-native.test.ts',\n",
+            "    'test/buyer-reviews-native.test.ts',\n",
+            "    'test/public-product-reviews-native.test.ts',\n",
+            "    'test/pc-product-content-native.test.ts',\n",
+            "    'test/pc-message-center-native.test.ts',\n",
+            "    'test/uni-product-coupons-native.test.ts',\n",
+            "    'test/uni-coupon-buy-native.test.ts',\n",
+            "    'test/public-product-estimate-native.test.ts',\n",
+            "    'test/coupon-rounding-native.test.ts',\n",
+            "    'test/review-community-sync-native.test.ts',\n",
+            "    'test/review-community-sync-migration.test.ts',\n",
+            "    'test/checkout-invoices-native.test.ts',\n",
+            "    'test/admin-order-edit-legacy-native.test.ts',\n",
+            "    'test/supplier-product-unit-native.test.ts',\n",
+            "    'test/supplier-product-shipping-editor-native.test.ts',\n",
+            "    'test/supplier-product-rule-inline-native.test.ts',\n",
+            "    'test/supplier-order-tracking-native.test.ts',\n",
+            "    'test/supplier-order-distribution-native.test.ts',\n",
+            "    'test/supplier-order-filters-native.test.ts',\n",
+            "    'test/supplier-order-review-native.test.ts',\n",
+            "    'test/supplier-order-invoice-review-native.test.ts',\n",
+            "    'test/supplier-order-promotions-review-native.test.ts',\n",
+            "    'test/supplier-order-gift-identity-native.test.ts',\n",
+            "    'test/supplier-order-virtual-review-native.test.ts',\n",
+            "    'test/supplier-refund-application-review-native.test.ts',\n",
+            "    'test/refund-application-evidence-native.test.ts',\n",
+            "    'test/customer-refund-request-images-native.test.ts',\n",
+            "    'test/customer-refund-quantities-native.test.ts',\n",
+            "    'test/customer-order-repurchase-native.test.ts',\n",
+            "    'test/customer-order-repurchase-short-sku-native.test.ts',\n",
+            "    'test/presale-short-sku-native.test.ts',\n",
+            "    'test/newcomer-short-sku-native.test.ts',\n",
+            "    'test/seckill-short-sku-native.test.ts',\n",
+            "    'test/bargain-short-sku-native.test.ts',\n",
+            "    'test/bargain-friend-help-native.test.ts',\n",
+            "    'test/bargain-admin-sku.test.ts',\n",
+            "    'test/bargain-admin-sku-postgres.test.ts',\n",
+            "    'test/bargain-admin-content.test.ts',\n",
+            "    'test/bargain-cart-binding-concurrency-postgres.test.ts',\n",
+            "    'test/presale-cart-postgres.test.ts',\n",
+            "    // Existing selector/creation/concurrency contracts run against the same owned native host.\n"
+          ]
+        },
+        {
+          "start": 1936,
+          "after": [
+            "    timeout: (publicProductEstimateBrowser ? 95 : uniCouponBuyBrowser ? 95 : uniProductCouponsBrowser ? 95 : pcMessageCenterBrowser ? 95 : pcProductContentBrowser ? 95 : publicProductReviewsBrowser ? 95 : reviewCommunitySyncBrowser ? 95 : buyerTrackingBrowser || buyerInvoicesBrowser || buyerReviewsBrowser || reviewCommunitySyncBrowser || pcProductContentBrowser || uniProductCouponsBrowser || uniCouponBuyBrowser || publicProductEstimateBrowser || pcMessageCenterBrowser || publicProductReviewsBrowser || checkoutInvoicesBrowser ? 40 : messageCenterBrowser || financeCenterBrowser || spreadPosterBrowser || distributionLevelBrowser || agentExplanationBrowser ? 60 : withdrawalApplicationBrowser ? 45 : distributionLedgersBrowser ? 40 : promoterPeopleBrowser ? 40 : promoterOrdersBrowser ? 40 : distributionRankingsBrowser ? 40 : memberLevelActivationBrowser ? 45 : membershipClauseBrowser ? 45 : membershipCouponsBrowser ? 50 : membershipHomeBrowser ? 50 : memberCardActivationBrowser ? 45 : membershipRightsBrowser ? 60 : customerProfileBrowser ? 60 : adminLevelDefinitionsBrowser ? 60 : memberLevelRecommendationsBrowser ? 60 : customerLevelOverviewBrowser ? 60 : customerGrowthRecordsBrowser ? 60 : adminMemberPackagesBrowser ? 60 : customerPointsCentreBrowser ? 60 : customerSignCentreBrowser ? 60 : adminUserFiltersBrowser ? 60 : adminWithdrawalDirectoryBrowser ? 60 : cartManagementBrowser ? 40 : diyCommunityAuthorBrowser ? 95 : diyCommerceAuthorBrowser ? 95 : diyEditorialAuthorBrowser ? 95 : diyStateAuthorBrowser ? 70 : diyListAuthorBrowser ? 70 : diyCarouselAuthorBrowser ? 70 : diyNavigationAuthorBrowser ? 70 : diyCarouselBrowser ? 70 : diyFooterBrowser ? 40 : diyCustomerServiceBrowser ? 40 : diyPageSettingsBrowser ? 50 : diyMediaReferenceBrowser ? 40 : diyPresentationBrowser ? 40 : diyNavigationBrowser ? 40 : unitShard ? 40 : (supplierRecommendImageBrowser || supplierUnitBrowser || supplierShippingEditorBrowser || supplierOrderTrackingBrowser || supplierOrderDistributionBrowser || supplierOrderFiltersBrowser || supplierOrderReviewBrowser || supplierOrderInvoiceReviewBrowser || supplierOrderPromotionsReviewBrowser || supplierOrderGiftIdentityBrowser || supplierOrderVirtualReviewBrowser || supplierRefundApplicationReviewBrowser || refundApplicationEvidenceBrowser || customerOrderRepurchaseBrowser || integralPurchaseOriginBrowser || integralPurchaseLimitsBrowser || productPurchaseAdmissionBrowser || supplierRuleInlineBrowser) ? 25 : (productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser || supplierCopyBrowser || supplierReviewBrowser || supplierDetailBrowser || supplierScheduleBrowser || supplierBrandBrowser || supplierEnsuresBrowser || supplierParametersBrowser || supplierSystemFormBrowser || supplierSkuBatchBrowser || supplierRecommendImageBrowser || supplierUnitBrowser || supplierShippingEditorBrowser || supplierOrderTrackingBrowser || supplierOrderDistributionBrowser || supplierOrderFiltersBrowser || supplierOrderReviewBrowser || supplierOrderInvoiceReviewBrowser || supplierOrderPromotionsReviewBrowser || supplierOrderGiftIdentityBrowser || supplierOrderVirtualReviewBrowser || supplierRefundApplicationReviewBrowser || refundApplicationEvidenceBrowser || customerOrderRepurchaseBrowser || integralPurchaseOriginBrowser || integralPurchaseLimitsBrowser || productPurchaseAdmissionBrowser || supplierRuleInlineBrowser || supplierOrderEditBrowser || adminOrderEditBrowser || adminOrderHistoryBrowser || buyerTrackingBrowser || buyerInvoicesBrowser || buyerReviewsBrowser || reviewCommunitySyncBrowser || pcProductContentBrowser || uniProductCouponsBrowser || uniCouponBuyBrowser || publicProductEstimateBrowser || pcMessageCenterBrowser || publicProductReviewsBrowser || checkoutInvoicesBrowser || orderTimelineBrowser || supplierCashBrowser || supplierProactiveRefundBrowser || supplierRefundSettlementBrowser || supplierBillBrowser || supplierBillExportBrowser || supplierFlowBrowser || supplierExtractBrowser || supplierExtractApplicationBrowser || supplierFinanceAccountsBrowser || supplierExtractMediaBrowser || supplierExtractApplicationMediaBrowser) ? 20 : tests.some(test => new Set([\n"
+          ],
+          "before": [
+            "    timeout: (uniCouponBuyBrowser ? 95 : uniProductCouponsBrowser ? 95 : pcMessageCenterBrowser ? 95 : pcProductContentBrowser ? 95 : publicProductReviewsBrowser ? 95 : reviewCommunitySyncBrowser ? 95 : buyerTrackingBrowser || buyerInvoicesBrowser || buyerReviewsBrowser || reviewCommunitySyncBrowser || pcProductContentBrowser || uniProductCouponsBrowser || uniCouponBuyBrowser || pcMessageCenterBrowser || publicProductReviewsBrowser || checkoutInvoicesBrowser ? 40 : messageCenterBrowser || financeCenterBrowser || spreadPosterBrowser || distributionLevelBrowser || agentExplanationBrowser ? 60 : withdrawalApplicationBrowser ? 45 : distributionLedgersBrowser ? 40 : promoterPeopleBrowser ? 40 : promoterOrdersBrowser ? 40 : distributionRankingsBrowser ? 40 : memberLevelActivationBrowser ? 45 : membershipClauseBrowser ? 45 : membershipCouponsBrowser ? 50 : membershipHomeBrowser ? 50 : memberCardActivationBrowser ? 45 : membershipRightsBrowser ? 60 : customerProfileBrowser ? 60 : adminLevelDefinitionsBrowser ? 60 : memberLevelRecommendationsBrowser ? 60 : customerLevelOverviewBrowser ? 60 : customerGrowthRecordsBrowser ? 60 : adminMemberPackagesBrowser ? 60 : customerPointsCentreBrowser ? 60 : customerSignCentreBrowser ? 60 : adminUserFiltersBrowser ? 60 : adminWithdrawalDirectoryBrowser ? 60 : cartManagementBrowser ? 40 : diyCommunityAuthorBrowser ? 95 : diyCommerceAuthorBrowser ? 95 : diyEditorialAuthorBrowser ? 95 : diyStateAuthorBrowser ? 70 : diyListAuthorBrowser ? 70 : diyCarouselAuthorBrowser ? 70 : diyNavigationAuthorBrowser ? 70 : diyCarouselBrowser ? 70 : diyFooterBrowser ? 40 : diyCustomerServiceBrowser ? 40 : diyPageSettingsBrowser ? 50 : diyMediaReferenceBrowser ? 40 : diyPresentationBrowser ? 40 : diyNavigationBrowser ? 40 : unitShard ? 40 : (supplierRecommendImageBrowser || supplierUnitBrowser || supplierShippingEditorBrowser || supplierOrderTrackingBrowser || supplierOrderDistributionBrowser || supplierOrderFiltersBrowser || supplierOrderReviewBrowser || supplierOrderInvoiceReviewBrowser || supplierOrderPromotionsReviewBrowser || supplierOrderGiftIdentityBrowser || supplierOrderVirtualReviewBrowser || supplierRefundApplicationReviewBrowser || refundApplicationEvidenceBrowser || customerOrderRepurchaseBrowser || integralPurchaseOriginBrowser || integralPurchaseLimitsBrowser || productPurchaseAdmissionBrowser || supplierRuleInlineBrowser) ? 25 : (productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser || supplierCopyBrowser || supplierReviewBrowser || supplierDetailBrowser || supplierScheduleBrowser || supplierBrandBrowser || supplierEnsuresBrowser || supplierParametersBrowser || supplierSystemFormBrowser || supplierSkuBatchBrowser || supplierRecommendImageBrowser || supplierUnitBrowser || supplierShippingEditorBrowser || supplierOrderTrackingBrowser || supplierOrderDistributionBrowser || supplierOrderFiltersBrowser || supplierOrderReviewBrowser || supplierOrderInvoiceReviewBrowser || supplierOrderPromotionsReviewBrowser || supplierOrderGiftIdentityBrowser || supplierOrderVirtualReviewBrowser || supplierRefundApplicationReviewBrowser || refundApplicationEvidenceBrowser || customerOrderRepurchaseBrowser || integralPurchaseOriginBrowser || integralPurchaseLimitsBrowser || productPurchaseAdmissionBrowser || supplierRuleInlineBrowser || supplierOrderEditBrowser || adminOrderEditBrowser || adminOrderHistoryBrowser || buyerTrackingBrowser || buyerInvoicesBrowser || buyerReviewsBrowser || reviewCommunitySyncBrowser || pcProductContentBrowser || uniProductCouponsBrowser || uniCouponBuyBrowser || pcMessageCenterBrowser || publicProductReviewsBrowser || checkoutInvoicesBrowser || orderTimelineBrowser || supplierCashBrowser || supplierProactiveRefundBrowser || supplierRefundSettlementBrowser || supplierBillBrowser || supplierBillExportBrowser || supplierFlowBrowser || supplierExtractBrowser || supplierExtractApplicationBrowser || supplierFinanceAccountsBrowser || supplierExtractMediaBrowser || supplierExtractApplicationMediaBrowser) ? 20 : tests.some(test => new Set([\n"
+          ],
+          "anchorStart": 1933,
+          "anchor": [
+            "    // These complete-schema assisted suites create two independent LOGIN\n",
+            "    // profiles for every case. Retain every original case and allow their full\n",
+            "    // files to finish; the individual SQL/HTTP lock deadlines remain bounded.\n",
+            "    timeout: (publicProductEstimateBrowser ? 95 : uniCouponBuyBrowser ? 95 : uniProductCouponsBrowser ? 95 : pcMessageCenterBrowser ? 95 : pcProductContentBrowser ? 95 : publicProductReviewsBrowser ? 95 : reviewCommunitySyncBrowser ? 95 : buyerTrackingBrowser || buyerInvoicesBrowser || buyerReviewsBrowser || reviewCommunitySyncBrowser || pcProductContentBrowser || uniProductCouponsBrowser || uniCouponBuyBrowser || publicProductEstimateBrowser || pcMessageCenterBrowser || publicProductReviewsBrowser || checkoutInvoicesBrowser ? 40 : messageCenterBrowser || financeCenterBrowser || spreadPosterBrowser || distributionLevelBrowser || agentExplanationBrowser ? 60 : withdrawalApplicationBrowser ? 45 : distributionLedgersBrowser ? 40 : promoterPeopleBrowser ? 40 : promoterOrdersBrowser ? 40 : distributionRankingsBrowser ? 40 : memberLevelActivationBrowser ? 45 : membershipClauseBrowser ? 45 : membershipCouponsBrowser ? 50 : membershipHomeBrowser ? 50 : memberCardActivationBrowser ? 45 : membershipRightsBrowser ? 60 : customerProfileBrowser ? 60 : adminLevelDefinitionsBrowser ? 60 : memberLevelRecommendationsBrowser ? 60 : customerLevelOverviewBrowser ? 60 : customerGrowthRecordsBrowser ? 60 : adminMemberPackagesBrowser ? 60 : customerPointsCentreBrowser ? 60 : customerSignCentreBrowser ? 60 : adminUserFiltersBrowser ? 60 : adminWithdrawalDirectoryBrowser ? 60 : cartManagementBrowser ? 40 : diyCommunityAuthorBrowser ? 95 : diyCommerceAuthorBrowser ? 95 : diyEditorialAuthorBrowser ? 95 : diyStateAuthorBrowser ? 70 : diyListAuthorBrowser ? 70 : diyCarouselAuthorBrowser ? 70 : diyNavigationAuthorBrowser ? 70 : diyCarouselBrowser ? 70 : diyFooterBrowser ? 40 : diyCustomerServiceBrowser ? 40 : diyPageSettingsBrowser ? 50 : diyMediaReferenceBrowser ? 40 : diyPresentationBrowser ? 40 : diyNavigationBrowser ? 40 : unitShard ? 40 : (supplierRecommendImageBrowser || supplierUnitBrowser || supplierShippingEditorBrowser || supplierOrderTrackingBrowser || supplierOrderDistributionBrowser || supplierOrderFiltersBrowser || supplierOrderReviewBrowser || supplierOrderInvoiceReviewBrowser || supplierOrderPromotionsReviewBrowser || supplierOrderGiftIdentityBrowser || supplierOrderVirtualReviewBrowser || supplierRefundApplicationReviewBrowser || refundApplicationEvidenceBrowser || customerOrderRepurchaseBrowser || integralPurchaseOriginBrowser || integralPurchaseLimitsBrowser || productPurchaseAdmissionBrowser || supplierRuleInlineBrowser) ? 25 : (productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser || supplierCopyBrowser || supplierReviewBrowser || supplierDetailBrowser || supplierScheduleBrowser || supplierBrandBrowser || supplierEnsuresBrowser || supplierParametersBrowser || supplierSystemFormBrowser || supplierSkuBatchBrowser || supplierRecommendImageBrowser || supplierUnitBrowser || supplierShippingEditorBrowser || supplierOrderTrackingBrowser || supplierOrderDistributionBrowser || supplierOrderFiltersBrowser || supplierOrderReviewBrowser || supplierOrderInvoiceReviewBrowser || supplierOrderPromotionsReviewBrowser || supplierOrderGiftIdentityBrowser || supplierOrderVirtualReviewBrowser || supplierRefundApplicationReviewBrowser || refundApplicationEvidenceBrowser || customerOrderRepurchaseBrowser || integralPurchaseOriginBrowser || integralPurchaseLimitsBrowser || productPurchaseAdmissionBrowser || supplierRuleInlineBrowser || supplierOrderEditBrowser || adminOrderEditBrowser || adminOrderHistoryBrowser || buyerTrackingBrowser || buyerInvoicesBrowser || buyerReviewsBrowser || reviewCommunitySyncBrowser || pcProductContentBrowser || uniProductCouponsBrowser || uniCouponBuyBrowser || publicProductEstimateBrowser || pcMessageCenterBrowser || publicProductReviewsBrowser || checkoutInvoicesBrowser || orderTimelineBrowser || supplierCashBrowser || supplierProactiveRefundBrowser || supplierRefundSettlementBrowser || supplierBillBrowser || supplierBillExportBrowser || supplierFlowBrowser || supplierExtractBrowser || supplierExtractApplicationBrowser || supplierFinanceAccountsBrowser || supplierExtractMediaBrowser || supplierExtractApplicationMediaBrowser) ? 20 : tests.some(test => new Set([\n",
+            "      'test/assisted-purchase-flow-postgres.test.ts',\n",
+            "      'test/assisted-purchase-runtime-postgres.test.ts',\n",
+            "    ]).has(test)) ? 25 : 10) * 60_000, maxBuffer: 32 * 1024 * 1024,\n"
+          ]
+        },
+        {
+          "start": 1941,
+          "after": [
+            "      : { ...process.env, TEST_FINANCE_POSTGRES_URL: testConnection, ...(purchasedLabelOperationsBrowser ? { TEST_PURCHASED_LABEL_OPERATIONS_BROWSER: '1' } : {}), ...(assignedFulfillmentBrowser ? { TEST_ASSIGNED_FULFILLMENT_BROWSER: '1' } : {}), ...(spreadPosterBrowser ? { TEST_SPREAD_POSTER_BROWSER: '1' } : {}), ...(financeCenterBrowser ? { TEST_FINANCE_CENTER_BROWSER: '1' } : {}), ...(productEditorBrowser ? { TEST_PRODUCT_EDITOR_BROWSER: '1' } : {}), ...(supplierVideoBrowser ? { TEST_SUPPLIER_VIDEO_BROWSER: '1' } : {}), ...(supplierRecycleBrowser ? { TEST_SUPPLIER_RECYCLE_BROWSER: '1' } : {}), ...(supplierCopyBrowser ? { TEST_SUPPLIER_COPY_BROWSER: '1' } : {}), ...(supplierReviewBrowser ? { TEST_SUPPLIER_REVIEW_BROWSER: '1' } : {}), ...(supplierDetailBrowser ? { TEST_SUPPLIER_DETAIL_BROWSER: '1' } : {}), ...(supplierScheduleBrowser ? { TEST_SUPPLIER_SCHEDULE_BROWSER: '1' } : {}), ...(supplierBrandBrowser ? { TEST_SUPPLIER_BRAND_BROWSER: '1' } : {}), ...(supplierEnsuresBrowser ? { TEST_SUPPLIER_ENSURES_BROWSER: '1' } : {}), ...(supplierParametersBrowser ? { TEST_SUPPLIER_PARAMETERS_BROWSER: '1' } : {}), ...(supplierSystemFormBrowser ? { TEST_SUPPLIER_SYSTEM_FORM_BROWSER: '1' } : {}), ...(supplierSkuBatchBrowser ? { TEST_SUPPLIER_SKU_BATCH_BROWSER: '1' } : {}), ...(supplierRecommendImageBrowser ? { TEST_SUPPLIER_PRODUCT_RECOMMEND_IMAGE_BROWSER: '1' } : {}), ...(supplierUnitBrowser ? { TEST_SUPPLIER_PRODUCT_UNIT_BROWSER: '1' } : {}), ...(supplierOrderTrackingBrowser ? { TEST_SUPPLIER_ORDER_TRACKING_BROWSER: '1' } : {}), ...(supplierOrderDistributionBrowser ? { TEST_SUPPLIER_ORDER_DISTRIBUTION_BROWSER: '1' } : {}), ...(supplierOrderFiltersBrowser ? { TEST_SUPPLIER_ORDER_FILTERS_BROWSER: '1' } : {}), ...(supplierOrderReviewBrowser ? { TEST_SUPPLIER_ORDER_REVIEW_BROWSER: '1' } : {}), ...(supplierOrderInvoiceReviewBrowser ? { TEST_SUPPLIER_ORDER_INVOICE_REVIEW_BROWSER: '1' } : {}), ...(supplierOrderPromotionsReviewBrowser ? { TEST_SUPPLIER_ORDER_PROMOTIONS_REVIEW_BROWSER: '1' } : {}), ...(supplierOrderGiftIdentityBrowser ? { TEST_SUPPLIER_ORDER_GIFT_IDENTITY_BROWSER: '1' } : {}), ...(supplierOrderVirtualReviewBrowser ? { TEST_SUPPLIER_ORDER_VIRTUAL_REVIEW_BROWSER: '1' } : {}), ...(supplierRefundApplicationReviewBrowser ? { TEST_SUPPLIER_REFUND_APPLICATION_REVIEW_BROWSER: '1' } : {}), ...(refundApplicationEvidenceBrowser ? { TEST_REFUND_APPLICATION_EVIDENCE_BROWSER: '1' } : {}), ...(customerOrderRepurchaseBrowser ? { TEST_CUSTOMER_ORDER_REPURCHASE_BROWSER: '1' } : {}), ...(repurchaseShortSkuBrowser ? { TEST_REPURCHASE_SHORT_SKU_BROWSER: '1' } : {}), ...(integralPurchaseOriginBrowser ? { TEST_INTEGRAL_PURCHASE_ORIGIN_BROWSER: '1' } : {}), ...(integralPurchaseLimitsBrowser ? { TEST_INTEGRAL_PURCHASE_LIMITS_BROWSER: '1' } : {}), ...(productPurchaseAdmissionBrowser ? { TEST_PRODUCT_PURCHASE_ADMISSION_BROWSER: '1' } : {}), ...(purchasePhysicalOriginBrowser ? { TEST_PURCHASE_PHYSICAL_ORIGIN_BROWSER: '1' } : {}), ...(ordinaryShortSkuBrowser ? { TEST_ORDINARY_SHORT_SKU_BROWSER: '1' } : {}), ...(customerSignCentreBrowser ? { TEST_CUSTOMER_SIGN_CENTRE_BROWSER: '1' } : {}), ...(customerPointsCentreBrowser ? { TEST_CUSTOMER_POINTS_CENTRE_BROWSER: '1' } : {}), ...(customerGrowthRecordsBrowser ? { TEST_CUSTOMER_GROWTH_RECORDS_BROWSER: '1' } : {}), ...(customerLevelOverviewBrowser ? { TEST_CUSTOMER_LEVEL_OVERVIEW_BROWSER: '1' } : {}), ...(withdrawalApplicationBrowser ? { TEST_WITHDRAWAL_APPLICATION_BROWSER: '1' } : {}), ...(distributionLedgersBrowser ? { TEST_DISTRIBUTION_LEDGERS_BROWSER: '1' } : {}), ...(promoterPeopleBrowser ? { TEST_PROMOTER_PEOPLE_BROWSER: '1' } : {}), ...(promoterOrdersBrowser ? { TEST_PROMOTER_ORDERS_BROWSER: '1' } : {}), ...(distributionRankingsBrowser ? { TEST_DISTRIBUTION_RANKINGS_BROWSER: '1' } : {}), ...(memberLevelRecommendationsBrowser ? { TEST_MEMBER_LEVEL_RECOMMENDATIONS_BROWSER: '1' } : {}), ...(memberLevelActivationBrowser ? { TEST_MEMBER_LEVEL_ACTIVATION_BROWSER: '1' } : {}), ...(membershipClauseBrowser ? { TEST_MEMBERSHIP_CLAUSE_BROWSER: '1' } : {}), ...(membershipCouponsBrowser ? { TEST_MEMBERSHIP_COUPONS_BROWSER: '1' } : {}), ...(membershipHomeBrowser ? { TEST_MEMBERSHIP_HOME_BROWSER: '1' } : {}), ...(memberCardActivationBrowser ? { TEST_MEMBER_CARD_ACTIVATION_BROWSER: '1' } : {}), ...(membershipRightsBrowser ? { TEST_MEMBERSHIP_RIGHTS_BROWSER: '1' } : {}), ...(customerProfileBrowser ? { TEST_CUSTOMER_PROFILE_BROWSER: '1' } : {}), ...(adminUserFiltersBrowser ? { TEST_ADMIN_USER_FILTERS_BROWSER: '1' } : {}), ...(agentExplanationBrowser ? { TEST_AGENT_EXPLANATION_BROWSER: '1' } : {}), ...(distributionLevelBrowser ? { TEST_DISTRIBUTION_LEVEL_BROWSER: '1' } : {}), ...(messageCenterBrowser ? { TEST_MESSAGE_CENTER_BROWSER: '1' } : {}), ...(adminWithdrawalDirectoryBrowser ? { TEST_ADMIN_WITHDRAWAL_DIRECTORY_BROWSER: '1' } : {}), ...(adminLevelDefinitionsBrowser ? { TEST_ADMIN_LEVEL_DEFINITIONS_BROWSER: '1' } : {}), ...(adminMemberPackagesBrowser ? { TEST_ADMIN_MEMBER_PACKAGES_BROWSER: '1' } : {}), ...(cartManagementBrowser ? { TEST_CART_MANAGEMENT_BROWSER: '1' } : {}), ...(diyFooterBrowser ? { TEST_DIY_FOOTER_BROWSER: '1' } : {}), ...(diyPresentationBrowser ? { TEST_DIY_PRESENTATION_BROWSER: '1' } : {}), ...(diyCustomerServiceBrowser ? { TEST_DIY_CUSTOMER_SERVICE_BROWSER: '1' } : {}), ...(diyPageSettingsBrowser ? { TEST_DIY_PAGE_SETTINGS_BROWSER: '1' } : {}), ...(diyMediaReferenceBrowser ? { TEST_DIY_MEDIA_REFERENCE_BROWSER: '1' } : {}), ...(diyNavigationAuthorBrowser ? { TEST_DIY_NAVIGATION_AUTHOR_BROWSER: '1' } : {}), ...(diyCarouselAuthorBrowser ? { TEST_DIY_CAROUSEL_AUTHOR_BROWSER: '1' } : {}), ...(diyListAuthorBrowser ? { TEST_DIY_LIST_AUTHOR_BROWSER: '1' } : {}), ...(diyStateAuthorBrowser ? { TEST_DIY_STATE_AUTHOR_BROWSER: '1' } : {}), ...(diyEditorialAuthorBrowser ? { TEST_DIY_EDITORIAL_AUTHOR_BROWSER: '1' } : {}), ...(diyCommerceAuthorBrowser ? { TEST_DIY_COMMERCE_AUTHOR_BROWSER: '1' } : {}), ...(diyCommunityAuthorBrowser ? { TEST_DIY_COMMUNITY_AUTHOR_BROWSER: '1' } : {}), ...(diyNavigationBrowser ? { TEST_DIY_NAVIGATION_BROWSER: '1' } : {}), ...(diyCarouselBrowser ? { TEST_DIY_CAROUSEL_BROWSER: '1' } : {}), ...(diyEditorialBrowser ? { TEST_DIY_EDITORIAL_BROWSER: '1' } : {}), ...(diyCommerceBrowser ? { TEST_DIY_COMMERCE_BROWSER: '1' } : {}), ...(diyStateBrowser ? { TEST_DIY_STATE_BROWSER: '1' } : {}), ...(diyCommunityBrowser ? { TEST_DIY_COMMUNITY_BROWSER: '1' } : {}), ...(communityMainFeedBrowser ? { TEST_COMMUNITY_MAIN_FEED_BROWSER: '1' } : {}), ...(communityAvailabilityBrowser ? { TEST_COMMUNITY_AVAILABILITY_BROWSER: '1' } : {}), ...(communityPublishEntryBrowser ? { TEST_COMMUNITY_PUBLISH_ENTRY_BROWSER: '1' } : {}), ...(communityEngagementBrowser ? { TEST_COMMUNITY_ENGAGEMENT_BROWSER: '1' } : {}), ...(communityCommentsBrowser ? { TEST_COMMUNITY_COMMENTS_BROWSER: '1' } : {}), ...(communityPeopleBrowser ? { TEST_COMMUNITY_PEOPLE_BROWSER: '1' } : {}), ...(communityAuthorBrowser ? { TEST_COMMUNITY_AUTHOR_BROWSER: '1' } : {}), ...(communityRelationsBrowser ? { TEST_COMMUNITY_RELATIONS_BROWSER: '1' } : {}), ...(communityImageBrowser ? { TEST_COMMUNITY_IMAGE_BROWSER: '1' } : {}), ...(communityVideoBrowser ? { TEST_COMMUNITY_VIDEO_BROWSER: '1' } : {}), ...(bargainParticipationCancelBrowser ? { TEST_BARGAIN_PARTICIPATION_CANCEL_BROWSER: '1' } : {}), ...(pcBargainInvitationsBrowser ? { TEST_PC_BARGAIN_INVITATIONS_BROWSER: '1' } : {}), ...(bargainFriendHelpBrowser ? { TEST_BARGAIN_FRIEND_HELP_BROWSER: '1' } : {}), ...(bargainShortSkuBrowser ? { TEST_BARGAIN_SHORT_SKU_BROWSER: '1' } : {}), ...(seckillShortSkuBrowser ? { TEST_SECKILL_SHORT_SKU_BROWSER: '1' } : {}), ...(newcomerShortSkuBrowser ? { TEST_NEWCOMER_SHORT_SKU_BROWSER: '1' } : {}), ...(presaleShortSkuBrowser ? { TEST_PRESALE_SHORT_SKU_BROWSER: '1' } : {}), ...(supplierRuleInlineBrowser ? { TEST_SUPPLIER_PRODUCT_RULE_INLINE_BROWSER: '1' } : {}), ...(supplierShippingEditorBrowser ? { TEST_SUPPLIER_PRODUCT_SHIPPING_EDITOR_BROWSER: '1' } : {}), ...(supplierOrderEditBrowser ? { TEST_SUPPLIER_ORDER_EDIT_BROWSER: '1' } : {}), ...(adminOrderEditBrowser ? { TEST_ADMIN_ORDER_EDIT_BROWSER: '1' } : {}), ...(adminOrderHistoryBrowser ? { TEST_ADMIN_ORDER_HISTORY_BROWSER: '1' } : {}), ...(buyerTrackingBrowser ? { TEST_BUYER_TRACKING_BROWSER: '1' } : {}), ...(buyerInvoicesBrowser ? { TEST_BUYER_INVOICES_BROWSER: '1' } : {}), ...(pcProductContentBrowser ? { TEST_PC_PRODUCT_CONTENT_BROWSER: '1' } : {}), ...(uniProductCouponsBrowser ? { TEST_UNI_PRODUCT_COUPONS_BROWSER: '1' } : {}), ...(uniCouponBuyBrowser ? { TEST_UNI_COUPON_BUY_BROWSER: '1' } : {}), ...(publicProductEstimateBrowser ? { TEST_PUBLIC_PRODUCT_ESTIMATE_BROWSER: '1' } : {}), ...(pcMessageCenterBrowser ? { TEST_PC_MESSAGE_CENTER_BROWSER: '1' } : {}), ...(publicProductReviewsBrowser ? { TEST_PUBLIC_PRODUCT_REVIEWS_BROWSER: '1' } : {}), ...(reviewCommunitySyncBrowser ? { TEST_REVIEW_COMMUNITY_SYNC_BROWSER: '1' } : {}), ...(buyerReviewsBrowser ? { TEST_BUYER_REVIEWS_BROWSER: '1' } : {}), ...(checkoutInvoicesBrowser ? { TEST_CHECKOUT_INVOICES_BROWSER: '1' } : {}), ...(orderTimelineBrowser ? { TEST_ORDER_TIMELINE_BROWSER: '1' } : {}), ...(supplierCashBrowser ? { TEST_SUPPLIER_CASH_BROWSER: '1' } : {}), ...(supplierProactiveRefundBrowser ? { TEST_SUPPLIER_PROACTIVE_REFUND_BROWSER: '1' } : {}), ...(supplierRefundSettlementBrowser ? { TEST_SUPPLIER_REFUND_SETTLEMENT_BROWSER: '1' } : {}), ...(supplierBillBrowser ? { TEST_SUPPLIER_BILL_BROWSER: '1' } : {}), ...(supplierBillExportBrowser ? { TEST_SUPPLIER_BILL_EXPORT_BROWSER: '1' } : {}), ...(supplierFlowBrowser ? { TEST_SUPPLIER_FLOW_BROWSER: '1' } : {}), ...(supplierExtractBrowser ? { TEST_SUPPLIER_EXTRACT_BROWSER: '1' } : {}), ...(supplierExtractApplicationBrowser ? { TEST_SUPPLIER_EXTRACT_APPLICATION_BROWSER: '1' } : {}), ...(supplierFinanceAccountsBrowser ? { TEST_SUPPLIER_FINANCE_ACCOUNTS_BROWSER: '1' } : {}), ...(supplierExtractMediaBrowser ? { TEST_SUPPLIER_EXTRACT_MEDIA_BROWSER: '1' } : {}), ...(supplierExtractApplicationMediaBrowser ? { TEST_SUPPLIER_EXTRACT_APPLICATION_MEDIA_BROWSER: '1' } : {}) },\n"
+          ],
+          "before": [
+            "      : { ...process.env, TEST_FINANCE_POSTGRES_URL: testConnection, ...(purchasedLabelOperationsBrowser ? { TEST_PURCHASED_LABEL_OPERATIONS_BROWSER: '1' } : {}), ...(assignedFulfillmentBrowser ? { TEST_ASSIGNED_FULFILLMENT_BROWSER: '1' } : {}), ...(spreadPosterBrowser ? { TEST_SPREAD_POSTER_BROWSER: '1' } : {}), ...(financeCenterBrowser ? { TEST_FINANCE_CENTER_BROWSER: '1' } : {}), ...(productEditorBrowser ? { TEST_PRODUCT_EDITOR_BROWSER: '1' } : {}), ...(supplierVideoBrowser ? { TEST_SUPPLIER_VIDEO_BROWSER: '1' } : {}), ...(supplierRecycleBrowser ? { TEST_SUPPLIER_RECYCLE_BROWSER: '1' } : {}), ...(supplierCopyBrowser ? { TEST_SUPPLIER_COPY_BROWSER: '1' } : {}), ...(supplierReviewBrowser ? { TEST_SUPPLIER_REVIEW_BROWSER: '1' } : {}), ...(supplierDetailBrowser ? { TEST_SUPPLIER_DETAIL_BROWSER: '1' } : {}), ...(supplierScheduleBrowser ? { TEST_SUPPLIER_SCHEDULE_BROWSER: '1' } : {}), ...(supplierBrandBrowser ? { TEST_SUPPLIER_BRAND_BROWSER: '1' } : {}), ...(supplierEnsuresBrowser ? { TEST_SUPPLIER_ENSURES_BROWSER: '1' } : {}), ...(supplierParametersBrowser ? { TEST_SUPPLIER_PARAMETERS_BROWSER: '1' } : {}), ...(supplierSystemFormBrowser ? { TEST_SUPPLIER_SYSTEM_FORM_BROWSER: '1' } : {}), ...(supplierSkuBatchBrowser ? { TEST_SUPPLIER_SKU_BATCH_BROWSER: '1' } : {}), ...(supplierRecommendImageBrowser ? { TEST_SUPPLIER_PRODUCT_RECOMMEND_IMAGE_BROWSER: '1' } : {}), ...(supplierUnitBrowser ? { TEST_SUPPLIER_PRODUCT_UNIT_BROWSER: '1' } : {}), ...(supplierOrderTrackingBrowser ? { TEST_SUPPLIER_ORDER_TRACKING_BROWSER: '1' } : {}), ...(supplierOrderDistributionBrowser ? { TEST_SUPPLIER_ORDER_DISTRIBUTION_BROWSER: '1' } : {}), ...(supplierOrderFiltersBrowser ? { TEST_SUPPLIER_ORDER_FILTERS_BROWSER: '1' } : {}), ...(supplierOrderReviewBrowser ? { TEST_SUPPLIER_ORDER_REVIEW_BROWSER: '1' } : {}), ...(supplierOrderInvoiceReviewBrowser ? { TEST_SUPPLIER_ORDER_INVOICE_REVIEW_BROWSER: '1' } : {}), ...(supplierOrderPromotionsReviewBrowser ? { TEST_SUPPLIER_ORDER_PROMOTIONS_REVIEW_BROWSER: '1' } : {}), ...(supplierOrderGiftIdentityBrowser ? { TEST_SUPPLIER_ORDER_GIFT_IDENTITY_BROWSER: '1' } : {}), ...(supplierOrderVirtualReviewBrowser ? { TEST_SUPPLIER_ORDER_VIRTUAL_REVIEW_BROWSER: '1' } : {}), ...(supplierRefundApplicationReviewBrowser ? { TEST_SUPPLIER_REFUND_APPLICATION_REVIEW_BROWSER: '1' } : {}), ...(refundApplicationEvidenceBrowser ? { TEST_REFUND_APPLICATION_EVIDENCE_BROWSER: '1' } : {}), ...(customerOrderRepurchaseBrowser ? { TEST_CUSTOMER_ORDER_REPURCHASE_BROWSER: '1' } : {}), ...(repurchaseShortSkuBrowser ? { TEST_REPURCHASE_SHORT_SKU_BROWSER: '1' } : {}), ...(integralPurchaseOriginBrowser ? { TEST_INTEGRAL_PURCHASE_ORIGIN_BROWSER: '1' } : {}), ...(integralPurchaseLimitsBrowser ? { TEST_INTEGRAL_PURCHASE_LIMITS_BROWSER: '1' } : {}), ...(productPurchaseAdmissionBrowser ? { TEST_PRODUCT_PURCHASE_ADMISSION_BROWSER: '1' } : {}), ...(purchasePhysicalOriginBrowser ? { TEST_PURCHASE_PHYSICAL_ORIGIN_BROWSER: '1' } : {}), ...(ordinaryShortSkuBrowser ? { TEST_ORDINARY_SHORT_SKU_BROWSER: '1' } : {}), ...(customerSignCentreBrowser ? { TEST_CUSTOMER_SIGN_CENTRE_BROWSER: '1' } : {}), ...(customerPointsCentreBrowser ? { TEST_CUSTOMER_POINTS_CENTRE_BROWSER: '1' } : {}), ...(customerGrowthRecordsBrowser ? { TEST_CUSTOMER_GROWTH_RECORDS_BROWSER: '1' } : {}), ...(customerLevelOverviewBrowser ? { TEST_CUSTOMER_LEVEL_OVERVIEW_BROWSER: '1' } : {}), ...(withdrawalApplicationBrowser ? { TEST_WITHDRAWAL_APPLICATION_BROWSER: '1' } : {}), ...(distributionLedgersBrowser ? { TEST_DISTRIBUTION_LEDGERS_BROWSER: '1' } : {}), ...(promoterPeopleBrowser ? { TEST_PROMOTER_PEOPLE_BROWSER: '1' } : {}), ...(promoterOrdersBrowser ? { TEST_PROMOTER_ORDERS_BROWSER: '1' } : {}), ...(distributionRankingsBrowser ? { TEST_DISTRIBUTION_RANKINGS_BROWSER: '1' } : {}), ...(memberLevelRecommendationsBrowser ? { TEST_MEMBER_LEVEL_RECOMMENDATIONS_BROWSER: '1' } : {}), ...(memberLevelActivationBrowser ? { TEST_MEMBER_LEVEL_ACTIVATION_BROWSER: '1' } : {}), ...(membershipClauseBrowser ? { TEST_MEMBERSHIP_CLAUSE_BROWSER: '1' } : {}), ...(membershipCouponsBrowser ? { TEST_MEMBERSHIP_COUPONS_BROWSER: '1' } : {}), ...(membershipHomeBrowser ? { TEST_MEMBERSHIP_HOME_BROWSER: '1' } : {}), ...(memberCardActivationBrowser ? { TEST_MEMBER_CARD_ACTIVATION_BROWSER: '1' } : {}), ...(membershipRightsBrowser ? { TEST_MEMBERSHIP_RIGHTS_BROWSER: '1' } : {}), ...(customerProfileBrowser ? { TEST_CUSTOMER_PROFILE_BROWSER: '1' } : {}), ...(adminUserFiltersBrowser ? { TEST_ADMIN_USER_FILTERS_BROWSER: '1' } : {}), ...(agentExplanationBrowser ? { TEST_AGENT_EXPLANATION_BROWSER: '1' } : {}), ...(distributionLevelBrowser ? { TEST_DISTRIBUTION_LEVEL_BROWSER: '1' } : {}), ...(messageCenterBrowser ? { TEST_MESSAGE_CENTER_BROWSER: '1' } : {}), ...(adminWithdrawalDirectoryBrowser ? { TEST_ADMIN_WITHDRAWAL_DIRECTORY_BROWSER: '1' } : {}), ...(adminLevelDefinitionsBrowser ? { TEST_ADMIN_LEVEL_DEFINITIONS_BROWSER: '1' } : {}), ...(adminMemberPackagesBrowser ? { TEST_ADMIN_MEMBER_PACKAGES_BROWSER: '1' } : {}), ...(cartManagementBrowser ? { TEST_CART_MANAGEMENT_BROWSER: '1' } : {}), ...(diyFooterBrowser ? { TEST_DIY_FOOTER_BROWSER: '1' } : {}), ...(diyPresentationBrowser ? { TEST_DIY_PRESENTATION_BROWSER: '1' } : {}), ...(diyCustomerServiceBrowser ? { TEST_DIY_CUSTOMER_SERVICE_BROWSER: '1' } : {}), ...(diyPageSettingsBrowser ? { TEST_DIY_PAGE_SETTINGS_BROWSER: '1' } : {}), ...(diyMediaReferenceBrowser ? { TEST_DIY_MEDIA_REFERENCE_BROWSER: '1' } : {}), ...(diyNavigationAuthorBrowser ? { TEST_DIY_NAVIGATION_AUTHOR_BROWSER: '1' } : {}), ...(diyCarouselAuthorBrowser ? { TEST_DIY_CAROUSEL_AUTHOR_BROWSER: '1' } : {}), ...(diyListAuthorBrowser ? { TEST_DIY_LIST_AUTHOR_BROWSER: '1' } : {}), ...(diyStateAuthorBrowser ? { TEST_DIY_STATE_AUTHOR_BROWSER: '1' } : {}), ...(diyEditorialAuthorBrowser ? { TEST_DIY_EDITORIAL_AUTHOR_BROWSER: '1' } : {}), ...(diyCommerceAuthorBrowser ? { TEST_DIY_COMMERCE_AUTHOR_BROWSER: '1' } : {}), ...(diyCommunityAuthorBrowser ? { TEST_DIY_COMMUNITY_AUTHOR_BROWSER: '1' } : {}), ...(diyNavigationBrowser ? { TEST_DIY_NAVIGATION_BROWSER: '1' } : {}), ...(diyCarouselBrowser ? { TEST_DIY_CAROUSEL_BROWSER: '1' } : {}), ...(diyEditorialBrowser ? { TEST_DIY_EDITORIAL_BROWSER: '1' } : {}), ...(diyCommerceBrowser ? { TEST_DIY_COMMERCE_BROWSER: '1' } : {}), ...(diyStateBrowser ? { TEST_DIY_STATE_BROWSER: '1' } : {}), ...(diyCommunityBrowser ? { TEST_DIY_COMMUNITY_BROWSER: '1' } : {}), ...(communityMainFeedBrowser ? { TEST_COMMUNITY_MAIN_FEED_BROWSER: '1' } : {}), ...(communityAvailabilityBrowser ? { TEST_COMMUNITY_AVAILABILITY_BROWSER: '1' } : {}), ...(communityPublishEntryBrowser ? { TEST_COMMUNITY_PUBLISH_ENTRY_BROWSER: '1' } : {}), ...(communityEngagementBrowser ? { TEST_COMMUNITY_ENGAGEMENT_BROWSER: '1' } : {}), ...(communityCommentsBrowser ? { TEST_COMMUNITY_COMMENTS_BROWSER: '1' } : {}), ...(communityPeopleBrowser ? { TEST_COMMUNITY_PEOPLE_BROWSER: '1' } : {}), ...(communityAuthorBrowser ? { TEST_COMMUNITY_AUTHOR_BROWSER: '1' } : {}), ...(communityRelationsBrowser ? { TEST_COMMUNITY_RELATIONS_BROWSER: '1' } : {}), ...(communityImageBrowser ? { TEST_COMMUNITY_IMAGE_BROWSER: '1' } : {}), ...(communityVideoBrowser ? { TEST_COMMUNITY_VIDEO_BROWSER: '1' } : {}), ...(bargainParticipationCancelBrowser ? { TEST_BARGAIN_PARTICIPATION_CANCEL_BROWSER: '1' } : {}), ...(pcBargainInvitationsBrowser ? { TEST_PC_BARGAIN_INVITATIONS_BROWSER: '1' } : {}), ...(bargainFriendHelpBrowser ? { TEST_BARGAIN_FRIEND_HELP_BROWSER: '1' } : {}), ...(bargainShortSkuBrowser ? { TEST_BARGAIN_SHORT_SKU_BROWSER: '1' } : {}), ...(seckillShortSkuBrowser ? { TEST_SECKILL_SHORT_SKU_BROWSER: '1' } : {}), ...(newcomerShortSkuBrowser ? { TEST_NEWCOMER_SHORT_SKU_BROWSER: '1' } : {}), ...(presaleShortSkuBrowser ? { TEST_PRESALE_SHORT_SKU_BROWSER: '1' } : {}), ...(supplierRuleInlineBrowser ? { TEST_SUPPLIER_PRODUCT_RULE_INLINE_BROWSER: '1' } : {}), ...(supplierShippingEditorBrowser ? { TEST_SUPPLIER_PRODUCT_SHIPPING_EDITOR_BROWSER: '1' } : {}), ...(supplierOrderEditBrowser ? { TEST_SUPPLIER_ORDER_EDIT_BROWSER: '1' } : {}), ...(adminOrderEditBrowser ? { TEST_ADMIN_ORDER_EDIT_BROWSER: '1' } : {}), ...(adminOrderHistoryBrowser ? { TEST_ADMIN_ORDER_HISTORY_BROWSER: '1' } : {}), ...(buyerTrackingBrowser ? { TEST_BUYER_TRACKING_BROWSER: '1' } : {}), ...(buyerInvoicesBrowser ? { TEST_BUYER_INVOICES_BROWSER: '1' } : {}), ...(pcProductContentBrowser ? { TEST_PC_PRODUCT_CONTENT_BROWSER: '1' } : {}), ...(uniProductCouponsBrowser ? { TEST_UNI_PRODUCT_COUPONS_BROWSER: '1' } : {}), ...(uniCouponBuyBrowser ? { TEST_UNI_COUPON_BUY_BROWSER: '1' } : {}), ...(pcMessageCenterBrowser ? { TEST_PC_MESSAGE_CENTER_BROWSER: '1' } : {}), ...(publicProductReviewsBrowser ? { TEST_PUBLIC_PRODUCT_REVIEWS_BROWSER: '1' } : {}), ...(reviewCommunitySyncBrowser ? { TEST_REVIEW_COMMUNITY_SYNC_BROWSER: '1' } : {}), ...(buyerReviewsBrowser ? { TEST_BUYER_REVIEWS_BROWSER: '1' } : {}), ...(checkoutInvoicesBrowser ? { TEST_CHECKOUT_INVOICES_BROWSER: '1' } : {}), ...(orderTimelineBrowser ? { TEST_ORDER_TIMELINE_BROWSER: '1' } : {}), ...(supplierCashBrowser ? { TEST_SUPPLIER_CASH_BROWSER: '1' } : {}), ...(supplierProactiveRefundBrowser ? { TEST_SUPPLIER_PROACTIVE_REFUND_BROWSER: '1' } : {}), ...(supplierRefundSettlementBrowser ? { TEST_SUPPLIER_REFUND_SETTLEMENT_BROWSER: '1' } : {}), ...(supplierBillBrowser ? { TEST_SUPPLIER_BILL_BROWSER: '1' } : {}), ...(supplierBillExportBrowser ? { TEST_SUPPLIER_BILL_EXPORT_BROWSER: '1' } : {}), ...(supplierFlowBrowser ? { TEST_SUPPLIER_FLOW_BROWSER: '1' } : {}), ...(supplierExtractBrowser ? { TEST_SUPPLIER_EXTRACT_BROWSER: '1' } : {}), ...(supplierExtractApplicationBrowser ? { TEST_SUPPLIER_EXTRACT_APPLICATION_BROWSER: '1' } : {}), ...(supplierFinanceAccountsBrowser ? { TEST_SUPPLIER_FINANCE_ACCOUNTS_BROWSER: '1' } : {}), ...(supplierExtractMediaBrowser ? { TEST_SUPPLIER_EXTRACT_MEDIA_BROWSER: '1' } : {}), ...(supplierExtractApplicationMediaBrowser ? { TEST_SUPPLIER_EXTRACT_APPLICATION_MEDIA_BROWSER: '1' } : {}) },\n"
+          ],
+          "anchorStart": 1938,
+          "anchor": [
+            "      'test/assisted-purchase-runtime-postgres.test.ts',\n",
+            "    ]).has(test)) ? 25 : 10) * 60_000, maxBuffer: 32 * 1024 * 1024,\n",
+            "    env: unitGate ? unitGate.unitGateEnvironment(process.env, testConnection, taskRoot)\n",
+            "      : { ...process.env, TEST_FINANCE_POSTGRES_URL: testConnection, ...(purchasedLabelOperationsBrowser ? { TEST_PURCHASED_LABEL_OPERATIONS_BROWSER: '1' } : {}), ...(assignedFulfillmentBrowser ? { TEST_ASSIGNED_FULFILLMENT_BROWSER: '1' } : {}), ...(spreadPosterBrowser ? { TEST_SPREAD_POSTER_BROWSER: '1' } : {}), ...(financeCenterBrowser ? { TEST_FINANCE_CENTER_BROWSER: '1' } : {}), ...(productEditorBrowser ? { TEST_PRODUCT_EDITOR_BROWSER: '1' } : {}), ...(supplierVideoBrowser ? { TEST_SUPPLIER_VIDEO_BROWSER: '1' } : {}), ...(supplierRecycleBrowser ? { TEST_SUPPLIER_RECYCLE_BROWSER: '1' } : {}), ...(supplierCopyBrowser ? { TEST_SUPPLIER_COPY_BROWSER: '1' } : {}), ...(supplierReviewBrowser ? { TEST_SUPPLIER_REVIEW_BROWSER: '1' } : {}), ...(supplierDetailBrowser ? { TEST_SUPPLIER_DETAIL_BROWSER: '1' } : {}), ...(supplierScheduleBrowser ? { TEST_SUPPLIER_SCHEDULE_BROWSER: '1' } : {}), ...(supplierBrandBrowser ? { TEST_SUPPLIER_BRAND_BROWSER: '1' } : {}), ...(supplierEnsuresBrowser ? { TEST_SUPPLIER_ENSURES_BROWSER: '1' } : {}), ...(supplierParametersBrowser ? { TEST_SUPPLIER_PARAMETERS_BROWSER: '1' } : {}), ...(supplierSystemFormBrowser ? { TEST_SUPPLIER_SYSTEM_FORM_BROWSER: '1' } : {}), ...(supplierSkuBatchBrowser ? { TEST_SUPPLIER_SKU_BATCH_BROWSER: '1' } : {}), ...(supplierRecommendImageBrowser ? { TEST_SUPPLIER_PRODUCT_RECOMMEND_IMAGE_BROWSER: '1' } : {}), ...(supplierUnitBrowser ? { TEST_SUPPLIER_PRODUCT_UNIT_BROWSER: '1' } : {}), ...(supplierOrderTrackingBrowser ? { TEST_SUPPLIER_ORDER_TRACKING_BROWSER: '1' } : {}), ...(supplierOrderDistributionBrowser ? { TEST_SUPPLIER_ORDER_DISTRIBUTION_BROWSER: '1' } : {}), ...(supplierOrderFiltersBrowser ? { TEST_SUPPLIER_ORDER_FILTERS_BROWSER: '1' } : {}), ...(supplierOrderReviewBrowser ? { TEST_SUPPLIER_ORDER_REVIEW_BROWSER: '1' } : {}), ...(supplierOrderInvoiceReviewBrowser ? { TEST_SUPPLIER_ORDER_INVOICE_REVIEW_BROWSER: '1' } : {}), ...(supplierOrderPromotionsReviewBrowser ? { TEST_SUPPLIER_ORDER_PROMOTIONS_REVIEW_BROWSER: '1' } : {}), ...(supplierOrderGiftIdentityBrowser ? { TEST_SUPPLIER_ORDER_GIFT_IDENTITY_BROWSER: '1' } : {}), ...(supplierOrderVirtualReviewBrowser ? { TEST_SUPPLIER_ORDER_VIRTUAL_REVIEW_BROWSER: '1' } : {}), ...(supplierRefundApplicationReviewBrowser ? { TEST_SUPPLIER_REFUND_APPLICATION_REVIEW_BROWSER: '1' } : {}), ...(refundApplicationEvidenceBrowser ? { TEST_REFUND_APPLICATION_EVIDENCE_BROWSER: '1' } : {}), ...(customerOrderRepurchaseBrowser ? { TEST_CUSTOMER_ORDER_REPURCHASE_BROWSER: '1' } : {}), ...(repurchaseShortSkuBrowser ? { TEST_REPURCHASE_SHORT_SKU_BROWSER: '1' } : {}), ...(integralPurchaseOriginBrowser ? { TEST_INTEGRAL_PURCHASE_ORIGIN_BROWSER: '1' } : {}), ...(integralPurchaseLimitsBrowser ? { TEST_INTEGRAL_PURCHASE_LIMITS_BROWSER: '1' } : {}), ...(productPurchaseAdmissionBrowser ? { TEST_PRODUCT_PURCHASE_ADMISSION_BROWSER: '1' } : {}), ...(purchasePhysicalOriginBrowser ? { TEST_PURCHASE_PHYSICAL_ORIGIN_BROWSER: '1' } : {}), ...(ordinaryShortSkuBrowser ? { TEST_ORDINARY_SHORT_SKU_BROWSER: '1' } : {}), ...(customerSignCentreBrowser ? { TEST_CUSTOMER_SIGN_CENTRE_BROWSER: '1' } : {}), ...(customerPointsCentreBrowser ? { TEST_CUSTOMER_POINTS_CENTRE_BROWSER: '1' } : {}), ...(customerGrowthRecordsBrowser ? { TEST_CUSTOMER_GROWTH_RECORDS_BROWSER: '1' } : {}), ...(customerLevelOverviewBrowser ? { TEST_CUSTOMER_LEVEL_OVERVIEW_BROWSER: '1' } : {}), ...(withdrawalApplicationBrowser ? { TEST_WITHDRAWAL_APPLICATION_BROWSER: '1' } : {}), ...(distributionLedgersBrowser ? { TEST_DISTRIBUTION_LEDGERS_BROWSER: '1' } : {}), ...(promoterPeopleBrowser ? { TEST_PROMOTER_PEOPLE_BROWSER: '1' } : {}), ...(promoterOrdersBrowser ? { TEST_PROMOTER_ORDERS_BROWSER: '1' } : {}), ...(distributionRankingsBrowser ? { TEST_DISTRIBUTION_RANKINGS_BROWSER: '1' } : {}), ...(memberLevelRecommendationsBrowser ? { TEST_MEMBER_LEVEL_RECOMMENDATIONS_BROWSER: '1' } : {}), ...(memberLevelActivationBrowser ? { TEST_MEMBER_LEVEL_ACTIVATION_BROWSER: '1' } : {}), ...(membershipClauseBrowser ? { TEST_MEMBERSHIP_CLAUSE_BROWSER: '1' } : {}), ...(membershipCouponsBrowser ? { TEST_MEMBERSHIP_COUPONS_BROWSER: '1' } : {}), ...(membershipHomeBrowser ? { TEST_MEMBERSHIP_HOME_BROWSER: '1' } : {}), ...(memberCardActivationBrowser ? { TEST_MEMBER_CARD_ACTIVATION_BROWSER: '1' } : {}), ...(membershipRightsBrowser ? { TEST_MEMBERSHIP_RIGHTS_BROWSER: '1' } : {}), ...(customerProfileBrowser ? { TEST_CUSTOMER_PROFILE_BROWSER: '1' } : {}), ...(adminUserFiltersBrowser ? { TEST_ADMIN_USER_FILTERS_BROWSER: '1' } : {}), ...(agentExplanationBrowser ? { TEST_AGENT_EXPLANATION_BROWSER: '1' } : {}), ...(distributionLevelBrowser ? { TEST_DISTRIBUTION_LEVEL_BROWSER: '1' } : {}), ...(messageCenterBrowser ? { TEST_MESSAGE_CENTER_BROWSER: '1' } : {}), ...(adminWithdrawalDirectoryBrowser ? { TEST_ADMIN_WITHDRAWAL_DIRECTORY_BROWSER: '1' } : {}), ...(adminLevelDefinitionsBrowser ? { TEST_ADMIN_LEVEL_DEFINITIONS_BROWSER: '1' } : {}), ...(adminMemberPackagesBrowser ? { TEST_ADMIN_MEMBER_PACKAGES_BROWSER: '1' } : {}), ...(cartManagementBrowser ? { TEST_CART_MANAGEMENT_BROWSER: '1' } : {}), ...(diyFooterBrowser ? { TEST_DIY_FOOTER_BROWSER: '1' } : {}), ...(diyPresentationBrowser ? { TEST_DIY_PRESENTATION_BROWSER: '1' } : {}), ...(diyCustomerServiceBrowser ? { TEST_DIY_CUSTOMER_SERVICE_BROWSER: '1' } : {}), ...(diyPageSettingsBrowser ? { TEST_DIY_PAGE_SETTINGS_BROWSER: '1' } : {}), ...(diyMediaReferenceBrowser ? { TEST_DIY_MEDIA_REFERENCE_BROWSER: '1' } : {}), ...(diyNavigationAuthorBrowser ? { TEST_DIY_NAVIGATION_AUTHOR_BROWSER: '1' } : {}), ...(diyCarouselAuthorBrowser ? { TEST_DIY_CAROUSEL_AUTHOR_BROWSER: '1' } : {}), ...(diyListAuthorBrowser ? { TEST_DIY_LIST_AUTHOR_BROWSER: '1' } : {}), ...(diyStateAuthorBrowser ? { TEST_DIY_STATE_AUTHOR_BROWSER: '1' } : {}), ...(diyEditorialAuthorBrowser ? { TEST_DIY_EDITORIAL_AUTHOR_BROWSER: '1' } : {}), ...(diyCommerceAuthorBrowser ? { TEST_DIY_COMMERCE_AUTHOR_BROWSER: '1' } : {}), ...(diyCommunityAuthorBrowser ? { TEST_DIY_COMMUNITY_AUTHOR_BROWSER: '1' } : {}), ...(diyNavigationBrowser ? { TEST_DIY_NAVIGATION_BROWSER: '1' } : {}), ...(diyCarouselBrowser ? { TEST_DIY_CAROUSEL_BROWSER: '1' } : {}), ...(diyEditorialBrowser ? { TEST_DIY_EDITORIAL_BROWSER: '1' } : {}), ...(diyCommerceBrowser ? { TEST_DIY_COMMERCE_BROWSER: '1' } : {}), ...(diyStateBrowser ? { TEST_DIY_STATE_BROWSER: '1' } : {}), ...(diyCommunityBrowser ? { TEST_DIY_COMMUNITY_BROWSER: '1' } : {}), ...(communityMainFeedBrowser ? { TEST_COMMUNITY_MAIN_FEED_BROWSER: '1' } : {}), ...(communityAvailabilityBrowser ? { TEST_COMMUNITY_AVAILABILITY_BROWSER: '1' } : {}), ...(communityPublishEntryBrowser ? { TEST_COMMUNITY_PUBLISH_ENTRY_BROWSER: '1' } : {}), ...(communityEngagementBrowser ? { TEST_COMMUNITY_ENGAGEMENT_BROWSER: '1' } : {}), ...(communityCommentsBrowser ? { TEST_COMMUNITY_COMMENTS_BROWSER: '1' } : {}), ...(communityPeopleBrowser ? { TEST_COMMUNITY_PEOPLE_BROWSER: '1' } : {}), ...(communityAuthorBrowser ? { TEST_COMMUNITY_AUTHOR_BROWSER: '1' } : {}), ...(communityRelationsBrowser ? { TEST_COMMUNITY_RELATIONS_BROWSER: '1' } : {}), ...(communityImageBrowser ? { TEST_COMMUNITY_IMAGE_BROWSER: '1' } : {}), ...(communityVideoBrowser ? { TEST_COMMUNITY_VIDEO_BROWSER: '1' } : {}), ...(bargainParticipationCancelBrowser ? { TEST_BARGAIN_PARTICIPATION_CANCEL_BROWSER: '1' } : {}), ...(pcBargainInvitationsBrowser ? { TEST_PC_BARGAIN_INVITATIONS_BROWSER: '1' } : {}), ...(bargainFriendHelpBrowser ? { TEST_BARGAIN_FRIEND_HELP_BROWSER: '1' } : {}), ...(bargainShortSkuBrowser ? { TEST_BARGAIN_SHORT_SKU_BROWSER: '1' } : {}), ...(seckillShortSkuBrowser ? { TEST_SECKILL_SHORT_SKU_BROWSER: '1' } : {}), ...(newcomerShortSkuBrowser ? { TEST_NEWCOMER_SHORT_SKU_BROWSER: '1' } : {}), ...(presaleShortSkuBrowser ? { TEST_PRESALE_SHORT_SKU_BROWSER: '1' } : {}), ...(supplierRuleInlineBrowser ? { TEST_SUPPLIER_PRODUCT_RULE_INLINE_BROWSER: '1' } : {}), ...(supplierShippingEditorBrowser ? { TEST_SUPPLIER_PRODUCT_SHIPPING_EDITOR_BROWSER: '1' } : {}), ...(supplierOrderEditBrowser ? { TEST_SUPPLIER_ORDER_EDIT_BROWSER: '1' } : {}), ...(adminOrderEditBrowser ? { TEST_ADMIN_ORDER_EDIT_BROWSER: '1' } : {}), ...(adminOrderHistoryBrowser ? { TEST_ADMIN_ORDER_HISTORY_BROWSER: '1' } : {}), ...(buyerTrackingBrowser ? { TEST_BUYER_TRACKING_BROWSER: '1' } : {}), ...(buyerInvoicesBrowser ? { TEST_BUYER_INVOICES_BROWSER: '1' } : {}), ...(pcProductContentBrowser ? { TEST_PC_PRODUCT_CONTENT_BROWSER: '1' } : {}), ...(uniProductCouponsBrowser ? { TEST_UNI_PRODUCT_COUPONS_BROWSER: '1' } : {}), ...(uniCouponBuyBrowser ? { TEST_UNI_COUPON_BUY_BROWSER: '1' } : {}), ...(publicProductEstimateBrowser ? { TEST_PUBLIC_PRODUCT_ESTIMATE_BROWSER: '1' } : {}), ...(pcMessageCenterBrowser ? { TEST_PC_MESSAGE_CENTER_BROWSER: '1' } : {}), ...(publicProductReviewsBrowser ? { TEST_PUBLIC_PRODUCT_REVIEWS_BROWSER: '1' } : {}), ...(reviewCommunitySyncBrowser ? { TEST_REVIEW_COMMUNITY_SYNC_BROWSER: '1' } : {}), ...(buyerReviewsBrowser ? { TEST_BUYER_REVIEWS_BROWSER: '1' } : {}), ...(checkoutInvoicesBrowser ? { TEST_CHECKOUT_INVOICES_BROWSER: '1' } : {}), ...(orderTimelineBrowser ? { TEST_ORDER_TIMELINE_BROWSER: '1' } : {}), ...(supplierCashBrowser ? { TEST_SUPPLIER_CASH_BROWSER: '1' } : {}), ...(supplierProactiveRefundBrowser ? { TEST_SUPPLIER_PROACTIVE_REFUND_BROWSER: '1' } : {}), ...(supplierRefundSettlementBrowser ? { TEST_SUPPLIER_REFUND_SETTLEMENT_BROWSER: '1' } : {}), ...(supplierBillBrowser ? { TEST_SUPPLIER_BILL_BROWSER: '1' } : {}), ...(supplierBillExportBrowser ? { TEST_SUPPLIER_BILL_EXPORT_BROWSER: '1' } : {}), ...(supplierFlowBrowser ? { TEST_SUPPLIER_FLOW_BROWSER: '1' } : {}), ...(supplierExtractBrowser ? { TEST_SUPPLIER_EXTRACT_BROWSER: '1' } : {}), ...(supplierExtractApplicationBrowser ? { TEST_SUPPLIER_EXTRACT_APPLICATION_BROWSER: '1' } : {}), ...(supplierFinanceAccountsBrowser ? { TEST_SUPPLIER_FINANCE_ACCOUNTS_BROWSER: '1' } : {}), ...(supplierExtractMediaBrowser ? { TEST_SUPPLIER_EXTRACT_MEDIA_BROWSER: '1' } : {}), ...(supplierExtractApplicationMediaBrowser ? { TEST_SUPPLIER_EXTRACT_APPLICATION_MEDIA_BROWSER: '1' } : {}) },\n",
+            "  });\n",
+            "  if (unitGate) {\n",
+            "    const result = await unitGate.finishUnitGate(workerRoot, taskRoot, preparedUnitGate, testRun);\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "a9157320e351cfeb5ecdb50817e45ecf3ede4a06",
+        "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+        "gitBlobSha1": "ba20491b81cec2fdb3691d5a1cf992c8db9fcc2e"
+      }
+    },
+    {
+      "file": "workers-ts/src/controllers/api/v1/ProductController.ts",
+      "current": {
+        "bytes": 16584,
+        "sha256": "4ebc93359a6798618db57eb01e74d6a6f7b12bb8405de994382fd31f73415af0",
+        "gitBlobSha1": "11d436aaa3ccfa389f648cc6086c71427ce76a7e"
+      },
+      "predecessor": {
+        "bytes": 16437,
+        "sha256": "e83852a2dc2bb7fcb0c5276e3074785a75539f24054ad3b9bbf7b2773cfabc35",
+        "gitBlobSha1": "038c544b5ff209db671fc6ec77d3a882f816a748"
+      },
+      "inverseEdits": [
+        {
+          "start": 27,
+          "after": [
+            "import { productEstimate } from './PublicProductEstimateController';\n"
+          ],
+          "before": [],
+          "anchorStart": 24,
+          "anchor": [
+            "import { themeDeadlines } from '@/services/content/ThemeReadService';\n",
+            "import { readProductCommunity } from '@/services/product/ProductDetailDesignData';\n",
+            "import { publicProductPictures, renderProductPictures } from '@/services/activity/ProductAssetPolicy';\n",
+            "import { productEstimate } from './PublicProductEstimateController';\n",
+            "\n",
+            "type C = Context<{ Bindings: Env; Variables: AppVariables }>;\n",
+            "\n"
+          ]
+        },
+        {
+          "start": 223,
+          "after": [
+            "  if (new URL(c.req.url).searchParams.has('view')) return productEstimate(c);\n"
+          ],
+          "before": [],
+          "anchorStart": 220,
+          "anchor": [
+            "\n",
+            "/** GET /api/product/detail/activity/:id */\n",
+            "export async function detailActivity(c: C) {\n",
+            "  if (new URL(c.req.url).searchParams.has('view')) return productEstimate(c);\n",
+            "  const id = Number(c.req.param(\"id\"));\n",
+            "  if (!Number.isSafeInteger(id) || id <= 0) return jsonFail(c, \"参数错误\");\n",
+            "  const promotionTypeValue = c.req.query(\"promotions_type\");\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "a9157320e351cfeb5ecdb50817e45ecf3ede4a06",
+        "path": "workers-ts/src/controllers/api/v1/ProductController.ts",
+        "gitBlobSha1": "038c544b5ff209db671fc6ec77d3a882f816a748"
+      }
+    },
+    {
+      "file": "workers-ts/src/middleware/auth.ts",
+      "current": {
+        "bytes": 6326,
+        "sha256": "ee4c84bbf33d4c80ae55c874bcff5876e125a6054ed8adfa9cb8cd5366f22d1c",
+        "gitBlobSha1": "9ad64032e547a3278af4f7e51885424984e66b29"
+      },
+      "predecessor": {
+        "bytes": 6181,
+        "sha256": "fe53f37a4e82268c66f96c9bf2b266ee18fc9d6bfc834d46b8380f133cfbd1c4",
+        "gitBlobSha1": "7f2c368a0877c685472777c3ba59a5235f88a549"
+      },
+      "inverseEdits": [
+        {
+          "start": 29,
+          "after": [
+            "  /** Read-only advisory routes reject invalid tokens without deleting buckets. */\n",
+            "  readOnly?: boolean;\n"
+          ],
+          "before": [],
+          "anchorStart": 26,
+          "anchor": [
+            "interface AuthOptions {\n",
+            "  /** true=必须登录, 未登录抛 410000; false=可选, 未登录放行 uid=0 */\n",
+            "  force: boolean;\n",
+            "  /** Read-only advisory routes reject invalid tokens without deleting buckets. */\n",
+            "  readOnly?: boolean;\n",
+            "}\n",
+            "\n",
+            "/** 从 HTTP header 或 WebSocket 子协议提取 token。 */\n"
+          ]
+        },
+        {
+          "start": 117,
+          "after": [
+            "      if (!opts.readOnly) await clearToken(key, env).catch(() => {});\n"
+          ],
+          "before": [
+            "      await clearToken(key, env).catch(() => {});\n"
+          ],
+          "anchorStart": 114,
+          "anchor": [
+            "    try {\n",
+            "      payload = await verifyToken(token, env.APP_KEY);\n",
+            "    } catch {\n",
+            "      if (!opts.readOnly) await clearToken(key, env).catch(() => {});\n",
+            "      if (force) throw new AuthException(\"登录已过期,请重新登录\", ApiErrorCode.ERR_EXPIRED);\n",
+            "      await next();\n",
+            "      return;\n"
+          ]
+        },
+        {
+          "start": 131,
+          "after": [
+            "      if (!opts.readOnly) await clearToken(key, env).catch(() => {});\n"
+          ],
+          "before": [
+            "      await clearToken(key, env).catch(() => {});\n"
+          ],
+          "anchorStart": 128,
+          "anchor": [
+            "\n",
+            "    // bucket uid 与 JWT uid 必须一致 (Redis 不可用时跳过此检查)\n",
+            "    if (hasRedis && bucket && Number(payload.id) !== Number(bucket.uid)) {\n",
+            "      if (!opts.readOnly) await clearToken(key, env).catch(() => {});\n",
+            "      if (force) throw new AuthException(\"登录状态有误,请重新登录\", ApiErrorCode.ERR_BANNED);\n",
+            "      await next();\n",
+            "      return;\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "a9157320e351cfeb5ecdb50817e45ecf3ede4a06",
+        "path": "workers-ts/src/middleware/auth.ts",
+        "gitBlobSha1": "7f2c368a0877c685472777c3ba59a5235f88a549"
+      }
+    },
+    {
+      "file": "workers-ts/src/routes/v1/index.ts",
+      "current": {
+        "bytes": 200455,
+        "sha256": "07a41c821915cf6a9ac8fab3d16f0dc8a55336d08fa7051648b0f145c8b5c1da",
+        "gitBlobSha1": "08b2df25602767a2c1853deb2458b3565e570b72"
+      },
+      "predecessor": {
+        "bytes": 200390,
+        "sha256": "06dbafcd2803cf66e38b71d360e56718f2f7a5081568c16f3e289ada976325bb",
+        "gitBlobSha1": "5d0f4ee08c58f89cf978604a12d92eb347443b56"
+      },
+      "inverseEdits": [
+        {
+          "start": 33,
+          "after": [
+            "import { activityAuth } from '@/controllers/api/v1/PublicProductEstimateController';\n"
+          ],
+          "before": [],
+          "anchorStart": 30,
+          "anchor": [
+            "import * as AgentExplanationController from '@/controllers/api/v1/AgentExplanationController';\n",
+            "import * as PublicGeocodingController from \"@/controllers/api/v1/PublicGeocodingController\";\n",
+            "import * as ProductController from \"@/controllers/api/v1/ProductController\";\n",
+            "import { activityAuth } from '@/controllers/api/v1/PublicProductEstimateController';\n",
+            "import * as ProductShareCode from '@/controllers/api/v1/ProductShareCodeController';\n",
+            "import * as LegacyShareCode from '@/controllers/api/v1/LegacyShareCodeController';\n",
+            "import * as WechatFollowPoster from '@/controllers/api/v1/WechatFollowPosterController';\n"
+          ]
+        },
+        {
+          "start": 431,
+          "after": [
+            "v1Routes.get(\"/product/detail/activity/:id\", activityAuth, ProductController.detailActivity);\n"
+          ],
+          "before": [
+            "v1Routes.get(\"/product/detail/activity/:id\", authMiddleware({ force: false }), ProductController.detailActivity);\n"
+          ],
+          "anchorStart": 428,
+          "anchor": [
+            "v1Routes.get(\"/product/detail/recommend/:id\", authMiddleware({ force: false }), ProductController.detailRecommend);\n",
+            "v1Routes.get(\"/product/:id/community\", authMiddleware({ force: false }), ProductController.productCommunity);\n",
+            "v1Routes.get('/product/code/:id', authMiddleware({ force: true }), ProductShareCode.code);\n",
+            "v1Routes.get(\"/product/detail/activity/:id\", activityAuth, ProductController.detailActivity);\n",
+            "v1Routes.get(\"/product/detail_content/:id\", authMiddleware({ force: false }), ProductController.detailContent);\n",
+            "v1Routes.get(\"/groom/list/:type\", authMiddleware({ force: false }), ProductController.groomList);\n",
+            "v1Routes.get(\"/product/hot\", authMiddleware({ force: false }), ProductController.productHot);\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "a9157320e351cfeb5ecdb50817e45ecf3ede4a06",
+        "path": "workers-ts/src/routes/v1/index.ts",
+        "gitBlobSha1": "5d0f4ee08c58f89cf978604a12d92eb347443b56"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/activity/ActivityService.ts",
+      "current": {
+        "bytes": 44888,
+        "sha256": "69802b1ebe5fa2dfe8fbef52120bb7f4d8d644ddb8a0744aa9c679ecd157f214",
+        "gitBlobSha1": "019579e21740e1cd166ec577aab2fe9ab5b5e03f"
+      },
+      "predecessor": {
+        "bytes": 45934,
+        "sha256": "22b12fad9a6da9f43e9fee6ffbd2152458b6bb78011ce7328a592df74b95aa07",
+        "gitBlobSha1": "f2b459ea1449c4442675308463bc428698118846"
+      },
+      "inverseEdits": [
+        {
+          "start": 13,
+          "after": [
+            "import {ordinaryCouponIssueAdmission,ordinaryCouponClaimLimitAdmission,couponClaimUseWindow} from './CouponClaimAdmission';\n"
+          ],
+          "before": [],
+          "anchorStart": 10,
+          "anchor": [
+            " */\n",
+            "import { eq, and, desc, inArray, sql } from \"drizzle-orm\";\n",
+            "import {claimMembershipCouponLocked,membershipCouponLockError,membershipCouponConflict} from './MembershipCouponService';\n",
+            "import {ordinaryCouponIssueAdmission,ordinaryCouponClaimLimitAdmission,couponClaimUseWindow} from './CouponClaimAdmission';\n",
+            "import {\n",
+            "  legacyCategory,\n",
+            "  storeActivity,\n"
+          ]
+        },
+        {
+          "start": 180,
+          "after": [
+            "      // Shared pure admission does not replace the locked grant transaction.\n"
+          ],
+          "before": [
+            "      // Public self-claim is a manual-coupon operation. Hidden gift/newcomer\n",
+            "      // catalogs are not an authority check; callers can submit any issue ID.\n",
+            "      // Trusted registration/product grants have their own transaction paths.\n",
+            "      // Member/popup coupons stay closed until genuine entitlement is checked.\n",
+            "      // Ordinary PHP issuers use category=1; new canonical issuers use 0.\n",
+            "      // Neither value grants paid membership or a trusted delivery capability.\n",
+            "      if (issue.receiveType !== 1 || ![0, 1].includes(issue.category) || issue.appType !== 0) {\n",
+            "        throw new ValidateException(\"该优惠券不允许手动领取\");\n",
+            "      }\n",
+            "\n"
+          ],
+          "anchorStart": 177,
+          "anchor": [
+            "        throw new NotFoundException(\"优惠券不存在或已停发\");\n",
+            "      }\n",
+            "\n",
+            "      // Shared pure admission does not replace the locked grant transaction.\n",
+            "      const now = new Date();\n",
+            "      const admission = ordinaryCouponIssueAdmission(issue, now.getTime());\n",
+            "      if (admission) throw new ValidateException(admission);\n"
+          ]
+        },
+        {
+          "start": 182,
+          "after": [
+            "      const admission = ordinaryCouponIssueAdmission(issue, now.getTime());\n",
+            "      if (admission) throw new ValidateException(admission);\n"
+          ],
+          "before": [
+            "      if (issue.startTime && issue.startTime > now) throw new ValidateException(\"优惠券未开始\");\n",
+            "      if (issue.endTime && issue.endTime < now) throw new ValidateException(\"优惠券已结束\");\n",
+            "      if (!issue.isPermanent && issue.remainCount <= 0) {\n",
+            "        throw new ValidateException(\"优惠券已领完\");\n",
+            "      }\n"
+          ],
+          "anchorStart": 179,
+          "anchor": [
+            "\n",
+            "      // Shared pure admission does not replace the locked grant transaction.\n",
+            "      const now = new Date();\n",
+            "      const admission = ordinaryCouponIssueAdmission(issue, now.getTime());\n",
+            "      if (admission) throw new ValidateException(admission);\n",
+            "\n",
+            "      const receivedRows = await tx\n",
+            "        .select({ count: sql<number>`COUNT(*)::int` })\n"
+          ]
+        },
+        {
+          "start": 191,
+          "after": [
+            "      // PHP's public controller passes more=false. A legacy default 0 is\n",
+            "      // one lifetime claim, including evidence after an owned row was removed.\n"
+          ],
+          "before": [
+            "      // PHP's public controller always passes more=false. A legacy default 0\n",
+            "      // is not permission for unlimited direct claims. Preserve issue evidence\n",
+            "      // even if its owned coupon was later removed; do not join duplicate logs.\n",
+            "      const effectiveLimit = issue.receiveLimit || 1;\n"
+          ],
+          "anchorStart": 188,
+          "anchor": [
+            "        .where(and(eq(storeCouponUser.uid, uid), eq(storeCouponUser.issueCouponId, issueId)));\n",
+            "      const received = receivedRows[0]?.count ?? 0;\n",
+            "      if (issue.receiveLimit < 0) throw new ValidateException('优惠券限领配置无效');\n",
+            "      // PHP's public controller passes more=false. A legacy default 0 is\n",
+            "      // one lifetime claim, including evidence after an owned row was removed.\n",
+            "      const [evidence] = issue.receiveLimit === 0 ? await tx\n",
+            "        .select({ count: sql<number>`COUNT(*)::int` }).from(storeCouponIssueUser)\n",
+            "        .where(and(eq(storeCouponIssueUser.uid, uid), eq(storeCouponIssueUser.issueCouponId, issueId))) : [];\n"
+          ]
+        },
+        {
+          "start": 196,
+          "after": [
+            "      const limitReason = ordinaryCouponClaimLimitAdmission(issue.receiveLimit, received, evidence?.count ?? 0);\n",
+            "      if (limitReason) throw new ValidateException(limitReason);\n"
+          ],
+          "before": [
+            "      if (received >= effectiveLimit || (issue.receiveLimit === 0 && (evidence?.count ?? 0) > 0)) {\n",
+            "        throw new ValidateException(`每人限领 ${effectiveLimit} 张`);\n",
+            "      }\n",
+            "\n"
+          ],
+          "anchorStart": 193,
+          "anchor": [
+            "      const [evidence] = issue.receiveLimit === 0 ? await tx\n",
+            "        .select({ count: sql<number>`COUNT(*)::int` }).from(storeCouponIssueUser)\n",
+            "        .where(and(eq(storeCouponIssueUser.uid, uid), eq(storeCouponIssueUser.issueCouponId, issueId))) : [];\n",
+            "      const limitReason = ordinaryCouponClaimLimitAdmission(issue.receiveLimit, received, evidence?.count ?? 0);\n",
+            "      if (limitReason) throw new ValidateException(limitReason);\n",
+            "      if (!issue.isPermanent) {\n",
+            "        const updated = await tx\n",
+            "          .update(storeCouponIssue)\n"
+          ]
+        },
+        {
+          "start": 207,
+          "after": [
+            "      const window = couponClaimUseWindow(issue, now.getTime());\n",
+            "      if (window.reason || !window.endTime) throw new ValidateException(window.reason || '优惠券固定有效期未配置');\n",
+            "      const { startTime, endTime } = window;\n"
+          ],
+          "before": [
+            "      let startTime = now;\n",
+            "      let endTime: Date;\n",
+            "      if (issue.day > 0) {\n",
+            "        endTime = new Date(now.getTime() + issue.day * 86_400_000);\n",
+            "      } else {\n",
+            "        if (!issue.useEndTime) throw new ValidateException(\"优惠券固定有效期未配置\");\n",
+            "        if (!Number.isFinite(issue.useEndTime.getTime()) || issue.useEndTime < now) throw new ValidateException(\"优惠券固定使用期已过期\");\n",
+            "        startTime = issue.useStartTime ?? now;\n",
+            "        endTime = issue.useEndTime;\n",
+            "      }\n"
+          ],
+          "anchorStart": 204,
+          "anchor": [
+            "        if (!updated[0]) throw new ValidateException(\"优惠券已领完\");\n",
+            "      }\n",
+            "\n",
+            "      const window = couponClaimUseWindow(issue, now.getTime());\n",
+            "      if (window.reason || !window.endTime) throw new ValidateException(window.reason || '优惠券固定有效期未配置');\n",
+            "      const { startTime, endTime } = window;\n",
+            "      const couponRows = await tx\n",
+            "        .insert(storeCouponUser)\n",
+            "        .values({\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "a9157320e351cfeb5ecdb50817e45ecf3ede4a06",
+        "path": "workers-ts/src/services/activity/ActivityService.ts",
+        "gitBlobSha1": "f2b459ea1449c4442675308463bc428698118846"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/activity/MembershipCouponService.ts",
+      "current": {
+        "bytes": 11071,
+        "sha256": "9dd5777ce680c2373441be5ff0c92887a2638b75cba7b6394da26f2a37dc6063",
+        "gitBlobSha1": "59420526014281d22c0456242478a5febe34c353"
+      },
+      "predecessor": {
+        "bytes": 12366,
+        "sha256": "0d3c9e0eb2553fb9270a9691d48458dbc053244a4c02cf1afaed070c18eeeb81",
+        "gitBlobSha1": "39ea93bbef0969ce89c636df5b864ba1ed0a611e"
+      },
+      "inverseEdits": [
+        {
+          "start": 8,
+          "after": [
+            "import {membershipCouponIssueAdmission as admission,membershipCouponHasHistory} from './CouponClaimAdmission';\n"
+          ],
+          "before": [],
+          "anchorStart": 5,
+          "anchor": [
+            "import {themeDeadlines} from '@/services/content/ThemeReadService';\n",
+            "import {membershipCouponId} from './MembershipCouponInput';\n",
+            "import {protectCheckoutPricingSources} from '@/services/order/CheckoutPricingSources';\n",
+            "import {membershipCouponIssueAdmission as admission,membershipCouponHasHistory} from './CouponClaimAdmission';\n",
+            "\n",
+            "type Issue=typeof storeCouponIssue.$inferSelect;\n",
+            "type Owned=typeof storeCouponUser.$inferSelect;\n"
+          ]
+        },
+        {
+          "start": 37,
+          "after": [],
+          "before": [
+            "function admission(issue:Issue,now:Date):string{\n",
+            " if(issue.category!==2||issue.receiveType!==1||issue.appType!==0)return'该优惠券不允许手动领取';\n",
+            " if(issue.status!==1||issue.isDel!==0)return'优惠券不存在或已停发';\n",
+            " if(issue.startTime&&issue.startTime>now)return'优惠券未开始';if(issue.endTime&&issue.endTime<now)return'优惠券已结束';\n",
+            " if(![1,2].includes(issue.type)||![0,1,2,3].includes(issue.couponType)||issue.receiveLimit<0||![0,1].includes(issue.isPermanent))return'优惠券配置无效';\n",
+            " try{money(issue.couponPrice);money(issue.useMinPrice);}catch{return'优惠券金额配置无效';}\n",
+            " if(issue.type===2&&(Number(issue.couponPrice)<=0||Number(issue.couponPrice)>100))return'折扣优惠券配置无效';\n",
+            " if((issue.couponTitle||issue.title).length>64)return'优惠券名称超过可领取范围';\n",
+            " if(!issue.isPermanent&&issue.remainCount<=0)return'优惠券已领完';\n",
+            " if(!Number.isSafeInteger(issue.day)||issue.day<0||!Number.isFinite(now.getTime()+issue.day*86400000)||Math.abs(now.getTime()+issue.day*86400000)>8640000000000000)return'优惠券有效期配置无效';\n",
+            " if(issue.day===0&&(!issue.useEndTime||!Number.isFinite(issue.useEndTime.getTime())||issue.useEndTime<now))return'优惠券固定使用期已过期或未配置';\n",
+            " if(issue.day===0&&issue.useStartTime&&issue.useEndTime&&issue.useStartTime>issue.useEndTime)return'优惠券固定使用期配置无效';return'';\n",
+            "}\n"
+          ],
+          "anchorStart": 34,
+          "anchor": [
+            " return{member_enabled,coupon_right_enabled,is_svip,eligible,reason};\n",
+            "}\n",
+            "export async function readMembershipCouponEligibility(tx:DbClient,uid:number,now:number){return eligibility(tx,uid,now);}\n",
+            "export function membershipCouponLockError(error:unknown):boolean{let current:unknown=error;for(let n=0;n<5&&current&&typeof current==='object';n++){const row=current as {code?:unknown;cause?:unknown};if(['55P03','40P01','40001'].includes(String(row.code)))return true;current=row.cause;}return false;}\n",
+            "/** Caller owns this exact issue FOR UPDATE; ordinary grants retain their\n",
+            " * separate transaction. Legacy receives a fresh grant or a true refusal;\n"
+          ]
+        },
+        {
+          "start": 38,
+          "after": [
+            "/** Caller owns this exact issue FOR UPDATE; ordinary grants retain their\n",
+            " * separate transaction. Legacy receives a fresh grant or a true refusal;\n"
+          ],
+          "before": [
+            "/** Caller owns this exact issue FOR UPDATE; ordinary ActivityService code is\n",
+            " * deliberately not rewritten. Legacy receives a fresh grant or a true refusal;\n"
+          ],
+          "anchorStart": 35,
+          "anchor": [
+            "}\n",
+            "export async function readMembershipCouponEligibility(tx:DbClient,uid:number,now:number){return eligibility(tx,uid,now);}\n",
+            "export function membershipCouponLockError(error:unknown):boolean{let current:unknown=error;for(let n=0;n<5&&current&&typeof current==='object';n++){const row=current as {code?:unknown;cause?:unknown};if(['55P03','40P01','40001'].includes(String(row.code)))return true;current=row.cause;}return false;}\n",
+            "/** Caller owns this exact issue FOR UPDATE; ordinary grants retain their\n",
+            " * separate transaction. Legacy receives a fresh grant or a true refusal;\n",
+            " * only the modern caller can replay its already-owned coupon without a grant. */\n",
+            "export async function claimMembershipCouponLocked(tx:DbClient,uid:number,issue:Issue|undefined,modern:boolean):Promise<{row:Owned;replayed:boolean}>{\n",
+            " if(!issue||issue.category!==2)throw new ValidateException('该优惠券不允许手动领取');\n"
+          ]
+        },
+        {
+          "start": 47,
+          "after": [
+            " if(membershipCouponHasHistory(previous?1:0,evidence.length)){if(modern)throw membershipCouponConflict();throw new ValidateException('已领取过该优惠券，每人限领1张');}\n"
+          ],
+          "before": [
+            " if(previous||evidence.length){if(modern)throw membershipCouponConflict();throw new ValidateException('已领取过该优惠券，每人限领1张');}\n"
+          ],
+          "anchorStart": 44,
+          "anchor": [
+            " if(modern&&previous)return{row:previous,replayed:true};\n",
+            " if(!modern){if(issue.receiveType!==1||issue.appType!==0)throw new ValidateException('该优惠券不允许手动领取');const[account]=await tx.select().from(user).where(eq(user.uid,uid)).limit(1).for('share',{noWait:true});if(!genuine(account,Math.floor(Date.now()/1000)))throw new ValidateException('该优惠券不允许手动领取');}\n",
+            " const evidence=await tx.select().from(storeCouponIssueUser).where(and(eq(storeCouponIssueUser.uid,uid),eq(storeCouponIssueUser.issueCouponId,issue.id))).limit(1);\n",
+            " if(membershipCouponHasHistory(previous?1:0,evidence.length)){if(modern)throw membershipCouponConflict();throw new ValidateException('已领取过该优惠券，每人限领1张');}\n",
+            " const now=new Date(),reason=admission(issue,now);if(reason)throw new ValidateException(reason);\n",
+            " const allowed=await eligibility(tx,uid,Math.floor(now.getTime()/1000),true);if(!allowed.eligible)throw new ValidateException('该优惠券不允许手动领取：'+allowed.reason);\n",
+            " if(!issue.isPermanent){const[changed]=await tx.update(storeCouponIssue).set({remainCount:sql`${storeCouponIssue.remainCount}-1`}).where(and(eq(storeCouponIssue.id,issue.id),gte(storeCouponIssue.remainCount,1))).returning({id:storeCouponIssue.id});if(!changed)throw new ValidateException('优惠券已领完');}\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "a9157320e351cfeb5ecdb50817e45ecf3ede4a06",
+        "path": "workers-ts/src/services/activity/MembershipCouponService.ts",
+        "gitBlobSha1": "39ea93bbef0969ce89c636df5b864ba1ed0a611e"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/activity/OrderCouponService.ts",
+      "current": {
+        "bytes": 12078,
+        "sha256": "a2b8c9e5bb4b8d5d3af43fe527a6c940c2c19b6bb5ddf5db4ef20cca8e277042",
+        "gitBlobSha1": "db2e0b60969f0fbba5f9475d68d54f895b4062bf"
+      },
+      "predecessor": {
+        "bytes": 11845,
+        "sha256": "2a63c5cbd3333b0740cab04dc9126f0001bb01a7a9349ab314e6f3d49b88cace",
+        "gitBlobSha1": "0ac25e9cd67a04547327f4b41679d1f9c3b648fe"
+      },
+      "inverseEdits": [
+        {
+          "start": 10,
+          "after": [
+            "/** Benefit facts can describe an unclaimed offer without pretending it is an owned coupon. */\n",
+            "export type CouponBenefitTerms = Pick<Coupon, \"status\" | \"isFail\" | \"startTime\" | \"endTime\" | \"couponPrice\" | \"useMinPrice\">;\n"
+          ],
+          "before": [],
+          "anchorStart": 7,
+          "anchor": [
+            "import { couponTemplateSnapshot } from '@/services/order/CheckoutCouponTemplateAuthority';\n",
+            "\n",
+            "type Coupon = typeof storeCouponUser.$inferSelect;\n",
+            "/** Benefit facts can describe an unclaimed offer without pretending it is an owned coupon. */\n",
+            "export type CouponBenefitTerms = Pick<Coupon, \"status\" | \"isFail\" | \"startTime\" | \"endTime\" | \"couponPrice\" | \"useMinPrice\">;\n",
+            "type Issue = typeof storeCouponIssue.$inferSelect;\n",
+            "export interface PricedCouponItem {\n",
+            "  cart: { cartNum: number };\n"
+          ]
+        },
+        {
+          "start": 69,
+          "after": [
+            "function evaluateCoupon(coupon: CouponBenefitTerms, issue: Issue | null, scope: Awaited<ReturnType<typeof prepareCouponScope>>, now: number) {\n"
+          ],
+          "before": [
+            "function evaluateCoupon(coupon: Coupon, issue: Issue | null, scope: Awaited<ReturnType<typeof prepareCouponScope>>, now: number) {\n"
+          ],
+          "anchorStart": 66,
+          "anchor": [
+            "  return { related, items };\n",
+            "}\n",
+            "\n",
+            "function evaluateCoupon(coupon: CouponBenefitTerms, issue: Issue | null, scope: Awaited<ReturnType<typeof prepareCouponScope>>, now: number) {\n",
+            "  if (!issue) throw new ValidateException(\"优惠券模板不存在，无法校验适用范围\");\n",
+            "  if (coupon.status !== 0 || coupon.isFail !== 0) throw new ValidateException(\"优惠券已使用或已失效\");\n",
+            "  if (coupon.startTime && coupon.startTime.getTime() > now) throw new ValidateException(\"优惠券尚未到可用时间\");\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "a9157320e351cfeb5ecdb50817e45ecf3ede4a06",
+        "path": "workers-ts/src/services/activity/OrderCouponService.ts",
+        "gitBlobSha1": "0ac25e9cd67a04547327f4b41679d1f9c3b648fe"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/activity/StoreNewcomerService.ts",
+      "current": {
+        "bytes": 41578,
+        "sha256": "367109c2bb9d26d01309792e2efd5fa282802b63916cc0d0a64306031d2d45e9",
+        "gitBlobSha1": "8c54e7a3c85d18a6ec7125c1946b99fafc6fc634"
+      },
+      "predecessor": {
+        "bytes": 40430,
+        "sha256": "aaf36502b91d8f99502075e2b38ff2f25aa65df93b23ff11079212513b679b70",
+        "gitBlobSha1": "26be12d401d86b8ada2faae8b07e5452301098dc"
+      },
+      "inverseEdits": [
+        {
+          "start": 305,
+          "after": [
+            "const FIRST_ORDER_CONFIG_KEYS = [\n",
+            "  \"newcomer_status\", \"first_order_status\", \"first_order_discount\",\n",
+            "  \"first_order_discount_limit\", \"newcomer_limit_status\", \"newcomer_limit_time\",\n",
+            "];\n",
+            "function firstOrderDiscountConfig(values: Record<string, string>): FirstOrderDiscountConfig {\n"
+          ],
+          "before": [
+            "export async function loadFirstOrderDiscountConfig(\n",
+            "  container: Container,\n",
+            "  env: SystemConfigEnv,\n",
+            "): Promise<FirstOrderDiscountConfig> {\n",
+            "  const values = await new SystemConfigService(container, env).getMany([\n",
+            "    \"newcomer_status\",\n",
+            "    \"first_order_status\",\n",
+            "    \"first_order_discount\",\n",
+            "    \"first_order_discount_limit\",\n",
+            "    \"newcomer_limit_status\",\n",
+            "    \"newcomer_limit_time\",\n",
+            "  ]);\n"
+          ],
+          "anchorStart": 302,
+          "anchor": [
+            "}\n",
+            "\n",
+            "/** PHP StoreNewcomerServices::checkUserFirstDiscount 所需的配置快照。 */\n",
+            "const FIRST_ORDER_CONFIG_KEYS = [\n",
+            "  \"newcomer_status\", \"first_order_status\", \"first_order_discount\",\n",
+            "  \"first_order_discount_limit\", \"newcomer_limit_status\", \"newcomer_limit_time\",\n",
+            "];\n",
+            "function firstOrderDiscountConfig(values: Record<string, string>): FirstOrderDiscountConfig {\n",
+            "  return {\n",
+            "    enabled: configFlag(values.newcomer_status) && configFlag(values.first_order_status),\n",
+            "    limitEnabled: configFlag(values.newcomer_limit_status, true),\n"
+          ]
+        },
+        {
+          "start": 317,
+          "after": [
+            "}\n",
+            "export async function loadFirstOrderDiscountConfig(\n",
+            "  container: Container,\n",
+            "  env: SystemConfigEnv,\n",
+            "): Promise<FirstOrderDiscountConfig> {\n",
+            "  return firstOrderDiscountConfig(await new SystemConfigService(container, env).getMany(FIRST_ORDER_CONFIG_KEYS));\n",
+            "}\n",
+            "\n",
+            "/** Advisory reads use the caller's SQL snapshot without a KV read or refill. */\n",
+            "export async function loadFirstOrderDiscountConfigFromDb(container: Container): Promise<FirstOrderDiscountConfig> {\n",
+            "  return firstOrderDiscountConfig(await container.systemConfigDao.getValues(FIRST_ORDER_CONFIG_KEYS));\n"
+          ],
+          "before": [],
+          "anchorStart": 314,
+          "anchor": [
+            "    payPercent: parseFirstOrderPayPercent(values.first_order_discount),\n",
+            "    limitCents: parseNonNegativeMoneyCents(values.first_order_discount_limit),\n",
+            "  };\n",
+            "}\n",
+            "export async function loadFirstOrderDiscountConfig(\n",
+            "  container: Container,\n",
+            "  env: SystemConfigEnv,\n",
+            "): Promise<FirstOrderDiscountConfig> {\n",
+            "  return firstOrderDiscountConfig(await new SystemConfigService(container, env).getMany(FIRST_ORDER_CONFIG_KEYS));\n",
+            "}\n",
+            "\n",
+            "/** Advisory reads use the caller's SQL snapshot without a KV read or refill. */\n",
+            "export async function loadFirstOrderDiscountConfigFromDb(container: Container): Promise<FirstOrderDiscountConfig> {\n",
+            "  return firstOrderDiscountConfig(await container.systemConfigDao.getValues(FIRST_ORDER_CONFIG_KEYS));\n",
+            "}\n",
+            "\n",
+            "/** PHP registration listener configuration, read once before creating the user. */\n"
+          ]
+        },
+        {
+          "start": 523,
+          "after": [
+            "  return quoteFirstOrderWithConfig(container, uid, totalCents, now, config);\n",
+            "}\n",
+            "\n",
+            "export async function quoteFirstOrderDiscountFromDb(\n",
+            "  container: Container, uid: number, totalCents: number, now = Math.floor(Date.now() / 1000),\n",
+            "): Promise<FirstOrderDiscountQuote> {\n",
+            "  if (!Number.isSafeInteger(totalCents) || totalCents < 0) throw new ValidateException(\"首单优惠计价基数无效\");\n",
+            "  return quoteFirstOrderWithConfig(container, uid, totalCents, now, await loadFirstOrderDiscountConfigFromDb(container));\n",
+            "}\n",
+            "\n",
+            "async function quoteFirstOrderWithConfig(\n",
+            "  container: Container, uid: number, totalCents: number, now: number, config: FirstOrderDiscountConfig,\n",
+            "): Promise<FirstOrderDiscountQuote> {\n"
+          ],
+          "before": [],
+          "anchorStart": 520,
+          "anchor": [
+            "    throw new ValidateException(\"首单优惠计价基数无效\");\n",
+            "  }\n",
+            "  const config = await loadFirstOrderDiscountConfig(container, env);\n",
+            "  return quoteFirstOrderWithConfig(container, uid, totalCents, now, config);\n",
+            "}\n",
+            "\n",
+            "export async function quoteFirstOrderDiscountFromDb(\n",
+            "  container: Container, uid: number, totalCents: number, now = Math.floor(Date.now() / 1000),\n",
+            "): Promise<FirstOrderDiscountQuote> {\n",
+            "  if (!Number.isSafeInteger(totalCents) || totalCents < 0) throw new ValidateException(\"首单优惠计价基数无效\");\n",
+            "  return quoteFirstOrderWithConfig(container, uid, totalCents, now, await loadFirstOrderDiscountConfigFromDb(container));\n",
+            "}\n",
+            "\n",
+            "async function quoteFirstOrderWithConfig(\n",
+            "  container: Container, uid: number, totalCents: number, now: number, config: FirstOrderDiscountConfig,\n",
+            "): Promise<FirstOrderDiscountQuote> {\n",
+            "  const accounts = await container.db\n",
+            "    .select({ addTime: userTable.addTime, isFirstOrder: userTable.isFirstOrder })\n",
+            "    .from(userTable)\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "a9157320e351cfeb5ecdb50817e45ecf3ede4a06",
+        "path": "workers-ts/src/services/activity/StoreNewcomerService.ts",
+        "gitBlobSha1": "26be12d401d86b8ada2faae8b07e5452301098dc"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/order/CartComputationService.ts",
+      "current": {
+        "bytes": 15353,
+        "sha256": "0ad8525aee660d65acca7ba67248908b3f23ec70241b45123370da8d37698c0c",
+        "gitBlobSha1": "21f62d549c89997bc5f543ad4cf2d8346b64bfda"
+      },
+      "predecessor": {
+        "bytes": 20116,
+        "sha256": "e227e726854328f7e74363bcab932f4b1e0b2e486d475b325cad8eb5ad9781b0",
+        "gitBlobSha1": "da8e114888f994f189d934e9861e68efba50cb33"
+      },
+      "inverseEdits": [
+        {
+          "start": 0,
+          "after": [
+            "import { and, eq, inArray, or, sql } from 'drizzle-orm';\n"
+          ],
+          "before": [
+            "import { and, asc, eq, inArray, or, sql } from 'drizzle-orm';\n"
+          ],
+          "anchorStart": 0,
+          "anchor": [
+            "import { and, eq, inArray, or, sql } from 'drizzle-orm';\n",
+            "import { createContainerFromDb, withTx, type Container } from '@/lib/di';\n",
+            "import { storeBargain, storeCart, storeCombination,\n",
+            "  storeIntegral, storeOrder, storeProduct, storeProductAttrValue, storeSeckill } from '@/models/schema';\n"
+          ]
+        },
+        {
+          "start": 2,
+          "after": [
+            "import { storeBargain, storeCart, storeCombination,\n",
+            "  storeIntegral, storeOrder, storeProduct, storeProductAttrValue, storeSeckill } from '@/models/schema';\n"
+          ],
+          "before": [
+            "import { storeBargain, storeCart, storeCombination, storeCouponIssue, storeCouponIssueUser,\n",
+            "  storeCouponUser, storeIntegral, storeOrder, storeProduct, storeProductAttrValue, storeSeckill } from '@/models/schema';\n"
+          ],
+          "anchorStart": 0,
+          "anchor": [
+            "import { and, eq, inArray, or, sql } from 'drizzle-orm';\n",
+            "import { createContainerFromDb, withTx, type Container } from '@/lib/di';\n",
+            "import { storeBargain, storeCart, storeCombination,\n",
+            "  storeIntegral, storeOrder, storeProduct, storeProductAttrValue, storeSeckill } from '@/models/schema';\n",
+            "import { AuthException, ValidateException } from '@/utils/errors';\n",
+            "import { StoreCartService } from './StoreCartService';\n",
+            "import { centsToDecimal, decimalToCents } from './OrderBrokerageService';\n"
+          ]
+        },
+        {
+          "start": 9,
+          "after": [
+            "import { type PricedCouponItem } from '@/services/activity/OrderCouponService';\n",
+            "import { claimableOrdinaryEstimatedCoupon, readBestEstimatedCoupon } from '@/services/activity/PublicCouponEstimateService';\n"
+          ],
+          "before": [
+            "import { evaluateOrderCoupon, prepareCouponScope, type PricedCouponItem } from '@/services/activity/OrderCouponService';\n"
+          ],
+          "anchorStart": 6,
+          "anchor": [
+            "import { centsToDecimal, decimalToCents } from './OrderBrokerageService';\n",
+            "import { isPaidMembershipActive } from './StoreOrderCreateService';\n",
+            "import { readMembershipPricingPolicy } from '@/services/user/MembershipPricingPolicy';\n",
+            "import { type PricedCouponItem } from '@/services/activity/OrderCouponService';\n",
+            "import { claimableOrdinaryEstimatedCoupon, readBestEstimatedCoupon } from '@/services/activity/PublicCouponEstimateService';\n",
+            "import { legacyCouponProjection } from '@/services/activity/V2CouponCompatibilityService';\n",
+            "import { quoteFirstOrderDiscount } from '@/services/activity/StoreNewcomerService';\n",
+            "import { allocateCheckoutLineUnits, fitCheckoutLineCapacities } from './CheckoutLineAllocation';\n"
+          ]
+        },
+        {
+          "start": 23,
+          "after": [],
+          "before": [
+            "type Coupon = typeof storeCouponUser.$inferSelect;\n",
+            "type Issue = typeof storeCouponIssue.$inferSelect;\n"
+          ],
+          "anchorStart": 20,
+          "anchor": [
+            "import type { CartComputationInput } from './CartComputationInput';\n",
+            "import { assertIntegralOnceLimit, assertIntegralTotalLimit, readIntegralPurchasedQuantity } from '@/services/activity/IntegralPurchaseAdmission';\n",
+            "\n",
+            "type Cart = typeof storeCart.$inferSelect;\n",
+            "type Product = typeof storeProduct.$inferSelect;\n",
+            "interface ComputedRow { id: number; cartNum: number; productId: number; type: number; activityId: number;\n"
+          ]
+        },
+        {
+          "start": 28,
+          "after": [],
+          "before": [
+            "interface Candidate { coupon: Coupon; issue: Issue; owned: boolean }\n"
+          ],
+          "anchorStart": 25,
+          "anchor": [
+            "interface ComputedRow { id: number; cartNum: number; productId: number; type: number; activityId: number;\n",
+            "  unique: string; isValid: boolean; truePrice: string; trueSumPrice: string; sumPrice: string;\n",
+            "  productInfo: { productType: number; stock: number; integral: number } | null; promotion?: OrderPromotionQuoteLine }\n",
+            "export interface CartComputationActor { uid: number; passwordVersion: string; expiresAt: number }\n",
+            "// Force fresh SQL configuration without a KV write, even when a caller has Worker bindings.\n",
+            "const READ_CONFIG = { CONFIG_KV: { get: async () => null, put: async () => {}, delete: async () => {} } };\n"
+          ]
+        },
+        {
+          "start": 29,
+          "after": [],
+          "before": [
+            "const CAP = 1000;\n"
+          ],
+          "anchorStart": 26,
+          "anchor": [
+            "  unique: string; isValid: boolean; truePrice: string; trueSumPrice: string; sumPrice: string;\n",
+            "  productInfo: { productType: number; stock: number; integral: number } | null; promotion?: OrderPromotionQuoteLine }\n",
+            "export interface CartComputationActor { uid: number; passwordVersion: string; expiresAt: number }\n",
+            "// Force fresh SQL configuration without a KV write, even when a caller has Worker bindings.\n",
+            "const READ_CONFIG = { CONFIG_KV: { get: async () => null, put: async () => {}, delete: async () => {} } };\n",
+            "const cents = (value: string | number) => {\n"
+          ]
+        },
+        {
+          "start": 43,
+          "after": [
+            "/** Compatibility export; shared admission is also used by the actual writer. */\n",
+            "export const claimableCartCoupon = claimableOrdinaryEstimatedCoupon;\n"
+          ],
+          "before": [
+            "/** Mirror the existing manual claim writer's window/stock/limit admission. This\n",
+            " * is a read-only offer, never an entitlement, decrement or synthetic owned row. */\n",
+            "export function claimableCartCoupon(issue: Issue, received: number, historical: number, now: number): boolean {\n",
+            "  if (issue.status !== 1 || issue.isDel !== 0 || issue.receiveType !== 1 || ![0,1].includes(issue.category)\n",
+            "    || issue.appType !== 0 || issue.receiveLimit < 0 || (!issue.isPermanent && issue.remainCount <= 0)\n",
+            "    || issue.startTime && issue.startTime.getTime() > now || issue.endTime && issue.endTime.getTime() < now\n",
+            "    || received >= (issue.receiveLimit || 1) || issue.receiveLimit === 0 && historical > 0) return false;\n",
+            "  if ((issue.couponTitle || issue.title).length > 64) return false; // The real owned-coupon column is varchar(64).\n",
+            "  return issue.day > 0 ? Number.isFinite(new Date(now + issue.day * 86400000).getTime()) : Boolean(issue.useEndTime && Number.isFinite(issue.useEndTime.getTime())\n",
+            "    && issue.useEndTime.getTime() >= now);\n",
+            "}\n",
+            "function hypotheticalClaim(issue: Issue, uid: number, now: number): Coupon {\n",
+            "  return { id: 0, uid, issueCouponId: issue.id, couponTitle: issue.couponTitle || issue.title,\n",
+            "    couponPrice: issue.couponPrice, useMinPrice: issue.useMinPrice, status: 0, isFail: 0,\n",
+            "    startTime: issue.day > 0 ? new Date(now) : issue.useStartTime ?? new Date(now),\n",
+            "    endTime: issue.day > 0 ? new Date(now + issue.day * 86400000) : issue.useEndTime,\n",
+            "    useTime: null, type: issue.type, receiveTime: Math.floor(now / 1000), receiveSource: 'get' };\n",
+            "}\n"
+          ],
+          "anchorStart": 40,
+          "anchor": [
+            "};\n",
+            "const money = (value: number) => Number(centsToDecimal(value));\n",
+            "\n",
+            "/** Compatibility export; shared admission is also used by the actual writer. */\n",
+            "export const claimableCartCoupon = claimableOrdinaryEstimatedCoupon;\n",
+            "\n",
+            "/** Budget quotes do not reserve stock, claim coupons, create tokens, or contact providers. */\n",
+            "export class CartComputationService {\n"
+          ]
+        },
+        {
+          "start": 135,
+          "after": [],
+          "before": [
+            "  private async candidates(container: Container, uid: number, now: number): Promise<Candidate[]> {\n",
+            "    const date = new Date(now).toISOString();\n",
+            "    const [owned, issues] = await Promise.all([\n",
+            "      container.db.select({ coupon: storeCouponUser, issue: storeCouponIssue }).from(storeCouponUser)\n",
+            "        .leftJoin(storeCouponIssue, eq(storeCouponIssue.id, storeCouponUser.issueCouponId))\n",
+            "        .where(and(eq(storeCouponUser.uid,uid),eq(storeCouponUser.status,0),eq(storeCouponUser.isFail,0),\n",
+            "          sql`(${storeCouponUser.startTime} IS NULL OR ${storeCouponUser.startTime} <= ${date})`,\n",
+            "          sql`(${storeCouponUser.endTime} IS NULL OR ${storeCouponUser.endTime} >= ${date})`)).orderBy(asc(storeCouponUser.id)).limit(CAP+1),\n",
+            "      container.db.select().from(storeCouponIssue).where(and(eq(storeCouponIssue.status,1),eq(storeCouponIssue.isDel,0),\n",
+            "        eq(storeCouponIssue.receiveType,1),inArray(storeCouponIssue.category,[0,1]),eq(storeCouponIssue.appType,0),\n",
+            "        sql`(${storeCouponIssue.startTime} IS NULL OR ${storeCouponIssue.startTime} <= ${date})`,\n",
+            "        sql`(${storeCouponIssue.endTime} IS NULL OR ${storeCouponIssue.endTime} >= ${date})`,\n",
+            "        sql`(${storeCouponIssue.isPermanent} <> 0 OR ${storeCouponIssue.remainCount} > 0)`)).orderBy(asc(storeCouponIssue.id)).limit(CAP+1),\n",
+            "    ]);\n",
+            "    if (owned.length > CAP || issues.length > CAP) throw new ValidateException('有效优惠券超过预算读取上限，请联系商家');\n",
+            "    const ids = issues.map(issue => issue.id);\n",
+            "    const [counts, evidence] = ids.length ? await Promise.all([\n",
+            "      container.db.select({ id: storeCouponUser.issueCouponId,count:sql<number>`COUNT(*)::int` }).from(storeCouponUser)\n",
+            "        .where(and(eq(storeCouponUser.uid,uid),inArray(storeCouponUser.issueCouponId,ids))).groupBy(storeCouponUser.issueCouponId),\n",
+            "      container.db.select({ id: storeCouponIssueUser.issueCouponId,count:sql<number>`COUNT(*)::int` }).from(storeCouponIssueUser)\n",
+            "        .where(and(eq(storeCouponIssueUser.uid,uid),inArray(storeCouponIssueUser.issueCouponId,ids))).groupBy(storeCouponIssueUser.issueCouponId),\n",
+            "    ]) : [[],[]];\n",
+            "    const received = new Map(counts.map(row => [row.id,row.count])), historical = new Map(evidence.map(row => [row.id,row.count]));\n",
+            "    return [...owned.flatMap(row => row.issue ? [{ coupon:row.coupon,issue:row.issue,owned:true }] : []),\n",
+            "      ...issues.filter(issue => claimableCartCoupon(issue,received.get(issue.id)??0,historical.get(issue.id)??0,now))\n",
+            "        .map(issue => ({ issue,coupon:hypotheticalClaim(issue,uid,now),owned:false }))];\n",
+            "  }\n"
+          ],
+          "anchorStart": 132,
+          "anchor": [
+            "      if (!Number.isSafeInteger(purchased) || purchased < 0 || purchased + cart.cartNum > activity.num) throw new ValidateException('已超过活动累计限购');\n",
+            "    }\n",
+            "  }\n",
+            "  private async budget(container: Container, uid: number, input: CartComputationInput, products: Map<number,Product>, assumed: boolean, now: number) {\n",
+            "    const rows = await new StoreCartService(container).list(uid,{ mode:'compute',ids:input.cartIds,hypotheticalPaidMember:assumed }) as ComputedRow[];\n",
+            "    if (rows.length !== input.cartIds.length || rows.some(row => !row.isValid || !row.productInfo || row.cartNum > row.productInfo.stock))\n"
+          ]
+        },
+        {
+          "start": 153,
+          "after": [
+            "    const best = normal && !first?.couponExclusive ? await readBestEstimatedCoupon(container,uid,items,now) : null;\n"
+          ],
+          "before": [
+            "    const candidates = normal && !first?.couponExclusive ? await this.candidates(container,uid,now) : [];\n",
+            "    const scope = candidates.length ? await prepareCouponScope(container,items,candidates.map(candidate => candidate.issue)) : null;\n",
+            "    let best: { candidate:Candidate; priceCents:number; lineEligibleCents:number[] } | null = null;\n",
+            "    for (const candidate of candidates) {\n",
+            "      try {\n",
+            "        const evaluated = evaluateOrderCoupon(candidate.coupon,candidate.issue,scope!,now);\n",
+            "        if (evaluated.priceCents > 0 && (!best || evaluated.priceCents > best.priceCents\n",
+            "          || evaluated.priceCents === best.priceCents && candidate.owned && !best.candidate.owned)) best = { candidate,...evaluated };\n",
+            "      } catch (error) { if (!(error instanceof ValidateException)) throw error; }\n",
+            "    }\n"
+          ],
+          "anchorStart": 150,
+          "anchor": [
+            "    const firstOrder = first ? cents(first.firstOrderPrice) : 0;\n",
+            "    const items: PricedCouponItem[] = rows.map(row => ({ cart:{cartNum:row.cartNum},product:products.get(row.productId)!,\n",
+            "      unitPriceCents:cents(row.truePrice),promotion:row.promotion,couponEligibleGrossCents:row.promotion?.couponEligibleGrossCents }));\n",
+            "    const best = normal && !first?.couponExclusive ? await readBestEstimatedCoupon(container,uid,items,now) : null;\n",
+            "    const discount = best?.priceCents ?? 0, pay = Math.max(0,total-discount-firstOrder);\n",
+            "    const gross = rows.map(row => cents(row.trueSumPrice)), capacities = best?.lineEligibleCents ?? gross;\n",
+            "    const apportioned = discount ? fitCheckoutLineCapacities(allocateCheckoutLineUnits(discount,capacities,4),capacities) : gross.map(()=>0);\n"
+          ]
+        },
+        {
+          "start": 165,
+          "after": [
+            "      coupon={...legacyCouponProjection(candidate.issue,{variant:'list',relatedProductIds:best.relatedProductIds}),\n",
+            "        id:candidate.source==='owned'?candidate.ownedCoupon.id:candidate.issue.id,cid:candidate.issue.id,\n",
+            "        coupon_title:(candidate.ownedCoupon?.couponTitle || candidate.issue.couponTitle || candidate.issue.title),is_use:candidate.source==='owned',\n",
+            "        coupon_price:money(cents(candidate.terms.couponPrice)),use_min_price:money(cents(candidate.terms.useMinPrice)),\n",
+            "        true_coupon_price:money(discount),...(candidate.source==='owned'?{used:{id:candidate.ownedCoupon.id,cid:candidate.issue.id}}:{})};\n"
+          ],
+          "before": [
+            "      coupon={...legacyCouponProjection(candidate.issue,{variant:'list',relatedProductIds:scope!.related.get(candidate.issue.id)}),\n",
+            "        id:candidate.owned?candidate.coupon.id:candidate.issue.id,cid:candidate.issue.id,\n",
+            "        coupon_title:candidate.coupon.couponTitle || candidate.issue.couponTitle || candidate.issue.title,is_use:candidate.owned,\n",
+            "        coupon_price:money(cents(candidate.coupon.couponPrice)),use_min_price:money(cents(candidate.coupon.useMinPrice)),\n",
+            "        true_coupon_price:money(discount),...(candidate.owned?{used:{id:candidate.coupon.id,cid:candidate.issue.id}}:{})};\n"
+          ],
+          "anchorStart": 162,
+          "anchor": [
+            "    let coupon: Record<string,unknown> | [] = [];\n",
+            "    if (best) {\n",
+            "      const {candidate}=best;\n",
+            "      coupon={...legacyCouponProjection(candidate.issue,{variant:'list',relatedProductIds:best.relatedProductIds}),\n",
+            "        id:candidate.source==='owned'?candidate.ownedCoupon.id:candidate.issue.id,cid:candidate.issue.id,\n",
+            "        coupon_title:(candidate.ownedCoupon?.couponTitle || candidate.issue.couponTitle || candidate.issue.title),is_use:candidate.source==='owned',\n",
+            "        coupon_price:money(cents(candidate.terms.couponPrice)),use_min_price:money(cents(candidate.terms.useMinPrice)),\n",
+            "        true_coupon_price:money(discount),...(candidate.source==='owned'?{used:{id:candidate.ownedCoupon.id,cid:candidate.issue.id}}:{})};\n",
+            "    }\n",
+            "    return {raw,pay,member,promotions,discount,firstOrder,coupon,requiredIntegral,requiresClaim:best?.candidate.source==='issue',\n",
+            "      issueId:best?.candidate.issue.id??0,userId:best?.candidate.source==='owned'?best.candidate.ownedCoupon.id:0,\n"
+          ]
+        },
+        {
+          "start": 171,
+          "after": [
+            "    return {raw,pay,member,promotions,discount,firstOrder,coupon,requiredIntegral,requiresClaim:best?.candidate.source==='issue',\n",
+            "      issueId:best?.candidate.issue.id??0,userId:best?.candidate.source==='owned'?best.candidate.ownedCoupon.id:0,\n"
+          ],
+          "before": [
+            "    return {raw,pay,member,promotions,discount,firstOrder,coupon,requiredIntegral,requiresClaim:!!best&&!best.candidate.owned,\n",
+            "      issueId:best?.candidate.issue.id??0,userId:best?.candidate.owned?best.candidate.coupon.id:0,\n"
+          ],
+          "anchorStart": 168,
+          "anchor": [
+            "        coupon_price:money(cents(candidate.terms.couponPrice)),use_min_price:money(cents(candidate.terms.useMinPrice)),\n",
+            "        true_coupon_price:money(discount),...(candidate.source==='owned'?{used:{id:candidate.ownedCoupon.id,cid:candidate.issue.id}}:{})};\n",
+            "    }\n",
+            "    return {raw,pay,member,promotions,discount,firstOrder,coupon,requiredIntegral,requiresClaim:best?.candidate.source==='issue',\n",
+            "      issueId:best?.candidate.issue.id??0,userId:best?.candidate.source==='owned'?best.candidate.ownedCoupon.id:0,\n",
+            "      gifts:gift?.intent?.promotions.map(campaign=>({id:campaign.id,name:campaign.name,giveIntegral:campaign.give_integral,\n",
+            "        coupons:campaign.coupons.map(c=>({issueId:c.issue_id,title:c.title})),\n",
+            "        products:campaign.products.map(p=>({productId:p.product_id,quantity:p.quantity}))}))??[]};\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "a9157320e351cfeb5ecdb50817e45ecf3ede4a06",
+        "path": "workers-ts/src/services/order/CartComputationService.ts",
+        "gitBlobSha1": "da8e114888f994f189d934e9861e68efba50cb33"
+      }
+    },
+    {
+      "file": "workers-ts/test/admin-marketing-frontend-parity.test.ts",
+      "current": {
+        "bytes": 36530,
+        "sha256": "1e60a5be67763f572d6f1ee7537db4eecfa8cc5bbc722d526881034b7654b1e3",
+        "gitBlobSha1": "4212385377dbfeda6d4f876e9ed361f3221d4d6c"
+      },
+      "predecessor": {
+        "bytes": 36397,
+        "sha256": "c6ce695e3fa981d0b4884f119bf5dc81c6b7acaf740351c7e843bcf08cf5f7c5",
+        "gitBlobSha1": "a0bb21ca4455e3eb644cb4cd8b70a9b11c8f3685"
+      },
+      "inverseEdits": [
+        {
+          "start": 368,
+          "after": [
+            "    expect(source(\"src/services/activity/ActivityService.ts\")).toContain(\"ordinaryCouponIssueAdmission(issue, now.getTime())\");\n",
+            "    expect(source(\"src/services/activity/CouponClaimAdmission.ts\"))\n"
+          ],
+          "before": [
+            "    expect(source(\"src/services/activity/ActivityService.ts\"))\n"
+          ],
+          "anchorStart": 365,
+          "anchor": [
+            "    expect(input).toContain(\"validDays: integer(body.valid_days, '有效天数', 1, 3650)\");\n",
+            "    expect(source(\"src/controllers/api/v1/AdminCouponTemplateController.ts\"))\n",
+            "      .toContain(\".assertAuthorized(actor, 'GET', '/adminapi/marketing/coupon-templates')\");\n",
+            "    expect(source(\"src/services/activity/ActivityService.ts\")).toContain(\"ordinaryCouponIssueAdmission(issue, now.getTime())\");\n",
+            "    expect(source(\"src/services/activity/CouponClaimAdmission.ts\"))\n",
+            "      .toContain(\"issue.receiveType !== 1 || ![0, 1].includes(issue.category) || issue.appType !== 0\");\n",
+            "    const frontend = source(\"../view/admin-ts/src/pages/marketing/CouponTemplates.vue\");\n",
+            "    expect(frontend).toContain(\"canPublish = computed(() => canView.value && has('coupon_template_issue.manage'))\");\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "a9157320e351cfeb5ecdb50817e45ecf3ede4a06",
+        "path": "workers-ts/test/admin-marketing-frontend-parity.test.ts",
+        "gitBlobSha1": "a0bb21ca4455e3eb644cb4cd8b70a9b11c8f3685"
+      }
+    },
+    {
+      "file": "workers-ts/test/coupon-issue-migration.test.ts",
+      "current": {
+        "bytes": 2338,
+        "sha256": "673a3dbca9478455369107a4bc03252e73ee8275da37203f73bd0fc554954f16",
+        "gitBlobSha1": "a4e99a9889fa449c8ec2419180cdb0f2a0928ac1"
+      },
+      "predecessor": {
+        "bytes": 2077,
+        "sha256": "5ad386b38d2a684241d28a708ee5fb365c613c07f5be6b860ba8ecaf050886ed",
+        "gitBlobSha1": "7db6d1a9155b6d9d576bd9289354691427165dcf"
+      },
+      "inverseEdits": [
+        {
+          "start": 48,
+          "after": [
+            "    const admission = readFileSync(\"src/services/activity/CouponClaimAdmission.ts\", \"utf8\");\n"
+          ],
+          "before": [],
+          "anchorStart": 45,
+          "anchor": [
+            "\n",
+            "  it(\"separates the claim window from the coupon use window at runtime\", () => {\n",
+            "    const service = readFileSync(\"src/services/activity/ActivityService.ts\", \"utf8\");\n",
+            "    const admission = readFileSync(\"src/services/activity/CouponClaimAdmission.ts\", \"utf8\");\n",
+            "    const dao = readFileSync(\"src/dao/activity/ActivityDaos.ts\", \"utf8\");\n",
+            "    expect(service).toContain(\"ordinaryCouponIssueAdmission(issue, now.getTime())\");\n",
+            "    expect(service).toContain(\"couponClaimUseWindow(issue, now.getTime())\");\n"
+          ]
+        },
+        {
+          "start": 50,
+          "after": [
+            "    expect(service).toContain(\"ordinaryCouponIssueAdmission(issue, now.getTime())\");\n",
+            "    expect(service).toContain(\"couponClaimUseWindow(issue, now.getTime())\");\n",
+            "    expect(admission).toContain(\"issue.status !== 1 || issue.isDel !== 0\");\n",
+            "    expect(admission).toContain(\"if (issue.day > 0)\");\n",
+            "    expect(admission).toContain(\"startTime: issue.useStartTime ?? now\");\n",
+            "    expect(admission).toContain(\"endTime: issue.useEndTime\");\n"
+          ],
+          "before": [
+            "    expect(service).toContain(\"issue.status !== 1 || issue.isDel !== 0\");\n",
+            "    expect(service).toContain(\"if (issue.day > 0)\");\n",
+            "    expect(service).toContain(\"startTime = issue.useStartTime ?? now\");\n",
+            "    expect(service).toContain(\"endTime = issue.useEndTime\");\n"
+          ],
+          "anchorStart": 47,
+          "anchor": [
+            "    const service = readFileSync(\"src/services/activity/ActivityService.ts\", \"utf8\");\n",
+            "    const admission = readFileSync(\"src/services/activity/CouponClaimAdmission.ts\", \"utf8\");\n",
+            "    const dao = readFileSync(\"src/dao/activity/ActivityDaos.ts\", \"utf8\");\n",
+            "    expect(service).toContain(\"ordinaryCouponIssueAdmission(issue, now.getTime())\");\n",
+            "    expect(service).toContain(\"couponClaimUseWindow(issue, now.getTime())\");\n",
+            "    expect(admission).toContain(\"issue.status !== 1 || issue.isDel !== 0\");\n",
+            "    expect(admission).toContain(\"if (issue.day > 0)\");\n",
+            "    expect(admission).toContain(\"startTime: issue.useStartTime ?? now\");\n",
+            "    expect(admission).toContain(\"endTime: issue.useEndTime\");\n",
+            "    expect(service).toContain(\"if (!issue.isPermanent)\");\n",
+            "    expect(dao).toContain(\"storeCouponIssue.receiveType} = 1\");\n",
+            "  });\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "a9157320e351cfeb5ecdb50817e45ecf3ede4a06",
+        "path": "workers-ts/test/coupon-issue-migration.test.ts",
+        "gitBlobSha1": "7db6d1a9155b6d9d576bd9289354691427165dcf"
+      }
+    },
+    {
+      "file": "workers-ts/test/helpers/providerTransportSourceContinuity.ts",
+      "current": {
+        "bytes": 5314,
+        "sha256": "8e7952d4bed8f55ae5621ee0911bf9de89c7ec045b0d5023442cf5c5edd6c99b",
+        "gitBlobSha1": "4cb4f6cbb81d0ffa1082411e9ef50faa9dd75160"
+      },
+      "predecessor": {
+        "bytes": 5079,
+        "sha256": "ad378d49c8c98c959cdefd6ba36e31b75e4e6ce64eeb0160754274e0f3fc2487",
+        "gitBlobSha1": "196dc4d3d638d57c4069d443022ddec297070243"
+      },
+      "inverseEdits": [
+        {
+          "start": 3,
+          "after": [
+            "import { isPublicProductEstimateSource, projectPublicProductEstimatePredecessor } from './publicProductEstimateSourceContinuity';\n"
+          ],
+          "before": [],
+          "anchorStart": 0,
+          "anchor": [
+            "/** Historical source projection only. Production and runtime acceptance import\n",
+            " * the real providers. No older proof file/hash, inventory or assertion is replaced. */\n",
+            "import { createHash } from 'node:crypto';\n",
+            "import { isPublicProductEstimateSource, projectPublicProductEstimatePredecessor } from './publicProductEstimateSourceContinuity';\n",
+            "import { readFileSync } from 'node:fs';\n",
+            "import { resolve } from 'node:path';\n",
+            "import { isUnitDiscoverySource, projectUnitDiscoveryPredecessor } from './unitDiscoverySourceContinuity';\n"
+          ]
+        },
+        {
+          "start": 39,
+          "after": [
+            "export const isProviderTransportSource = (file: string) => isPublicProductEstimateSource(file) || isPurchasedLabelOperationsSource(file) || isPurchasedLabelAuthorSource(file) || isOutLabelRunnerSource(file) || isUnitDiscoverySource(file) || proof.sources.some(row => row.file === file);\n"
+          ],
+          "before": [
+            "export const isProviderTransportSource = (file: string) => isPurchasedLabelOperationsSource(file) || isPurchasedLabelAuthorSource(file) || isOutLabelRunnerSource(file) || isUnitDiscoverySource(file) || proof.sources.some(row => row.file === file);\n"
+          ],
+          "anchorStart": 36,
+          "anchor": [
+            "\n",
+            "// Peel the later discovery-only images before the unchanged older views. This\n",
+            "// reader is historical; runtime tests and production always import native code.\n",
+            "export const isProviderTransportSource = (file: string) => isPublicProductEstimateSource(file) || isPurchasedLabelOperationsSource(file) || isPurchasedLabelAuthorSource(file) || isOutLabelRunnerSource(file) || isUnitDiscoverySource(file) || proof.sources.some(row => row.file === file);\n",
+            "\n",
+            "/** A selected old image is refused, including an otherwise valid predecessor.\n",
+            " * Every changed line must match exactly; the whole output must be fixed353. */\n"
+          ]
+        },
+        {
+          "start": 44,
+          "after": [
+            "  source = projectPublicProductEstimatePredecessor(file, source);\n"
+          ],
+          "before": [],
+          "anchorStart": 41,
+          "anchor": [
+            "/** A selected old image is refused, including an otherwise valid predecessor.\n",
+            " * Every changed line must match exactly; the whole output must be fixed353. */\n",
+            "export function projectProviderTransportPredecessor(file: string, source: string): string {\n",
+            "  source = projectPublicProductEstimatePredecessor(file, source);\n",
+            "  source = projectPurchasedLabelOperationsPredecessor(file, source);\n",
+            "  source = projectPurchasedLabelAuthorPredecessor(file, source);\n",
+            "  source = projectPurchasedLabelRunnerPredecessor(file, source);\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "a9157320e351cfeb5ecdb50817e45ecf3ede4a06",
+        "path": "workers-ts/test/helpers/providerTransportSourceContinuity.ts",
+        "gitBlobSha1": "196dc4d3d638d57c4069d443022ddec297070243"
+      }
+    },
+    {
+      "file": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "current": {
+        "bytes": 228541,
+        "sha256": "731e6cfe5831f20856df3e0d27fbb3e4d0ce80f65cab8a067178d4e521128b27",
+        "gitBlobSha1": "ea7caaa66d143e24d825d1a0f0bc67225f855220"
+      },
+      "predecessor": {
+        "bytes": 224162,
+        "sha256": "75328d0d2178281739037f75f42d1ad3e1c6ae1641f1f39fa840f0b2392cc646",
+        "gitBlobSha1": "546ab3fe69f3b3f7ec6deae0e6eaff70e8d05d57"
+      },
+      "inverseEdits": [
+        {
+          "start": 2273,
+          "after": [
+            "\n",
+            "describe('Public product estimate exact native and Browser owned runner admission', () => {\n",
+            "  const directory = mkdtempSync(join(tmpdir(), 'cinashop-public-product-estimate-admission-'));\n",
+            "  const bin = join(directory, 'bin'), hook = join(directory, 'block-native-launch.mjs');\n",
+            "  const sentinel = 'PUBLIC_PRODUCT_ESTIMATE_NATIVE_COMMAND_BOUNDARY';\n",
+            "  const mode = 'audit:public-product-estimate-browser', native = 'test/public-product-estimate-native.test.ts';\n",
+            "  mkdirSync(bin);\n",
+            "  for (const name of ['postgres', 'initdb', 'pg_ctl', 'psql']) writeFileSync(join(bin, `${name}${process.platform === 'win32' ? '.exe' : ''}`), 'Native launch must be intercepted');\n",
+            "  writeFileSync(hook, `import childProcess from 'node:child_process';\\nimport { syncBuiltinESMExports } from 'node:module';\\nchildProcess.spawnSync = () => { throw new Error('${sentinel}'); };\\nsyncBuiltinESMExports();\\n`);\n",
+            "  afterAll(() => rmSync(directory, { recursive: true, force: true }));\n",
+            "  const admission = (args: string[]) => {\n",
+            "    const result = spawnSync(process.execPath, ['--import', pathToFileURL(hook).href, script, ...args], {\n",
+            "      cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000,\n",
+            "      env: { ...process.env, TEST_FINANCE_LOCAL_CACHE_ROOT: directory, TEST_BROWSER_PACKAGE_JSON: '', TEST_BROWSER_EXECUTABLE: '', TEST_BROWSER_OUTPUT_DIR: '' },\n",
+            "    });\n",
+            "    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');\n",
+            "    return result.stderr;\n",
+            "  };\n",
+            "  it.each([native, mode])('admits the exact complete entry %s to the intercepted owned native boundary', entry => {\n",
+            "    expect(admission(['--schema-maintenance', bin, entry])).toContain(sentinel);\n",
+            "  });\n",
+            "  it.each([\n",
+            "    { label: 'native suffix', args: ['--schema-maintenance', bin, native + '.extra'], error: 'Only explicit unit test paths are accepted' },\n",
+            "    { label: 'native alternate extension', args: ['--schema-maintenance', bin, 'test/public-product-estimate-native.other.ts'], error: 'Only explicit unit test paths are accepted' },\n",
+            "    { label: 'unreviewed native spelling', args: ['--schema-maintenance', bin, 'test/public-product-estimate-native-extra.test.ts'], error: 'Test does not exist' },\n",
+            "    { label: 'native arbitrary config', args: ['--schema-maintenance', bin, native, '--config', 'vitest.config.ts'], error: 'Only explicit unit test paths are accepted' },\n",
+            "    { label: 'native arbitrary workers', args: ['--schema-maintenance', bin, native, '--maxWorkers=2'], error: 'Only explicit unit test paths are accepted' },\n",
+            "    { label: 'native unreviewed maintenance peer', args: ['--schema-maintenance', bin, native, 'test/price.test.ts'], error: 'Schema maintenance accepts only' },\n",
+            "    { label: 'late maintenance flag', args: [bin, '--schema-maintenance', native], error: 'Only explicit unit test paths are accepted' },\n",
+            "    { label: 'browser without maintenance', args: [bin, mode], error: 'Only explicit unit test paths are accepted' },\n",
+            "    { label: 'browser in runtime mode', args: ['--runtime', bin, mode], error: '--runtime accepts only' },\n",
+            "    { label: 'browser mixed native file', args: ['--schema-maintenance', bin, mode, native], error: 'Only explicit unit test paths are accepted' },\n",
+            "    { label: 'browser changed spelling', args: ['--schema-maintenance', bin, mode + '-other'], error: 'Only explicit unit test paths are accepted' },\n",
+            "    { label: 'browser literal case filter', args: ['--schema-maintenance', '--case', 'coupon', bin, mode], error: 'Literal cases apply only to explicit test files' },\n",
+            "    { label: 'browser verbose override', args: ['--schema-maintenance', '--verbose-tests', bin, mode], error: 'Verbose reporting applies only to explicit native test files' },\n",
+            "    { label: 'browser worker override', args: ['--schema-maintenance', bin, mode, '--maxWorkers=2'], error: 'Only explicit unit test paths are accepted' },\n",
+            "    { label: 'browser config override', args: ['--schema-maintenance', bin, mode, '--config', 'vitest.config.ts'], error: 'Only explicit unit test paths are accepted' },\n",
+            "    { label: 'browser raw filename', args: ['--schema-maintenance', bin, 'test/browser/public-product-estimate.acceptance.ts'], error: 'Only explicit unit test paths are accepted' },\n",
+            "  ])('rejects $label before native launch', ({ args, error }) => {\n",
+            "    const output = admission(args); expect(output).toContain(error); expect(output).not.toContain(sentinel);\n",
+            "  });\n",
+            "});\n"
+          ],
+          "before": [],
+          "anchorStart": 2270,
+          "anchor": [
+            "    const output = admission(args); expect(output).toContain(error); expect(output).not.toContain(sentinel);\n",
+            "  });\n",
+            "});\n",
+            "\n",
+            "describe('Public product estimate exact native and Browser owned runner admission', () => {\n",
+            "  const directory = mkdtempSync(join(tmpdir(), 'cinashop-public-product-estimate-admission-'));\n",
+            "  const bin = join(directory, 'bin'), hook = join(directory, 'block-native-launch.mjs');\n",
+            "  const sentinel = 'PUBLIC_PRODUCT_ESTIMATE_NATIVE_COMMAND_BOUNDARY';\n",
+            "  const mode = 'audit:public-product-estimate-browser', native = 'test/public-product-estimate-native.test.ts';\n",
+            "  mkdirSync(bin);\n",
+            "  for (const name of ['postgres', 'initdb', 'pg_ctl', 'psql']) writeFileSync(join(bin, `${name}${process.platform === 'win32' ? '.exe' : ''}`), 'Native launch must be intercepted');\n",
+            "  writeFileSync(hook, `import childProcess from 'node:child_process';\\nimport { syncBuiltinESMExports } from 'node:module';\\nchildProcess.spawnSync = () => { throw new Error('${sentinel}'); };\\nsyncBuiltinESMExports();\\n`);\n",
+            "  afterAll(() => rmSync(directory, { recursive: true, force: true }));\n",
+            "  const admission = (args: string[]) => {\n",
+            "    const result = spawnSync(process.execPath, ['--import', pathToFileURL(hook).href, script, ...args], {\n",
+            "      cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000,\n",
+            "      env: { ...process.env, TEST_FINANCE_LOCAL_CACHE_ROOT: directory, TEST_BROWSER_PACKAGE_JSON: '', TEST_BROWSER_EXECUTABLE: '', TEST_BROWSER_OUTPUT_DIR: '' },\n",
+            "    });\n",
+            "    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');\n",
+            "    return result.stderr;\n",
+            "  };\n",
+            "  it.each([native, mode])('admits the exact complete entry %s to the intercepted owned native boundary', entry => {\n",
+            "    expect(admission(['--schema-maintenance', bin, entry])).toContain(sentinel);\n",
+            "  });\n",
+            "  it.each([\n",
+            "    { label: 'native suffix', args: ['--schema-maintenance', bin, native + '.extra'], error: 'Only explicit unit test paths are accepted' },\n",
+            "    { label: 'native alternate extension', args: ['--schema-maintenance', bin, 'test/public-product-estimate-native.other.ts'], error: 'Only explicit unit test paths are accepted' },\n",
+            "    { label: 'unreviewed native spelling', args: ['--schema-maintenance', bin, 'test/public-product-estimate-native-extra.test.ts'], error: 'Test does not exist' },\n",
+            "    { label: 'native arbitrary config', args: ['--schema-maintenance', bin, native, '--config', 'vitest.config.ts'], error: 'Only explicit unit test paths are accepted' },\n",
+            "    { label: 'native arbitrary workers', args: ['--schema-maintenance', bin, native, '--maxWorkers=2'], error: 'Only explicit unit test paths are accepted' },\n",
+            "    { label: 'native unreviewed maintenance peer', args: ['--schema-maintenance', bin, native, 'test/price.test.ts'], error: 'Schema maintenance accepts only' },\n",
+            "    { label: 'late maintenance flag', args: [bin, '--schema-maintenance', native], error: 'Only explicit unit test paths are accepted' },\n",
+            "    { label: 'browser without maintenance', args: [bin, mode], error: 'Only explicit unit test paths are accepted' },\n",
+            "    { label: 'browser in runtime mode', args: ['--runtime', bin, mode], error: '--runtime accepts only' },\n",
+            "    { label: 'browser mixed native file', args: ['--schema-maintenance', bin, mode, native], error: 'Only explicit unit test paths are accepted' },\n",
+            "    { label: 'browser changed spelling', args: ['--schema-maintenance', bin, mode + '-other'], error: 'Only explicit unit test paths are accepted' },\n",
+            "    { label: 'browser literal case filter', args: ['--schema-maintenance', '--case', 'coupon', bin, mode], error: 'Literal cases apply only to explicit test files' },\n",
+            "    { label: 'browser verbose override', args: ['--schema-maintenance', '--verbose-tests', bin, mode], error: 'Verbose reporting applies only to explicit native test files' },\n",
+            "    { label: 'browser worker override', args: ['--schema-maintenance', bin, mode, '--maxWorkers=2'], error: 'Only explicit unit test paths are accepted' },\n",
+            "    { label: 'browser config override', args: ['--schema-maintenance', bin, mode, '--config', 'vitest.config.ts'], error: 'Only explicit unit test paths are accepted' },\n",
+            "    { label: 'browser raw filename', args: ['--schema-maintenance', bin, 'test/browser/public-product-estimate.acceptance.ts'], error: 'Only explicit unit test paths are accepted' },\n",
+            "  ])('rejects $label before native launch', ({ args, error }) => {\n",
+            "    const output = admission(args); expect(output).toContain(error); expect(output).not.toContain(sentinel);\n",
+            "  });\n",
+            "});\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "a9157320e351cfeb5ecdb50817e45ecf3ede4a06",
+        "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+        "gitBlobSha1": "546ab3fe69f3b3f7ec6deae0e6eaff70e8d05d57"
+      }
+    },
+    {
+      "file": "workers-ts/test/out-product-label-runner-source-continuity.test.ts",
+      "current": {
+        "bytes": 4593,
+        "sha256": "6fbdbb481c2608a9790a24d4eddf0ecb5f160c32e7e6201eeae62888f573399d",
+        "gitBlobSha1": "00cb1bb33081bfcf668722f5d1fd12c487c46c97"
+      },
+      "predecessor": {
+        "bytes": 4392,
+        "sha256": "5d7fe73eba061fbbd285d56842cc471b4fddfa7f37f277d79e3c3c9343f23342",
+        "gitBlobSha1": "5f0de46b5da55f2546ea3a38fd7dcadff9efe2c8"
+      },
+      "inverseEdits": [
+        {
+          "start": 0,
+          "after": [
+            "import { projectPublicProductEstimatePredecessor } from './helpers/publicProductEstimateSourceContinuity';\n"
+          ],
+          "before": [],
+          "anchorStart": 0,
+          "anchor": [
+            "import { projectPublicProductEstimatePredecessor } from './helpers/publicProductEstimateSourceContinuity';\n",
+            "import { projectPurchasedLabelOperationsPredecessor } from './helpers/purchasedLabelOperationsSourceContinuity';\n",
+            "import { execFileSync } from 'node:child_process';\n",
+            "import { createHash } from 'node:crypto';\n"
+          ]
+        },
+        {
+          "start": 16,
+          "after": [
+            "const physical = readFileSync(path, 'utf8'), native = projectPurchasedLabelAuthorPredecessor(file, projectPurchasedLabelOperationsPredecessor(file, projectPublicProductEstimatePredecessor(file, physical)));\n"
+          ],
+          "before": [
+            "const physical = readFileSync(path, 'utf8'), native = projectPurchasedLabelAuthorPredecessor(file, projectPurchasedLabelOperationsPredecessor(file, physical));\n"
+          ],
+          "anchorStart": 13,
+          "anchor": [
+            "import { projectRechargeRefundPredecessor, readRechargeRefundPredecessorFile } from './helpers/rechargeRefundSourceContinuity';\n",
+            "\n",
+            "const root = resolve(import.meta.dirname, '../..'), path = resolve(root, file);\n",
+            "const physical = readFileSync(path, 'utf8'), native = projectPurchasedLabelAuthorPredecessor(file, projectPurchasedLabelOperationsPredecessor(file, projectPublicProductEstimatePredecessor(file, physical)));\n",
+            "const current = projectPurchasedLabelRunnerPredecessor(file, native);\n",
+            "const before = execFileSync('git', ['cat-file', 'blob', proof.predecessorCommit + ':' + file], { cwd: root, encoding: 'utf8' });\n",
+            "const added = \"    'test/out-product-labels-postgres.test.ts',\\n\";\n"
+          ]
+        },
+        {
+          "start": 30,
+          "after": [
+            "    expect(projectPurchasedLabelRunnerPredecessor(file, projectPurchasedLabelAuthorPredecessor(file, projectPurchasedLabelOperationsPredecessor(file, projectPublicProductEstimatePredecessor(file, readFileSync(path, 'utf8')))))).toBe(current); expect(Object.isFrozen(proof.current)).toBe(true);\n"
+          ],
+          "before": [
+            "    expect(projectPurchasedLabelRunnerPredecessor(file, projectPurchasedLabelAuthorPredecessor(file, projectPurchasedLabelOperationsPredecessor(file, readFileSync(path, 'utf8'))))).toBe(current); expect(Object.isFrozen(proof.current)).toBe(true);\n"
+          ],
+          "anchorStart": 27,
+          "anchor": [
+            "    expect(sha(current)).toBe(proof.current.sha256); expect(sha(before)).toBe(proof.predecessor.sha256);\n",
+            "    expect(Buffer.byteLength(current)).toBe(proof.current.bytes); expect(Buffer.byteLength(before)).toBe(proof.predecessor.bytes);\n",
+            "    expect(execFileSync('git', ['rev-parse', proof.predecessorCommit + ':' + file], { cwd: root, encoding: 'utf8' }).trim()).toBe(proof.predecessor.gitBlobSha1);\n",
+            "    expect(projectPurchasedLabelRunnerPredecessor(file, projectPurchasedLabelAuthorPredecessor(file, projectPurchasedLabelOperationsPredecessor(file, projectPublicProductEstimatePredecessor(file, readFileSync(path, 'utf8')))))).toBe(current); expect(Object.isFrozen(proof.current)).toBe(true);\n",
+            "  });\n",
+            "  it.each(['prefix', 'suffix', 'CRLF', 'same-size edit', 'old complete image', 'duplicate admission', 'different budget'])(\n",
+            "    'rejects unreviewed %s before the older reader can authorize it', kind => {\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "a9157320e351cfeb5ecdb50817e45ecf3ede4a06",
+        "path": "workers-ts/test/out-product-label-runner-source-continuity.test.ts",
+        "gitBlobSha1": "5f0de46b5da55f2546ea3a38fd7dcadff9efe2c8"
+      }
+    },
+    {
+      "file": "workers-ts/test/product-coupon-migration.test.ts",
+      "current": {
+        "bytes": 7242,
+        "sha256": "d1a8cc73f4fa05d5a073fbd539d736f9d1d29bf4fe7f61d445455ab3c6613478",
+        "gitBlobSha1": "94d172eeba02d71895acdc2b329a31c0c0fcc368"
+      },
+      "predecessor": {
+        "bytes": 7049,
+        "sha256": "3108996d19607d31d54502ee0e7adc62dcbe085ef3add365eef5529855ccc8a7",
+        "gitBlobSha1": "6c5766e3e5e8ffcc535a679a41fc227fa64c561a"
+      },
+      "inverseEdits": [
+        {
+          "start": 101,
+          "after": [
+            "    const admission = readFileSync(\"src/services/activity/CouponClaimAdmission.ts\", \"utf8\");\n"
+          ],
+          "before": [],
+          "anchorStart": 98,
+          "anchor": [
+            "    const outbox = readFileSync(\"src/services/order/OrderOutboxService.ts\", \"utf8\");\n",
+            "    const grants = readFileSync(\"src/services/activity/ProductCouponService.ts\", \"utf8\");\n",
+            "    const receive = readFileSync(\"src/services/activity/ActivityService.ts\", \"utf8\");\n",
+            "    const admission = readFileSync(\"src/services/activity/CouponClaimAdmission.ts\", \"utf8\");\n",
+            "    const admin = readFileSync(\"src/controllers/api/v1/AdminCrudController.ts\", \"utf8\");\n",
+            "    expect(createOrder).toContain('from \"@/services/activity/OrderCouponService\"');\n",
+            "    expect(createOrder).toContain(\"await resolveOrderCoupon(c, uid, params.couponId, orderItems)\");\n"
+          ]
+        },
+        {
+          "start": 116,
+          "after": [
+            "    expect(receive).toContain(\"ordinaryCouponClaimLimitAdmission(issue.receiveLimit, received, evidence?.count ?? 0)\");\n",
+            "    expect(admission).toContain(\"const effectiveLimit = receiveLimit || 1\");\n",
+            "    expect(admission).toContain(\"received >= effectiveLimit\");\n"
+          ],
+          "before": [
+            "    expect(receive).toContain(\"const effectiveLimit = issue.receiveLimit || 1\");\n",
+            "    expect(receive).toContain(\"received >= effectiveLimit\");\n"
+          ],
+          "anchorStart": 113,
+          "anchor": [
+            "    expect(grants).toContain(\"linkByIssue\");\n",
+            "    expect(grants).toContain(\"storeOrderProductCouponReward\");\n",
+            "    expect(receive).toContain('.for(\"update\")');\n",
+            "    expect(receive).toContain(\"ordinaryCouponClaimLimitAdmission(issue.receiveLimit, received, evidence?.count ?? 0)\");\n",
+            "    expect(admission).toContain(\"const effectiveLimit = receiveLimit || 1\");\n",
+            "    expect(admission).toContain(\"received >= effectiveLimit\");\n",
+            "    expect(receive).toContain(\"from(storeCouponIssueUser)\");\n",
+            "    expect(admission).toContain(\"receiveLimit === 0 && historical > 0\");\n",
+            "    expect(receive).not.toContain(\"storeCouponUserDao.countReceived\");\n"
+          ]
+        },
+        {
+          "start": 120,
+          "after": [
+            "    expect(admission).toContain(\"receiveLimit === 0 && historical > 0\");\n"
+          ],
+          "before": [
+            "    expect(receive).toContain(\"(issue.receiveLimit === 0 && (evidence?.count ?? 0) > 0)\");\n"
+          ],
+          "anchorStart": 117,
+          "anchor": [
+            "    expect(admission).toContain(\"const effectiveLimit = receiveLimit || 1\");\n",
+            "    expect(admission).toContain(\"received >= effectiveLimit\");\n",
+            "    expect(receive).toContain(\"from(storeCouponIssueUser)\");\n",
+            "    expect(admission).toContain(\"receiveLimit === 0 && historical > 0\");\n",
+            "    expect(receive).not.toContain(\"storeCouponUserDao.countReceived\");\n",
+            "    expect(admin).toContain(\"couponType: scopeType\");\n",
+            "    expect(admin).toContain(\"totalCount - claimedCount\");\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "a9157320e351cfeb5ecdb50817e45ecf3ede4a06",
+        "path": "workers-ts/test/product-coupon-migration.test.ts",
+        "gitBlobSha1": "6c5766e3e5e8ffcc535a679a41fc227fa64c561a"
+      }
+    },
+    {
+      "file": "workers-ts/test/purchased-label-author-source-continuity.test.ts",
+      "current": {
+        "bytes": 3313,
+        "sha256": "13e9f9dbe2db814bac331e569ae8e51ee6a05c507e9a12cf877c0852af7ae062",
+        "gitBlobSha1": "f871cf9dbf3e95399385c51f5a9dd07c9a27b068"
+      },
+      "predecessor": {
+        "bytes": 3160,
+        "sha256": "86e6d9a7bad52dfa6663afd294c54e4143e28d3a99f7f767e571c85524cf22f3",
+        "gitBlobSha1": "61e73f31b944fa1c9e6a09d2c016944608c0cdb2"
+      },
+      "inverseEdits": [
+        {
+          "start": 0,
+          "after": [
+            "import { projectPublicProductEstimatePredecessor } from './helpers/publicProductEstimateSourceContinuity';\n"
+          ],
+          "before": [],
+          "anchorStart": 0,
+          "anchor": [
+            "import { projectPublicProductEstimatePredecessor } from './helpers/publicProductEstimateSourceContinuity';\n",
+            "import { projectPurchasedLabelOperationsPredecessor } from './helpers/purchasedLabelOperationsSourceContinuity';\n",
+            "import { createHash } from 'node:crypto';\n",
+            "import { readFileSync } from 'node:fs';\n"
+          ]
+        },
+        {
+          "start": 9,
+          "after": [
+            "const priorSource = (file:string) => projectPurchasedLabelOperationsPredecessor(file,projectPublicProductEstimatePredecessor(file,readFileSync(resolve(root,file),'utf8')));\n"
+          ],
+          "before": [
+            "const priorSource = (file:string) => projectPurchasedLabelOperationsPredecessor(file,readFileSync(resolve(root,file),'utf8'));\n"
+          ],
+          "anchorStart": 6,
+          "anchor": [
+            "import { purchasedLabelAuthorImage, purchasedLabelAuthorProof as proof, projectPurchasedLabelAuthorPredecessor,\n",
+            "  PURCHASED_LABEL_AUTHOR_PROOF_FILE, PURCHASED_LABEL_AUTHOR_PROOF_SHA256 } from './helpers/purchasedLabelAuthorSourceContinuity';\n",
+            "const root = resolve(import.meta.dirname, '../..');\n",
+            "const priorSource = (file:string) => projectPurchasedLabelOperationsPredecessor(file,projectPublicProductEstimatePredecessor(file,readFileSync(resolve(root,file),'utf8')));\n",
+            "describe('purchased label author exact current source successor', () => {\n",
+            "  it('pins the complete proof and fixed thirteen-source inventory without requiring another shallow CI Git object', () => {\n",
+            "    expect(createHash('sha256').update(readFileSync(resolve(root,PURCHASED_LABEL_AUTHOR_PROOF_FILE))).digest('hex')).toBe(PURCHASED_LABEL_AUTHOR_PROOF_SHA256);\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "a9157320e351cfeb5ecdb50817e45ecf3ede4a06",
+        "path": "workers-ts/test/purchased-label-author-source-continuity.test.ts",
+        "gitBlobSha1": "61e73f31b944fa1c9e6a09d2c016944608c0cdb2"
+      }
+    },
+    {
+      "file": "workers-ts/test/purchased-label-operations-source-continuity.test.ts",
+      "current": {
+        "bytes": 3354,
+        "sha256": "e9943d46aebee768d74fdb9c6c8ab23bf770c450b6d7af4b59e1bb1c36f9a540",
+        "gitBlobSha1": "02af1044f6d302e94018b7b9c5c24f5b4c87bf7d"
+      },
+      "predecessor": {
+        "bytes": 3063,
+        "sha256": "413b5430bf29978f322babc89755ec3bc0f1a8a7b3995f28a17ec847f6427a2b",
+        "gitBlobSha1": "04267d0ee992a350c73f34d9aed7251e730ed42e"
+      },
+      "inverseEdits": [
+        {
+          "start": 0,
+          "after": [
+            "import { projectPublicProductEstimatePredecessor } from './helpers/publicProductEstimateSourceContinuity';\n"
+          ],
+          "before": [],
+          "anchorStart": 0,
+          "anchor": [
+            "import { projectPublicProductEstimatePredecessor } from './helpers/publicProductEstimateSourceContinuity';\n",
+            "import { createHash } from 'node:crypto';\n",
+            "import { readFileSync } from 'node:fs';\n",
+            "import { resolve } from 'node:path';\n"
+          ]
+        },
+        {
+          "start": 8,
+          "after": [
+            "const priorSource = (file: string) => projectPublicProductEstimatePredecessor(file, readFileSync(resolve(root, file), 'utf8'));\n"
+          ],
+          "before": [],
+          "anchorStart": 5,
+          "anchor": [
+            "import { purchasedLabelOperationsImage, purchasedLabelOperationsProof as proof, projectPurchasedLabelOperationsPredecessor,\n",
+            "  PURCHASED_LABEL_OPERATIONS_PROOF_FILE, PURCHASED_LABEL_OPERATIONS_PROOF_SHA256 } from './helpers/purchasedLabelOperationsSourceContinuity';\n",
+            "const root = resolve(import.meta.dirname, '../..');\n",
+            "const priorSource = (file: string) => projectPublicProductEstimatePredecessor(file, readFileSync(resolve(root, file), 'utf8'));\n",
+            "describe('purchased label operations exact current source successor', () => {\n",
+            "  it('pins the complete proof and fixed six-source inventory without requiring another shallow CI Git object', () => {\n",
+            "    expect(createHash('sha256').update(readFileSync(resolve(root,PURCHASED_LABEL_OPERATIONS_PROOF_FILE))).digest('hex')).toBe(PURCHASED_LABEL_OPERATIONS_PROOF_SHA256);\n"
+          ]
+        },
+        {
+          "start": 18,
+          "after": [
+            "      const untouched = readFileSync(resolve(root,row.file),'utf8');\n",
+            "      const physical = priorSource(row.file);\n"
+          ],
+          "before": [
+            "      const physical = readFileSync(resolve(root,row.file),'utf8');\n"
+          ],
+          "anchorStart": 15,
+          "anchor": [
+            "  });\n",
+            "  for (const row of proof.sources) {\n",
+            "    it('checks all native bytes and exact 2e63 reconstruction for '+row.file, () => {\n",
+            "      const untouched = readFileSync(resolve(root,row.file),'utf8');\n",
+            "      const physical = priorSource(row.file);\n",
+            "      expect(purchasedLabelOperationsImage(physical)).toEqual(row.current);\n",
+            "      const previous = projectPurchasedLabelOperationsPredecessor(row.file,physical);\n",
+            "      expect(purchasedLabelOperationsImage(previous)).toEqual(row.predecessor);\n"
+          ]
+        },
+        {
+          "start": 24,
+          "after": [
+            "      expect(priorSource(row.file)).toBe(physical);\n",
+            "      expect(readFileSync(resolve(root,row.file),'utf8')).toBe(untouched);\n"
+          ],
+          "before": [
+            "      expect(readFileSync(resolve(root,row.file),'utf8')).toBe(physical);\n"
+          ],
+          "anchorStart": 21,
+          "anchor": [
+            "      const previous = projectPurchasedLabelOperationsPredecessor(row.file,physical);\n",
+            "      expect(purchasedLabelOperationsImage(previous)).toEqual(row.predecessor);\n",
+            "      expect(row.origin).toEqual({ commit: proof.predecessorCommit, path: row.file, gitBlobSha1: row.predecessor.gitBlobSha1 });\n",
+            "      expect(priorSource(row.file)).toBe(physical);\n",
+            "      expect(readFileSync(resolve(root,row.file),'utf8')).toBe(untouched);\n",
+            "    });\n",
+            "    it.each(['prefix','suffix','CRLF','same length','old complete image','duplicate complete image'])(\n",
+            "      'refuses %s of '+row.file, kind => {\n"
+          ]
+        },
+        {
+          "start": 29,
+          "after": [
+            "        const physical = priorSource(row.file), previous = projectPurchasedLabelOperationsPredecessor(row.file,physical);\n"
+          ],
+          "before": [
+            "        const physical = readFileSync(resolve(root,row.file),'utf8'), previous = projectPurchasedLabelOperationsPredecessor(row.file,physical);\n"
+          ],
+          "anchorStart": 26,
+          "anchor": [
+            "    });\n",
+            "    it.each(['prefix','suffix','CRLF','same length','old complete image','duplicate complete image'])(\n",
+            "      'refuses %s of '+row.file, kind => {\n",
+            "        const physical = priorSource(row.file), previous = projectPurchasedLabelOperationsPredecessor(row.file,physical);\n",
+            "        const changed = kind==='prefix' ? '// changed\\n'+physical : kind==='suffix' ? physical+'\\n' : kind==='CRLF' ? physical.replaceAll('\\n','\\r\\n')\n",
+            "          : kind==='same length' ? 'X'+physical.slice(1) : kind==='old complete image' ? previous : physical+physical;\n",
+            "        expect(() => projectPurchasedLabelOperationsPredecessor(row.file,changed)).toThrow('complete current source differs');\n"
+          ]
+        },
+        {
+          "start": 36,
+          "after": [
+            "    const file = 'workers-ts/scripts/run-local-finance-postgres.mjs', physical = priorSource(file);\n"
+          ],
+          "before": [
+            "    const file = 'workers-ts/scripts/run-local-finance-postgres.mjs', physical = readFileSync(resolve(root,file),'utf8');\n"
+          ],
+          "anchorStart": 33,
+          "anchor": [
+            "      });\n",
+            "  }\n",
+            "  it('keeps native runner admissions and every original resource budget while rejecting a larger budget', () => {\n",
+            "    const file = 'workers-ts/scripts/run-local-finance-postgres.mjs', physical = priorSource(file);\n",
+            "    expect(physical.split(\"    'test/purchased-label-operations-native.test.ts',\\n\")).toHaveLength(3);\n",
+            "    const changed = physical.replace('? 25 : 10) * 60_000','? 25 : 11) * 60_000');\n",
+            "    expect(changed).not.toBe(physical); expect(() => projectPurchasedLabelOperationsPredecessor(file,changed)).toThrow();\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "a9157320e351cfeb5ecdb50817e45ecf3ede4a06",
+        "path": "workers-ts/test/purchased-label-operations-source-continuity.test.ts",
+        "gitBlobSha1": "04267d0ee992a350c73f34d9aed7251e730ed42e"
+      }
+    },
+    {
+      "file": "workers-ts/test/purchased-label-storage-runner-source-continuity.test.ts",
+      "current": {
+        "bytes": 3391,
+        "sha256": "c4a04818782a341000d3f15cc8568765f713b77a5358978b824ca3dadb69a9f4",
+        "gitBlobSha1": "1b5fcd6737fc0e7f73b871f64817bc19232838f8"
+      },
+      "predecessor": {
+        "bytes": 3237,
+        "sha256": "464275660013b518831ba9c67af3a226de73b2c2f3dd1f30c8af54a04ec2afdc",
+        "gitBlobSha1": "5e1e9f2cd5b271c7a627cb8dc721783969e21634"
+      },
+      "inverseEdits": [
+        {
+          "start": 0,
+          "after": [
+            "import { projectPublicProductEstimatePredecessor } from './helpers/publicProductEstimateSourceContinuity';\n"
+          ],
+          "before": [],
+          "anchorStart": 0,
+          "anchor": [
+            "import { projectPublicProductEstimatePredecessor } from './helpers/publicProductEstimateSourceContinuity';\n",
+            "import { projectPurchasedLabelOperationsPredecessor } from './helpers/purchasedLabelOperationsSourceContinuity';\n",
+            "import { createHash } from 'node:crypto';\n",
+            "import { readFileSync } from 'node:fs';\n"
+          ]
+        },
+        {
+          "start": 12,
+          "after": [
+            "const native = projectPurchasedLabelAuthorPredecessor(file, projectPurchasedLabelOperationsPredecessor(file, projectPublicProductEstimatePredecessor(file, physical)));\n"
+          ],
+          "before": [
+            "const native = projectPurchasedLabelAuthorPredecessor(file, projectPurchasedLabelOperationsPredecessor(file, physical));\n"
+          ],
+          "anchorStart": 9,
+          "anchor": [
+            "import { projectProviderTransportPredecessor } from './helpers/providerTransportSourceContinuity';\n",
+            "import { projectPurchasedLabelAuthorPredecessor } from './helpers/purchasedLabelAuthorSourceContinuity';\n",
+            "const root = resolve(import.meta.dirname, '../..'), physical = readFileSync(resolve(root, file), 'utf8');\n",
+            "const native = projectPurchasedLabelAuthorPredecessor(file, projectPurchasedLabelOperationsPredecessor(file, projectPublicProductEstimatePredecessor(file, physical)));\n",
+            "const admission = \"    'test/purchased-product-label-storage-native.test.ts',\\n\";\n",
+            "// Fixed Git image metadata was independently checked against fc568ece locally.\n",
+            "// No new shallow-CI commit supply dependency is introduced by this successor.\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "a9157320e351cfeb5ecdb50817e45ecf3ede4a06",
+        "path": "workers-ts/test/purchased-label-storage-runner-source-continuity.test.ts",
+        "gitBlobSha1": "5e1e9f2cd5b271c7a627cb8dc721783969e21634"
+      }
+    }
+  ]
+}

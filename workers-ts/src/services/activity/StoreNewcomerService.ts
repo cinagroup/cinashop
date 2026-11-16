@@ -303,18 +303,11 @@ export async function isNewcomerEligibleFromDb(
 }
 
 /** PHP StoreNewcomerServices::checkUserFirstDiscount 所需的配置快照。 */
-export async function loadFirstOrderDiscountConfig(
-  container: Container,
-  env: SystemConfigEnv,
-): Promise<FirstOrderDiscountConfig> {
-  const values = await new SystemConfigService(container, env).getMany([
-    "newcomer_status",
-    "first_order_status",
-    "first_order_discount",
-    "first_order_discount_limit",
-    "newcomer_limit_status",
-    "newcomer_limit_time",
-  ]);
+const FIRST_ORDER_CONFIG_KEYS = [
+  "newcomer_status", "first_order_status", "first_order_discount",
+  "first_order_discount_limit", "newcomer_limit_status", "newcomer_limit_time",
+];
+function firstOrderDiscountConfig(values: Record<string, string>): FirstOrderDiscountConfig {
   return {
     enabled: configFlag(values.newcomer_status) && configFlag(values.first_order_status),
     limitEnabled: configFlag(values.newcomer_limit_status, true),
@@ -322,6 +315,17 @@ export async function loadFirstOrderDiscountConfig(
     payPercent: parseFirstOrderPayPercent(values.first_order_discount),
     limitCents: parseNonNegativeMoneyCents(values.first_order_discount_limit),
   };
+}
+export async function loadFirstOrderDiscountConfig(
+  container: Container,
+  env: SystemConfigEnv,
+): Promise<FirstOrderDiscountConfig> {
+  return firstOrderDiscountConfig(await new SystemConfigService(container, env).getMany(FIRST_ORDER_CONFIG_KEYS));
+}
+
+/** Advisory reads use the caller's SQL snapshot without a KV read or refill. */
+export async function loadFirstOrderDiscountConfigFromDb(container: Container): Promise<FirstOrderDiscountConfig> {
+  return firstOrderDiscountConfig(await container.systemConfigDao.getValues(FIRST_ORDER_CONFIG_KEYS));
 }
 
 /** PHP registration listener configuration, read once before creating the user. */
@@ -517,6 +521,19 @@ export async function quoteFirstOrderDiscount(
     throw new ValidateException("首单优惠计价基数无效");
   }
   const config = await loadFirstOrderDiscountConfig(container, env);
+  return quoteFirstOrderWithConfig(container, uid, totalCents, now, config);
+}
+
+export async function quoteFirstOrderDiscountFromDb(
+  container: Container, uid: number, totalCents: number, now = Math.floor(Date.now() / 1000),
+): Promise<FirstOrderDiscountQuote> {
+  if (!Number.isSafeInteger(totalCents) || totalCents < 0) throw new ValidateException("首单优惠计价基数无效");
+  return quoteFirstOrderWithConfig(container, uid, totalCents, now, await loadFirstOrderDiscountConfigFromDb(container));
+}
+
+async function quoteFirstOrderWithConfig(
+  container: Container, uid: number, totalCents: number, now: number, config: FirstOrderDiscountConfig,
+): Promise<FirstOrderDiscountQuote> {
   const accounts = await container.db
     .select({ addTime: userTable.addTime, isFirstOrder: userTable.isFirstOrder })
     .from(userTable)

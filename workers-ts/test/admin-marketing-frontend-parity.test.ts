@@ -366,7 +366,8 @@ describe("legacy Admin marketing route parity audit", () => {
     expect(input).toContain("validDays: integer(body.valid_days, '有效天数', 1, 3650)");
     expect(source("src/controllers/api/v1/AdminCouponTemplateController.ts"))
       .toContain(".assertAuthorized(actor, 'GET', '/adminapi/marketing/coupon-templates')");
-    expect(source("src/services/activity/ActivityService.ts"))
+    expect(source("src/services/activity/ActivityService.ts")).toContain("ordinaryCouponIssueAdmission(issue, now.getTime())");
+    expect(source("src/services/activity/CouponClaimAdmission.ts"))
       .toContain("issue.receiveType !== 1 || ![0, 1].includes(issue.category) || issue.appType !== 0");
     const frontend = source("../view/admin-ts/src/pages/marketing/CouponTemplates.vue");
     expect(frontend).toContain("canPublish = computed(() => canView.value && has('coupon_template_issue.manage'))");

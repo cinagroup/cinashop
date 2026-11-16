@@ -46,11 +46,14 @@ describe("coupon issue migration parity", () => {
 
   it("separates the claim window from the coupon use window at runtime", () => {
     const service = readFileSync("src/services/activity/ActivityService.ts", "utf8");
+    const admission = readFileSync("src/services/activity/CouponClaimAdmission.ts", "utf8");
     const dao = readFileSync("src/dao/activity/ActivityDaos.ts", "utf8");
-    expect(service).toContain("issue.status !== 1 || issue.isDel !== 0");
-    expect(service).toContain("if (issue.day > 0)");
-    expect(service).toContain("startTime = issue.useStartTime ?? now");
-    expect(service).toContain("endTime = issue.useEndTime");
+    expect(service).toContain("ordinaryCouponIssueAdmission(issue, now.getTime())");
+    expect(service).toContain("couponClaimUseWindow(issue, now.getTime())");
+    expect(admission).toContain("issue.status !== 1 || issue.isDel !== 0");
+    expect(admission).toContain("if (issue.day > 0)");
+    expect(admission).toContain("startTime: issue.useStartTime ?? now");
+    expect(admission).toContain("endTime: issue.useEndTime");
     expect(service).toContain("if (!issue.isPermanent)");
     expect(dao).toContain("storeCouponIssue.receiveType} = 1");
   });

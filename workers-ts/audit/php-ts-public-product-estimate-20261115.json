@@ -1,0 +1,1752 @@
+{
+  "version": 1,
+  "batch": "public-product-estimate",
+  "batchDate": "2026-11-15",
+  "generatedAtUtc": "2026-11-16T16:05:27.070888+00:00",
+  "baseCommit": "a9157320e351cfeb5ecdb50817e45ecf3ede4a06",
+  "phpFixedCommit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "sourceCount": 39,
+  "sourceFiles": [
+    {
+      "path": "view/common/publicProductEstimate.ts",
+      "sha256": "539cf6134e4f2326d3b7aecc55322a504333ba0038b05f154ad7ba7b4f87ae06"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/product-coupons-runtime.test.cjs",
+      "sha256": "6ec521f362d10ed70ffb925a3bdccf4d8225e435d5a1a9110d94d2b7b7ad9f29"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/product-detail-design-runtime.test.cjs",
+      "sha256": "0ff797c5e57d2ac388499673cf25a9b82a2a2f864001cf3fa29ffff761121d12"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/product-estimate-runtime.test.cjs",
+      "sha256": "6536ef218c84e5e7153b3f9103db59d1849c24ede7f7890a5eb7c97f7d587ab8"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/product-sku-runtime.test.cjs",
+      "sha256": "83c47e4c84549ba4e4091fc1149a96114ed7d12d8187504dd0833f30c0e22404"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/productEstimate.ts",
+      "sha256": "8888ab3ba851a1ff0c04871c3f5ddc124d5d19f4af90b782244a1f5f1cb8429a"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/productDetail/ProductEstimate.vue",
+      "sha256": "185c13bb1cb5db709a78f79ee7a7a34bdebca12b5033cf14d8d06146144f4b1b"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useProductEstimate.ts",
+      "sha256": "227115eb05effe2fd35eeb4dd32e57fc885ecf582866eed666b5ab16a52344c0"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/goods/detail.vue",
+      "sha256": "75541e72552e48df6d518b31329632f30054cc838c9cde0634bcacb53ec4ac38"
+    },
+    {
+      "path": "workers-ts/package.json",
+      "sha256": "ca7e8c5e962e53faae33051d4260acfe8ee12f363805d660aabafc51495f1b65"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "a0dbe43d51e3a52dcc1c7412aa85b4cedf26be7662c823e205d36f7871e63408"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/ProductController.ts",
+      "sha256": "4ebc93359a6798618db57eb01e74d6a6f7b12bb8405de994382fd31f73415af0"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/PublicProductEstimateController.ts",
+      "sha256": "59b61d743113259875ddd8ec5336c24b42762bd11d35a7edc9ac4cf4842d6295"
+    },
+    {
+      "path": "workers-ts/src/middleware/auth.ts",
+      "sha256": "ee4c84bbf33d4c80ae55c874bcff5876e125a6054ed8adfa9cb8cd5366f22d1c"
+    },
+    {
+      "path": "workers-ts/src/routes/v1/index.ts",
+      "sha256": "07a41c821915cf6a9ac8fab3d16f0dc8a55336d08fa7051648b0f145c8b5c1da"
+    },
+    {
+      "path": "workers-ts/src/services/activity/ActivityService.ts",
+      "sha256": "69802b1ebe5fa2dfe8fbef52120bb7f4d8d644ddb8a0744aa9c679ecd157f214"
+    },
+    {
+      "path": "workers-ts/src/services/activity/CouponClaimAdmission.ts",
+      "sha256": "d801db75dbdb5fc4a1b841912c8d0a9c90b527e8a655330705eef00ca475a4a3"
+    },
+    {
+      "path": "workers-ts/src/services/activity/MembershipCouponService.ts",
+      "sha256": "9dd5777ce680c2373441be5ff0c92887a2638b75cba7b6394da26f2a37dc6063"
+    },
+    {
+      "path": "workers-ts/src/services/activity/OrderCouponService.ts",
+      "sha256": "a2b8c9e5bb4b8d5d3af43fe527a6c940c2c19b6bb5ddf5db4ef20cca8e277042"
+    },
+    {
+      "path": "workers-ts/src/services/activity/PublicCouponEstimateService.ts",
+      "sha256": "a46f606cf63875f70cd5cb512362cf67b2ba0439fb09d88642c8eebf011b0539"
+    },
+    {
+      "path": "workers-ts/src/services/activity/StoreNewcomerService.ts",
+      "sha256": "367109c2bb9d26d01309792e2efd5fa282802b63916cc0d0a64306031d2d45e9"
+    },
+    {
+      "path": "workers-ts/src/services/order/CartComputationService.ts",
+      "sha256": "0ad8525aee660d65acca7ba67248908b3f23ec70241b45123370da8d37698c0c"
+    },
+    {
+      "path": "workers-ts/src/services/product/PublicProductEstimateService.ts",
+      "sha256": "6dbeb41a9c28a226e6c8f34f669a47c0d27ef2c457ee64b021aad713c4d6277d"
+    },
+    {
+      "path": "workers-ts/test/admin-marketing-frontend-parity.test.ts",
+      "sha256": "1e60a5be67763f572d6f1ee7537db4eecfa8cc5bbc722d526881034b7654b1e3"
+    },
+    {
+      "path": "workers-ts/test/browser/public-product-estimate.acceptance.ts",
+      "sha256": "be6a2f04790e041177b6882a3ac943551b9c92f8e9936c42da17eceebbda5064"
+    },
+    {
+      "path": "workers-ts/test/coupon-issue-migration.test.ts",
+      "sha256": "673a3dbca9478455369107a4bc03252e73ee8275da37203f73bd0fc554954f16"
+    },
+    {
+      "path": "workers-ts/test/fixtures/public-product-estimate-source-continuity-20261115.json",
+      "sha256": "bb78b85fe23a3ede3dbe57a97d13665a3c1367ad1a1803394d28fdbbc97388b2"
+    },
+    {
+      "path": "workers-ts/test/helpers/providerTransportSourceContinuity.ts",
+      "sha256": "8e7952d4bed8f55ae5621ee0911bf9de89c7ec045b0d5023442cf5c5edd6c99b"
+    },
+    {
+      "path": "workers-ts/test/helpers/publicProductEstimateSourceContinuity.ts",
+      "sha256": "bc927b71a0e451b45737521e4ee7f4708b10a727594bdbc25a91c30b7f798407"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "731e6cfe5831f20856df3e0d27fbb3e4d0ce80f65cab8a067178d4e521128b27"
+    },
+    {
+      "path": "workers-ts/test/out-product-label-runner-source-continuity.test.ts",
+      "sha256": "6fbdbb481c2608a9790a24d4eddf0ecb5f160c32e7e6201eeae62888f573399d"
+    },
+    {
+      "path": "workers-ts/test/product-coupon-migration.test.ts",
+      "sha256": "d1a8cc73f4fa05d5a073fbd539d736f9d1d29bf4fe7f61d445455ab3c6613478"
+    },
+    {
+      "path": "workers-ts/test/public-coupon-estimate.test.ts",
+      "sha256": "b165ab8a35285e4af56ba1afa3af842fa67d288540558c8376a3da3830c449cb"
+    },
+    {
+      "path": "workers-ts/test/public-product-estimate-native.test.ts",
+      "sha256": "7c1a50b92a5828f42fe67a06872b0b960acb0ea1e922b25b7fcbb0f1971cb08c"
+    },
+    {
+      "path": "workers-ts/test/public-product-estimate-source-continuity.test.ts",
+      "sha256": "d7a81660b39a34c1c3e302f2fa4cf594c88e798d0f075c59a9097317af6a9364"
+    },
+    {
+      "path": "workers-ts/test/purchased-label-author-source-continuity.test.ts",
+      "sha256": "13e9f9dbe2db814bac331e569ae8e51ee6a05c507e9a12cf877c0852af7ae062"
+    },
+    {
+      "path": "workers-ts/test/purchased-label-operations-source-continuity.test.ts",
+      "sha256": "e9943d46aebee768d74fdb9c6c8ab23bf770c450b6d7af4b59e1bb1c36f9a540"
+    },
+    {
+      "path": "workers-ts/test/purchased-label-storage-runner-source-continuity.test.ts",
+      "sha256": "c4a04818782a341000d3f15cc8568765f713b77a5358978b824ca3dadb69a9f4"
+    },
+    {
+      "path": "workers-ts/vitest.public-product-estimate-browser.config.ts",
+      "sha256": "ea35d15aabd34e4133aa34da5df3d0039d29b7a24e5f28e27721e7def71b31a6"
+    }
+  ],
+  "protectedDependencyCount": 9323,
+  "scope": "Public ordinary quantity-one actual-SKU no-cart estimate, global best single usable/claimable coupon and independent Uni detail display",
+  "entry": "GET /api/product/detail/activity/:id?view=uni_product_estimate_v1&unique=<actual SKU>",
+  "worker": [
+    {
+      "name": "type-partition",
+      "nodeOptions": "--max-old-space-size=8192",
+      "exitCode": 0,
+      "seconds": 0.53,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "/tmp/php-ts-public-product-estimate-20261115/type-shards-verified.cjs"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/worker-type-partition.log",
+      "logSha256": "2309833fe0d65b2d2c0966160a6eb116037f8dfdcc7ddc085bed1e62a37b8c43",
+      "frozenBefore": true,
+      "frozenAfter": true,
+      "accepted": true
+    },
+    {
+      "name": "type-options",
+      "nodeOptions": "--max-old-space-size=8192",
+      "exitCode": 0,
+      "seconds": 0.44,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "/tmp/php-ts-public-product-estimate-20261115/check-options-verified.cjs"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/worker-type-options.log",
+      "logSha256": "da8e88b33d4019c686cfc58978c8c35756534139222f33dbeba7b47448e1a703",
+      "frozenBefore": true,
+      "frozenAfter": true,
+      "result": {
+        "originalRoots": 4478,
+        "commonRoots": 1951,
+        "testRoots": 2527,
+        "shardTestCounts": [
+          1264,
+          1263
+        ],
+        "unionExactlyMatchesOriginal": true,
+        "optionsExactlyMatchOriginal": true,
+        "explicitTypeLibrariesResolveExactlyAsOriginal": true,
+        "generatedConfigs": [
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts/.cache/public-product-estimate-types-20261115/tsconfig.worker-public-product-estimate-shard-1.generated.json",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts/.cache/public-product-estimate-types-20261115/tsconfig.worker-public-product-estimate-shard-2.generated.json"
+        ]
+      },
+      "accepted": true
+    },
+    {
+      "name": "worker-types-2",
+      "nodeOptions": "--max-old-space-size=7168 --max-semi-space-size=16",
+      "exitCode": 0,
+      "seconds": 367.15,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts/.cache/public-product-estimate-types-20261115/tsconfig.worker-public-product-estimate-shard-2.generated.json"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/worker-worker-types-2.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "frozenBefore": true,
+      "frozenAfter": true,
+      "accepted": true
+    },
+    {
+      "name": "worker-types-1",
+      "nodeOptions": "--max-old-space-size=7168 --max-semi-space-size=16",
+      "exitCode": 0,
+      "seconds": 272.8,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts/.cache/public-product-estimate-types-20261115/tsconfig.worker-public-product-estimate-shard-1.generated.json"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/worker-worker-types-1.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "frozenBefore": true,
+      "frozenAfter": true,
+      "accepted": true
+    },
+    {
+      "name": "runtime-types",
+      "nodeOptions": "--max-old-space-size=7168 --max-semi-space-size=16",
+      "exitCode": 0,
+      "seconds": 159.92,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "tsconfig.runtime-test.json"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/worker-runtime-types.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "frozenBefore": true,
+      "frozenAfter": true,
+      "accepted": true
+    },
+    {
+      "name": "unit",
+      "nodeOptions": "--max-old-space-size=8192",
+      "exitCode": 0,
+      "seconds": 111.09,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "test/coupon-rounding-php-parity.test.ts",
+        "test/product-coupon-migration.test.ts",
+        "test/local-finance-postgres-runner.test.ts",
+        "test/v2-coupon-compatibility-migration.test.ts",
+        "test/order-coupon-picker.test.ts",
+        "test/first-order-discount.test.ts",
+        "test/checkout-line-allocation.test.ts",
+        "test/admin-assisted-order-migration.test.ts",
+        "test/customer-cashier-ordinary-contract.test.ts",
+        "test/order-legacy-migration.test.ts",
+        "test/order-cart-pink-migration.test.ts",
+        "test/order-auxiliary-migration.test.ts",
+        "test/admin-coupon-issue-input.test.ts",
+        "test/public-coupon-estimate.test.ts",
+        "test/coupon-issue-migration.test.ts",
+        "test/admin-marketing-frontend-parity.test.ts",
+        "test/order-promotion-quote.test.ts",
+        "test/public-product-estimate-source-continuity.test.ts",
+        "--testTimeout=30000",
+        "--maxWorkers=1",
+        "--no-file-parallelism",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile=/tmp/php-ts-public-product-estimate-20261115/worker-unit.json"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/worker-unit.log",
+      "logSha256": "5b66ec11daa21d80601dae06baa6c444a8117389b86a61087739ac1156164f73",
+      "frozenBefore": true,
+      "frozenAfter": true,
+      "result": {
+        "files": 18,
+        "tests": 1027,
+        "failed": 0,
+        "skipped": 0
+      },
+      "accepted": true
+    },
+    {
+      "name": "public-native",
+      "nodeOptions": "--max-old-space-size=8192",
+      "exitCode": 0,
+      "seconds": 287.41,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/public-product-estimate-native.test.ts"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/worker-public-native.log",
+      "logSha256": "46330c76e2d35beb2e06b5ca0e14a1ec11643390f72bdb3f36d7bca12907aee2",
+      "frozenBefore": true,
+      "frozenAfter": true,
+      "result": {
+        "files": 1,
+        "tests": 16,
+        "failed": 0,
+        "skipped": 0
+      },
+      "cleanup": {
+        "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-WYLFUw",
+        "port": 37513,
+        "fixturesRemaining": 0,
+        "postmasterPidAbsent": true,
+        "pgCtlExitCode": 3,
+        "portClosed": true
+      },
+      "accepted": true
+    },
+    {
+      "name": "coupon-native",
+      "nodeOptions": "--max-old-space-size=8192",
+      "exitCode": 0,
+      "seconds": 290.06,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/coupon-rounding-native.test.ts",
+        "test/cart-computation-http.test.ts",
+        "test/checkout-line-finance.test.ts",
+        "test/order-full-gift-checkout.test.ts",
+        "test/checkout-confirmation.test.ts"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/worker-coupon-native.log",
+      "logSha256": "6917cfb047c435ad3892fb4380679bfe4237d26117880d1b254bc020fb529d28",
+      "frozenBefore": true,
+      "frozenAfter": true,
+      "result": {
+        "files": 5,
+        "tests": 104,
+        "failed": 0,
+        "skipped": 0
+      },
+      "cleanup": {
+        "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-ZWNx9l",
+        "port": 39303,
+        "fixturesRemaining": 0,
+        "postmasterPidAbsent": true,
+        "pgCtlExitCode": 3,
+        "portClosed": true
+      },
+      "accepted": true
+    },
+    {
+      "name": "uni-native",
+      "nodeOptions": "--max-old-space-size=8192",
+      "exitCode": 0,
+      "seconds": 106.36,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/uni-coupon-buy-native.test.ts"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/worker-uni-native.log",
+      "logSha256": "1b45b82a20afaf0150804ee08eedc673fe581e1cd029a1f3cf3e517316f54e3a",
+      "frozenBefore": true,
+      "frozenAfter": true,
+      "result": {
+        "files": 1,
+        "tests": 4,
+        "failed": 0,
+        "skipped": 0
+      },
+      "cleanup": {
+        "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-qk4jTX",
+        "port": 37391,
+        "fixturesRemaining": 0,
+        "postmasterPidAbsent": true,
+        "pgCtlExitCode": 3,
+        "portClosed": true
+      },
+      "accepted": true
+    },
+    {
+      "name": "legacy-pc-native",
+      "nodeOptions": "--max-old-space-size=8192",
+      "exitCode": 0,
+      "seconds": 106.17,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/pc-product-content-native.test.ts"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/worker-legacy-pc-native.log",
+      "logSha256": "586f032f7599f8c11455159de74ba821b4114e055ced1fb0a008812bf0ea3b00",
+      "frozenBefore": true,
+      "frozenAfter": true,
+      "result": {
+        "files": 1,
+        "tests": 5,
+        "failed": 0,
+        "skipped": 0
+      },
+      "cleanup": {
+        "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-p50ABZ",
+        "port": 40365,
+        "fixturesRemaining": 0,
+        "postmasterPidAbsent": true,
+        "pgCtlExitCode": 3,
+        "portClosed": true
+      },
+      "accepted": true
+    },
+    {
+      "name": "shared-bargain-native",
+      "nodeOptions": "--max-old-space-size=8192",
+      "exitCode": 0,
+      "seconds": 53.17,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/bargain-admin-content.test.ts"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/worker-shared-bargain-native.log",
+      "logSha256": "c3a3d944d356aab53198e9af2290579afca1dd683b6547601d77fac09f847f88",
+      "frozenBefore": true,
+      "frozenAfter": true,
+      "result": {
+        "files": 1,
+        "tests": 24,
+        "failed": 0,
+        "skipped": 0
+      },
+      "cleanup": {
+        "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-7j6oqz",
+        "port": 33227,
+        "fixturesRemaining": 0,
+        "postmasterPidAbsent": true,
+        "pgCtlExitCode": 3,
+        "portClosed": true
+      },
+      "accepted": true
+    },
+    {
+      "name": "workerd",
+      "nodeOptions": "--max-old-space-size=8192",
+      "exitCode": 0,
+      "seconds": 235.86,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--runtime",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "audit:runtime"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/worker-workerd.log",
+      "logSha256": "a9bd92aa44bc730647fbe8fedd1f4be2a88a438cb11a7cec0c2bf00cc38fb3fa",
+      "frozenBefore": true,
+      "frozenAfter": true,
+      "result": {
+        "files": 30,
+        "tests": 410,
+        "failed": 0,
+        "skipped": 0
+      },
+      "cleanup": {
+        "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-iTWLRU",
+        "port": 41159,
+        "fixturesRemaining": 0,
+        "postmasterPidAbsent": true,
+        "pgCtlExitCode": 3,
+        "portClosed": true
+      },
+      "accepted": true
+    },
+    {
+      "name": "production-audit",
+      "nodeOptions": "--max-old-space-size=8192",
+      "exitCode": 0,
+      "seconds": 5.19,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/npm",
+        "run",
+        "audit:prod"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/worker-production-audit.log",
+      "logSha256": "4ca0bc8f609b8cd4e43a18d0faebf8f0b05d91b15ee6386fb48a789c00393192",
+      "frozenBefore": true,
+      "frozenAfter": true,
+      "result": {
+        "vulnerabilities": {
+          "info": 0,
+          "low": 0,
+          "moderate": 0,
+          "high": 0,
+          "critical": 0,
+          "total": 0
+        }
+      },
+      "accepted": true
+    },
+    {
+      "name": "pc-build",
+      "nodeOptions": "--max-old-space-size=8192",
+      "exitCode": 0,
+      "seconds": 37.6,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/npm",
+        "run",
+        "build"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/worker-pc-build.log",
+      "logSha256": "654582e9341b61b3a927a7b6045909ea904d1241da86c0cbb80233631b7082a3",
+      "frozenBefore": true,
+      "frozenAfter": true,
+      "result": {
+        "tests": 547,
+        "nodeTestInvocations": [
+          {
+            "tests": 538,
+            "pass": 538,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          },
+          {
+            "tests": 9,
+            "pass": 9,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        ],
+        "vueTscAndViteExitCode": 0
+      },
+      "accepted": true
+    }
+  ],
+  "workerManifest": {
+    "driver": "run-worker-validation.py",
+    "sourceCount": 39,
+    "dependencyCount": 9323,
+    "frozenInputs": [
+      {
+        "path": "candidate-source.json",
+        "sha256": "4047a2e3455c128d05f927a8177ab7a61bfa48b0b2557673b09881e42926049f"
+      },
+      {
+        "path": "candidate-dependencies.json",
+        "sha256": "55be7ae8df82491614359d722ca237383cf7b69b49addb4631827b0bc1c1bfc7"
+      },
+      {
+        "path": "user-symlinks.json",
+        "sha256": "32f0ae750787e6bde76a8d6f60ab3e6f135ecff1c9e7cc3b06bd86a820fae4ca"
+      },
+      {
+        "path": "restored-resources.json",
+        "sha256": "2805035753af768b74ac4b987581644a085a6b857765a6c19ac0a2a6cd8fdd57"
+      },
+      {
+        "path": "type-shards-verified.cjs",
+        "sha256": "699eb9e7c425932749c69f74da5deaba17af8ac2c51483b191a4231255476fc9"
+      },
+      {
+        "path": "check-options-verified.cjs",
+        "sha256": "6e40b7d25a2029aca2daf7df7913cfb32eaad3940eb4b6ff1054d47ed6a7d5f2"
+      }
+    ],
+    "outerWrapperRequired": true,
+    "nestedWrapper": false,
+    "node": "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+    "nodeOptions": "--max-old-space-size=8192",
+    "typeNodeOptions": "--max-old-space-size=7168 --max-semi-space-size=16",
+    "exactOriginalTypeShards": 2,
+    "runtimeConfig": "workers-ts/tsconfig.runtime-test.json",
+    "caseFilters": false,
+    "unitFiles": [
+      "test/coupon-rounding-php-parity.test.ts",
+      "test/product-coupon-migration.test.ts",
+      "test/local-finance-postgres-runner.test.ts",
+      "test/v2-coupon-compatibility-migration.test.ts",
+      "test/order-coupon-picker.test.ts",
+      "test/first-order-discount.test.ts",
+      "test/checkout-line-allocation.test.ts",
+      "test/admin-assisted-order-migration.test.ts",
+      "test/customer-cashier-ordinary-contract.test.ts",
+      "test/order-legacy-migration.test.ts",
+      "test/order-cart-pink-migration.test.ts",
+      "test/order-auxiliary-migration.test.ts",
+      "test/admin-coupon-issue-input.test.ts",
+      "test/public-coupon-estimate.test.ts",
+      "test/coupon-issue-migration.test.ts",
+      "test/admin-marketing-frontend-parity.test.ts",
+      "test/order-promotion-quote.test.ts",
+      "test/public-product-estimate-source-continuity.test.ts"
+    ],
+    "nativeFullFiles": [
+      "test/public-product-estimate-native.test.ts",
+      "test/coupon-rounding-native.test.ts",
+      "test/cart-computation-http.test.ts",
+      "test/checkout-line-finance.test.ts",
+      "test/order-full-gift-checkout.test.ts",
+      "test/checkout-confirmation.test.ts",
+      "test/uni-coupon-buy-native.test.ts",
+      "test/pc-product-content-native.test.ts",
+      "test/bargain-admin-content.test.ts"
+    ],
+    "historicalBinding": "Eighteen complete business and new continuity files form the required passing unit gate. Sixteen existing historical files are separately measured against exact a915 using full files, assertions and collection errors; their remaining baseline failures are never counted as passing.",
+    "commands": [
+      {
+        "name": "type-partition",
+        "cwd": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts",
+        "argv": [
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+          "/tmp/php-ts-public-product-estimate-20261115/type-shards-verified.cjs"
+        ],
+        "required": true
+      },
+      {
+        "name": "type-options",
+        "cwd": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts",
+        "argv": [
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+          "/tmp/php-ts-public-product-estimate-20261115/check-options-verified.cjs"
+        ],
+        "required": true
+      },
+      {
+        "name": "worker-types-2",
+        "cwd": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts",
+        "argv": [
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit",
+          "-p",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts/.cache/public-product-estimate-types-20261115/tsconfig.worker-public-product-estimate-shard-2.generated.json"
+        ],
+        "required": true
+      },
+      {
+        "name": "worker-types-1",
+        "cwd": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts",
+        "argv": [
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit",
+          "-p",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts/.cache/public-product-estimate-types-20261115/tsconfig.worker-public-product-estimate-shard-1.generated.json"
+        ],
+        "required": true
+      },
+      {
+        "name": "runtime-types",
+        "cwd": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts",
+        "argv": [
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit",
+          "-p",
+          "tsconfig.runtime-test.json"
+        ],
+        "required": true
+      },
+      {
+        "name": "unit",
+        "cwd": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts",
+        "argv": [
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "test/coupon-rounding-php-parity.test.ts",
+          "test/product-coupon-migration.test.ts",
+          "test/local-finance-postgres-runner.test.ts",
+          "test/v2-coupon-compatibility-migration.test.ts",
+          "test/order-coupon-picker.test.ts",
+          "test/first-order-discount.test.ts",
+          "test/checkout-line-allocation.test.ts",
+          "test/admin-assisted-order-migration.test.ts",
+          "test/customer-cashier-ordinary-contract.test.ts",
+          "test/order-legacy-migration.test.ts",
+          "test/order-cart-pink-migration.test.ts",
+          "test/order-auxiliary-migration.test.ts",
+          "test/admin-coupon-issue-input.test.ts",
+          "test/public-coupon-estimate.test.ts",
+          "test/coupon-issue-migration.test.ts",
+          "test/admin-marketing-frontend-parity.test.ts",
+          "test/order-promotion-quote.test.ts",
+          "test/public-product-estimate-source-continuity.test.ts",
+          "--testTimeout=30000",
+          "--maxWorkers=1",
+          "--no-file-parallelism",
+          "--reporter=default",
+          "--reporter=json",
+          "--outputFile=/tmp/php-ts-public-product-estimate-20261115/worker-unit.json"
+        ],
+        "required": true
+      },
+      {
+        "name": "public-native",
+        "cwd": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts",
+        "argv": [
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/public-product-estimate-native.test.ts"
+        ],
+        "required": true
+      },
+      {
+        "name": "coupon-native",
+        "cwd": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts",
+        "argv": [
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/coupon-rounding-native.test.ts",
+          "test/cart-computation-http.test.ts",
+          "test/checkout-line-finance.test.ts",
+          "test/order-full-gift-checkout.test.ts",
+          "test/checkout-confirmation.test.ts"
+        ],
+        "required": true
+      },
+      {
+        "name": "uni-native",
+        "cwd": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts",
+        "argv": [
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/uni-coupon-buy-native.test.ts"
+        ],
+        "required": true
+      },
+      {
+        "name": "legacy-pc-native",
+        "cwd": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts",
+        "argv": [
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/pc-product-content-native.test.ts"
+        ],
+        "required": true
+      },
+      {
+        "name": "shared-bargain-native",
+        "cwd": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts",
+        "argv": [
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/bargain-admin-content.test.ts"
+        ],
+        "required": true
+      },
+      {
+        "name": "workerd",
+        "cwd": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts",
+        "argv": [
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--runtime",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "audit:runtime"
+        ],
+        "required": true
+      },
+      {
+        "name": "production-audit",
+        "cwd": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts",
+        "argv": [
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/npm",
+          "run",
+          "audit:prod"
+        ],
+        "required": true
+      },
+      {
+        "name": "pc-build",
+        "cwd": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/view/pc-ts",
+        "argv": [
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/npm",
+          "run",
+          "build"
+        ],
+        "required": true
+      }
+    ],
+    "status": "passed",
+    "reusedTypeGates": 0,
+    "typeEvidenceBoundary": "All five original type gates are executed afresh after the test-only SKU I/O boundary and23-source continuity update. Compiler gates use a7GiB V8 old heap plus16MiB semi-space after an owned8GiB compiler was terminated for confirmed severe VM swap thrashing and the full6GiB attempt actually exhausted its V8 heap; exact original TypeScript configs, roots and options remain unchanged. Earlier66713/46810 evidence remains archived and is not counted as current execution.",
+    "driverSha256": "c68d08c5b89cc71911ef79201e66577f7d02c14da95fc358e5744121809a709c",
+    "commandsPassed": 14,
+    "commandsExecutedThisOuter": 14,
+    "frozenAfterAll": true
+  },
+  "claims": [
+    {
+      "file": "test/coupon-issue-manual-claim.test.ts",
+      "exitCode": 0,
+      "log": "/tmp/php-ts-public-product-estimate-20261115/claims-coupon-issue-manual-claim.test.log",
+      "logSha256": "c253a5e73e248b64a4cc47512a9f2e2c8519fc657c0636a5ea5936a9309f54be",
+      "seconds": 28.88,
+      "accepted": true,
+      "result": {
+        "files": 1,
+        "tests": 12,
+        "failed": 0,
+        "skipped": 0
+      },
+      "cleanup": {
+        "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-53oBC0",
+        "port": 41401,
+        "fixturesRemaining": 0,
+        "pgCtlExitCode": 3,
+        "portClosed": true
+      }
+    },
+    {
+      "file": "test/coupon-manual-claim.test.ts",
+      "exitCode": 0,
+      "log": "/tmp/php-ts-public-product-estimate-20261115/claims-coupon-manual-claim.test.log",
+      "logSha256": "99dc0c675b19eb8d1ef1e12418143b44a757b03cfaaa911347e3462215f59905",
+      "seconds": 26.99,
+      "accepted": true,
+      "result": {
+        "files": 1,
+        "tests": 8,
+        "failed": 0,
+        "skipped": 0
+      },
+      "cleanup": {
+        "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-WYyGFr",
+        "port": 32881,
+        "fixturesRemaining": 0,
+        "pgCtlExitCode": 3,
+        "portClosed": true
+      }
+    },
+    {
+      "file": "test/membership-coupons-postgres.test.ts",
+      "exitCode": 0,
+      "log": "/tmp/php-ts-public-product-estimate-20261115/claims-membership-coupons-postgres.test.log",
+      "logSha256": "620d55d3f8c05952cc6ec6511a45eb35eb4c8f63261d39cd3c6956aa886dbf85",
+      "seconds": 96.23,
+      "accepted": true,
+      "result": {
+        "files": 1,
+        "tests": 57,
+        "failed": 0,
+        "skipped": 0
+      },
+      "cleanup": {
+        "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-pD3W3F",
+        "port": 43531,
+        "fixturesRemaining": 0,
+        "pgCtlExitCode": 3,
+        "portClosed": true
+      }
+    },
+    {
+      "file": "test/member-coupon-app-role-postgres.test.ts",
+      "exitCode": 0,
+      "log": "/tmp/php-ts-public-product-estimate-20261115/claims-member-coupon-app-role-postgres.test.log",
+      "logSha256": "1caa810d28e8e386b7070b10eb0cd2925a386c6dcde987122e9eeaafe5aeeb6f",
+      "seconds": 247.93,
+      "accepted": true,
+      "result": {
+        "files": 1,
+        "tests": 16,
+        "failed": 0,
+        "skipped": 0
+      },
+      "cleanup": {
+        "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-NNpBET",
+        "port": 38995,
+        "fixturesRemaining": 0,
+        "pgCtlExitCode": 3,
+        "portClosed": true
+      }
+    }
+  ],
+  "uni": [
+    {
+      "name": "typecheck",
+      "terminalExitCode": 0,
+      "seconds": 24.36,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "node_modules/vue-tsc/bin/vue-tsc.js",
+        "--noEmit"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/uni-final-typecheck.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "accepted": true
+    },
+    {
+      "name": "core-runtime",
+      "terminalExitCode": 0,
+      "seconds": 104.84,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "--test",
+        "--test-concurrency=1",
+        "scripts/product-detail-design-runtime.test.cjs",
+        "scripts/product-detail-lifecycle.test.cjs",
+        "scripts/checkout-runtime.test.cjs"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/uni-final-core-runtime.log",
+      "logSha256": "5a47a082fe5932bffd0a97b36c2dbe601c82e2314a555373621e28e19a957a97",
+      "accepted": true,
+      "result": {
+        "tests": [
+          260
+        ],
+        "pass": [
+          260
+        ],
+        "fail": [
+          0
+        ],
+        "cancelled": [
+          0
+        ],
+        "skipped": [
+          0
+        ],
+        "todo": [
+          0
+        ]
+      }
+    },
+    {
+      "name": "related-runtime",
+      "terminalExitCode": 0,
+      "seconds": 117.03,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "--test",
+        "--test-concurrency=1",
+        "scripts/cart-runtime.test.cjs",
+        "scripts/coupon-products-runtime.test.cjs",
+        "scripts/member-coupons-runtime.test.cjs",
+        "scripts/category-catalog-runtime.test.cjs",
+        "scripts/product-sku-runtime.test.cjs",
+        "scripts/seckill-runtime.test.cjs",
+        "scripts/combination-runtime.test.cjs",
+        "scripts/bargain-runtime.test.cjs",
+        "scripts/presale-runtime.test.cjs",
+        "scripts/integral-purchase-runtime.test.cjs",
+        "scripts/newcomer-runtime.test.cjs"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/uni-final-related-runtime.log",
+      "logSha256": "bc6b32e157c4d26ac2e2ffd9b3356042d4283f1608021aacbbe9008d18710706",
+      "accepted": true,
+      "result": {
+        "tests": [
+          285
+        ],
+        "pass": [
+          285
+        ],
+        "fail": [
+          0
+        ],
+        "cancelled": [
+          0
+        ],
+        "skipped": [
+          0
+        ],
+        "todo": [
+          0
+        ]
+      }
+    },
+    {
+      "name": "test:admzip",
+      "terminalExitCode": 0,
+      "seconds": 4.55,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/npm",
+        "run",
+        "test:admzip"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/uni-final-test-admzip.log",
+      "logSha256": "4929c29c7f97e34c776304122d351928ff7afbc5c8b5a09a97e1694d67206c2c",
+      "accepted": true,
+      "result": {
+        "tests": [
+          6
+        ],
+        "pass": [
+          6
+        ],
+        "fail": [
+          0
+        ],
+        "cancelled": [
+          0
+        ],
+        "skipped": [
+          0
+        ],
+        "todo": [
+          0
+        ]
+      }
+    },
+    {
+      "name": "test:express-qs",
+      "terminalExitCode": 0,
+      "seconds": 5.77,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/npm",
+        "run",
+        "test:express-qs"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/uni-final-test-express-qs.log",
+      "logSha256": "cc72ce4a67bb3b0fba9ada0fc7160c4625c290a59bcf262c304838cfedac5fc7",
+      "accepted": true,
+      "result": {
+        "tests": [
+          21
+        ],
+        "pass": [
+          21
+        ],
+        "fail": [
+          0
+        ],
+        "cancelled": [
+          0
+        ],
+        "skipped": [
+          0
+        ],
+        "todo": [
+          0
+        ]
+      }
+    },
+    {
+      "name": "test:jest-jsdom-once",
+      "terminalExitCode": 0,
+      "seconds": 9.04,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/npm",
+        "run",
+        "test:jest-jsdom-once"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/uni-final-test-jest-jsdom-once.log",
+      "logSha256": "5b787435072342cd837eff31e4f8fbc8d1fb0482f006d5cf67e58fffd785ff5c",
+      "accepted": true,
+      "result": {
+        "tests": [
+          4
+        ],
+        "pass": [
+          4
+        ],
+        "fail": [
+          0
+        ],
+        "cancelled": [
+          0
+        ],
+        "skipped": [
+          0
+        ],
+        "todo": [
+          0
+        ]
+      }
+    },
+    {
+      "name": "test:d3-advisories",
+      "terminalExitCode": 0,
+      "seconds": 48.58,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/npm",
+        "run",
+        "test:d3-advisories"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/uni-final-test-d3-advisories.log",
+      "logSha256": "e479030533d2ef4ecc89735bb13a112fcf0f101c09b3c245d985eb790d543e95",
+      "accepted": true,
+      "result": {
+        "tests": [
+          101
+        ],
+        "pass": [
+          101
+        ],
+        "fail": [
+          0
+        ],
+        "cancelled": [
+          0
+        ],
+        "skipped": [
+          0
+        ],
+        "todo": [
+          0
+        ]
+      }
+    },
+    {
+      "name": "build:h5",
+      "terminalExitCode": 0,
+      "seconds": 31.38,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/npm",
+        "run",
+        "build:h5"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/uni-final-build-h5.log",
+      "logSha256": "2cd0ede7ab5a76fa14b7840203bd51d20edb74b0efe300faed49d47786aac8a4",
+      "accepted": true
+    },
+    {
+      "name": "build:mp-weixin",
+      "terminalExitCode": 0,
+      "seconds": 24.57,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/npm",
+        "run",
+        "build:mp-weixin"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/uni-final-build-mp-weixin.log",
+      "logSha256": "4068b94764153867c1fa2e13440fbc493fa3190cb93fb2287e4bf3551d812625",
+      "accepted": true
+    },
+    {
+      "name": "build:app",
+      "terminalExitCode": 0,
+      "seconds": 29.87,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/npm",
+        "run",
+        "build:app"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/uni-final-build-app.log",
+      "logSha256": "a2051cd401599570aeafd694ace38af58a716eaa441c4dab1c75b80b0fa76800",
+      "accepted": true
+    },
+    {
+      "name": "test:build-artifacts",
+      "terminalExitCode": 0,
+      "seconds": 0.3,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/npm",
+        "run",
+        "test:build-artifacts"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/uni-final-test-build-artifacts.log",
+      "logSha256": "17dcfe8740c92948f0f484296cf9f73336da074255e305f80423d9279e459d73",
+      "accepted": true,
+      "result": {
+        "tests": [
+          4
+        ],
+        "pass": [
+          4
+        ],
+        "fail": [
+          0
+        ],
+        "cancelled": [
+          0
+        ],
+        "skipped": [
+          0
+        ],
+        "todo": [
+          0
+        ]
+      }
+    },
+    {
+      "name": "test:automator-qr",
+      "terminalExitCode": 0,
+      "seconds": 4.21,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/npm",
+        "run",
+        "test:automator-qr"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/uni-final-test-automator-qr.log",
+      "logSha256": "80a6375c456fe7c2fbd09586076209237db7d93cf3e3025359cf21c750d5afdf",
+      "accepted": true,
+      "result": {
+        "tests": [
+          5
+        ],
+        "pass": [
+          5
+        ],
+        "fail": [
+          0
+        ],
+        "cancelled": [
+          0
+        ],
+        "skipped": [
+          0
+        ],
+        "todo": [
+          0
+        ]
+      }
+    },
+    {
+      "name": "test:runtime-i18n",
+      "terminalExitCode": 0,
+      "seconds": 84.0,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/npm",
+        "run",
+        "test:runtime-i18n"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/uni-final-test-runtime-i18n.log",
+      "logSha256": "022e0c298c3211c08573ced6eed36c10f4958bb23799b2eb3f7b05af98cd898e",
+      "accepted": true,
+      "result": {
+        "tests": [
+          13
+        ],
+        "pass": [
+          13
+        ],
+        "fail": [
+          0
+        ],
+        "cancelled": [
+          0
+        ],
+        "skipped": [
+          0
+        ],
+        "todo": [
+          0
+        ]
+      }
+    },
+    {
+      "name": "common-security",
+      "terminalExitCode": 0,
+      "seconds": 0.81,
+      "command": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "--test",
+        "../common/toolchain-security.test.mjs"
+      ],
+      "log": "/tmp/php-ts-public-product-estimate-20261115/uni-final-common-security.log",
+      "logSha256": "2806374aef3f3316bd6ba0d5d581044b6185fe09a875574a9261ab34475214ed",
+      "accepted": true,
+      "result": {
+        "tests": [
+          14
+        ],
+        "pass": [
+          14
+        ],
+        "fail": [
+          0
+        ],
+        "cancelled": [
+          0
+        ],
+        "skipped": [
+          0
+        ],
+        "todo": [
+          0
+        ]
+      }
+    }
+  ],
+  "actualOuterTerminals": {
+    "worker": {
+      "sessionId": 60266,
+      "exitCode": 0,
+      "kind": "worker",
+      "sourceManifestSha256": "4047a2e3455c128d05f927a8177ab7a61bfa48b0b2557673b09881e42926049f",
+      "driverSha256": "c68d08c5b89cc71911ef79201e66577f7d02c14da95fc358e5744121809a709c",
+      "proofSha256": "4d64baa41fd5be208f5309c6e9741a67f912600a7d767db0fb7c141588c37dcd",
+      "commandsPassed": 14,
+      "commandsExecutedThisOuter": 14,
+      "reusedTypeGates": 0,
+      "typeNodeOptions": "--max-old-space-size=7168 --max-semi-space-size=16"
+    },
+    "claims": {
+      "sessionId": 15093,
+      "exitCode": 0,
+      "kind": "claims",
+      "sourceManifestSha256": "4047a2e3455c128d05f927a8177ab7a61bfa48b0b2557673b09881e42926049f",
+      "driverSha256": "b90826286944f3b8876522d4a5c137d9c7944fcce97ce17f50b05aa56bcbefb2",
+      "proofSha256": "fde18cc8fe025f004b410f0b9aa22209acbc8ddf8863069b899777030cfe9ac1"
+    },
+    "uni": {
+      "sessionId": 55751,
+      "exitCode": 0,
+      "kind": "uni",
+      "sourceManifestSha256": "4047a2e3455c128d05f927a8177ab7a61bfa48b0b2557673b09881e42926049f",
+      "driverSha256": "4e903b9bae9bf34ec724a6390f72bb77ce9c39e3434ceed03626b8a7ff85c2f9",
+      "proofSha256": "7440bcf92a913dfc2d9d6b47744844eeb5c3ac1a77a1f89d4685580d0f3e584a"
+    },
+    "browser": {
+      "sessionId": 74722,
+      "exitCode": 0,
+      "kind": "browser",
+      "sourceManifestSha256": "4047a2e3455c128d05f927a8177ab7a61bfa48b0b2557673b09881e42926049f",
+      "driverSha256": "cf1ce8524e637f0909fd9a5c89952b4b98a2c4f257d14ee00e58a701a33f2f00",
+      "proofSha256": "7f28a06413cdc26fd8eab4f89e10811c66d4066700540f895dcb87a1944e9317",
+      "actualIabPhases": 9,
+      "advisoryRequests": 14,
+      "tables": 283,
+      "sequences": 229,
+      "viewportReset": true,
+      "ownedTabClosed": true
+    }
+  },
+  "historical": {
+    "allTestsPassed": false,
+    "noNewFailures": true,
+    "allOutcomesExactlyMatchFixedBase": true,
+    "fullFiles": 16,
+    "assertions": 1714,
+    "passed": 1404,
+    "failedUnchanged": 310,
+    "collectionErrorsUnchanged": 2,
+    "actualChildExitCodes": [
+      1,
+      1
+    ],
+    "actualOuter": {
+      "sessionId": 87039,
+      "exitCode": 0,
+      "kind": "historical-diagnostic",
+      "driverSha256": "20bdcdd73392658ca42c73d703de817857e4b67d22d11dc87efff3ee063728cc",
+      "comparisonHelperSha256": "86a0b6b2a680786b662f15102faa62481bbe9c6d15012797f11e052620760ca8",
+      "sourceManifestSha256": "4047a2e3455c128d05f927a8177ab7a61bfa48b0b2557673b09881e42926049f",
+      "comparisonSha256": "d061a81c2bca8c3fbcb3b41a62c4b4f943d25ad176876568b5489affea4d328f",
+      "manifestSha256": "1910ff2f2a051f53624e317b6f44c79c072cdaadfa8dbe9c7ab35061c8688e81",
+      "noNewCurrentLegacyFailures": true,
+      "exactHistoricalOutcomesPreserved": true,
+      "remainingFailedAssertions": 310,
+      "remainingCollectionErrors": 2,
+      "allTestsPassed": false
+    },
+    "diagnosticOuter0DoesNotMeanVitestPass": true
+  },
+  "browser": {
+    "driver": {
+      "argv": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/node-v24.14.1-linux-x64/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "audit:public-product-estimate-browser"
+      ],
+      "exitCode": 0,
+      "seconds": 2807.32,
+      "accepted": true,
+      "log": "/tmp/php-ts-public-product-estimate-20261115/browser-native.log",
+      "logSha256": "2b7fac948a96af85e1e3d9681fe394f1ee07c7ad01adf67eddff0bb820ade916",
+      "driverSha256": "cf1ce8524e637f0909fd9a5c89952b4b98a2c4f257d14ee00e58a701a33f2f00",
+      "commonSha256": "dc0b69c5c40bf2941b5552e7c0a275029a7005cc9df5cbad07ec4af37dade7db",
+      "sourceManifestSha256": "4047a2e3455c128d05f927a8177ab7a61bfa48b0b2557673b09881e42926049f",
+      "dependencyManifestSha256": "55be7ae8df82491614359d722ca237383cf7b69b49addb4631827b0bc1c1bfc7",
+      "sourceCount": 39,
+      "filesFrozen": 9362,
+      "result": {
+        "files": 1,
+        "tests": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "cleanup": {
+        "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-JEoQSG",
+        "port": 38595,
+        "fixturesRemaining": 0,
+        "pgCtlExitCode": 3,
+        "portClosed": true
+      },
+      "status": "passed",
+      "phases": 9,
+      "advisoryRequests": 14,
+      "fullTables": 283,
+      "fullSequences": 229
+    },
+    "environment": {
+      "url": "http://127.0.0.1:45915/__public_product_estimate/8af3823e-f93c-402a-b3ec-b69292f02384",
+      "browser": "Codex In-app Browser via CUA; no alternate automation",
+      "mobileFrameWidth": 375,
+      "desktopFrameWidth": 1280,
+      "formalH5Build": true,
+      "actualAppJwtRestrictedPg16": true
+    },
+    "phases": [
+      {
+        "name": "a-red-mobile",
+        "state": "ready",
+        "owner": "11",
+        "sku": "qared001",
+        "total": "¥16.99",
+        "frameWidth": 375
+      },
+      {
+        "name": "a-blue-multiple",
+        "state": "ready",
+        "owner": "11",
+        "sku": "qablue01",
+        "total": "¥25.49",
+        "frameWidth": 375
+      },
+      {
+        "name": "sku-race-red",
+        "state": "ready",
+        "owner": "11",
+        "sku": "qared001",
+        "total": "¥16.99",
+        "frameWidth": 375
+      },
+      {
+        "name": "owner-b",
+        "state": "ready",
+        "owner": "22",
+        "sku": "qared001",
+        "total": "¥16.99",
+        "frameWidth": 375
+      },
+      {
+        "name": "guest",
+        "state": "ready",
+        "owner": "0",
+        "sku": "qared001",
+        "total": "¥16.99",
+        "frameWidth": 375
+      },
+      {
+        "name": "owner-a-desktop",
+        "state": "ready",
+        "owner": "11",
+        "sku": "qared001",
+        "total": "¥16.99",
+        "frameWidth": 1280
+      },
+      {
+        "name": "error-blue",
+        "state": "error",
+        "owner": "",
+        "sku": "",
+        "total": "",
+        "frameWidth": 1280
+      },
+      {
+        "name": "retry-blue",
+        "state": "ready",
+        "owner": "11",
+        "sku": "qablue01",
+        "total": "¥25.49",
+        "frameWidth": 1280
+      },
+      {
+        "name": "actor-race-b",
+        "state": "ready",
+        "owner": "22",
+        "sku": "qared001",
+        "total": "¥16.99",
+        "frameWidth": 1280
+      }
+    ],
+    "screenshots": {
+      "images": [
+        {
+          "path": "/tmp/php-ts-public-product-estimate-20261115/screenshots/02-blue-multiple.jpg",
+          "persistentPath": "/home/cina/.codex/visualizations/2026/11/11/01a1ca9e-f25e-7191-90ea-abbcd4d95279/public-product-estimate-20261115/02-blue-multiple.jpg",
+          "sha256": "b25f07cfa731d77bd4585ff8ecef6374b7991fd10fc7193a9d586449c80d0eed",
+          "phase": "a-blue-multiple",
+          "mimeType": "image/jpeg",
+          "actualIabScreenshot": true
+        },
+        {
+          "path": "/tmp/php-ts-public-product-estimate-20261115/screenshots/06-desktop-advice.jpg",
+          "persistentPath": "/home/cina/.codex/visualizations/2026/11/11/01a1ca9e-f25e-7191-90ea-abbcd4d95279/public-product-estimate-20261115/06-desktop-advice.jpg",
+          "sha256": "6bb111293661e15a4ec429dc03c6ce8c8039a9df41685fc1deb915bbc2b076bc",
+          "phase": "owner-a-desktop",
+          "mimeType": "image/jpeg",
+          "actualIabScreenshot": true
+        },
+        {
+          "path": "/tmp/php-ts-public-product-estimate-20261115/screenshots/08-retry-blue.jpg",
+          "persistentPath": "/home/cina/.codex/visualizations/2026/11/11/01a1ca9e-f25e-7191-90ea-abbcd4d95279/public-product-estimate-20261115/08-retry-blue.jpg",
+          "sha256": "c6feaa9165cd99e97de897dd3ba8501761ba06d6087c50402028ad560a4cd2b7",
+          "phase": "retry-blue",
+          "mimeType": "image/jpeg",
+          "actualIabScreenshot": true
+        },
+        {
+          "path": "/tmp/php-ts-public-product-estimate-20261115/screenshots/09-actor-b-safe.jpg",
+          "persistentPath": "/home/cina/.codex/visualizations/2026/11/11/01a1ca9e-f25e-7191-90ea-abbcd4d95279/public-product-estimate-20261115/09-actor-b-safe.jpg",
+          "sha256": "3459ac1662c4d599abeccf4f7f6e684f186142d9af41ce2f10f3a5d7324cbfe2",
+          "phase": "actor-race-b",
+          "mimeType": "image/jpeg",
+          "actualIabScreenshot": true
+        }
+      ],
+      "viewportReset": true,
+      "ownedTabClosed": true,
+      "diagnosticScreenshotsExcluded": [
+        "01-mobile-advice.jpg was captured during a focus-triggered reload",
+        "07-explicit-error.jpg shows a vertically clipped alert; complete error DOM/9-phase server capture retained"
+      ],
+      "qaEvidenceSha256": "1e9bbff3e0ffe4e1441fad2875aa1c89a6b40550939dd10fa5683bc0f14ad799"
+    },
+    "advisoryWrites": 0,
+    "necessaryLegacyProductVisitWritesCountedSeparately": true,
+    "tables": 283,
+    "sequences": 229,
+    "actualDelayedResponseBytesPreserved": true
+  },
+  "reviewBoundary": {
+    "authorStaticReview": "pre-freeze-independent-review.json was written by a source author and is not a fully independent code audit",
+    "independentStaticReview": "independent-production-path-review.json covers only its named production flows; independent-production-path-23-review.json confirms those18 production files unchanged and the current23-source continuity layer",
+    "independentEvidenceReview": "Final independent acceptance and delivery review is recorded separately after these reports are written"
+  },
+  "boundaries": [
+    "Quantity one only; shipping, integral and payment excluded; checkout re-quotes",
+    "Each owned/issue source independently caps at1000+1; overflow errors rather than a partial winner",
+    "Equal saving prefers actual owned coupon then actual source ID; no independently proven PHP stable tie order",
+    "Public advice reads fresh SQL; existing checkout may still read stale KV configuration and remains authoritative",
+    "Fixed PHP source and previous standalone expression oracle were reviewed; the PHP framework estimate path was not executed",
+    "No real provider payment/SMS/queue or production deployment"
+  ],
+  "failedAttemptsPreserved": [
+    "Earlier native16 had14pass2 incorrect new promotion rounding expectations; test expectations corrected to existing PHP/TS formula",
+    "Earlier Worker browser harness TS duplicate kind was corrected without business change",
+    "Earlier Worker unit report hit default5000ms; complete files retried with30000ms and no assertion edits",
+    "Actual Uni70009 related runtime284/285 failed because queued SKU advisory read crossed the old confirmation I/O count boundary; tick before and after confirm preserves strict no-I/O and all old purchase assertions",
+    "Owned8GiB compiler was terminated after2521.2s confirmed severe VM swap thrashing; child-15 and actual outer39561exit1 retained. The exact full6GiB attempt then failed with actual V8 heap exhaustion, child-6 and outer9180exit1. Exact original compiler configs/coverage rerun using7GiB old-space and16MiB semi-space; all14 Worker gates execute afresh",
+    "First actual Browser36517exit1 after prolonged QA caused an old signed media GET404;2 accepted phases are not final acceptance. Same39 sources rerun against a new owned DB/actual App, all9 phases accepted by actual IAB and outer74722exit0",
+    "All earlier38-source evidence remains archived; current39-source Worker14 and Uni14 are actually rerun"
+  ],
+  "preservation": {
+    "userSymlinks": 5,
+    "restoredResources": 150,
+    "uniPackageUnchanged": true,
+    "phpDirtyHeadAndStatusUnchanged": true,
+    "configUnchanged": true
+  },
+  "pushCi": {
+    "status": "pending-at-report-creation",
+    "baselineHead": "a9157320e351cfeb5ecdb50817e45ecf3ede4a06",
+    "baselineRun": 43812682978,
+    "baselineSuccess": 10,
+    "baselineFailures": 3,
+    "workerUnitSkippedIsNotPassing": true,
+    "actualPushedCommitAndAll13TerminalLogs": "Recorded in /tmp/php-ts-public-product-estimate-20261115/completion.json after push; not inferred here"
+  },
+  "wholeMigrationComplete": false,
+  "goalStatus": "active",
+  "proofs": [
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/candidate-source.json",
+      "sha256": "4047a2e3455c128d05f927a8177ab7a61bfa48b0b2557673b09881e42926049f"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/candidate-dependencies.json",
+      "sha256": "55be7ae8df82491614359d722ca237383cf7b69b49addb4631827b0bc1c1bfc7"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/source-secret-scan-result.json",
+      "sha256": "b3c62e13cbba3e1938866504bb22269564c80edfff021b62886fcc5ff2c4156e"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/worker-validation-manifest.json",
+      "sha256": "4d64baa41fd5be208f5309c6e9741a67f912600a7d767db0fb7c141588c37dcd"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/worker-validation.json",
+      "sha256": "7626f4739931fbff3c3c22caadb6a826d74fac819e8dc542ab8eec10eca489c8"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/worker-unit.json",
+      "sha256": "8854e4a8a350337e793afbaff1889af9aa40c49bc8ac863a5d0de0e85972beb0"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/worker-outer-terminal.json",
+      "sha256": "4008d47f5d600c950304f2eb04084794d71de1fb0b462d3800015dd08bc17340"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/claims-command.json",
+      "sha256": "fde18cc8fe025f004b410f0b9aa22209acbc8ddf8863069b899777030cfe9ac1"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/claims-validation.json",
+      "sha256": "641a1b7a1a0528fdf0f144853cf94f3eb39336da9f7a25c0b4a6c417de04558b"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/claims-outer-terminal.json",
+      "sha256": "7e62b09c4e34165bb58a7bdf15b5c363fa12cdd023cba1ccd5b2841f651ad7f7"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/uni-final-command.json",
+      "sha256": "7440bcf92a913dfc2d9d6b47744844eeb5c3ac1a77a1f89d4685580d0f3e584a"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/uni-final-validation.json",
+      "sha256": "54e3acb644ea8a18db3855e70288ce2b2a92e2d36cd0c251cf1a1cf7b9ba1bc1"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/uni-outer-terminal.json",
+      "sha256": "3693daa7cc4a3ad25339a3516500591f8123415ef9f4e5ebbc81d1a34250ac3d"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/uni-build-files.json",
+      "sha256": "3d09466229c9fdc6c86d16465cfb524e45892d6504c496cb92aec37201923a80"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/browser-command.json",
+      "sha256": "7f28a06413cdc26fd8eab4f89e10811c66d4066700540f895dcb87a1944e9317"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/browser-result.json",
+      "sha256": "4d2918d520f0f6ea73ca707e9ab45b9c76fb4cc68f617a645c25dd6ee6e316ed"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/browser-cleanup.json",
+      "sha256": "2ff3f851be5535db90decfd35246cb3111a49541dd7fe231d37878a2059a2068"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/browser-outer-terminal.json",
+      "sha256": "8ac2730b85a7a8ee754fe0f8198f237e27d0b6a3577176b9f31fd1b254e2c8d2"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/browser-screenshots.json",
+      "sha256": "c2bdb0650ddb8f972fe470ce8428a900209cd5bafb560107028a86f8910913ed"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/historical-recheck-23-comparison.json",
+      "sha256": "d061a81c2bca8c3fbcb3b41a62c4b4f943d25ad176876568b5489affea4d328f"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/historical-recheck-23-validation.json",
+      "sha256": "a11004cf544677c6c55a3e4073f5f406eb73d01ba115f7f25be62720dc9ba3af"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/historical-recheck-23-outer-terminal.json",
+      "sha256": "3a54ebf282e2cafd187d7017469a9bdfffb4856c63127cc6c30b8997eaf5e6be"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/independent-production-path-review.json",
+      "sha256": "4c89a701d0d78ce4e6d67bb471e40ad798d4017e238d0016b4f8d44f092d6a4b"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/independent-production-path-23-review.json",
+      "sha256": "907ec818f5af12e7fcf847fc12efb33338c47dd4d01af03942f52d7549f9ee07"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/fourth-uni-sku-io-boundary-failure/archive-manifest.json",
+      "sha256": "48924145f7a50734895d7cf5aebe5b1dd391bf79f54177530a97f5da604e1dae"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/worker-owned-compiler-stop-request.json",
+      "sha256": "e6159fa803fedddafdada908bcb66a6a7c6b3fc15a7178e66ebf8a5b2663d69b"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/worker-memory-pressure-outer-terminal.json",
+      "sha256": "af98b0923685a463a5c49f3f89cc56806cc6198d4df805cf29d4dd8365ce0ee2"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/fifth-worker-memory-pressure/archive-manifest.json",
+      "sha256": "2f1d9b3c958c70885b6784719c03252d1b2b6c1ed98c4dd2462adccc53ae692b"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/worker-six-gib-outer-terminal.json",
+      "sha256": "c65033c9c7fb180652522636b7df12edcfbbbaf356e1d80bfa354af0614e6890"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/sixth-worker-six-gib-heap-exhaustion/archive-manifest.json",
+      "sha256": "9fb4d13ff7bc03fe2409f4fbd73a130fbd1fea03bfdf4da90d96b50a3872e874"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/browser-cua-ui-evidence.json",
+      "sha256": "1e9bbff3e0ffe4e1441fad2875aa1c89a6b40550939dd10fa5683bc0f14ad799"
+    },
+    {
+      "path": "/tmp/php-ts-public-product-estimate-20261115/seventh-browser-expired-media/actual-outer-terminal.json",
+      "sha256": "e020a40f19aca9855ff497da8ea12c0cd8b9af35263c7307e2fc65bcb82c9d31"
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import { projectPublicProductEstimatePredecessor } from './helpers/publicProductEstimateSourceContinuity';
 import { projectPurchasedLabelOperationsPredecessor } from './helpers/purchasedLabelOperationsSourceContinuity';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -6,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { purchasedLabelAuthorImage, purchasedLabelAuthorProof as proof, projectPurchasedLabelAuthorPredecessor,
   PURCHASED_LABEL_AUTHOR_PROOF_FILE, PURCHASED_LABEL_AUTHOR_PROOF_SHA256 } from './helpers/purchasedLabelAuthorSourceContinuity';
 const root = resolve(import.meta.dirname, '../..');
-const priorSource = (file:string) => projectPurchasedLabelOperationsPredecessor(file,readFileSync(resolve(root,file),'utf8'));
+const priorSource = (file:string) => projectPurchasedLabelOperationsPredecessor(file,projectPublicProductEstimatePredecessor(file,readFileSync(resolve(root,file),'utf8')));
 describe('purchased label author exact current source successor', () => {
   it('pins the complete proof and fixed thirteen-source inventory without requiring another shallow CI Git object', () => {
     expect(createHash('sha256').update(readFileSync(resolve(root,PURCHASED_LABEL_AUTHOR_PROOF_FILE))).digest('hex')).toBe(PURCHASED_LABEL_AUTHOR_PROOF_SHA256);

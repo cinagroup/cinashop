@@ -6,6 +6,7 @@
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
+    "audit:public-product-estimate-browser": "vitest run --config vitest.public-product-estimate-browser.config.ts",
     "test:express-author": "vitest run --maxWorkers=1 --no-file-parallelism test/admin-express-author.test.ts test/admin-express-provider.test.ts test/admin-express-operation.test.ts test/admin-express-source-binding.test.ts",
     "test:diy-live-broadcast-author": "vitest run --maxWorkers=1 test/diy-live-broadcast-author-catalog.test.ts test/diy-live-broadcast-author-source-binding.test.ts",
     "test:diy-seckill-author": "vitest run --maxWorkers=1 test/diy-seckill-author-media.test.ts test/diy-seckill-author-catalog.test.ts test/diy-seckill-author-source-binding.test.ts",

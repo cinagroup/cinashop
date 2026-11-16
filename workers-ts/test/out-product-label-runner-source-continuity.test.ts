@@ -1,3 +1,4 @@
+import { projectPublicProductEstimatePredecessor } from './helpers/publicProductEstimateSourceContinuity';
 import { projectPurchasedLabelOperationsPredecessor } from './helpers/purchasedLabelOperationsSourceContinuity';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -13,7 +14,7 @@ import { projectPurchasedLabelAuthorPredecessor } from './helpers/purchasedLabel
 import { projectRechargeRefundPredecessor, readRechargeRefundPredecessorFile } from './helpers/rechargeRefundSourceContinuity';
 
 const root = resolve(import.meta.dirname, '../..'), path = resolve(root, file);
-const physical = readFileSync(path, 'utf8'), native = projectPurchasedLabelAuthorPredecessor(file, projectPurchasedLabelOperationsPredecessor(file, physical));
+const physical = readFileSync(path, 'utf8'), native = projectPurchasedLabelAuthorPredecessor(file, projectPurchasedLabelOperationsPredecessor(file, projectPublicProductEstimatePredecessor(file, physical)));
 const current = projectPurchasedLabelRunnerPredecessor(file, native);
 const before = execFileSync('git', ['cat-file', 'blob', proof.predecessorCommit + ':' + file], { cwd: root, encoding: 'utf8' });
 const added = "    'test/out-product-labels-postgres.test.ts',\n";
@@ -27,7 +28,7 @@ describe('Out label runner exact successor before unchanged historical proofs', 
     expect(sha(current)).toBe(proof.current.sha256); expect(sha(before)).toBe(proof.predecessor.sha256);
     expect(Buffer.byteLength(current)).toBe(proof.current.bytes); expect(Buffer.byteLength(before)).toBe(proof.predecessor.bytes);
     expect(execFileSync('git', ['rev-parse', proof.predecessorCommit + ':' + file], { cwd: root, encoding: 'utf8' }).trim()).toBe(proof.predecessor.gitBlobSha1);
-    expect(projectPurchasedLabelRunnerPredecessor(file, projectPurchasedLabelAuthorPredecessor(file, projectPurchasedLabelOperationsPredecessor(file, readFileSync(path, 'utf8'))))).toBe(current); expect(Object.isFrozen(proof.current)).toBe(true);
+    expect(projectPurchasedLabelRunnerPredecessor(file, projectPurchasedLabelAuthorPredecessor(file, projectPurchasedLabelOperationsPredecessor(file, projectPublicProductEstimatePredecessor(file, readFileSync(path, 'utf8')))))).toBe(current); expect(Object.isFrozen(proof.current)).toBe(true);
   });
   it.each(['prefix', 'suffix', 'CRLF', 'same-size edit', 'old complete image', 'duplicate admission', 'different budget'])(
     'rejects unreviewed %s before the older reader can authorize it', kind => {

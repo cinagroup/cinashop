@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
-const { runtime } = require('./uni-store-runtime.cjs');
+const { runtime, tick } = require('./uni-store-runtime.cjs');
 const base = () => ({ id: 70, price: '10.00', stock: 8, isVip: 1, vipPrice: '0.00', otPrice: '99.00',cart_button:1,
   attr_value: [
     { unique: 'red001', suk: '红色', price: '10', ot_price: '12.00', vip_price: '9.00', stock: 8 },
@@ -26,7 +26,9 @@ test('actual product page switches all SKU prices and stock without using parent
     assert.equal(p.displayVipPrice.value, '18.00'); assert.equal(p.maxNum.value, 2); assert.equal(p.num.value, 2);
     p.pickSku({ ...p.skuList.value[0], vip_price: '1.00' }); assert.equal(p.selectedSku.value.unique, 'blue001');
     p.pickSku(p.skuList.value[2]); assert.equal(p.selectedSku.value.vip_price, '0.00'); assert.equal(p.displayVipPrice.value, null); assert.equal(p.maxNum.value, 0);
-    const calls = r.calls.length; await p.confirmSku(); assert.equal(r.calls.length, calls); assert.match(r.toasts.at(-1).title, /库存不足/);
+    // Settle the selected-SKU advisory read before isolating confirmation I/O.
+    await tick();
+    const calls = r.calls.length; await p.confirmSku(); await tick(); assert.equal(r.calls.length, calls); assert.match(r.toasts.at(-1).title, /库存不足/);
     p.pickSku(p.skuList.value[0]); assert.equal(p.num.value, 1); assert.equal(p.displayVipPrice.value, '9.00');
     p.buying.value = true; p.pickSku(p.skuList.value[1]); assert.equal(p.selectedSku.value.unique, 'red001');
     assert.ok(r.calls.every(c => !/cart\/add|order\/create|pay/.test(c.url)));

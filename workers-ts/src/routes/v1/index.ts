@@ -31,6 +31,7 @@ import * as PublicController from "@/controllers/api/v1/PublicController";
 import * as AgentExplanationController from '@/controllers/api/v1/AgentExplanationController';
 import * as PublicGeocodingController from "@/controllers/api/v1/PublicGeocodingController";
 import * as ProductController from "@/controllers/api/v1/ProductController";
+import { activityAuth } from '@/controllers/api/v1/PublicProductEstimateController';
 import * as ProductShareCode from '@/controllers/api/v1/ProductShareCodeController';
 import * as LegacyShareCode from '@/controllers/api/v1/LegacyShareCodeController';
 import * as WechatFollowPoster from '@/controllers/api/v1/WechatFollowPosterController';
@@ -428,7 +429,7 @@ v1Routes.get('/product/detail/:productId/coupons/:couponId/receipt',authMiddlewa
 v1Routes.get("/product/detail/recommend/:id", authMiddleware({ force: false }), ProductController.detailRecommend);
 v1Routes.get("/product/:id/community", authMiddleware({ force: false }), ProductController.productCommunity);
 v1Routes.get('/product/code/:id', authMiddleware({ force: true }), ProductShareCode.code);
-v1Routes.get("/product/detail/activity/:id", authMiddleware({ force: false }), ProductController.detailActivity);
+v1Routes.get("/product/detail/activity/:id", activityAuth, ProductController.detailActivity);
 v1Routes.get("/product/detail_content/:id", authMiddleware({ force: false }), ProductController.detailContent);
 v1Routes.get("/groom/list/:type", authMiddleware({ force: false }), ProductController.groomList);
 v1Routes.get("/product/hot", authMiddleware({ force: false }), ProductController.productHot);

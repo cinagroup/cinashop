@@ -43,6 +43,8 @@
         </view>
       </view>
 
+      <ProductEstimate v-if="!detail.is_presale_product" :estimate="productEstimate" :quantity="num" />
+
       <!-- 商品信息 -->
       <view class="info-section">
         <view class="goods-name">{{ detail.store_name }}</view>
@@ -260,6 +262,8 @@ import { reviewImageSource,reviewImagePreview } from '@/utils/reviewImage';
 import ThemePage from '@/components/ThemePage.vue';
 import ProductMedia from '@/components/productDetail/ProductMedia.vue';
 import ProductCoupons from '@/components/productDetail/ProductCoupons.vue';
+import ProductEstimate from '@/components/productDetail/ProductEstimate.vue';
+import { useProductEstimate } from '@/composables/useProductEstimate';
 import { useProductCoupons } from '@/composables/useProductCoupons';
 import { useProductCouponBuy } from '@/composables/useProductCouponBuy';
 import type { ProductCoupon } from '@/api/productCoupons';
@@ -343,6 +347,8 @@ const skuMode = ref<"cart" | "buy">("cart");
 const skuList = ref<SkuItem[]>([]);
 const selectedSku = ref<SkuItem | null>(null);
 const num = ref(1);
+const productEstimate = reactive(useProductEstimate(computed(() => detail.value?.id ?? 0),
+  computed(() => selectedSku.value?.unique ?? ''), computed(() => visible.value && !loading.value && !!detail.value && !detail.value.is_presale_product), currentView));
 const buying = ref(false);
 const preparedCart = ref<PreparedProductCart | null>(null), checkoutError = ref(''), purchaseNeedsRefresh = ref(false);
 const ordinaryRecovery = ref<OrdinaryCartRecovery | null>(null), ordinaryRecoveryInvalid = ref(false);
@@ -572,6 +578,7 @@ function currentView() {
     && owner.version === authStore.sessionVersion && owner.token === authStore.token && owner.uid === authStore.uid;
 }
 function clearView() {
+  productEstimate.clear();
   couponBuy.reset();
   revision++; detail.value = null; skuList.value = []; selectedSku.value = null; num.value = 1; skuVisible.value = false;
   discountPackages.value = []; selectedPackage.value = null; packageChoices.value = {}; packageVisible.value = false;

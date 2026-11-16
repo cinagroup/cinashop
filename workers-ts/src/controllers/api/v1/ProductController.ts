@@ -25,6 +25,7 @@ import { sql } from 'drizzle-orm';
 import { themeDeadlines } from '@/services/content/ThemeReadService';
 import { readProductCommunity } from '@/services/product/ProductDetailDesignData';
 import { publicProductPictures, renderProductPictures } from '@/services/activity/ProductAssetPolicy';
+import { productEstimate } from './PublicProductEstimateController';
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -220,6 +221,7 @@ export async function detailRecommend(c: C) {
 
 /** GET /api/product/detail/activity/:id */
 export async function detailActivity(c: C) {
+  if (new URL(c.req.url).searchParams.has('view')) return productEstimate(c);
   const id = Number(c.req.param("id"));
   if (!Number.isSafeInteger(id) || id <= 0) return jsonFail(c, "参数错误");
   const promotionTypeValue = c.req.query("promotions_type");

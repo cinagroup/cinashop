@@ -1,13 +1,14 @@
-import { and, asc, eq, inArray, or, sql } from 'drizzle-orm';
+import { and, eq, inArray, or, sql } from 'drizzle-orm';
 import { createContainerFromDb, withTx, type Container } from '@/lib/di';
-import { storeBargain, storeCart, storeCombination, storeCouponIssue, storeCouponIssueUser,
-  storeCouponUser, storeIntegral, storeOrder, storeProduct, storeProductAttrValue, storeSeckill } from '@/models/schema';
+import { storeBargain, storeCart, storeCombination,
+  storeIntegral, storeOrder, storeProduct, storeProductAttrValue, storeSeckill } from '@/models/schema';
 import { AuthException, ValidateException } from '@/utils/errors';
 import { StoreCartService } from './StoreCartService';
 import { centsToDecimal, decimalToCents } from './OrderBrokerageService';
 import { isPaidMembershipActive } from './StoreOrderCreateService';
 import { readMembershipPricingPolicy } from '@/services/user/MembershipPricingPolicy';
-import { evaluateOrderCoupon, prepareCouponScope, type PricedCouponItem } from '@/services/activity/OrderCouponService';
+import { type PricedCouponItem } from '@/services/activity/OrderCouponService';
+import { claimableOrdinaryEstimatedCoupon, readBestEstimatedCoupon } from '@/services/activity/PublicCouponEstimateService';
 import { legacyCouponProjection } from '@/services/activity/V2CouponCompatibilityService';
 import { quoteFirstOrderDiscount } from '@/services/activity/StoreNewcomerService';
 import { allocateCheckoutLineUnits, fitCheckoutLineCapacities } from './CheckoutLineAllocation';
@@ -20,16 +21,12 @@ import { assertBargainShippingMethod } from '@/services/activity/BargainShipping
 import type { CartComputationInput } from './CartComputationInput';
 import { assertIntegralOnceLimit, assertIntegralTotalLimit, readIntegralPurchasedQuantity } from '@/services/activity/IntegralPurchaseAdmission';
 
-type Coupon = typeof storeCouponUser.$inferSelect;
-type Issue = typeof storeCouponIssue.$inferSelect;
 type Cart = typeof storeCart.$inferSelect;
 type Product = typeof storeProduct.$inferSelect;
 interface ComputedRow { id: number; cartNum: number; productId: number; type: number; activityId: number;
   unique: string; isValid: boolean; truePrice: string; trueSumPrice: string; sumPrice: string;
   productInfo: { productType: number; stock: number; integral: number } | null; promotion?: OrderPromotionQuoteLine }
-interface Candidate { coupon: Coupon; issue: Issue; owned: boolean }
 export interface CartComputationActor { uid: number; passwordVersion: string; expiresAt: number }
-const CAP = 1000;
 // Force fresh SQL configuration without a KV write, even when a caller has Worker bindings.
 const READ_CONFIG = { CONFIG_KV: { get: async () => null, put: async () => {}, delete: async () => {} } };
 const cents = (value: string | number) => {
@@ -44,24 +41,8 @@ const sum = (values: number[]) => {
 };
 const money = (value: number) => Number(centsToDecimal(value));
 
-/** Mirror the existing manual claim writer's window/stock/limit admission. This
- * is a read-only offer, never an entitlement, decrement or synthetic owned row. */
-export function claimableCartCoupon(issue: Issue, received: number, historical: number, now: number): boolean {
-  if (issue.status !== 1 || issue.isDel !== 0 || issue.receiveType !== 1 || ![0,1].includes(issue.category)
-    || issue.appType !== 0 || issue.receiveLimit < 0 || (!issue.isPermanent && issue.remainCount <= 0)
-    || issue.startTime && issue.startTime.getTime() > now || issue.endTime && issue.endTime.getTime() < now
-    || received >= (issue.receiveLimit || 1) || issue.receiveLimit === 0 && historical > 0) return false;
-  if ((issue.couponTitle || issue.title).length > 64) return false; // The real owned-coupon column is varchar(64).
-  return issue.day > 0 ? Number.isFinite(new Date(now + issue.day * 86400000).getTime()) : Boolean(issue.useEndTime && Number.isFinite(issue.useEndTime.getTime())
-    && issue.useEndTime.getTime() >= now);
-}
-function hypotheticalClaim(issue: Issue, uid: number, now: number): Coupon {
-  return { id: 0, uid, issueCouponId: issue.id, couponTitle: issue.couponTitle || issue.title,
-    couponPrice: issue.couponPrice, useMinPrice: issue.useMinPrice, status: 0, isFail: 0,
-    startTime: issue.day > 0 ? new Date(now) : issue.useStartTime ?? new Date(now),
-    endTime: issue.day > 0 ? new Date(now + issue.day * 86400000) : issue.useEndTime,
-    useTime: null, type: issue.type, receiveTime: Math.floor(now / 1000), receiveSource: 'get' };
-}
+/** Compatibility export; shared admission is also used by the actual writer. */
+export const claimableCartCoupon = claimableOrdinaryEstimatedCoupon;
 
 /** Budget quotes do not reserve stock, claim coupons, create tokens, or contact providers. */
 export class CartComputationService {
@@ -152,33 +133,6 @@ export class CartComputationService {
       if (!Number.isSafeInteger(purchased) || purchased < 0 || purchased + cart.cartNum > activity.num) throw new ValidateException('已超过活动累计限购');
     }
   }
-  private async candidates(container: Container, uid: number, now: number): Promise<Candidate[]> {
-    const date = new Date(now).toISOString();
-    const [owned, issues] = await Promise.all([
-      container.db.select({ coupon: storeCouponUser, issue: storeCouponIssue }).from(storeCouponUser)
-        .leftJoin(storeCouponIssue, eq(storeCouponIssue.id, storeCouponUser.issueCouponId))
-        .where(and(eq(storeCouponUser.uid,uid),eq(storeCouponUser.status,0),eq(storeCouponUser.isFail,0),
-          sql`(${storeCouponUser.startTime} IS NULL OR ${storeCouponUser.startTime} <= ${date})`,
-          sql`(${storeCouponUser.endTime} IS NULL OR ${storeCouponUser.endTime} >= ${date})`)).orderBy(asc(storeCouponUser.id)).limit(CAP+1),
-      container.db.select().from(storeCouponIssue).where(and(eq(storeCouponIssue.status,1),eq(storeCouponIssue.isDel,0),
-        eq(storeCouponIssue.receiveType,1),inArray(storeCouponIssue.category,[0,1]),eq(storeCouponIssue.appType,0),
-        sql`(${storeCouponIssue.startTime} IS NULL OR ${storeCouponIssue.startTime} <= ${date})`,
-        sql`(${storeCouponIssue.endTime} IS NULL OR ${storeCouponIssue.endTime} >= ${date})`,
-        sql`(${storeCouponIssue.isPermanent} <> 0 OR ${storeCouponIssue.remainCount} > 0)`)).orderBy(asc(storeCouponIssue.id)).limit(CAP+1),
-    ]);
-    if (owned.length > CAP || issues.length > CAP) throw new ValidateException('有效优惠券超过预算读取上限，请联系商家');
-    const ids = issues.map(issue => issue.id);
-    const [counts, evidence] = ids.length ? await Promise.all([
-      container.db.select({ id: storeCouponUser.issueCouponId,count:sql<number>`COUNT(*)::int` }).from(storeCouponUser)
-        .where(and(eq(storeCouponUser.uid,uid),inArray(storeCouponUser.issueCouponId,ids))).groupBy(storeCouponUser.issueCouponId),
-      container.db.select({ id: storeCouponIssueUser.issueCouponId,count:sql<number>`COUNT(*)::int` }).from(storeCouponIssueUser)
-        .where(and(eq(storeCouponIssueUser.uid,uid),inArray(storeCouponIssueUser.issueCouponId,ids))).groupBy(storeCouponIssueUser.issueCouponId),
-    ]) : [[],[]];
-    const received = new Map(counts.map(row => [row.id,row.count])), historical = new Map(evidence.map(row => [row.id,row.count]));
-    return [...owned.flatMap(row => row.issue ? [{ coupon:row.coupon,issue:row.issue,owned:true }] : []),
-      ...issues.filter(issue => claimableCartCoupon(issue,received.get(issue.id)??0,historical.get(issue.id)??0,now))
-        .map(issue => ({ issue,coupon:hypotheticalClaim(issue,uid,now),owned:false }))];
-  }
   private async budget(container: Container, uid: number, input: CartComputationInput, products: Map<number,Product>, assumed: boolean, now: number) {
     const rows = await new StoreCartService(container).list(uid,{ mode:'compute',ids:input.cartIds,hypotheticalPaidMember:assumed }) as ComputedRow[];
     if (rows.length !== input.cartIds.length || rows.some(row => !row.isValid || !row.productInfo || row.cartNum > row.productInfo.stock))
@@ -197,16 +151,7 @@ export class CartComputationService {
     const firstOrder = first ? cents(first.firstOrderPrice) : 0;
     const items: PricedCouponItem[] = rows.map(row => ({ cart:{cartNum:row.cartNum},product:products.get(row.productId)!,
       unitPriceCents:cents(row.truePrice),promotion:row.promotion,couponEligibleGrossCents:row.promotion?.couponEligibleGrossCents }));
-    const candidates = normal && !first?.couponExclusive ? await this.candidates(container,uid,now) : [];
-    const scope = candidates.length ? await prepareCouponScope(container,items,candidates.map(candidate => candidate.issue)) : null;
-    let best: { candidate:Candidate; priceCents:number; lineEligibleCents:number[] } | null = null;
-    for (const candidate of candidates) {
-      try {
-        const evaluated = evaluateOrderCoupon(candidate.coupon,candidate.issue,scope!,now);
-        if (evaluated.priceCents > 0 && (!best || evaluated.priceCents > best.priceCents
-          || evaluated.priceCents === best.priceCents && candidate.owned && !best.candidate.owned)) best = { candidate,...evaluated };
-      } catch (error) { if (!(error instanceof ValidateException)) throw error; }
-    }
+    const best = normal && !first?.couponExclusive ? await readBestEstimatedCoupon(container,uid,items,now) : null;
     const discount = best?.priceCents ?? 0, pay = Math.max(0,total-discount-firstOrder);
     const gross = rows.map(row => cents(row.trueSumPrice)), capacities = best?.lineEligibleCents ?? gross;
     const apportioned = discount ? fitCheckoutLineCapacities(allocateCheckoutLineUnits(discount,capacities,4),capacities) : gross.map(()=>0);
@@ -218,14 +163,14 @@ export class CartComputationService {
     let coupon: Record<string,unknown> | [] = [];
     if (best) {
       const {candidate}=best;
-      coupon={...legacyCouponProjection(candidate.issue,{variant:'list',relatedProductIds:scope!.related.get(candidate.issue.id)}),
-        id:candidate.owned?candidate.coupon.id:candidate.issue.id,cid:candidate.issue.id,
-        coupon_title:candidate.coupon.couponTitle || candidate.issue.couponTitle || candidate.issue.title,is_use:candidate.owned,
-        coupon_price:money(cents(candidate.coupon.couponPrice)),use_min_price:money(cents(candidate.coupon.useMinPrice)),
-        true_coupon_price:money(discount),...(candidate.owned?{used:{id:candidate.coupon.id,cid:candidate.issue.id}}:{})};
+      coupon={...legacyCouponProjection(candidate.issue,{variant:'list',relatedProductIds:best.relatedProductIds}),
+        id:candidate.source==='owned'?candidate.ownedCoupon.id:candidate.issue.id,cid:candidate.issue.id,
+        coupon_title:(candidate.ownedCoupon?.couponTitle || candidate.issue.couponTitle || candidate.issue.title),is_use:candidate.source==='owned',
+        coupon_price:money(cents(candidate.terms.couponPrice)),use_min_price:money(cents(candidate.terms.useMinPrice)),
+        true_coupon_price:money(discount),...(candidate.source==='owned'?{used:{id:candidate.ownedCoupon.id,cid:candidate.issue.id}}:{})};
     }
-    return {raw,pay,member,promotions,discount,firstOrder,coupon,requiredIntegral,requiresClaim:!!best&&!best.candidate.owned,
-      issueId:best?.candidate.issue.id??0,userId:best?.candidate.owned?best.candidate.coupon.id:0,
+    return {raw,pay,member,promotions,discount,firstOrder,coupon,requiredIntegral,requiresClaim:best?.candidate.source==='issue',
+      issueId:best?.candidate.issue.id??0,userId:best?.candidate.source==='owned'?best.candidate.ownedCoupon.id:0,
       gifts:gift?.intent?.promotions.map(campaign=>({id:campaign.id,name:campaign.name,giveIntegral:campaign.give_integral,
         coupons:campaign.coupons.map(c=>({issueId:c.issue_id,title:c.title})),
         products:campaign.products.map(p=>({productId:p.product_id,quantity:p.quantity}))}))??[]};

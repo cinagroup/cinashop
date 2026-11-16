@@ -8,6 +8,8 @@ import { projectOwnedCoupon } from "./UserCouponWalletService";
 import { couponTemplateSnapshot } from '@/services/order/CheckoutCouponTemplateAuthority';
 
 type Coupon = typeof storeCouponUser.$inferSelect;
+/** Benefit facts can describe an unclaimed offer without pretending it is an owned coupon. */
+export type CouponBenefitTerms = Pick<Coupon, "status" | "isFail" | "startTime" | "endTime" | "couponPrice" | "useMinPrice">;
 type Issue = typeof storeCouponIssue.$inferSelect;
 export interface PricedCouponItem {
   cart: { cartNum: number };
@@ -65,7 +67,7 @@ export async function prepareCouponScope(container: Container, orderItems: reado
   return { related, items };
 }
 
-function evaluateCoupon(coupon: Coupon, issue: Issue | null, scope: Awaited<ReturnType<typeof prepareCouponScope>>, now: number) {
+function evaluateCoupon(coupon: CouponBenefitTerms, issue: Issue | null, scope: Awaited<ReturnType<typeof prepareCouponScope>>, now: number) {
   if (!issue) throw new ValidateException("优惠券模板不存在，无法校验适用范围");
   if (coupon.status !== 0 || coupon.isFail !== 0) throw new ValidateException("优惠券已使用或已失效");
   if (coupon.startTime && coupon.startTime.getTime() > now) throw new ValidateException("优惠券尚未到可用时间");

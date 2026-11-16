@@ -11,6 +11,7 @@
  */
 import { eq, and, desc, inArray, sql } from "drizzle-orm";
 import {claimMembershipCouponLocked,membershipCouponLockError,membershipCouponConflict} from './MembershipCouponService';
+import {ordinaryCouponIssueAdmission,ordinaryCouponClaimLimitAdmission,couponClaimUseWindow} from './CouponClaimAdmission';
 import {
   legacyCategory,
   storeActivity,
@@ -177,22 +178,10 @@ export class ActivityService {
         throw new NotFoundException("优惠券不存在或已停发");
       }
 
-      // Public self-claim is a manual-coupon operation. Hidden gift/newcomer
-      // catalogs are not an authority check; callers can submit any issue ID.
-      // Trusted registration/product grants have their own transaction paths.
-      // Member/popup coupons stay closed until genuine entitlement is checked.
-      // Ordinary PHP issuers use category=1; new canonical issuers use 0.
-      // Neither value grants paid membership or a trusted delivery capability.
-      if (issue.receiveType !== 1 || ![0, 1].includes(issue.category) || issue.appType !== 0) {
-        throw new ValidateException("该优惠券不允许手动领取");
-      }
-
+      // Shared pure admission does not replace the locked grant transaction.
       const now = new Date();
-      if (issue.startTime && issue.startTime > now) throw new ValidateException("优惠券未开始");
-      if (issue.endTime && issue.endTime < now) throw new ValidateException("优惠券已结束");
-      if (!issue.isPermanent && issue.remainCount <= 0) {
-        throw new ValidateException("优惠券已领完");
-      }
+      const admission = ordinaryCouponIssueAdmission(issue, now.getTime());
+      if (admission) throw new ValidateException(admission);
 
       const receivedRows = await tx
         .select({ count: sql<number>`COUNT(*)::int` })
@@ -200,17 +189,13 @@ export class ActivityService {
         .where(and(eq(storeCouponUser.uid, uid), eq(storeCouponUser.issueCouponId, issueId)));
       const received = receivedRows[0]?.count ?? 0;
       if (issue.receiveLimit < 0) throw new ValidateException('优惠券限领配置无效');
-      // PHP's public controller always passes more=false. A legacy default 0
-      // is not permission for unlimited direct claims. Preserve issue evidence
-      // even if its owned coupon was later removed; do not join duplicate logs.
-      const effectiveLimit = issue.receiveLimit || 1;
+      // PHP's public controller passes more=false. A legacy default 0 is
+      // one lifetime claim, including evidence after an owned row was removed.
       const [evidence] = issue.receiveLimit === 0 ? await tx
         .select({ count: sql<number>`COUNT(*)::int` }).from(storeCouponIssueUser)
         .where(and(eq(storeCouponIssueUser.uid, uid), eq(storeCouponIssueUser.issueCouponId, issueId))) : [];
-      if (received >= effectiveLimit || (issue.receiveLimit === 0 && (evidence?.count ?? 0) > 0)) {
-        throw new ValidateException(`每人限领 ${effectiveLimit} 张`);
-      }
-
+      const limitReason = ordinaryCouponClaimLimitAdmission(issue.receiveLimit, received, evidence?.count ?? 0);
+      if (limitReason) throw new ValidateException(limitReason);
       if (!issue.isPermanent) {
         const updated = await tx
           .update(storeCouponIssue)
@@ -220,16 +205,9 @@ export class ActivityService {
         if (!updated[0]) throw new ValidateException("优惠券已领完");
       }
 
-      let startTime = now;
-      let endTime: Date;
-      if (issue.day > 0) {
-        endTime = new Date(now.getTime() + issue.day * 86_400_000);
-      } else {
-        if (!issue.useEndTime) throw new ValidateException("优惠券固定有效期未配置");
-        if (!Number.isFinite(issue.useEndTime.getTime()) || issue.useEndTime < now) throw new ValidateException("优惠券固定使用期已过期");
-        startTime = issue.useStartTime ?? now;
-        endTime = issue.useEndTime;
-      }
+      const window = couponClaimUseWindow(issue, now.getTime());
+      if (window.reason || !window.endTime) throw new ValidateException(window.reason || '优惠券固定有效期未配置');
+      const { startTime, endTime } = window;
       const couponRows = await tx
         .insert(storeCouponUser)
         .values({

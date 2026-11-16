@@ -99,6 +99,7 @@ describe("product coupon migration", () => {
     const outbox = readFileSync("src/services/order/OrderOutboxService.ts", "utf8");
     const grants = readFileSync("src/services/activity/ProductCouponService.ts", "utf8");
     const receive = readFileSync("src/services/activity/ActivityService.ts", "utf8");
+    const admission = readFileSync("src/services/activity/CouponClaimAdmission.ts", "utf8");
     const admin = readFileSync("src/controllers/api/v1/AdminCrudController.ts", "utf8");
     expect(createOrder).toContain('from "@/services/activity/OrderCouponService"');
     expect(createOrder).toContain("await resolveOrderCoupon(c, uid, params.couponId, orderItems)");
@@ -113,10 +114,11 @@ describe("product coupon migration", () => {
     expect(grants).toContain("linkByIssue");
     expect(grants).toContain("storeOrderProductCouponReward");
     expect(receive).toContain('.for("update")');
-    expect(receive).toContain("const effectiveLimit = issue.receiveLimit || 1");
-    expect(receive).toContain("received >= effectiveLimit");
+    expect(receive).toContain("ordinaryCouponClaimLimitAdmission(issue.receiveLimit, received, evidence?.count ?? 0)");
+    expect(admission).toContain("const effectiveLimit = receiveLimit || 1");
+    expect(admission).toContain("received >= effectiveLimit");
     expect(receive).toContain("from(storeCouponIssueUser)");
-    expect(receive).toContain("(issue.receiveLimit === 0 && (evidence?.count ?? 0) > 0)");
+    expect(admission).toContain("receiveLimit === 0 && historical > 0");
     expect(receive).not.toContain("storeCouponUserDao.countReceived");
     expect(admin).toContain("couponType: scopeType");
     expect(admin).toContain("totalCount - claimedCount");

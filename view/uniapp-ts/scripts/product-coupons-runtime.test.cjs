@@ -260,12 +260,22 @@ test('H5 same-origin exclusive lock denial creates no journal and no grant', asy
     assert.equal(writes(r).length, 0); assert.equal(r.storage.get(key(11)), undefined); assert.match(r.c.state.actionError, /另一页面/u);
   } finally { r.stop(); assert.equal(events.size, 0); if (saved) Object.defineProperty(globalThis, 'window', saved); else delete globalThis.window; }
 });
+// A browser dispatches every listener. Independent estimate and coupon hooks
+// share these events; a one-function Map would silently replace the first hook.
+function listenerRegistry() {
+  const entries = new Map();
+  return { get size() { return entries.size; },
+    add(name, fn) { const list = entries.get(name) ?? new Set(); list.add(fn); entries.set(name, list); },
+    remove(name, fn) { const list = entries.get(name); list?.delete(fn); if (!list?.size) entries.delete(name); },
+    get(name) { return () => { for (const fn of [...(entries.get(name) ?? [])]) fn(); }; },
+  };
+}
 test('H5 lock, browser visibility, storage and disposal fence the actual pending native request', async () => {
-  const saved = Object.fromEntries(['window', 'document'].map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)])), events = new Map(), documentEvents = new Map(), locks = [], gate = deferred();
-  const doc = { visibilityState: 'visible', addEventListener: (name, fn) => documentEvents.set(name, fn), removeEventListener: (name, fn) => { if (documentEvents.get(name) === fn) documentEvents.delete(name); } };
+  const saved = Object.fromEntries(['window', 'document'].map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)])), events = listenerRegistry(), documentEvents = listenerRegistry(), locks = [], gate = deferred();
+  const doc = { visibilityState: 'visible', addEventListener: (name, fn) => documentEvents.add(name, fn), removeEventListener: (name, fn) => { documentEvents.remove(name, fn); } };
   Object.defineProperty(globalThis, 'document', { configurable: true, value: doc });
   Object.defineProperty(globalThis, 'window', { configurable: true, value: { location: { hash: '' }, navigator: { locks: { request: async (name, options, action) => { locks.push([name, options]); return action({}); } } },
-    addEventListener: (name, fn) => events.set(name, fn), removeEventListener: (name, fn) => { if (events.get(name) === fn) events.delete(name); } } });
+    addEventListener: (name, fn) => events.add(name, fn), removeEventListener: (name, fn) => { events.remove(name, fn); } } });
   const r = setup({ claim: (call, commit) => { const result = commit(); return gate.promise.then(() => result); } });
   try { await r.open(); const claim = r.c.claim(130001); await tick(); assert.equal(writes(r).length, 1); assert.equal(locks.length, 1);
     doc.visibilityState = 'hidden'; documentEvents.get('visibilitychange')(); assert.deepEqual(r.c.state.items, []); gate.resolve(); await claim;

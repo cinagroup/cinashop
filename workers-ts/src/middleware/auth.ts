@@ -27,6 +27,8 @@ import type { AppVariables, AuthUser, Env } from "@/env";
 interface AuthOptions {
   /** true=必须登录, 未登录抛 410000; false=可选, 未登录放行 uid=0 */
   force: boolean;
+  /** Read-only advisory routes reject invalid tokens without deleting buckets. */
+  readOnly?: boolean;
 }
 
 /** 从 HTTP header 或 WebSocket 子协议提取 token。 */
@@ -113,7 +115,7 @@ export function authMiddleware(opts: AuthOptions): MiddlewareHandler<{
     try {
       payload = await verifyToken(token, env.APP_KEY);
     } catch {
-      await clearToken(key, env).catch(() => {});
+      if (!opts.readOnly) await clearToken(key, env).catch(() => {});
       if (force) throw new AuthException("登录已过期,请重新登录", ApiErrorCode.ERR_EXPIRED);
       await next();
       return;
@@ -127,7 +129,7 @@ export function authMiddleware(opts: AuthOptions): MiddlewareHandler<{
 
     // bucket uid 与 JWT uid 必须一致 (Redis 不可用时跳过此检查)
     if (hasRedis && bucket && Number(payload.id) !== Number(bucket.uid)) {
-      await clearToken(key, env).catch(() => {});
+      if (!opts.readOnly) await clearToken(key, env).catch(() => {});
       if (force) throw new AuthException("登录状态有误,请重新登录", ApiErrorCode.ERR_BANNED);
       await next();
       return;

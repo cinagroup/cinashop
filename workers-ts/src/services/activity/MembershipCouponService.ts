@@ -6,6 +6,7 @@ import {normalizeConfigScalar,parseConfigInteger} from '@/utils/config';
 import {themeDeadlines} from '@/services/content/ThemeReadService';
 import {membershipCouponId} from './MembershipCouponInput';
 import {protectCheckoutPricingSources} from '@/services/order/CheckoutPricingSources';
+import {membershipCouponIssueAdmission as admission,membershipCouponHasHistory} from './CouponClaimAdmission';
 
 type Issue=typeof storeCouponIssue.$inferSelect;
 type Owned=typeof storeCouponUser.$inferSelect;
@@ -34,22 +35,9 @@ async function eligibility(tx:DbClient,uid:number,now:number,lock=false):Promise
  return{member_enabled,coupon_right_enabled,is_svip,eligible,reason};
 }
 export async function readMembershipCouponEligibility(tx:DbClient,uid:number,now:number){return eligibility(tx,uid,now);}
-function admission(issue:Issue,now:Date):string{
- if(issue.category!==2||issue.receiveType!==1||issue.appType!==0)return'该优惠券不允许手动领取';
- if(issue.status!==1||issue.isDel!==0)return'优惠券不存在或已停发';
- if(issue.startTime&&issue.startTime>now)return'优惠券未开始';if(issue.endTime&&issue.endTime<now)return'优惠券已结束';
- if(![1,2].includes(issue.type)||![0,1,2,3].includes(issue.couponType)||issue.receiveLimit<0||![0,1].includes(issue.isPermanent))return'优惠券配置无效';
- try{money(issue.couponPrice);money(issue.useMinPrice);}catch{return'优惠券金额配置无效';}
- if(issue.type===2&&(Number(issue.couponPrice)<=0||Number(issue.couponPrice)>100))return'折扣优惠券配置无效';
- if((issue.couponTitle||issue.title).length>64)return'优惠券名称超过可领取范围';
- if(!issue.isPermanent&&issue.remainCount<=0)return'优惠券已领完';
- if(!Number.isSafeInteger(issue.day)||issue.day<0||!Number.isFinite(now.getTime()+issue.day*86400000)||Math.abs(now.getTime()+issue.day*86400000)>8640000000000000)return'优惠券有效期配置无效';
- if(issue.day===0&&(!issue.useEndTime||!Number.isFinite(issue.useEndTime.getTime())||issue.useEndTime<now))return'优惠券固定使用期已过期或未配置';
- if(issue.day===0&&issue.useStartTime&&issue.useEndTime&&issue.useStartTime>issue.useEndTime)return'优惠券固定使用期配置无效';return'';
-}
 export function membershipCouponLockError(error:unknown):boolean{let current:unknown=error;for(let n=0;n<5&&current&&typeof current==='object';n++){const row=current as {code?:unknown;cause?:unknown};if(['55P03','40P01','40001'].includes(String(row.code)))return true;current=row.cause;}return false;}
-/** Caller owns this exact issue FOR UPDATE; ordinary ActivityService code is
- * deliberately not rewritten. Legacy receives a fresh grant or a true refusal;
+/** Caller owns this exact issue FOR UPDATE; ordinary grants retain their
+ * separate transaction. Legacy receives a fresh grant or a true refusal;
  * only the modern caller can replay its already-owned coupon without a grant. */
 export async function claimMembershipCouponLocked(tx:DbClient,uid:number,issue:Issue|undefined,modern:boolean):Promise<{row:Owned;replayed:boolean}>{
  if(!issue||issue.category!==2)throw new ValidateException('该优惠券不允许手动领取');
@@ -57,7 +45,7 @@ export async function claimMembershipCouponLocked(tx:DbClient,uid:number,issue:I
  if(modern&&previous)return{row:previous,replayed:true};
  if(!modern){if(issue.receiveType!==1||issue.appType!==0)throw new ValidateException('该优惠券不允许手动领取');const[account]=await tx.select().from(user).where(eq(user.uid,uid)).limit(1).for('share',{noWait:true});if(!genuine(account,Math.floor(Date.now()/1000)))throw new ValidateException('该优惠券不允许手动领取');}
  const evidence=await tx.select().from(storeCouponIssueUser).where(and(eq(storeCouponIssueUser.uid,uid),eq(storeCouponIssueUser.issueCouponId,issue.id))).limit(1);
- if(previous||evidence.length){if(modern)throw membershipCouponConflict();throw new ValidateException('已领取过该优惠券，每人限领1张');}
+ if(membershipCouponHasHistory(previous?1:0,evidence.length)){if(modern)throw membershipCouponConflict();throw new ValidateException('已领取过该优惠券，每人限领1张');}
  const now=new Date(),reason=admission(issue,now);if(reason)throw new ValidateException(reason);
  const allowed=await eligibility(tx,uid,Math.floor(now.getTime()/1000),true);if(!allowed.eligible)throw new ValidateException('该优惠券不允许手动领取：'+allowed.reason);
  if(!issue.isPermanent){const[changed]=await tx.update(storeCouponIssue).set({remainCount:sql`${storeCouponIssue.remainCount}-1`}).where(and(eq(storeCouponIssue.id,issue.id),gte(storeCouponIssue.remainCount,1))).returning({id:storeCouponIssue.id});if(!changed)throw new ValidateException('优惠券已领完');}

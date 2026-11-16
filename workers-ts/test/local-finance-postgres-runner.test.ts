@@ -2271,3 +2271,45 @@ describe('Uni coupon buy exact native and Browser owned runner admission', () =>
     const output = admission(args); expect(output).toContain(error); expect(output).not.toContain(sentinel);
   });
 });
+
+describe('Public product estimate exact native and Browser owned runner admission', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'cinashop-public-product-estimate-admission-'));
+  const bin = join(directory, 'bin'), hook = join(directory, 'block-native-launch.mjs');
+  const sentinel = 'PUBLIC_PRODUCT_ESTIMATE_NATIVE_COMMAND_BOUNDARY';
+  const mode = 'audit:public-product-estimate-browser', native = 'test/public-product-estimate-native.test.ts';
+  mkdirSync(bin);
+  for (const name of ['postgres', 'initdb', 'pg_ctl', 'psql']) writeFileSync(join(bin, `${name}${process.platform === 'win32' ? '.exe' : ''}`), 'Native launch must be intercepted');
+  writeFileSync(hook, `import childProcess from 'node:child_process';\nimport { syncBuiltinESMExports } from 'node:module';\nchildProcess.spawnSync = () => { throw new Error('${sentinel}'); };\nsyncBuiltinESMExports();\n`);
+  afterAll(() => rmSync(directory, { recursive: true, force: true }));
+  const admission = (args: string[]) => {
+    const result = spawnSync(process.execPath, ['--import', pathToFileURL(hook).href, script, ...args], {
+      cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000,
+      env: { ...process.env, TEST_FINANCE_LOCAL_CACHE_ROOT: directory, TEST_BROWSER_PACKAGE_JSON: '', TEST_BROWSER_EXECUTABLE: '', TEST_BROWSER_OUTPUT_DIR: '' },
+    });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    return result.stderr;
+  };
+  it.each([native, mode])('admits the exact complete entry %s to the intercepted owned native boundary', entry => {
+    expect(admission(['--schema-maintenance', bin, entry])).toContain(sentinel);
+  });
+  it.each([
+    { label: 'native suffix', args: ['--schema-maintenance', bin, native + '.extra'], error: 'Only explicit unit test paths are accepted' },
+    { label: 'native alternate extension', args: ['--schema-maintenance', bin, 'test/public-product-estimate-native.other.ts'], error: 'Only explicit unit test paths are accepted' },
+    { label: 'unreviewed native spelling', args: ['--schema-maintenance', bin, 'test/public-product-estimate-native-extra.test.ts'], error: 'Test does not exist' },
+    { label: 'native arbitrary config', args: ['--schema-maintenance', bin, native, '--config', 'vitest.config.ts'], error: 'Only explicit unit test paths are accepted' },
+    { label: 'native arbitrary workers', args: ['--schema-maintenance', bin, native, '--maxWorkers=2'], error: 'Only explicit unit test paths are accepted' },
+    { label: 'native unreviewed maintenance peer', args: ['--schema-maintenance', bin, native, 'test/price.test.ts'], error: 'Schema maintenance accepts only' },
+    { label: 'late maintenance flag', args: [bin, '--schema-maintenance', native], error: 'Only explicit unit test paths are accepted' },
+    { label: 'browser without maintenance', args: [bin, mode], error: 'Only explicit unit test paths are accepted' },
+    { label: 'browser in runtime mode', args: ['--runtime', bin, mode], error: '--runtime accepts only' },
+    { label: 'browser mixed native file', args: ['--schema-maintenance', bin, mode, native], error: 'Only explicit unit test paths are accepted' },
+    { label: 'browser changed spelling', args: ['--schema-maintenance', bin, mode + '-other'], error: 'Only explicit unit test paths are accepted' },
+    { label: 'browser literal case filter', args: ['--schema-maintenance', '--case', 'coupon', bin, mode], error: 'Literal cases apply only to explicit test files' },
+    { label: 'browser verbose override', args: ['--schema-maintenance', '--verbose-tests', bin, mode], error: 'Verbose reporting applies only to explicit native test files' },
+    { label: 'browser worker override', args: ['--schema-maintenance', bin, mode, '--maxWorkers=2'], error: 'Only explicit unit test paths are accepted' },
+    { label: 'browser config override', args: ['--schema-maintenance', bin, mode, '--config', 'vitest.config.ts'], error: 'Only explicit unit test paths are accepted' },
+    { label: 'browser raw filename', args: ['--schema-maintenance', bin, 'test/browser/public-product-estimate.acceptance.ts'], error: 'Only explicit unit test paths are accepted' },
+  ])('rejects $label before native launch', ({ args, error }) => {
+    const output = admission(args); expect(output).toContain(error); expect(output).not.toContain(sentinel);
+  });
+});
