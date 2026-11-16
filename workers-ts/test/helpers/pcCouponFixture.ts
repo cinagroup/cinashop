@@ -6,7 +6,7 @@ import { storeCouponIssue, storeCouponUser, storeCouponProduct, storeOrderCartIn
 export async function createPcCouponFixture(extraTables: PgTable[] = []) {
   const fixture = await createPcCheckoutQuoteFixture([storeCouponIssue, storeCouponUser, storeCouponProduct, storeOrderCartInfo, storeOrderStatus, printDocument, ...extraTables]);
   try {
-    fixture.config.first_order_status = "0";
+    await fixture.setConfig({ first_order_status: "0" });
     await fixture.db.insert(storeCouponIssue).values([
       { id: 1, couponType: 0, type: 1, couponTitle: "现金券", status: 1 },
       { id: 2, couponType: 0, type: 2, couponTitle: "折扣券", status: 1 },

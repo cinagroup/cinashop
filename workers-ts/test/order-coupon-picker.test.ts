@@ -76,9 +76,9 @@ describe("order coupon picker with authoritative pricing and disposable SQL", ()
     }
   });
   it("uses the exact first-order exclusion even when its configured discount rounds to zero, and excludes marketing", async () => {
-    fixture.config.first_order_status = "1"; fixture.config.first_order_discount = "100";
+    await fixture.setConfig({ first_order_status: "1", first_order_discount: "100" });
     try { expect((await get()).body.data).toEqual([]); }
-    finally { fixture.config.first_order_status = "0"; fixture.config.first_order_discount = "90"; }
+    finally { await fixture.setConfig({ first_order_status: "0", first_order_discount: "90" }); }
     try { await fixture.db.update(storeCart).set({ type: 1 }).where(eq(storeCart.id, 1)); expect((await get()).body.data).toEqual([]); }
     finally { await fixture.db.update(storeCart).set({ type: 0 }).where(eq(storeCart.id, 1)); }
   });

@@ -8,17 +8,24 @@ import { acquireCheckoutPricingLock } from '@/migrations/checkoutPricingLock';
 const MEMBERSHIP_KEYS = [
   'member_func_status', 'member_card_status', 'svip_price_status',
 ] as const;
+const FIRST_ORDER_KEYS = [
+  'newcomer_status', 'first_order_status', 'first_order_discount',
+  'first_order_discount_limit', 'newcomer_limit_status', 'newcomer_limit_time',
+] as const;
 const PRICING_KEYS = [
   ...MEMBERSHIP_KEYS,
+  ...FIRST_ORDER_KEYS,
   'integral_ratio_status', 'integral_ratio', 'integral_max_type', 'integral_max_num', 'integral_max_rate',
   'whole_free_shipping', 'store_free_postage', 'offline_postage',
 ] as const;
 type PricingRight = Pick<typeof memberRight.$inferSelect, 'rightType' | 'number' | 'status'>;
 
-/** One SQL/MVCC snapshot for the fixed 11 keys and two rights; no KV authority.
+/** One SQL/MVCC snapshot for the fixed 17 keys and two rights; no KV authority.
  * Config priority matches SystemConfigDao (global scope, sort DESC/id DESC).
  * Config status is field visibility, NOT a switch. Rights retain the legacy
  * lowest-id winner, even when disabled. Missing/empty normalization is unchanged.
+ * The six first-order values stay raw: their shared legacy parser performs the
+ * single scalar decode. The existing eleven fields retain their normalization.
  * Scalar LIMITs bound data returned to the Worker despite historical duplicates.
  */
 export async function readCheckoutPricingSources(db: DbClient) {
@@ -31,7 +38,13 @@ export async function readMembershipPricingSources(db: DbClient) {
   return readPricingSources(db, MEMBERSHIP_KEYS, false);
 }
 
-async function readPricingSources(db: DbClient, keys: readonly string[], includeExpress: boolean) {
+/** The same bounded SQL projection for first-order advice/cart reads. No
+ * membership-right query, KV lookup or cache refill is needed for these keys. */
+export async function readFirstOrderPricingSources(db: DbClient) {
+  return (await readPricingSources(db, FIRST_ORDER_KEYS, false, false)).values;
+}
+
+async function readPricingSources(db: DbClient, keys: readonly string[], includeExpress: boolean, includeVip = true) {
   const configPairs = keys.flatMap(name => [sql`${name}::text`, sql`(
     SELECT ${systemConfig.value} FROM ${systemConfig}
     WHERE ${systemConfig.isStore} = 0 AND ${systemConfig.menuName} = ${name}
@@ -44,11 +57,12 @@ async function readPricingSources(db: DbClient, keys: readonly string[], include
   )`;
   const [row] = await db.select({
     values: sql<Record<string, string | null>>`json_build_object(${sql.join(configPairs, sql`, `)})`,
-    vip: right('vip_price'), express: includeExpress ? right('express') : sql<null>`NULL`,
+    vip: includeVip ? right('vip_price') : sql<null>`NULL`, express: includeExpress ? right('express') : sql<null>`NULL`,
   }).from(sql`(VALUES (1)) checkout_pricing_source(n)`);
   if (!row) throw new ValidateException('订单计价配置读取失败');
   return {
-    values: Object.fromEntries(keys.map(name => [name, normalizeConfigScalar(row.values[name] ?? '')])),
+    values: Object.fromEntries(keys.map(name => [name, FIRST_ORDER_KEYS.some(key => key === name)
+      ? row.values[name] ?? '' : normalizeConfigScalar(row.values[name] ?? '')])),
     rightRows: [row.vip, row.express].filter((value): value is PricingRight => value !== null),
   };
 }

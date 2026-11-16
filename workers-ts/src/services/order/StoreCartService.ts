@@ -19,7 +19,7 @@ import { readMembershipPricingPolicy } from "@/services/user/MembershipPricingPo
 import { assertOrdinaryVipCandidate, protectOrdinaryVipCart } from './OrdinaryVipCartAdmission';
 import { ValidateException, NotFoundException } from "@/utils/errors";
 import {
-  quoteFirstOrderDiscount,
+  quoteFirstOrderDiscountFromDb,
   isNewcomerEligibleFromDb,
   newcomerBaseProductIsEligible,
   StoreNewcomerService,
@@ -127,10 +127,8 @@ export class StoreCartService {
 
   private async applyPromotions(uid: number, lines: OrderPromotionInputLine[], result: Record<string, unknown>[], legacy = false, skipGifts = false) {
     if (!lines.length) return;
-    // SQL remains the source when the cart service is used without Worker bindings.
-    const configEnv = this.env ?? { CONFIG_KV: { get: async () => null, put: async () => {}, delete: async () => {} } };
     const firstOrder = uid > 0
-      ? await quoteFirstOrderDiscount(this.container, configEnv, uid, lines.reduce((sum, line) => sum + line.memberUnitPriceCents * line.quantity, 0))
+      ? await quoteFirstOrderDiscountFromDb(this.container, uid, lines.reduce((sum, line) => sum + line.memberUnitPriceCents * line.quantity, 0))
       : { eligible: false };
     const quote = await quoteOrderPromotions(this.container, { uid, lines, firstOrderEligible: firstOrder.eligible });
     const byId = new Map(quote.lines.map(line => [String(line.key), line]));
@@ -1619,10 +1617,8 @@ export class StoreCartService {
   async quoteFirstOrder(
     uid: number,
     cartIds: number[],
-    configEnv?: SystemConfigEnv,
+    _configEnv?: SystemConfigEnv,
   ): Promise<FirstOrderDiscountQuote> {
-    const runtime = configEnv ?? this.env;
-    if (!runtime) throw new ValidateException("首单优惠配置不可用");
     if (!cartIds.length || cartIds.length > 200 || new Set(cartIds).size !== cartIds.length) {
       throw new ValidateException("请选择有效的结算商品");
     }
@@ -1665,7 +1661,7 @@ export class StoreCartService {
       totalCents += lineCents;
     }
     assertProductPurchaseBatch(limitLines);
-    return quoteFirstOrderDiscount(this.container, runtime, uid, totalCents);
+    return quoteFirstOrderDiscountFromDb(this.container, uid, totalCents);
   }
 
   private async resolveIntegralSku(params: {

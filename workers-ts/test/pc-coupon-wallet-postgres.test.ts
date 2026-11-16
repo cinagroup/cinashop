@@ -59,12 +59,12 @@ describe("PC coupon wallet and checkout through real controller and isolated SQL
     expect(await fixture.snapshot()).toEqual(before); expect(await fixture.db.select().from(storeCouponUser)).toEqual(coupons);
   });
   it("reports first-order priority explicitly in the real amounts without consuming the requested coupon", async () => {
-    fixture.config.first_order_status = "1";
+    await fixture.setConfig({ first_order_status: "1" });
     try {
       const result = await post("/api/order/confirm", { cartIds: [1], addressId: 11, couponId: 41 });
       expect(result.status, result.msg).toBe(200);
       expect(result.data.priceGroup).toMatchObject({ couponPrice: "0.00", firstOrderPrice: "1.80", pay_price: "19.20" });
-    } finally { fixture.config.first_order_status = "0"; }
+    } finally { await fixture.setConfig({ first_order_status: "0" }); }
   });
   it("creates exactly one unpaid order with the selected coupon and reserves it once on an identical retry", async () => {
     vi.spyOn(StoreOrderCreateService.prototype, "createOrder").mockImplementation((params) => StoreOrderCreateService.createWithRuntime(fixture.container,

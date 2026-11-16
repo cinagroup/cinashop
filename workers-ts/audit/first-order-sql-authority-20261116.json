@@ -1,0 +1,704 @@
+{
+  "schema": "php-ts-first-order-sql-authority/v1",
+  "generatedAtUtc": "2026-11-16T20:11:43.807446+00:00",
+  "baseCommit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+  "sourceBranch": "codex/first-order-sql-authority",
+  "scope": "First-order pricing SQL authority across public advice, cart, ordinary checkout and Admin assisted snapshot; final pricing fence semantic recheck",
+  "wholeMigrationComplete": false,
+  "localAcceptancePassed": true,
+  "deliveryStatusAtReport": "local acceptance complete; commit/push/CI receipts collected separately",
+  "sourceManifestSha256": "e10b1673125eccbc646dd0d62553af80261b730d83410d1f25b64f0ed9263c7d",
+  "dependencyManifestSha256": "d422e7bdfdeb1b2c4bbbefda6d6650c7592de6d0dfbd23eb3c20cbec7218c948",
+  "sourceFiles": [
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "a1019471f7de10dc39f6f14f088e4d7dbdf130e536b36ccc493542f6dfce8353"
+    },
+    {
+      "path": "workers-ts/src/services/activity/StoreNewcomerService.ts",
+      "sha256": "6a3333b71f62be7fbf4250eaaaa6ecbe7da34903663114f3e5925d9a8ff9e302"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminAssistedOrderService.ts",
+      "sha256": "de68a9b449e23e94ba910dbd342e4fe0a9f5a9fbe376ae563e254d5413ad5c96"
+    },
+    {
+      "path": "workers-ts/src/services/order/CartComputationService.ts",
+      "sha256": "a28cf1128a777db4a843d3d875fbdc93e06d315d9ab8e6e0caaad1dad0b4c0bb"
+    },
+    {
+      "path": "workers-ts/src/services/order/CheckoutPricingSources.ts",
+      "sha256": "1e12b19c791774f6ce4ef4d9890d367d9571153c462978ac0041bf6ffef272f8"
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreCartService.ts",
+      "sha256": "5242344f84edd36c7af2d63cd4d8c25f8f01f869eaba5f95efd511b99f25c159"
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+      "sha256": "daf3feaa898242e42921dffdafb902d222582f3d4b364f4ad356fb8f4fc07acf"
+    },
+    {
+      "path": "workers-ts/test/assisted-purchase-runtime-cases.ts",
+      "sha256": "e2250b8c932d0abde4c1e647f83f910e770175bad989c619c5a7661334482413"
+    },
+    {
+      "path": "workers-ts/test/checkout-confirmation.test.ts",
+      "sha256": "e5ccc99cf1c1f2d5870e6c6ce019dc0aa9ad91bdbab6ceeec2b6d9fdb2bb00cf"
+    },
+    {
+      "path": "workers-ts/test/checkout-pricing-config-authority.test.ts",
+      "sha256": "1dcc8e0166363fbad116d14bebd4afcdef2d3d919910495488e3a5e4c11ea48f"
+    },
+    {
+      "path": "workers-ts/test/first-order-authority-source-continuity.test.ts",
+      "sha256": "dbb506b495f39c8bfd9a4912d9defdc21c3e49cb694e8d57d008c27ae6a0854a"
+    },
+    {
+      "path": "workers-ts/test/first-order-sql-authority.test.ts",
+      "sha256": "0b45050ccddd0880ee4121e60bfc8b887ca4684438f015f20273558dac13040b"
+    },
+    {
+      "path": "workers-ts/test/fixtures/first-order-authority-source-continuity-20261116.json",
+      "sha256": "97fab9c318a99855eaea69dc2bad115eb0c4ae32898d0f4bbbd7768464d1bfd2"
+    },
+    {
+      "path": "workers-ts/test/helpers/firstOrderAuthoritySourceContinuity.ts",
+      "sha256": "0524df4a437972d0c83662074bb4f47a434d464930832fd56440b41c0222f13a"
+    },
+    {
+      "path": "workers-ts/test/helpers/pcCheckoutQuoteFixture.ts",
+      "sha256": "c2fc49e4faaaeb0b63f6c8da15b5422ab457243f09959d79347eeab41a0e9ccb"
+    },
+    {
+      "path": "workers-ts/test/helpers/pcCouponFixture.ts",
+      "sha256": "c2c824f85ef88864626c514ef4a2f97452fe4bdea667586edf767aebb55c1aef"
+    },
+    {
+      "path": "workers-ts/test/helpers/providerTransportSourceContinuity.ts",
+      "sha256": "e8f1fc043b1326ee0a1ce32442d725ea234e224818ce182625b4d9e2734020c3"
+    },
+    {
+      "path": "workers-ts/test/integration/FirstOrderDiscountPostgresScenario.ts",
+      "sha256": "a18cd6a79a6e8f86b1747147f78fa03bb3a2d53ba7328c82ca7b0019cffd4041"
+    },
+    {
+      "path": "workers-ts/test/membership-pricing-policy.test.ts",
+      "sha256": "8e708013655eec3af117b200b0218e007dc8bd6718f53ab1bf1105728967f4d8"
+    },
+    {
+      "path": "workers-ts/test/newcomer-migration.test.ts",
+      "sha256": "f3352305ffeae303987d40d85d54ed78618dee449b13cb02a04bb5684eb7c25c"
+    },
+    {
+      "path": "workers-ts/test/newcomer-purchase-postgres.test.ts",
+      "sha256": "ca7e04702a96d6e41cc9c56f93b3004fbff02588c8a88a07a81a6f121580de24"
+    },
+    {
+      "path": "workers-ts/test/order-coupon-picker.test.ts",
+      "sha256": "b5e15e32b3d1886deb9e1cd819bd5a28057aee7b37d8d0cf6f8247b0c17337ea"
+    },
+    {
+      "path": "workers-ts/test/out-product-label-runner-source-continuity.test.ts",
+      "sha256": "fa2d5c2cda5683364931663738a75d3e9754b3deffb450e1648ebc55a8b62dc9"
+    },
+    {
+      "path": "workers-ts/test/pc-coupon-wallet-postgres.test.ts",
+      "sha256": "6a86869b212e817c352761d1062dc93fbc921d4016599310aaff2afe5f027359"
+    },
+    {
+      "path": "workers-ts/test/pc-order-coupon-postgres.test.ts",
+      "sha256": "18fc94798443cca7866e987d1648807730859057860c7392e66e477d1c470ce7"
+    },
+    {
+      "path": "workers-ts/test/presale-checkout-postgres.test.ts",
+      "sha256": "eebfde00f0e36e3ec2b3c44f3ab8d6e3d36c384f03abaf81be5d36186c3dcb42"
+    },
+    {
+      "path": "workers-ts/test/public-product-estimate-source-continuity.test.ts",
+      "sha256": "35d00169220f9ef2d0c3ededef73757dcc335bf7925a1099b404d3038b811fdb"
+    },
+    {
+      "path": "workers-ts/test/purchased-label-author-source-continuity.test.ts",
+      "sha256": "385e8939b4a0bb4b267dd2fd83e88f02b3cdc78ed79eb51f8a07a6d571368627"
+    },
+    {
+      "path": "workers-ts/test/purchased-label-operations-source-continuity.test.ts",
+      "sha256": "db41ea5ea58bc0b6f1c1473db55230ca11b409798ad8b43ca3d4d802d8823e1b"
+    },
+    {
+      "path": "workers-ts/test/purchased-label-storage-runner-source-continuity.test.ts",
+      "sha256": "bb020e21f3b803d1328e06e57b2c896c768eadc154a1cca7f8c4741d293a5506"
+    }
+  ],
+  "protectedDependencyCount": 9338,
+  "modifiedOriginalFiles": 26,
+  "newSourceFiles": 4,
+  "productionFiles": 6,
+  "native": [
+    {
+      "file": "test/first-order-sql-authority.test.ts",
+      "tests": 21,
+      "childExitCode": 0,
+      "fixturesRemaining": 0,
+      "pgCtlExitCode": 3,
+      "portClosed": true,
+      "log": "/tmp/php-ts-first-order-authority-20261116/sixth-newcomer-canonical-config-assertion-failure/final-native-01.log",
+      "logSha256": "13d0f6982d4a909a4ab204e2c9345f5d48ec196f96459dc142fa9164c75fabb6",
+      "executionOrigin": "reused-unchanged-runtime-closure",
+      "originOuterSessionId": 85700
+    },
+    {
+      "file": "test/membership-pricing-policy.test.ts",
+      "tests": 26,
+      "childExitCode": 0,
+      "fixturesRemaining": 0,
+      "pgCtlExitCode": 3,
+      "portClosed": true,
+      "log": "/tmp/php-ts-first-order-authority-20261116/sixth-newcomer-canonical-config-assertion-failure/final-native-02.log",
+      "logSha256": "2aaa452a029dfb5de5bcffe24d12d5e462baf7cd44f9b1571e1608ecb3fd3966",
+      "executionOrigin": "reused-unchanged-runtime-closure",
+      "originOuterSessionId": 85700
+    },
+    {
+      "file": "test/checkout-pricing-config-authority.test.ts",
+      "tests": 34,
+      "childExitCode": 0,
+      "fixturesRemaining": 0,
+      "pgCtlExitCode": 3,
+      "portClosed": true,
+      "log": "/tmp/php-ts-first-order-authority-20261116/sixth-newcomer-canonical-config-assertion-failure/final-native-03.log",
+      "logSha256": "6bb0a3d88926c812a8de83a6a503ed8d0e1199c028dec37bd61416dcf1d06fe3",
+      "executionOrigin": "reused-unchanged-runtime-closure",
+      "originOuterSessionId": 85700
+    },
+    {
+      "file": "test/checkout-pricing-lock.test.ts",
+      "tests": 36,
+      "childExitCode": 0,
+      "fixturesRemaining": 0,
+      "pgCtlExitCode": 3,
+      "portClosed": true,
+      "log": "/tmp/php-ts-first-order-authority-20261116/sixth-newcomer-canonical-config-assertion-failure/final-native-04.log",
+      "logSha256": "f91e9df8aee71fe1674b47ca1251338dafc8124f40f7ffed535d5c1cdf8f8d64",
+      "executionOrigin": "reused-unchanged-runtime-closure",
+      "originOuterSessionId": 85700
+    },
+    {
+      "file": "test/checkout-pricing-lock-registration.test.ts",
+      "tests": 20,
+      "childExitCode": 0,
+      "fixturesRemaining": 0,
+      "pgCtlExitCode": 3,
+      "portClosed": true,
+      "log": "/tmp/php-ts-first-order-authority-20261116/sixth-newcomer-canonical-config-assertion-failure/final-native-05.log",
+      "logSha256": "1d0390518618ac5e59ac6984d03aea480895ced8c60fe7b704466242ed60cde7",
+      "executionOrigin": "reused-unchanged-runtime-closure",
+      "originOuterSessionId": 85700
+    },
+    {
+      "file": "test/checkout-confirmation-postgres.test.ts",
+      "tests": 7,
+      "childExitCode": 0,
+      "fixturesRemaining": 0,
+      "pgCtlExitCode": 3,
+      "portClosed": true,
+      "log": "/tmp/php-ts-first-order-authority-20261116/sixth-newcomer-canonical-config-assertion-failure/final-native-06.log",
+      "logSha256": "e35e9dc98d54182ec9fd2568266c8932f50f1c124fb0da67c2abd1f3762aeaec",
+      "executionOrigin": "reused-unchanged-runtime-closure",
+      "originOuterSessionId": 85700
+    },
+    {
+      "file": "test/account-cancellation-order-admission-postgres.test.ts",
+      "tests": 10,
+      "childExitCode": 0,
+      "fixturesRemaining": 0,
+      "pgCtlExitCode": 3,
+      "portClosed": true,
+      "log": "/tmp/php-ts-first-order-authority-20261116/sixth-newcomer-canonical-config-assertion-failure/final-native-07.log",
+      "logSha256": "d484d4ca7e5da449cc8795630a9700fa3c8641f74ae5161018b21c308c960160",
+      "executionOrigin": "reused-unchanged-runtime-closure",
+      "originOuterSessionId": 85700
+    },
+    {
+      "file": "test/assisted-purchase-flow-postgres.test.ts",
+      "tests": 50,
+      "childExitCode": 0,
+      "fixturesRemaining": 0,
+      "pgCtlExitCode": 3,
+      "portClosed": true,
+      "log": "/tmp/php-ts-first-order-authority-20261116/sixth-newcomer-canonical-config-assertion-failure/final-native-08.log",
+      "logSha256": "6490f9027f30b9da14cf0db240d34d87960be662b8ba05cf914d4f9c57fc6a60",
+      "executionOrigin": "reused-unchanged-runtime-closure",
+      "originOuterSessionId": 85700
+    },
+    {
+      "file": "test/assisted-purchase-runtime-postgres.test.ts",
+      "tests": 40,
+      "childExitCode": 0,
+      "fixturesRemaining": 0,
+      "pgCtlExitCode": 3,
+      "portClosed": true,
+      "log": "/tmp/php-ts-first-order-authority-20261116/sixth-newcomer-canonical-config-assertion-failure/final-native-09.log",
+      "logSha256": "1d11764eea6f6de6d249fa26f43cbf47c446b45fd34d50181201aa143067b350",
+      "executionOrigin": "reused-unchanged-runtime-closure",
+      "originOuterSessionId": 85700
+    },
+    {
+      "file": "test/assisted-payment-race-postgres.test.ts",
+      "tests": 4,
+      "childExitCode": 0,
+      "fixturesRemaining": 0,
+      "pgCtlExitCode": 3,
+      "portClosed": true,
+      "log": "/tmp/php-ts-first-order-authority-20261116/sixth-newcomer-canonical-config-assertion-failure/final-native-10.log",
+      "logSha256": "a6614de13698fc60bcbad618af45ff9a9e4fe2061b1f26176efa72f9df3cda20",
+      "executionOrigin": "reused-unchanged-runtime-closure",
+      "originOuterSessionId": 85700
+    },
+    {
+      "file": "test/public-product-estimate-native.test.ts",
+      "tests": 16,
+      "childExitCode": 0,
+      "fixturesRemaining": 0,
+      "pgCtlExitCode": 3,
+      "portClosed": true,
+      "log": "/tmp/php-ts-first-order-authority-20261116/sixth-newcomer-canonical-config-assertion-failure/final-native-11.log",
+      "logSha256": "aa7955e952d7d9ad8a156766b38967cdf55cf3081b570bca693a428e8a506afa",
+      "executionOrigin": "reused-unchanged-runtime-closure",
+      "originOuterSessionId": 85700
+    },
+    {
+      "file": "test/coupon-rounding-native.test.ts",
+      "tests": 9,
+      "childExitCode": 0,
+      "fixturesRemaining": 0,
+      "pgCtlExitCode": 3,
+      "portClosed": true,
+      "log": "/tmp/php-ts-first-order-authority-20261116/sixth-newcomer-canonical-config-assertion-failure/final-native-12.log",
+      "logSha256": "9ee7209fbc81b4c20153e350141a3fd5354dbe279400e07a1c6d15aaa048b50a",
+      "executionOrigin": "reused-unchanged-runtime-closure",
+      "originOuterSessionId": 85700
+    },
+    {
+      "file": "test/cart-computation-http.test.ts",
+      "tests": 49,
+      "childExitCode": 0,
+      "fixturesRemaining": 0,
+      "pgCtlExitCode": 3,
+      "portClosed": true,
+      "log": "/tmp/php-ts-first-order-authority-20261116/sixth-newcomer-canonical-config-assertion-failure/final-native-13.log",
+      "logSha256": "fdd6f8a4c0ea55cc0e0f8d4b49af7121b703d2ab7dbfe45233e022556889b4c1",
+      "executionOrigin": "reused-unchanged-runtime-closure",
+      "originOuterSessionId": 85700
+    },
+    {
+      "file": "test/checkout-line-finance.test.ts",
+      "tests": 13,
+      "childExitCode": 0,
+      "fixturesRemaining": 0,
+      "pgCtlExitCode": 3,
+      "portClosed": true,
+      "log": "/tmp/php-ts-first-order-authority-20261116/sixth-newcomer-canonical-config-assertion-failure/final-native-14.log",
+      "logSha256": "a6e4bce3f40bde55667d11c00ec174b4f93c68c2949a410727016c74c5354630",
+      "executionOrigin": "reused-unchanged-runtime-closure",
+      "originOuterSessionId": 85700
+    },
+    {
+      "file": "test/order-full-gift-checkout.test.ts",
+      "tests": 6,
+      "childExitCode": 0,
+      "fixturesRemaining": 0,
+      "pgCtlExitCode": 3,
+      "portClosed": true,
+      "log": "/tmp/php-ts-first-order-authority-20261116/sixth-newcomer-canonical-config-assertion-failure/final-native-15.log",
+      "logSha256": "cacac29f56186ccf1eccbff279fc486f8bdff9b95400c1b07e1690f7c304ec93",
+      "executionOrigin": "reused-unchanged-runtime-closure",
+      "originOuterSessionId": 85700
+    },
+    {
+      "file": "test/checkout-confirmation.test.ts",
+      "tests": 27,
+      "childExitCode": 0,
+      "fixturesRemaining": 0,
+      "pgCtlExitCode": 3,
+      "portClosed": true,
+      "log": "/tmp/php-ts-first-order-authority-20261116/sixth-newcomer-canonical-config-assertion-failure/final-native-16.log",
+      "logSha256": "0d9c2d069d86ca90f937e959d4d7df5906c0cf25dbfd604811d714d3d7ddf0f8",
+      "executionOrigin": "reused-unchanged-runtime-closure",
+      "originOuterSessionId": 85700
+    },
+    {
+      "file": "test/uni-coupon-buy-native.test.ts",
+      "tests": 4,
+      "childExitCode": 0,
+      "fixturesRemaining": 0,
+      "pgCtlExitCode": 3,
+      "portClosed": true,
+      "log": "/tmp/php-ts-first-order-authority-20261116/sixth-newcomer-canonical-config-assertion-failure/final-native-17.log",
+      "logSha256": "7310973473b967e506910de8deed15f1dce7b26029f2f0d07706583ac3f594eb",
+      "executionOrigin": "reused-unchanged-runtime-closure",
+      "originOuterSessionId": 85700
+    },
+    {
+      "file": "test/pc-product-content-native.test.ts",
+      "tests": 5,
+      "childExitCode": 0,
+      "fixturesRemaining": 0,
+      "pgCtlExitCode": 3,
+      "portClosed": true,
+      "log": "/tmp/php-ts-first-order-authority-20261116/sixth-newcomer-canonical-config-assertion-failure/final-native-18.log",
+      "logSha256": "7e07a30c512de8707736a488c03cd0a112cb28ab9751147c24cab1cf0f014f79",
+      "executionOrigin": "reused-unchanged-runtime-closure",
+      "originOuterSessionId": 85700
+    },
+    {
+      "file": "test/newcomer-purchase-postgres.test.ts",
+      "tests": 33,
+      "childExitCode": 0,
+      "fixturesRemaining": 0,
+      "pgCtlExitCode": 3,
+      "portClosed": true,
+      "log": "/tmp/php-ts-first-order-authority-20261116/final-native-19.log",
+      "logSha256": "13b2bd17172428e6713118eaa6e7f72ba270a7d80518191e9ec417db4d70a743",
+      "executionOrigin": "fresh-current-candidate",
+      "originOuterSessionId": 46597
+    },
+    {
+      "file": "test/pc-coupon-wallet-postgres.test.ts",
+      "tests": 5,
+      "childExitCode": 0,
+      "fixturesRemaining": 0,
+      "pgCtlExitCode": 3,
+      "portClosed": true,
+      "log": "/tmp/php-ts-first-order-authority-20261116/final-native-20.log",
+      "logSha256": "b6910384261e958853bf75266d5b1559306f44f2e2deea271f106f52e565f8f8",
+      "executionOrigin": "fresh-current-candidate",
+      "originOuterSessionId": 46597
+    },
+    {
+      "file": "test/pc-order-coupon-postgres.test.ts",
+      "tests": 5,
+      "childExitCode": 0,
+      "fixturesRemaining": 0,
+      "pgCtlExitCode": 3,
+      "portClosed": true,
+      "log": "/tmp/php-ts-first-order-authority-20261116/final-native-21.log",
+      "logSha256": "b3a9ffb80ec4169214672edd3c2c078be8b5e36aaafed434dedf17b7063dfe06",
+      "executionOrigin": "fresh-current-candidate",
+      "originOuterSessionId": 46597
+    },
+    {
+      "file": "test/presale-checkout-postgres.test.ts",
+      "tests": 66,
+      "childExitCode": 0,
+      "fixturesRemaining": 0,
+      "pgCtlExitCode": 3,
+      "portClosed": true,
+      "log": "/tmp/php-ts-first-order-authority-20261116/final-native-22.log",
+      "logSha256": "0b2b8913cd947dc6b3627b5c12c48a7cad3202a9dd4ab6dafa49f9a33f9b4987",
+      "executionOrigin": "fresh-current-candidate",
+      "originOuterSessionId": 46597
+    },
+    {
+      "file": "test/checkout-marketing-scenarios-postgres.test.ts",
+      "tests": 8,
+      "childExitCode": 0,
+      "fixturesRemaining": 0,
+      "pgCtlExitCode": 3,
+      "portClosed": true,
+      "log": "/tmp/php-ts-first-order-authority-20261116/final-native-23.log",
+      "logSha256": "5e0b8c57005c88c5b0dd958aca2978d2073705a88b935951ca7af86f715c001b",
+      "executionOrigin": "fresh-current-candidate",
+      "originOuterSessionId": 46597
+    }
+  ],
+  "nativeTotalTests": 494,
+  "unit": {
+    "files": 20,
+    "tests": 1089,
+    "failed": 0,
+    "skipped": 0,
+    "rawJsonSha256": "6e17cac058efe062c8fd82382eddc6aa99ef4030db2f361e4e94db846c401483"
+  },
+  "workerd": {
+    "files": 30,
+    "tests": 410,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "types": {
+    "originalRoots": 4481,
+    "commonRoots": 1951,
+    "testRoots": 2530,
+    "shardTestCounts": [
+      1265,
+      1265
+    ],
+    "unionExactlyMatchesOriginal": true,
+    "optionsExactlyMatchOriginal": true,
+    "explicitTypeLibrariesResolveExactlyAsOriginal": true,
+    "generatedConfigs": [
+      "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts/.cache/first-order-authority-types-20261116/tsconfig.worker-first-order-authority-shard-1.generated.json",
+      "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts/.cache/first-order-authority-types-20261116/tsconfig.worker-first-order-authority-shard-2.generated.json"
+    ]
+  },
+  "actualFinalOuter": {
+    "sessionId": 46597,
+    "exitCode": 0,
+    "allTestsPassed": true,
+    "scope": "Current acceptance gates; excludes superseded failed attempts and known historical diagnostic failures",
+    "commandsExecutedThisOuter": 13,
+    "acceptedGates": 31,
+    "reusedPriorPassedNativeCommands": 18,
+    "reusedPriorPassedNativeTests": 377,
+    "priorOuter85700ExitCode": 1,
+    "driverSha256": "4b0f07f88f5d41beec0c6aeb9b9521e536f02998c6e1ecf702c95a1481bbc36c",
+    "resultsSha256": "8d45350b122ed405e197fce0aae5d29c2d1f6b8b187e7d1b3ef90acb81bdcf9f",
+    "manifestSha256": "8232982435c308c45cf8565ef8a3f82df2b69ff7b0e279a04ee9bc2123359374",
+    "sourceManifestSha256": "e10b1673125eccbc646dd0d62553af80261b730d83410d1f25b64f0ed9263c7d",
+    "dependencyManifestSha256": "d422e7bdfdeb1b2c4bbbefda6d6650c7592de6d0dfbd23eb3c20cbec7218c948",
+    "reuseProofSha256": "50aa8372672f4852cd971e87b895b7349be97b646627ded0c67cd5a9b69d7b41",
+    "actualTerminalObservedByRoot": true
+  },
+  "actualHistoricalOuter": {
+    "sessionId": 64120,
+    "exitCode": 0,
+    "kind": "complete16 historical diagnostic; child1 is preserved baseline failure, not passing tests",
+    "allTestsPassed": false,
+    "driverSha256": "d340544dcd4d29412a103f149e0c9082da323f13a97c7f6022881388846a7be2",
+    "comparisonHelperSha256": "86a0b6b2a680786b662f15102faa62481bbe9c6d15012797f11e052620760ca8",
+    "inputBindingSha256": "4a2ed9ed6563fd2f08290ed5604963b9ed781dbb3c2dc062039065aba066587f",
+    "commandSha256": "536bd0c2a3221d60d0e58e2fcdc54c9e2eee877ec0482b0370a57a3be8c511bf",
+    "comparisonSha256": "595871d378011031e1fd5c2a565a8446c23fb8239a6604b9b0d396026db8d9cf",
+    "actualTerminalObservedByRoot": true
+  },
+  "historical": {
+    "baselineCommit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+    "baselineWasPreviousActualComplete16Run": true,
+    "baselineIdentityMeansMatchedSourceContents": true,
+    "environmentsNotIdentical": true,
+    "knownInventoryAdditionalPaths": 6,
+    "outcomeEquivalenceNotEnvironmentEquivalence": true,
+    "previousActualBaselineCheckoutHead": "a9157320e351cfeb5ecdb50817e45ecf3ede4a06",
+    "baselineOuterSessionId": 87039,
+    "currentVitestChildExitCode": 1,
+    "allTestsPassed": false,
+    "actualCounts": {
+      "physicalFiles": 16,
+      "passedFiles": 2,
+      "failedFiles": 14,
+      "collectionErrorFiles": 2,
+      "tests": 1714,
+      "passed": 1404,
+      "failed": 310,
+      "skipped": 0,
+      "todo": 0
+    },
+    "noNewCurrentLegacyFailures": true,
+    "exactHistoricalOutcomesPreserved": true,
+    "failedCasesNeverCountedAsPassing": true
+  },
+  "sqlContract": {
+    "firstOrderKeys": 6,
+    "checkoutPricingKeys": 17,
+    "firstOrderScalarDecodes": 1,
+    "globalScopeOnly": true,
+    "priority": "sort DESC, id DESC",
+    "fieldVisibilityNotEnableSwitch": true,
+    "boundedProjection": true,
+    "firstOrderOnlyReaderHasNoMembershipRightsReads": true,
+    "finalWriteFence": "existing pricing capability plus semantic SQL re-read late in the business transaction before commit; changed semantics roll back all SQL business writes",
+    "missingInsertAndDuplicateWinnerProtected": true,
+    "adminPreview": "existing REPEATABLE READ, READ ONLY SQL snapshot",
+    "paymentReadiness": "before preview SQL transaction",
+    "receiptKv": "after preview SQL commit",
+    "cachedOverrideRemoved": true,
+    "firstOrderPricingKvReadsOrRefills": 0
+  },
+  "continuity": {
+    "modifiedOriginals": 26,
+    "completeInverseVerifiedAgainstGit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+    "cases": 56,
+    "fixtureSha256": "97fab9c318a99855eaea69dc2bad115eb0c4ae32898d0f4bbbd7768464d1bfd2",
+    "helperSha256": "0524df4a437972d0c83662074bb4f47a434d464930832fd56440b41c0222f13a",
+    "oldPublicProofUnchanged": true,
+    "historicalViewsAreNotRuntimeAcceptance": true
+  },
+  "developmentFailuresPreserved": [
+    {
+      "archive": "/tmp/php-ts-first-order-authority-20261116/first-assisted-fixture-failure/archive-manifest.json",
+      "sha256": "cec0b5aec6f0e217be3d085a1133c2ef4bd1407569126520a647fa8d9a693cbc",
+      "acceptedAsFinalValidation": false
+    },
+    {
+      "archive": "/tmp/php-ts-first-order-authority-20261116/second-nested-normalization-counterexample/archive-manifest.json",
+      "sha256": "dbd3bca1d860d1097301bb6748219362945479563bbd4243707de340d7654e71",
+      "acceptedAsFinalValidation": false
+    },
+    {
+      "archive": "/tmp/php-ts-first-order-authority-20261116/third-coupon-fixture-final-unit-failure/archive-manifest.json",
+      "sha256": "56e0564c494632c6e11eb749b103ceb444d28de09dfb8f3d6840517351fa850d",
+      "acceptedAsFinalValidation": false
+    },
+    {
+      "archive": "/tmp/php-ts-first-order-authority-20261116/fourth-assisted-kv-mock-type-failure/archive-manifest.json",
+      "sha256": "ea98ede5a6f0e828366b451414700b0e125ac21923e37f089da424b8e15f1d83",
+      "acceptedAsFinalValidation": false
+    },
+    {
+      "archive": "/tmp/php-ts-first-order-authority-20261116/fifth-native-kv-mock-type-failure/archive-manifest.json",
+      "sha256": "d37fc4cad79acbd498b817dbe1cf50fe193e98a427f2783353712b3df8e54492",
+      "acceptedAsFinalValidation": false
+    },
+    {
+      "archive": "/tmp/php-ts-first-order-authority-20261116/sixth-newcomer-canonical-config-assertion-failure/archive-manifest.json",
+      "sha256": "3fdf448861eb2137ddf33d6d4877cc0133446a03a831d5e847b7f02c0b478c5b",
+      "acceptedAsFinalValidation": false
+    }
+  ],
+  "validationBoundaries": {
+    "noCaseFilters": true,
+    "vitestWorkers": 1,
+    "nativeFilesPerInvocation": 1,
+    "oneOuterSerialWrapperPerActualRun": true,
+    "currentOuterExecutedCommands": 13,
+    "reusedPriorPassedNativeCommands": 18,
+    "priorOuter85700ExitCode": 1,
+    "reuseProofSha256": "50aa8372672f4852cd971e87b895b7349be97b646627ded0c67cd5a9b69d7b41",
+    "typePartitions": 2,
+    "originalTypeRootsOptionsAndLibrariesPreserved": true,
+    "productionAuditVulnerabilities": 0,
+    "unchangedFrontendBuildsNotRepeatedLocally": true,
+    "renderedUiChanged": false,
+    "browserVerificationRequiredForThisBackendOnlyBatch": false,
+    "phpFrameworkExecuted": false,
+    "realPaymentSmsProviderOrQueueCalled": false,
+    "productionDeployed": false,
+    "newPushedCiNotYetClaimedPassing": true,
+    "pushedCiBaselineRun": 43907900986
+  },
+  "preservation": {
+    "userNodeModulesLinks": 5,
+    "restoredIgnoredResources": 150,
+    "realPhpHeadUnchanged": true,
+    "realPhpDirtyStatusUnchanged": true,
+    "configSha256": "5b4700a73453adf6a011262bd21955c7bed9e2b6cdb8505cf77adc7a25868d38",
+    "uniappPackageSha256": "8dadbccf7ae03c8b040267766eceb0dadcc9bb30cf29506db439790619273555"
+  },
+  "evidenceFiles": [
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/candidate-source.json",
+      "sha256": "e10b1673125eccbc646dd0d62553af80261b730d83410d1f25b64f0ed9263c7d"
+    },
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/candidate-dependencies.json",
+      "sha256": "d422e7bdfdeb1b2c4bbbefda6d6650c7592de6d0dfbd23eb3c20cbec7218c948"
+    },
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/candidate-freeze.json",
+      "sha256": "c865b335214cd1608be844975e147ace52d6fb7ab55afa7944455c5f4695df29"
+    },
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/final-validation-manifest.json",
+      "sha256": "8232982435c308c45cf8565ef8a3f82df2b69ff7b0e279a04ee9bc2123359374"
+    },
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/final-validation-results.json",
+      "sha256": "8d45350b122ed405e197fce0aae5d29c2d1f6b8b187e7d1b3ef90acb81bdcf9f"
+    },
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/final-validation-outer-terminal.json",
+      "sha256": "6a485f8923b944e7a57da02cdf073d5e65f5e42888ea9c96d4f14ff7b646b6fb"
+    },
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/final-unit.json",
+      "sha256": "6e17cac058efe062c8fd82382eddc6aa99ef4030db2f361e4e94db846c401483"
+    },
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/type-shards-verified.json",
+      "sha256": "bb727afcdfc564dd395ec3a324d34724fd0348c560c22dd5cb88b3b7ab8efd05"
+    },
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/historical-input-binding.json",
+      "sha256": "4a2ed9ed6563fd2f08290ed5604963b9ed781dbb3c2dc062039065aba066587f"
+    },
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/historical-command.json",
+      "sha256": "536bd0c2a3221d60d0e58e2fcdc54c9e2eee877ec0482b0370a57a3be8c511bf"
+    },
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/historical-outer-terminal.json",
+      "sha256": "6fbc87a47f36c7826335e543ba1a4588e10a31628e6a2e98462f2b7582b33b7a"
+    },
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/historical-comparison.json",
+      "sha256": "595871d378011031e1fd5c2a565a8446c23fb8239a6604b9b0d396026db8d9cf"
+    },
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/historical-current-vitest.json",
+      "sha256": "a0dd30b85c5822ae6246fb8864a7a9fa24055fc745d8118968c234a8d432be5b"
+    },
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/first-order-continuity-generation.json",
+      "sha256": "764a964552fe160fec21ef652c80d1c1175faf9db2fe03a397aae41780520c6c"
+    },
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/php-first-order-source-evidence.json",
+      "sha256": "2b43a0665c12117d005a8c72a80abda4a9c21567746d99ca78d67789db4eeca0"
+    },
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/fresh-independent-static-preparation.json",
+      "sha256": "fc7506ec73977f7280c61cf09a8504a6ad40143a00c93b80a1cafdd76e2571f9"
+    },
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/fresh-independent-historical-baseline-proof.json",
+      "sha256": "7c7b04e64cabab987b79550e316b0c11cd6db1512d4225792f6ba3f71576b297"
+    },
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/fresh-independent-historical-environment-review.json",
+      "sha256": "4f737d083a083ad28569bb9c33889820337da1160768246a94ecf7d67e5fd015"
+    },
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/independent-static-review-30-final.json",
+      "sha256": "ab88a8f673d0f45b0ddcd79b137cbe17105f13d4d730aeaa69be3fc012a9be98"
+    },
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/run-final-validation.py",
+      "sha256": "4b0f07f88f5d41beec0c6aeb9b9521e536f02998c6e1ecf702c95a1481bbc36c"
+    },
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/run-historical-validation.py",
+      "sha256": "d340544dcd4d29412a103f149e0c9082da323f13a97c7f6022881388846a7be2"
+    },
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/historical_recheck_compare.py",
+      "sha256": "86a0b6b2a680786b662f15102faa62481bbe9c6d15012797f11e052620760ca8"
+    },
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/native-reuse-proof.json",
+      "sha256": "50aa8372672f4852cd971e87b895b7349be97b646627ded0c67cd5a9b69d7b41"
+    },
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/prove-native-reuse.py",
+      "sha256": "d4e2ac34092f43028e2df294bccf5ea97405c7ff60601d61600bbb9454e5a016"
+    },
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/native-reuse-outer-terminal.json",
+      "sha256": "0e5b96f22b3b9bff87d207a20c5d7c4c13f0fcf0ea6348aca8be531c4f5465e4"
+    },
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/native-reuse-ast.json",
+      "sha256": "a0c8fae3a334c6f6640c17e3d1e789f08bcf05aa578d0840711eadd1316abb8d"
+    },
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/native-reuse-ast.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/php-ts-first-order-authority-20261116/native-reuse-ast-input.json",
+      "sha256": "59116f807bad452288aaa44b539ad1f3a410f233c552492b1e55f66383ff455f"
+    }
+  ]
+}

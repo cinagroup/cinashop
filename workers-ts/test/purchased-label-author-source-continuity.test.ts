@@ -1,4 +1,5 @@
-import { projectPublicProductEstimatePredecessor } from './helpers/publicProductEstimateSourceContinuity';
+import { projectPublicProductEstimatePredecessor as projectPublicProductEstimate9743Predecessor } from './helpers/publicProductEstimateSourceContinuity';
+import { projectFirstOrderAuthorityPredecessor } from './helpers/firstOrderAuthoritySourceContinuity';
 import { projectPurchasedLabelOperationsPredecessor } from './helpers/purchasedLabelOperationsSourceContinuity';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -6,6 +7,9 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { purchasedLabelAuthorImage, purchasedLabelAuthorProof as proof, projectPurchasedLabelAuthorPredecessor,
   PURCHASED_LABEL_AUTHOR_PROOF_FILE, PURCHASED_LABEL_AUTHOR_PROOF_SHA256 } from './helpers/purchasedLabelAuthorSourceContinuity';
+// Peel the exact current first-order layer before this unchanged older view.
+const projectPublicProductEstimatePredecessor = (file: string, source: string) =>
+  projectPublicProductEstimate9743Predecessor(file, projectFirstOrderAuthorityPredecessor(file, source));
 const root = resolve(import.meta.dirname, '../..');
 const priorSource = (file:string) => projectPurchasedLabelOperationsPredecessor(file,projectPublicProductEstimatePredecessor(file,readFileSync(resolve(root,file),'utf8')));
 describe('purchased label author exact current source successor', () => {

@@ -1,3 +1,4 @@
+import { projectFirstOrderAuthorityPredecessor } from './helpers/firstOrderAuthoritySourceContinuity';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -5,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { PUBLIC_PRODUCT_ESTIMATE_PREDECESSOR, PUBLIC_PRODUCT_ESTIMATE_PROOF_FILE, PUBLIC_PRODUCT_ESTIMATE_PROOF_SHA256,
   publicProductEstimateImage, publicProductEstimateProof as proof, isPublicProductEstimateSource,
   projectPublicProductEstimatePredecessor } from './helpers/publicProductEstimateSourceContinuity';
-import { isProviderTransportSource, projectProviderTransportPredecessor, providerTransportSourceContinuity } from './helpers/providerTransportSourceContinuity';
+import { isProviderTransportSource, projectProviderTransportFromPublicProductEstimateView as projectProviderTransportPredecessor, providerTransportSourceContinuity } from './helpers/providerTransportSourceContinuity';
 import { projectPurchasedLabelOperationsPredecessor } from './helpers/purchasedLabelOperationsSourceContinuity';
 import { projectPurchasedLabelAuthorPredecessor } from './helpers/purchasedLabelAuthorSourceContinuity';
 import { projectPurchasedLabelRunnerPredecessor } from './helpers/purchasedLabelStorageRunnerSourceContinuity';
@@ -14,6 +15,9 @@ import { projectUnitDiscoveryPredecessor } from './helpers/unitDiscoverySourceCo
 import { readRechargeRefundPredecessorFile } from './helpers/rechargeRefundSourceContinuity';
 const root = resolve(import.meta.dirname, '../..');
 const physical = (file: string) => readFileSync(resolve(root, file), 'utf8');
+// These original fifty assertions check the explicit fixed9743 view. The new
+// first-order continuity suite separately binds every real physical current byte.
+const atPublicProductEstimate9743 = (file: string) => projectFirstOrderAuthorityPredecessor(file, physical(file));
 const sha = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
 const sources = [
   'view/uniapp-ts/scripts/product-coupons-runtime.test.cjs',
@@ -69,7 +73,7 @@ describe('public product estimate exact successor before unchanged historical so
   });
   for (const row of proof.sources) {
     it('binds every native byte and reconstructs the complete fixed Git image for ' + row.file, () => {
-      const current = physical(row.file); expect(publicProductEstimateImage(current)).toEqual(row.current);
+      const native = physical(row.file), current = atPublicProductEstimate9743(row.file); expect(publicProductEstimateImage(current)).toEqual(row.current);
       const previous = projectPublicProductEstimatePredecessor(row.file, current);
       expect(previous).not.toBe(current); expect(publicProductEstimateImage(previous)).toEqual(row.predecessor);
       expect(row.origin).toEqual({ commit: proof.predecessorCommit, path: row.file, gitBlobSha1: row.predecessor.gitBlobSha1 });
@@ -81,10 +85,10 @@ describe('public product estimate exact successor before unchanged historical so
         expect(historicalOutcome(() => previousProviderView(row.file, previous))).toEqual(expected);
         expect(historicalOutcome(() => projectProviderTransportPredecessor(row.file, current))).toEqual(expected);
       } else expect(projectProviderTransportPredecessor(row.file, current)).toBe(previousProviderView(row.file, previous));
-      expect(physical(row.file)).toBe(current);
+      expect(physical(row.file)).toBe(native); expect(atPublicProductEstimate9743(row.file)).toBe(current);
     });
     it('rejects whole-image drift and all predecessor/duplicate input forms for ' + row.file, () => {
-      const current = physical(row.file), previous = projectPublicProductEstimatePredecessor(row.file, current);
+      const current = atPublicProductEstimate9743(row.file), previous = projectPublicProductEstimatePredecessor(row.file, current);
       const changed = ['// unknown\n' + current, current + '\n// unknown\n', current.replaceAll('\n', '\r\n'),
         'X' + current.slice(1), previous, current + current, '', current.slice(0, -1)];
       for (const input of changed) {
@@ -106,7 +110,7 @@ describe('public product estimate exact successor before unchanged historical so
   });
   it('feeds Activity and ProductController through the existing historical read port while native source stays unchanged', () => {
     for (const file of ['workers-ts/src/services/activity/ActivityService.ts', 'workers-ts/src/controllers/api/v1/ProductController.ts']) {
-      const current = physical(file), before = projectPublicProductEstimatePredecessor(file, current);
+      const current = physical(file), before = projectPublicProductEstimatePredecessor(file, atPublicProductEstimate9743(file));
       expect(readRechargeRefundPredecessorFile(resolve(root, file), 'utf8')).toBe(before);
       expect(readRechargeRefundPredecessorFile(resolve(root, file))).toEqual(Buffer.from(before));
       expect(physical(file)).toBe(current);
@@ -126,7 +130,7 @@ describe('public product estimate exact successor before unchanged historical so
       }
       expect(Reflect.set(row.current, 'sha256', row.predecessor.sha256)).toBe(false);
       expect(Reflect.set(row.origin, 'commit', 'unknown')).toBe(false);
-      expect(publicProductEstimateImage(projectPublicProductEstimatePredecessor(row.file, physical(row.file)))).toEqual(row.predecessor);
+      expect(publicProductEstimateImage(projectPublicProductEstimatePredecessor(row.file, atPublicProductEstimate9743(row.file)))).toEqual(row.predecessor);
     }
     expect(sha(readFileSync(resolve(root, PUBLIC_PRODUCT_ESTIMATE_PROOF_FILE)))).toBe(PUBLIC_PRODUCT_ESTIMATE_PROOF_SHA256);
   });

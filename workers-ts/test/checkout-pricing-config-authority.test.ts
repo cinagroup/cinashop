@@ -51,6 +51,106 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('full-ORM checkou
   const create = (r: { orderKey: string; quoteToken: string }) => request(`/api/order/create/${r.orderKey}`, {
     cartIds: [1], addressId: 11, quoteToken: r.quoteToken,
   });
+  const firstOrder = {
+    newcomer_status: '1', first_order_status: '1', first_order_discount: '90',
+    first_order_discount_limit: '100', newcomer_limit_status: '0', newcomer_limit_time: '1',
+  };
+  // The full ORM fixture exposes every business table. Configuration edits are
+  // the controlled peer action; all other rows must survive rejected creation.
+  const businessRows = async () => {
+    const tables = await f.db.execute(sql`SELECT tablename FROM pg_catalog.pg_tables
+      WHERE schemaname = current_schema() AND tablename <> 'system_config' ORDER BY tablename`);
+    const rows: Record<string, unknown[]> = {};
+    for (const table of tables) {
+      const name = String(table.tablename); expect(name).toMatch(/^[a-z_][a-z0-9_]*$/);
+      rows[name] = Array.from(await f.db.execute(sql`SELECT to_jsonb(t) AS body
+        FROM ${sql.identifier(name)} AS t ORDER BY to_jsonb(t)::text`));
+    }
+    expect(Object.keys(rows).length).toBeGreaterThan(280);
+    return rows;
+  };
+
+  it.each([
+    ['newcomer_status', '0'], ['first_order_status', '0'], ['first_order_discount', '80'],
+    ['first_order_discount_limit', '1'], ['newcomer_limit_status', '1'], ['newcomer_limit_time', '1'],
+  ])('rolls back every business table when SQL first-order %s changes after initial pricing', async (key, value) => {
+    await f.setConfig({ ...firstOrder, ...(key === 'newcomer_limit_time'
+      ? { newcomer_limit_status: '1', newcomer_limit_time: '0' } : {}) });
+    expect(await quote()).toMatchObject({ firstOrderPriceCents: 200, payCents: 2400 });
+    const r = await receipt(), before = await businessRows();
+    beforeSequence = async () => { await setSql(key, value); };
+    const result = await create(r);
+    expect(result).toMatchObject({ status: 400, data: { errorCode: 'ORDER_QUOTE_RECONFIRM_REQUIRED' } });
+    expect(await businessRows()).toEqual(before);
+  }, 30_000);
+
+  it.each(['absent-insert', 'duplicate-insert', 'delete-winner', 'rename-winner'] as const)(
+    'rechecks first-order %s semantics rather than trusting the pre-transaction config', async kind => {
+      await f.setConfig(firstOrder);
+      if (kind === 'absent-insert') await f.db.delete(systemConfig).where(eq(systemConfig.menuName, 'first_order_status'));
+      const r = await receipt(), before = await businessRows();
+      beforeSequence = async () => {
+        if (kind === 'absent-insert') await f.db.insert(systemConfig).values({ menuName: 'first_order_status', value: '1' });
+        else if (kind === 'duplicate-insert') await f.db.insert(systemConfig).values({ menuName: 'first_order_discount', value: '80', sort: 10 });
+        else if (kind === 'delete-winner') await f.db.delete(systemConfig).where(eq(systemConfig.menuName, 'first_order_discount_limit'));
+        else await f.db.update(systemConfig).set({ menuName: 'renamed_first_order_limit' }).where(eq(systemConfig.menuName, 'first_order_discount_limit'));
+      };
+      expect(await create(r)).toMatchObject({ status: 400, data: { errorCode: 'ORDER_QUOTE_RECONFIRM_REQUIRED' } });
+      expect(await businessRows()).toEqual(before);
+    }, 30_000);
+
+  it('accepts semantically identical first-order formatting, visibility and losing duplicate edits', async () => {
+    await f.setConfig({ ...firstOrder, first_order_discount: '85.99' });
+    const r = await receipt();
+    beforeSequence = async () => {
+      await f.db.update(systemConfig).set({ status: 0, info: 'display only' });
+      await setSql('first_order_discount', '"85.50"');
+      await f.db.insert(systemConfig).values({ menuName: 'first_order_discount', value: '0', sort: -1 });
+    };
+    expect((await create(r)).status).toBe(200);
+    expect((await f.snapshot()).orders).toMatchObject([{ firstOrderPrice: '3.00', payPrice: '23.00' }]);
+  });
+
+  it('replays an already committed first-order receipt without repricing or consuming eligibility twice', async () => {
+    await f.setConfig(firstOrder);
+    const r = await receipt(); expect((await create(r)).status).toBe(200);
+    const before = await businessRows();
+    await setSql('first_order_discount', '0');
+    expect((await create(r)).status).toBe(200);
+    expect(await businessRows()).toEqual(before);
+  }, 30_000);
+
+  it.each(['update', 'insert-absent'] as const)('holds first-order %s writers behind the actual checkout fence until commit', async kind => {
+    await f.setConfig(firstOrder);
+    if (kind === 'insert-absent') await f.db.delete(systemConfig).where(eq(systemConfig.menuName, 'first_order_status'));
+    const r = await receipt(), connect = owned.withPeer;
+    if (!connect) throw new Error('Dedicated PG16 peers required');
+    const [buyer] = await f.db.select({ pid: sql<number>`pg_backend_pid()` }).from(sql`(VALUES (1)) buyer(n)`);
+    await connect(writer => connect(async observer => {
+      expect(new Set([buyer.pid, writer.pid, observer.pid]).size).toBe(3);
+      let writing: ReturnType<typeof outcome> | undefined, fenced = false;
+      const execute = PostgresJsPreparedQuery.prototype.execute;
+      vi.spyOn(PostgresJsPreparedQuery.prototype, 'execute').mockImplementation(async function (
+        this: PostgresJsPreparedQuery<PreparedQueryConfig>, ...args
+      ) {
+        const result = await execute.apply(this, args);
+        if (!fenced && this.getQuery().sql === 'SELECT "public".checkout_lock_pricing_v1()') {
+          fenced = true;
+          writing = outcome(writer.exec(kind === 'update'
+            ? "UPDATE system_config SET value='80' WHERE menu_name='first_order_discount'"
+            : "INSERT INTO system_config(menu_name,value) VALUES('first_order_status','1')"));
+          await waitForFinanceBlock(observer.db, writer.pid, buyer.pid);
+        }
+        return result;
+      });
+      try { expect((await create(r)).status).toBe(200); } finally { vi.restoreAllMocks(); }
+      expect(fenced).toBe(true); expect((await writing)?.ok).toBe(true);
+    }));
+    expect((await f.snapshot()).orders).toMatchObject([{ firstOrderPrice: kind === 'update' ? '2.00' : '0.00',
+      payPrice: kind === 'update' ? '24.00' : '26.00' }]);
+    expect((await readCheckoutPricingSources(f.db)).values[kind === 'update' ? 'first_order_discount' : 'first_order_status'])
+      .toBe(kind === 'update' ? '80' : '1');
+  }, 20_000);
 
   it('ignores a stale cached free-shipping grant when SQL disables it', async () => {
     f.config.whole_free_shipping = '1';

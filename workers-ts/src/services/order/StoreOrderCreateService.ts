@@ -80,7 +80,7 @@ import { MEMBER_SAVINGS_VERSION, orderMembershipSavings } from './OrderMembershi
 import {
   allocateLegacyDiscountCents,
   calculateFirstOrderDiscountCents,
-  loadFirstOrderDiscountConfig,
+  firstOrderDiscountConfig,
   loadNewcomerEligibilityConfig,
   loadNewcomerEligibilityConfigFromDb,
   newcomerBaseProductIsEligible,
@@ -281,6 +281,7 @@ export interface OrderPricingQuote {
 }
 
 interface OrderPricingConfig {
+  firstOrder: FirstOrderDiscountConfig | null;
   memberFunctionEnabled: boolean;
   paidMemberEnabled: boolean;
   paidMemberPriceEnabled: boolean;
@@ -306,6 +307,7 @@ function configInteger(value: string, fallback: number): number {
 
 async function loadOrderPricingConfig(
   db: DbClient,
+  includeFirstOrder: boolean,
 ): Promise<OrderPricingConfig> {
   const { values, rightRows } = await readCheckoutPricingSources(db);
   const rights = new Map<string, (typeof rightRows)[number]>();
@@ -322,6 +324,7 @@ async function loadOrderPricingConfig(
     throw new ValidateException("满额包邮配置无效");
   }
   return {
+    firstOrder: includeFirstOrder ? firstOrderDiscountConfig(values) : null,
     memberFunctionEnabled: configInteger(values.member_func_status, 1) === 1,
     paidMemberEnabled,
     paidMemberPriceEnabled: paidMemberEnabled &&
@@ -955,9 +958,6 @@ export class StoreOrderCreateService {
   async quoteOrder(
     params: Omit<CreateOrderParams, "key" | "userIp">,
     couponQuery?: OrderCouponQuery,
-    // Trusted service input only, never copied from an HTTP DTO. Lets ordinary
-    // assisted previews read SQL in one snapshot without doing KV I/O inside it.
-    previewFirstOrderConfig?: FirstOrderDiscountConfig,
   ): Promise<OrderPricingQuote> {
     return StoreOrderCreateService.createWithRuntime(
       this.container,
@@ -972,7 +972,7 @@ export class StoreOrderCreateService {
         key: `preview_${crypto.randomUUID().replaceAll("-", "")}`,
         userIp: "0.0.0.0",
       },
-      { preview: true, couponQuery, previewFirstOrderConfig },
+      { preview: true, couponQuery },
     );
   }
 
@@ -986,13 +986,13 @@ export class StoreOrderCreateService {
     c: Container,
     runtime: StoreOrderCreationRuntime,
     params: CreateOrderParams,
-    options: { preview: true; couponQuery?: OrderCouponQuery; previewFirstOrderConfig?: FirstOrderDiscountConfig },
+    options: { preview: true; couponQuery?: OrderCouponQuery },
   ): Promise<OrderPricingQuote>;
   static async createWithRuntime(
     c: Container,
     runtime: StoreOrderCreationRuntime,
     params: CreateOrderParams,
-    options?: { preview?: boolean; couponQuery?: OrderCouponQuery; previewFirstOrderConfig?: FirstOrderDiscountConfig },
+    options?: { preview?: boolean; couponQuery?: OrderCouponQuery },
   ): Promise<{ orderId: string; key: string } | OrderPricingQuote> {
     const { uid, key, cartIds } = params;
     const assisted = params.assisted;
@@ -1161,7 +1161,7 @@ export class StoreOrderCreateService {
     }
     const [user, pricingConfig] = await Promise.all([
       uid > 0 ? c.userDao.findForAuth(uid) : Promise.resolve(null),
-      loadOrderPricingConfig(c.db),
+      loadOrderPricingConfig(c.db, type === 0 && uid > 0),
     ]);
     if (uid > 0 && !user) throw new NotFoundException("用户不存在");
     const activeLevel = pricingConfig.memberFunctionEnabled && user?.levelStatus === 1;
@@ -1655,8 +1655,7 @@ export class StoreOrderCreateService {
     const orderMerId = merIds.size === 1 ? [...merIds][0] : 0;
 
     const firstOrderConfig: FirstOrderDiscountConfig = type === 0 && user
-      ? (options?.preview && options.previewFirstOrderConfig
-          ? options.previewFirstOrderConfig : await loadFirstOrderDiscountConfig(c, runtime))
+      ? pricingConfig.firstOrder!
       : { enabled: false, limitEnabled: true, limitDays: 0, payPercent: 100, limitCents: 0 };
     const preliminaryNow = Math.floor(Date.now() / 1000);
     const preliminaryUsableIntegral = user
@@ -3203,7 +3202,7 @@ export class StoreOrderCreateService {
           throw new ValidateException('自提门店信息已变化，请重新确认');
         pickupPolicy = currentPickup;
       }
-      if (JSON.stringify(await loadOrderPricingConfig(tx)) !== JSON.stringify(pricingConfig)) {
+      if (JSON.stringify(await loadOrderPricingConfig(tx, type === 0 && uid > 0)) !== JSON.stringify(pricingConfig)) {
         throw new ValidateException("订单计价配置或会员权益已变化，请重新确认");
       }
       if (confirmation) assertCheckoutConfirmation(confirmation, await confirmationFingerprint(), key);

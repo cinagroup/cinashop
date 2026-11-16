@@ -103,7 +103,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual HTTP and 
     expect((await f.snapshot()).orders[0].payPrice).toBe('26.00');
   });
   it.each(['first_order', 'integral'] as const)('rolls back if final transaction changes %s amount after initial quote admission', async kind => {
-    if (kind === 'first_order') Object.assign(f.config, { newcomer_status: '1', first_order_status: '1', first_order_discount: '90', first_order_discount_limit: '100', newcomer_limit_status: '0' });
+    if (kind === 'first_order') await f.setConfig({ newcomer_status: '1', first_order_status: '1', first_order_discount: '90', first_order_discount_limit: '100', newcomer_limit_status: '0' });
     else await f.setConfig({ integral_ratio_status: '1', integral_ratio: '0.01', integral_max_type: '1', integral_max_num: '50' });
     const params = { ...input, useIntegral: kind === 'integral' };
     const confirmed = await request('/api/order/confirm', params); expect(confirmed.status).toBe(200);

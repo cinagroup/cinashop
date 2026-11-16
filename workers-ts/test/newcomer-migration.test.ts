@@ -50,7 +50,9 @@ describe("newcomer catalog migration", () => {
     expect(order).toContain("isNewcomer: 1");
     expect(order).toContain('.for("update")');
     expect(order).toContain("type === 7");
-    expect(order).toContain("loadFirstOrderDiscountConfig");
+    expect(order).toContain("firstOrderDiscountConfig(values)");
+    expect(order).toContain("loadOrderPricingConfig(tx, type === 0 && uid > 0)");
+    expect(order).not.toContain("loadFirstOrderDiscountConfig(c, runtime)");
     expect(order).toContain("firstOrderPriceCents");
     expect(order).toContain("isFirstOrder: 1");
     expect(order).toContain("hasPaidNonNewcomerOrder");

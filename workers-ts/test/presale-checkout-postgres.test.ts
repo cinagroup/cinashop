@@ -245,7 +245,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('presale quote/cr
     await f.db.delete(storeCart);
     const added = await post<{ cartId: number }>('/cart/add', { productId: 70, uniqueId: 'qared001', cartNum: 2, new: 1 });
     expect(added).toMatchObject({ status: 200, data: { cartId: 1 } });
-    f.config.first_order_status = '1';
+    await f.setConfig({ first_order_status: '1' });
     const before = await state(), receipt = await confirm({ type: undefined, couponId: 41 });
     expect(receipt.priceGroup.pay_price).toBe('21.00');
     expect(await quote({ couponId: 41 })).toMatchObject({ rawTotalCents: 2000, totalCents: 1800, payCents: 2100,

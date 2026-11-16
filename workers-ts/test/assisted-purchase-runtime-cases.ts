@@ -47,7 +47,7 @@ type CompleteQuote = Quote & {
     isNew: number; shippingType: number; storeId: number; addressSource: string; addressRequired: boolean;
     useIntegral: boolean; couponId: number; payType: string; systemFormId: number };
   integralRatio: string; integral_ratio_status: number;
-  priceGroup: Quote['priceGroup'] & { totalPrice: string; deduction_price: string };
+  priceGroup: Quote['priceGroup'] & { totalPrice: string; deduction_price: string; first_order_price: string };
 };
 type Created = { result: { order_id: string; extended: boolean } };
 
@@ -551,6 +551,54 @@ describe('assisted member/guest purchase with actual Admin authentication and tw
   },60_000);
 
   } else if (phase === 'flow') {
+  it('keeps SQL first-order pricing inside the assisted snapshot despite cache outage and a concurrent admin edit',async()=>{
+    for(const [menuName,value] of Object.entries({newcomer_status:'1',first_order_status:'1',first_order_discount:'90',
+      first_order_discount_limit:'100',newcomer_limit_status:'0',newcomer_limit_time:'0'})){
+      const rows=await f.db.update(systemConfig).set({value}).where(and(eq(systemConfig.menuName,menuName),eq(systemConfig.isStore,0)))
+        .returning({id:systemConfig.id});
+      if(!rows.length)await f.db.insert(systemConfig).values({menuName,value});
+    }
+    const firstKeys=new Set(['newcomer_status','first_order_status','first_order_discount',
+      'first_order_discount_limit','newcomer_limit_status','newcomer_limit_time'].map(key=>'cfg_'+key));
+    const kv=f.env.CONFIG_KV, get=kv.get.bind(kv), put=kv.put.bind(kv);
+    // Preserve Cloudflare's single/bulk read overloads and every KV payload/options argument.
+    const reads=vi.spyOn(kv,'get').mockImplementation(async(...args)=>{
+      const keys=Array.isArray(args[0])?args[0]:[args[0]];
+      if(keys.some(key=>firstKeys.has(key)))throw Error('First-order KV unavailable');return get(...args);
+    });
+    const writes=vi.spyOn(kv,'put').mockImplementation(async(...args)=>{
+      if(firstKeys.has(args[0]))throw Error('First-order KV refill forbidden');return put(...args);
+    });
+    await profiles(async(app,admin)=>{
+      const client=await http(app,admin),{body,quote}=await confirm(client,11);
+      const old=await client.post<CompleteQuote>('confirm/11',body);
+      expect(old.status,old.msg).toBe(200);expect(old.data.priceGroup.first_order_price).toBe('2.00');
+      const original=StoreOrderCreateService.prototype.quoteOrder;
+      let observed=false;
+      const quoteSpy=vi.spyOn(StoreOrderCreateService.prototype,'quoteOrder').mockImplementationOnce(async function(this:StoreOrderCreateService,...args){
+        const [context]=await this['container'].db.execute(sql`SELECT current_setting('transaction_isolation') AS isolation,
+          current_setting('transaction_read_only') AS readonly`);
+        expect(context).toMatchObject({isolation:'repeatable read',readonly:'on'});
+        // Cart projection has already established this real snapshot. Maintenance
+        // commits the edit on an independent connection before the real quote.
+        await f.exec("UPDATE system_config SET value='80' WHERE menu_name='first_order_discount' AND is_store=0");
+        observed=true;return original.apply(this,args);
+      });
+      const current=await client.post<{result:CompleteQuote}>(`computed/${quote.orderKey}/11`,body);
+      expect(observed).toBe(true);expect(current.status,current.msg).toBe(200);
+      expect(current.data.result.priceGroup).toEqual(old.data.priceGroup);
+      expect(current.data.result.cartInfo).toEqual(old.data.cartInfo);quoteSpy.mockRestore();
+      const changed=await f.state();
+      expect((await client.post(`create/${quote.orderKey}/11`,{...body,quoteToken:current.data.result.quoteToken})).status).toBe(400);
+      expect(await f.state()).toEqual(changed);expect(client.sequence).not.toHaveBeenCalled();
+      const fresh=await client.post<{result:CompleteQuote}>(`computed/${quote.orderKey}/11`,body);
+      expect(fresh.status,fresh.msg).toBe(200);expect(fresh.data.result.priceGroup.first_order_price).toBe('4.00');
+      expect((await client.post(`create/${quote.orderKey}/11`,{...body,quoteToken:fresh.data.result.quoteToken})).status).toBe(200);
+      expect(reads.mock.calls.some(([key])=>(Array.isArray(key)?key:[key]).some(name=>firstKeys.has(name)))).toBe(false);
+      expect(writes.mock.calls.some(([key])=>firstKeys.has(key))).toBe(false);
+    });
+  },60_000);
+
   it.each([[11,'saved'],[11,'manual'],[0,'manual'],[11,'pickup'],[11,'virtual'],[0,'virtual']] as const)(
     'returns complete confirm/recomputed projections for uid=%i %s without business writes',async(uid,delivery)=>{
       await profiles(async(app,admin)=>{

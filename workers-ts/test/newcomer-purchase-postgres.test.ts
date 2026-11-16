@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { eq, sql } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { createContainerFromDb } from '../src/lib/di';
 import { cartAdd, cartAddNewcomerReplay, cartList, orderCreate } from '../src/controllers/api/v1/OrderController';
 import { addNewcomerCartWithReplay } from '../src/services/order/NewcomerCartAddReplayService';
@@ -470,9 +470,15 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('newcomer HTTP pu
     const state = await f.snapshot();
     expect(state.orders).toHaveLength(commit ? 0 : 1);
     expect(state.users.find(row => row.uid === 11)).toMatchObject({ isNewcomer: commit ? 0 : 1 });
-    const [config] = await f.db.select({ value: systemConfig.value }).from(systemConfig)
-      .where(eq(systemConfig.menuName, 'newcomer_status'));
+    const globalNewcomerStatus = and(eq(systemConfig.isStore, 0), eq(systemConfig.menuName, 'newcomer_status'));
+    const [config] = await f.db.select({ id: systemConfig.id, value: systemConfig.value }).from(systemConfig)
+      .where(globalNewcomerStatus).orderBy(desc(systemConfig.sort), desc(systemConfig.id)).limit(1);
     expect(config?.value).toBe(commit ? '0' : '1');
+    const duplicates = await f.db.select({ id: systemConfig.id, value: systemConfig.value }).from(systemConfig)
+      .where(globalNewcomerStatus).orderBy(desc(systemConfig.sort), desc(systemConfig.id));
+    expect(duplicates).toHaveLength(2);
+    expect(duplicates[0]).toEqual(config);
+    expect(duplicates[1]?.value).toBe('1');
   }, 30_000);
 
   it.each([true, false])('dedicated Admin SKU save %s while create waits: commit reconfirms, rollback preserves original quote', async commit => {

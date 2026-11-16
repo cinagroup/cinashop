@@ -33,8 +33,6 @@ import { ApiException, NotFoundException, ValidateException } from "@/utils/erro
 import { assistedDeliveryAddress, checkoutAddressId } from '@/services/order/OrderDeliveryAddress';
 import { issueCheckoutConfirmation, OrderQuoteReconfirmRequired } from '@/services/order/CheckoutConfirmation';
 import { loadActiveOrderSystemForm, OrderFormRejectedException, readOrderSystemFormForOrder } from '@/services/order/OrderSystemFormService';
-import { loadFirstOrderDiscountConfig, type FirstOrderDiscountConfig } from '@/services/activity/StoreNewcomerService';
-import type { SystemConfigEnv } from '@/services/system/SystemConfigService';
 import { AttachmentService, canonicalAttachmentPath, R2_IMAGE_TYPE } from '@/services/system/AttachmentService';
 import { assistedFormAttachmentScope, belongsToAssistedFormScope } from '@/services/system/AssistedFormAttachmentScope';
 
@@ -553,41 +551,10 @@ export class AdminAssistedOrderService {
     options: Record<string, unknown>,
     key?: string,
   ) {
-    // Remote config/payment reads precede the SQL transaction; immutable receipts
-    // are issued only after it has committed. No KV/Sequence/provider I/O under RR.
-    // First-order config retains its existing KV authority, unlike SQL pricing.
-    // The cart projection also evaluates first-order promotions. Capture the
-    // exact KV hits and SQL cache fills here so both readers use one configuration
-    // without remote I/O while their product/account reads share the SQL snapshot.
-    const firstOrderValues = new Map<string, string>();
-    const captureConfig: SystemConfigEnv = { CONFIG_KV: {
-      get: async key => {
-        const value = await this.env.CONFIG_KV.get(key);
-        if (value !== null) firstOrderValues.set(key, value);
-        return value;
-      },
-      put: async (key, value, options) => {
-        await this.env.CONFIG_KV.put(key, value, options);
-        firstOrderValues.set(key, value);
-      },
-      delete: async () => { throw new ValidateException('报价配置快照只读'); },
-    } };
-    // Native App readiness owns a short SQL transaction. Finish it before the
-    // first-order reader can dispatch KV I/O, keeping every remote wait outside
-    // both the readiness transaction and the quote's repeatable-read snapshot.
+    // Payment readiness precedes the read-only SQL snapshot; immutable receipts
+    // are issued after it commits. First-order/cart/checkout pricing all read
+    // the same SQL snapshot, without remote config I/O or a trusted override.
     const readiness = await getPaymentReadiness(this.container, this.env);
-    const firstOrderConfig = selection.uid > 0
-      ? await loadFirstOrderDiscountConfig(this.container, captureConfig)
-      : undefined;
-    const cartConfig: SystemConfigEnv = { CONFIG_KV: {
-      get: async key => {
-        const value = firstOrderValues.get(key);
-        if (value === undefined) throw new ValidateException('报价配置快照不完整');
-        return value;
-      },
-      put: async () => { throw new ValidateException('报价配置快照只读'); },
-      delete: async () => { throw new ValidateException('报价配置快照只读'); },
-    } };
     const preview = await withTx(this.container, async db => {
       await db.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
       await db.execute(sql`SELECT set_config('statement_timeout',
@@ -595,7 +562,7 @@ export class AdminAssistedOrderService {
         set_config('idle_in_transaction_session_timeout',
         LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000)::text || 'ms',true)`);
       return new AdminAssistedOrderService(createContainerFromDb(db), this.env)
-        .readPreview(adminId, selection, options, firstOrderConfig, cartConfig);
+        .readPreview(adminId, selection, options);
     });
     const orderKey = key ?? await this.remember(adminId, selection);
     const quoteToken = await issueCheckoutConfirmation(this.env.CONFIG_KV,
@@ -611,8 +578,6 @@ export class AdminAssistedOrderService {
     adminId: number,
     selection: AssistedSelection,
     options: Record<string, unknown>,
-    firstOrderConfig: FirstOrderDiscountConfig | undefined,
-    cartConfig: SystemConfigEnv,
   ) {
     const shippingType = integer(options.shipping_type, "配送方式", { min: 1, max: 2, fallback: 1 });
     const addressId = checkoutAddressId(options.addressId, options.address_id);
@@ -622,12 +587,7 @@ export class AdminAssistedOrderService {
     const couponId = integer(options.couponId, "优惠券", { min: 0, fallback: 0 });
     const useIntegral = parseBooleanSwitch(options.useIntegral ?? 0);
     const [cartInfo, account, address] = await Promise.all([
-      new StoreCartService(this.container, {
-        ...this.env,
-        // This local facade supports only the config reader's text get/put/delete
-        // contract; it cannot dispatch any remote KV request from the transaction.
-        CONFIG_KV: cartConfig.CONFIG_KV as Env['CONFIG_KV'],
-      }).listAssistedLegacyV2({
+      new StoreCartService(this.container, this.env).listAssistedLegacyV2({
         adminId,
         uid: selection.uid,
         touristUid: selection.touristUid,
@@ -657,7 +617,7 @@ export class AdminAssistedOrderService {
       payType: normalizePayType(options.payType),
       type: 0,
       assisted: { adminId, touristUid: selection.touristUid },
-    }, undefined, firstOrderConfig);
+    });
     const quoted = new Map(quote.items.map((item) => [item.cartId, item]));
     for (const row of cartInfo) {
       const item = quoted.get(Number(row.id));

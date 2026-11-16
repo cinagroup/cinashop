@@ -125,7 +125,7 @@ describe('membership feature policy across catalogue, legacy cart and checkout',
       rightRows: [{ rightType: 'vip_price', status: 1, number: 1 }] });
   });
 
-  it('keeps membership display SQL-only and full-cart promotion failure read-only during a KV outage', async () => {
+  it('keeps membership display and full-cart promotions SQL-only and read-only during a KV outage', async () => {
     const get = vi.spyOn(f.env.CONFIG_KV, 'get').mockImplementation(async () => { throw new Error('synthetic KV outage'); });
     const put = vi.spyOn(f.env.CONFIG_KV, 'put');
     const snapshot = async () => ({ ...await f.snapshot(), configs: await f.db.select().from(systemConfig),
@@ -133,19 +133,8 @@ describe('membership feature policy across catalogue, legacy cart and checkout',
     const before = await snapshot();
     await display('70.00', 'member', true);
     expect(get).not.toHaveBeenCalled(); expect(put).not.toHaveBeenCalled();
-    await expect(cart()).rejects.toThrow('synthetic KV outage');
-    const observedCalls: readonly (readonly unknown[])[] = get.mock.calls;
-    const observedKeys = observedCalls.map(([key]) => {
-      expect(typeof key).toBe('string');
-      if (typeof key !== 'string') throw new Error('Expected an individual KV key');
-      return key;
-    });
-    expect(observedKeys).toEqual([
-      'cfg_newcomer_status', 'cfg_first_order_status', 'cfg_first_order_discount',
-      'cfg_first_order_discount_limit', 'cfg_newcomer_limit_status', 'cfg_newcomer_limit_time',
-    ]);
-    expect(observedKeys.some(key => keys.some(name => key === `cfg_${name}`))).toBe(false);
-    expect(put).not.toHaveBeenCalled();
+    expect(await cart()).toMatchObject([{ truePrice: 70, price_type: 'member' }]);
+    expect(get).not.toHaveBeenCalled(); expect(put).not.toHaveBeenCalled();
     expect(await snapshot()).toEqual(before);
   });
 

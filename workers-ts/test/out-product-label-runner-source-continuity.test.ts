@@ -1,4 +1,5 @@
-import { projectPublicProductEstimatePredecessor } from './helpers/publicProductEstimateSourceContinuity';
+import { projectPublicProductEstimatePredecessor as projectPublicProductEstimate9743Predecessor } from './helpers/publicProductEstimateSourceContinuity';
+import { projectFirstOrderAuthorityPredecessor } from './helpers/firstOrderAuthoritySourceContinuity';
 import { projectPurchasedLabelOperationsPredecessor } from './helpers/purchasedLabelOperationsSourceContinuity';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -13,6 +14,9 @@ import { projectProviderTransportPredecessor } from './helpers/providerTransport
 import { projectPurchasedLabelAuthorPredecessor } from './helpers/purchasedLabelAuthorSourceContinuity';
 import { projectRechargeRefundPredecessor, readRechargeRefundPredecessorFile } from './helpers/rechargeRefundSourceContinuity';
 
+// Peel the exact current first-order layer before this unchanged older view.
+const projectPublicProductEstimatePredecessor = (file: string, source: string) =>
+  projectPublicProductEstimate9743Predecessor(file, projectFirstOrderAuthorityPredecessor(file, source));
 const root = resolve(import.meta.dirname, '../..'), path = resolve(root, file);
 const physical = readFileSync(path, 'utf8'), native = projectPurchasedLabelAuthorPredecessor(file, projectPurchasedLabelOperationsPredecessor(file, projectPublicProductEstimatePredecessor(file, physical)));
 const current = projectPurchasedLabelRunnerPredecessor(file, native);

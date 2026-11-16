@@ -725,6 +725,7 @@ if (schemaMaintenance) {
     'test/presale-checkout-postgres.test.ts',
     // This policy suite performs real checkout after its read-only assertions.
     'test/membership-pricing-policy.test.ts',
+    'test/first-order-sql-authority.test.ts',
     // Uses the existing checkout NOLOGIN protocol before real refund materialization.
     'test/presale-refund-baseline-postgres.test.ts',
     // Full schema, atomic refunds, paid recovery and due delivery under an owned LOGIN.
@@ -1911,6 +1912,7 @@ try {
     'test/sku-membership-price.test.ts',
     'test/level-pricing-activation.test.ts',
     'test/membership-pricing-policy.test.ts',
+    'test/first-order-sql-authority.test.ts',
     'test/product-price-truncation.test.ts',
     'test/user-level-cache-authority.test.ts',
     'test/public-product-catalog-promotion-slots.test.ts',

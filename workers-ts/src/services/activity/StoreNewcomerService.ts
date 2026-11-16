@@ -35,6 +35,7 @@ import {readActivityDetailDesign,renderActivityDetailDesign,readDetailVideo} fro
 import {publicProductPictures,renderProductPictures} from '@/services/activity/ProductAssetPolicy';
 import {themeDeadlines} from '@/services/content/ThemeReadService';
 import { canonicalNewcomerBaseSkuUnique } from './NewcomerSkuIdentity';
+import { readFirstOrderPricingSources } from '@/services/order/CheckoutPricingSources';
 
 const CONFIG_KEYS = [
   "newcomer_status",
@@ -303,11 +304,7 @@ export async function isNewcomerEligibleFromDb(
 }
 
 /** PHP StoreNewcomerServices::checkUserFirstDiscount 所需的配置快照。 */
-const FIRST_ORDER_CONFIG_KEYS = [
-  "newcomer_status", "first_order_status", "first_order_discount",
-  "first_order_discount_limit", "newcomer_limit_status", "newcomer_limit_time",
-];
-function firstOrderDiscountConfig(values: Record<string, string>): FirstOrderDiscountConfig {
+export function firstOrderDiscountConfig(values: Record<string, string>): FirstOrderDiscountConfig {
   return {
     enabled: configFlag(values.newcomer_status) && configFlag(values.first_order_status),
     limitEnabled: configFlag(values.newcomer_limit_status, true),
@@ -318,14 +315,14 @@ function firstOrderDiscountConfig(values: Record<string, string>): FirstOrderDis
 }
 export async function loadFirstOrderDiscountConfig(
   container: Container,
-  env: SystemConfigEnv,
+  _env: SystemConfigEnv,
 ): Promise<FirstOrderDiscountConfig> {
-  return firstOrderDiscountConfig(await new SystemConfigService(container, env).getMany(FIRST_ORDER_CONFIG_KEYS));
+  return loadFirstOrderDiscountConfigFromDb(container);
 }
 
-/** Advisory reads use the caller's SQL snapshot without a KV read or refill. */
+/** All pricing callers use their SQL snapshot without a KV read or refill. */
 export async function loadFirstOrderDiscountConfigFromDb(container: Container): Promise<FirstOrderDiscountConfig> {
-  return firstOrderDiscountConfig(await container.systemConfigDao.getValues(FIRST_ORDER_CONFIG_KEYS));
+  return firstOrderDiscountConfig(await readFirstOrderPricingSources(container.db));
 }
 
 /** PHP registration listener configuration, read once before creating the user. */

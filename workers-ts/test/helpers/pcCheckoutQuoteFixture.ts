@@ -40,7 +40,8 @@ export async function createPcCheckoutQuoteFixture(extraTables: PgTable[] = [],
   const container = createContainerFromDb(fixture.db);
   const cache = new Map<string, string>();
   const pricingKeys = ['store_func_status', 'store_self_mention', 'member_func_status', 'member_card_status', 'svip_price_status', 'integral_ratio_status',
-    'integral_ratio', 'integral_max_type', 'integral_max_num', 'integral_max_rate', 'whole_free_shipping', 'store_free_postage', 'offline_postage'];
+    'integral_ratio', 'integral_max_type', 'integral_max_num', 'integral_max_rate', 'whole_free_shipping', 'store_free_postage', 'offline_postage',
+    'newcomer_status', 'first_order_status', 'first_order_discount', 'first_order_discount_limit', 'newcomer_limit_status', 'newcomer_limit_time'];
   const config: Record<string, string> = {
     ...Object.fromEntries(pricingKeys.map(key => [key, '0'])),
     store_func_status: "1", store_self_mention: "1",

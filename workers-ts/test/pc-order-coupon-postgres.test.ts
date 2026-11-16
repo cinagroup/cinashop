@@ -57,8 +57,8 @@ describe("PC order picker through the actual order coupon controller and disposa
     } finally { await fixture.db.update(storeCouponUser).set({ isFail: 0 }).where(eq(storeCouponUser.id, 41)); }
   });
   it("renders the real first-order exclusion as a complete empty page, not a failed adapter or spendable coupon", async () => {
-    fixture.config.first_order_status = "1";
+    await fixture.setConfig({ first_order_status: "1" });
     try { expect(await fetchPage(orderCouponScope(await readItems(), 1, 0))).toEqual({ list: [], nextCursor: null }); }
-    finally { fixture.config.first_order_status = "0"; }
+    finally { await fixture.setConfig({ first_order_status: "0" }); }
   });
 });

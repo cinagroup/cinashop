@@ -10,7 +10,7 @@ import { readMembershipPricingPolicy } from '@/services/user/MembershipPricingPo
 import { type PricedCouponItem } from '@/services/activity/OrderCouponService';
 import { claimableOrdinaryEstimatedCoupon, readBestEstimatedCoupon } from '@/services/activity/PublicCouponEstimateService';
 import { legacyCouponProjection } from '@/services/activity/V2CouponCompatibilityService';
-import { quoteFirstOrderDiscount } from '@/services/activity/StoreNewcomerService';
+import { quoteFirstOrderDiscountFromDb } from '@/services/activity/StoreNewcomerService';
 import { allocateCheckoutLineUnits, fitCheckoutLineCapacities } from './CheckoutLineAllocation';
 import { quoteOrderPromotionGifts } from '@/services/activity/OrderPromotionGiftService';
 import type { OrderPromotionQuoteLine } from '@/services/activity/OrderPromotionQuoteService';
@@ -27,8 +27,6 @@ interface ComputedRow { id: number; cartNum: number; productId: number; type: nu
   unique: string; isValid: boolean; truePrice: string; trueSumPrice: string; sumPrice: string;
   productInfo: { productType: number; stock: number; integral: number } | null; promotion?: OrderPromotionQuoteLine }
 export interface CartComputationActor { uid: number; passwordVersion: string; expiresAt: number }
-// Force fresh SQL configuration without a KV write, even when a caller has Worker bindings.
-const READ_CONFIG = { CONFIG_KV: { get: async () => null, put: async () => {}, delete: async () => {} } };
 const cents = (value: string | number) => {
   const result = decimalToCents(value);
   if (!Number.isSafeInteger(result) || result < 0) throw new ValidateException('购物车预算金额无效');
@@ -147,7 +145,7 @@ export class CartComputationService {
     const promotions = sum(rows.map(row => row.promotion?.promotionSavingsCents ?? 0));
     const member = sum(rows.map(row => row.promotion?.membershipSavingsCents ?? Math.max(0,cents(row.sumPrice)-cents(row.trueSumPrice))));
     if (raw - member - promotions !== total) throw new ValidateException('购物车预算价格不一致，请重新读取');
-    const first = normal ? await quoteFirstOrderDiscount(container,READ_CONFIG,uid,total,Math.floor(now/1000)) : null;
+    const first = normal ? await quoteFirstOrderDiscountFromDb(container,uid,total,Math.floor(now/1000)) : null;
     const firstOrder = first ? cents(first.firstOrderPrice) : 0;
     const items: PricedCouponItem[] = rows.map(row => ({ cart:{cartNum:row.cartNum},product:products.get(row.productId)!,
       unitPriceCents:cents(row.truePrice),promotion:row.promotion,couponEligibleGrossCents:row.promotion?.couponEligibleGrossCents }));

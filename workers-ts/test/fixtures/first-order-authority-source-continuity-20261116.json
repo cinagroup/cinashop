@@ -1,0 +1,2427 @@
+{
+  "schema": "first-order-authority-source-continuity/v1",
+  "predecessorCommit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+  "boundary": "Historical views only. Bind the complete physical current image and uniquely anchored inverse to the complete fixed9743 image; old public-product fixtures and every negative assertion remain unchanged. Production/native/browser acceptance uses physical current sources.",
+  "sources": [
+    {
+      "file": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "current": {
+        "bytes": 149995,
+        "sha256": "a1019471f7de10dc39f6f14f088e4d7dbdf130e536b36ccc493542f6dfce8353",
+        "gitBlobSha1": "cd478b551497a4c1d4fc0f73c3092eae9785a5df"
+      },
+      "predecessor": {
+        "bytes": 149903,
+        "sha256": "a0dbe43d51e3a52dcc1c7412aa85b4cedf26be7662c823e205d36f7871e63408",
+        "gitBlobSha1": "a2e513f1c19e228b1f89c3650f77dc8705e3d00e"
+      },
+      "inverseEdits": [
+        {
+          "start": 727,
+          "after": [
+            "    'test/first-order-sql-authority.test.ts',\n"
+          ],
+          "before": [],
+          "anchorStart": 724,
+          "anchor": [
+            "    'test/presale-checkout-postgres.test.ts',\n",
+            "    // This policy suite performs real checkout after its read-only assertions.\n",
+            "    'test/membership-pricing-policy.test.ts',\n",
+            "    'test/first-order-sql-authority.test.ts',\n",
+            "    // Uses the existing checkout NOLOGIN protocol before real refund materialization.\n",
+            "    'test/presale-refund-baseline-postgres.test.ts',\n",
+            "    // Full schema, atomic refunds, paid recovery and due delivery under an owned LOGIN.\n"
+          ]
+        },
+        {
+          "start": 1914,
+          "after": [
+            "    'test/first-order-sql-authority.test.ts',\n"
+          ],
+          "before": [],
+          "anchorStart": 1911,
+          "anchor": [
+            "    'test/sku-membership-price.test.ts',\n",
+            "    'test/level-pricing-activation.test.ts',\n",
+            "    'test/membership-pricing-policy.test.ts',\n",
+            "    'test/first-order-sql-authority.test.ts',\n",
+            "    'test/product-price-truncation.test.ts',\n",
+            "    'test/user-level-cache-authority.test.ts',\n",
+            "    'test/public-product-catalog-promotion-slots.test.ts',\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+        "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+        "gitBlobSha1": "a2e513f1c19e228b1f89c3650f77dc8705e3d00e"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/activity/StoreNewcomerService.ts",
+      "current": {
+        "bytes": 41411,
+        "sha256": "6a3333b71f62be7fbf4250eaaaa6ecbe7da34903663114f3e5925d9a8ff9e302",
+        "gitBlobSha1": "bbed826ae2a888c1891d8224147f9cf0dfc934c9"
+      },
+      "predecessor": {
+        "bytes": 41578,
+        "sha256": "367109c2bb9d26d01309792e2efd5fa282802b63916cc0d0a64306031d2d45e9",
+        "gitBlobSha1": "8c54e7a3c85d18a6ec7125c1946b99fafc6fc634"
+      },
+      "inverseEdits": [
+        {
+          "start": 37,
+          "after": [
+            "import { readFirstOrderPricingSources } from '@/services/order/CheckoutPricingSources';\n"
+          ],
+          "before": [],
+          "anchorStart": 34,
+          "anchor": [
+            "import {publicProductPictures,renderProductPictures} from '@/services/activity/ProductAssetPolicy';\n",
+            "import {themeDeadlines} from '@/services/content/ThemeReadService';\n",
+            "import { canonicalNewcomerBaseSkuUnique } from './NewcomerSkuIdentity';\n",
+            "import { readFirstOrderPricingSources } from '@/services/order/CheckoutPricingSources';\n",
+            "\n",
+            "const CONFIG_KEYS = [\n",
+            "  \"newcomer_status\",\n"
+          ]
+        },
+        {
+          "start": 306,
+          "after": [
+            "export function firstOrderDiscountConfig(values: Record<string, string>): FirstOrderDiscountConfig {\n"
+          ],
+          "before": [
+            "const FIRST_ORDER_CONFIG_KEYS = [\n",
+            "  \"newcomer_status\", \"first_order_status\", \"first_order_discount\",\n",
+            "  \"first_order_discount_limit\", \"newcomer_limit_status\", \"newcomer_limit_time\",\n",
+            "];\n",
+            "function firstOrderDiscountConfig(values: Record<string, string>): FirstOrderDiscountConfig {\n"
+          ],
+          "anchorStart": 303,
+          "anchor": [
+            "}\n",
+            "\n",
+            "/** PHP StoreNewcomerServices::checkUserFirstDiscount 所需的配置快照。 */\n",
+            "export function firstOrderDiscountConfig(values: Record<string, string>): FirstOrderDiscountConfig {\n",
+            "  return {\n",
+            "    enabled: configFlag(values.newcomer_status) && configFlag(values.first_order_status),\n",
+            "    limitEnabled: configFlag(values.newcomer_limit_status, true),\n"
+          ]
+        },
+        {
+          "start": 317,
+          "after": [
+            "  _env: SystemConfigEnv,\n"
+          ],
+          "before": [
+            "  env: SystemConfigEnv,\n"
+          ],
+          "anchorStart": 314,
+          "anchor": [
+            "}\n",
+            "export async function loadFirstOrderDiscountConfig(\n",
+            "  container: Container,\n",
+            "  _env: SystemConfigEnv,\n",
+            "): Promise<FirstOrderDiscountConfig> {\n",
+            "  return loadFirstOrderDiscountConfigFromDb(container);\n",
+            "}\n"
+          ]
+        },
+        {
+          "start": 319,
+          "after": [
+            "  return loadFirstOrderDiscountConfigFromDb(container);\n"
+          ],
+          "before": [
+            "  return firstOrderDiscountConfig(await new SystemConfigService(container, env).getMany(FIRST_ORDER_CONFIG_KEYS));\n"
+          ],
+          "anchorStart": 316,
+          "anchor": [
+            "  container: Container,\n",
+            "  _env: SystemConfigEnv,\n",
+            "): Promise<FirstOrderDiscountConfig> {\n",
+            "  return loadFirstOrderDiscountConfigFromDb(container);\n",
+            "}\n",
+            "\n",
+            "/** All pricing callers use their SQL snapshot without a KV read or refill. */\n"
+          ]
+        },
+        {
+          "start": 322,
+          "after": [
+            "/** All pricing callers use their SQL snapshot without a KV read or refill. */\n"
+          ],
+          "before": [
+            "/** Advisory reads use the caller's SQL snapshot without a KV read or refill. */\n"
+          ],
+          "anchorStart": 319,
+          "anchor": [
+            "  return loadFirstOrderDiscountConfigFromDb(container);\n",
+            "}\n",
+            "\n",
+            "/** All pricing callers use their SQL snapshot without a KV read or refill. */\n",
+            "export async function loadFirstOrderDiscountConfigFromDb(container: Container): Promise<FirstOrderDiscountConfig> {\n",
+            "  return firstOrderDiscountConfig(await readFirstOrderPricingSources(container.db));\n",
+            "}\n"
+          ]
+        },
+        {
+          "start": 324,
+          "after": [
+            "  return firstOrderDiscountConfig(await readFirstOrderPricingSources(container.db));\n"
+          ],
+          "before": [
+            "  return firstOrderDiscountConfig(await container.systemConfigDao.getValues(FIRST_ORDER_CONFIG_KEYS));\n"
+          ],
+          "anchorStart": 321,
+          "anchor": [
+            "\n",
+            "/** All pricing callers use their SQL snapshot without a KV read or refill. */\n",
+            "export async function loadFirstOrderDiscountConfigFromDb(container: Container): Promise<FirstOrderDiscountConfig> {\n",
+            "  return firstOrderDiscountConfig(await readFirstOrderPricingSources(container.db));\n",
+            "}\n",
+            "\n",
+            "/** PHP registration listener configuration, read once before creating the user. */\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+        "path": "workers-ts/src/services/activity/StoreNewcomerService.ts",
+        "gitBlobSha1": "8c54e7a3c85d18a6ec7125c1946b99fafc6fc634"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/admin/AdminAssistedOrderService.ts",
+      "current": {
+        "bytes": 58308,
+        "sha256": "de68a9b449e23e94ba910dbd342e4fe0a9f5a9fbe376ae563e254d5413ad5c96",
+        "gitBlobSha1": "580354faec8994164eaadc5d37c28bedb6e671c7"
+      },
+      "predecessor": {
+        "bytes": 60521,
+        "sha256": "93adc2b2c0234fb428cf7649da9eaacc9af7b36403a5ed9ceebbd0b9ddc8114c",
+        "gitBlobSha1": "61c2b743a5e8aa5ceea0ccc41deeb3619eded070"
+      },
+      "inverseEdits": [
+        {
+          "start": 35,
+          "after": [],
+          "before": [
+            "import { loadFirstOrderDiscountConfig, type FirstOrderDiscountConfig } from '@/services/activity/StoreNewcomerService';\n",
+            "import type { SystemConfigEnv } from '@/services/system/SystemConfigService';\n"
+          ],
+          "anchorStart": 32,
+          "anchor": [
+            "import { assistedDeliveryAddress, checkoutAddressId } from '@/services/order/OrderDeliveryAddress';\n",
+            "import { issueCheckoutConfirmation, OrderQuoteReconfirmRequired } from '@/services/order/CheckoutConfirmation';\n",
+            "import { loadActiveOrderSystemForm, OrderFormRejectedException, readOrderSystemFormForOrder } from '@/services/order/OrderSystemFormService';\n",
+            "import { AttachmentService, canonicalAttachmentPath, R2_IMAGE_TYPE } from '@/services/system/AttachmentService';\n",
+            "import { assistedFormAttachmentScope, belongsToAssistedFormScope } from '@/services/system/AssistedFormAttachmentScope';\n",
+            "\n"
+          ]
+        },
+        {
+          "start": 553,
+          "after": [
+            "    // Payment readiness precedes the read-only SQL snapshot; immutable receipts\n",
+            "    // are issued after it commits. First-order/cart/checkout pricing all read\n",
+            "    // the same SQL snapshot, without remote config I/O or a trusted override.\n"
+          ],
+          "before": [
+            "    // Remote config/payment reads precede the SQL transaction; immutable receipts\n",
+            "    // are issued only after it has committed. No KV/Sequence/provider I/O under RR.\n",
+            "    // First-order config retains its existing KV authority, unlike SQL pricing.\n",
+            "    // The cart projection also evaluates first-order promotions. Capture the\n",
+            "    // exact KV hits and SQL cache fills here so both readers use one configuration\n",
+            "    // without remote I/O while their product/account reads share the SQL snapshot.\n",
+            "    const firstOrderValues = new Map<string, string>();\n",
+            "    const captureConfig: SystemConfigEnv = { CONFIG_KV: {\n",
+            "      get: async key => {\n",
+            "        const value = await this.env.CONFIG_KV.get(key);\n",
+            "        if (value !== null) firstOrderValues.set(key, value);\n",
+            "        return value;\n",
+            "      },\n",
+            "      put: async (key, value, options) => {\n",
+            "        await this.env.CONFIG_KV.put(key, value, options);\n",
+            "        firstOrderValues.set(key, value);\n",
+            "      },\n",
+            "      delete: async () => { throw new ValidateException('报价配置快照只读'); },\n",
+            "    } };\n",
+            "    // Native App readiness owns a short SQL transaction. Finish it before the\n",
+            "    // first-order reader can dispatch KV I/O, keeping every remote wait outside\n",
+            "    // both the readiness transaction and the quote's repeatable-read snapshot.\n"
+          ],
+          "anchorStart": 550,
+          "anchor": [
+            "    options: Record<string, unknown>,\n",
+            "    key?: string,\n",
+            "  ) {\n",
+            "    // Payment readiness precedes the read-only SQL snapshot; immutable receipts\n",
+            "    // are issued after it commits. First-order/cart/checkout pricing all read\n",
+            "    // the same SQL snapshot, without remote config I/O or a trusted override.\n",
+            "    const readiness = await getPaymentReadiness(this.container, this.env);\n",
+            "    const preview = await withTx(this.container, async db => {\n",
+            "      await db.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);\n"
+          ]
+        },
+        {
+          "start": 557,
+          "after": [],
+          "before": [
+            "    const firstOrderConfig = selection.uid > 0\n",
+            "      ? await loadFirstOrderDiscountConfig(this.container, captureConfig)\n",
+            "      : undefined;\n",
+            "    const cartConfig: SystemConfigEnv = { CONFIG_KV: {\n",
+            "      get: async key => {\n",
+            "        const value = firstOrderValues.get(key);\n",
+            "        if (value === undefined) throw new ValidateException('报价配置快照不完整');\n",
+            "        return value;\n",
+            "      },\n",
+            "      put: async () => { throw new ValidateException('报价配置快照只读'); },\n",
+            "      delete: async () => { throw new ValidateException('报价配置快照只读'); },\n",
+            "    } };\n"
+          ],
+          "anchorStart": 554,
+          "anchor": [
+            "    // are issued after it commits. First-order/cart/checkout pricing all read\n",
+            "    // the same SQL snapshot, without remote config I/O or a trusted override.\n",
+            "    const readiness = await getPaymentReadiness(this.container, this.env);\n",
+            "    const preview = await withTx(this.container, async db => {\n",
+            "      await db.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);\n",
+            "      await db.execute(sql`SELECT set_config('statement_timeout',\n"
+          ]
+        },
+        {
+          "start": 564,
+          "after": [
+            "        .readPreview(adminId, selection, options);\n"
+          ],
+          "before": [
+            "        .readPreview(adminId, selection, options, firstOrderConfig, cartConfig);\n"
+          ],
+          "anchorStart": 561,
+          "anchor": [
+            "        set_config('idle_in_transaction_session_timeout',\n",
+            "        LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000)::text || 'ms',true)`);\n",
+            "      return new AdminAssistedOrderService(createContainerFromDb(db), this.env)\n",
+            "        .readPreview(adminId, selection, options);\n",
+            "    });\n",
+            "    const orderKey = key ?? await this.remember(adminId, selection);\n",
+            "    const quoteToken = await issueCheckoutConfirmation(this.env.CONFIG_KV,\n"
+          ]
+        },
+        {
+          "start": 580,
+          "after": [],
+          "before": [
+            "    firstOrderConfig: FirstOrderDiscountConfig | undefined,\n",
+            "    cartConfig: SystemConfigEnv,\n"
+          ],
+          "anchorStart": 577,
+          "anchor": [
+            "    adminId: number,\n",
+            "    selection: AssistedSelection,\n",
+            "    options: Record<string, unknown>,\n",
+            "  ) {\n",
+            "    const shippingType = integer(options.shipping_type, \"配送方式\", { min: 1, max: 2, fallback: 1 });\n",
+            "    const addressId = checkoutAddressId(options.addressId, options.address_id);\n"
+          ]
+        },
+        {
+          "start": 589,
+          "after": [
+            "      new StoreCartService(this.container, this.env).listAssistedLegacyV2({\n"
+          ],
+          "before": [
+            "      new StoreCartService(this.container, {\n",
+            "        ...this.env,\n",
+            "        // This local facade supports only the config reader's text get/put/delete\n",
+            "        // contract; it cannot dispatch any remote KV request from the transaction.\n",
+            "        CONFIG_KV: cartConfig.CONFIG_KV as Env['CONFIG_KV'],\n",
+            "      }).listAssistedLegacyV2({\n"
+          ],
+          "anchorStart": 586,
+          "anchor": [
+            "    const couponId = integer(options.couponId, \"优惠券\", { min: 0, fallback: 0 });\n",
+            "    const useIntegral = parseBooleanSwitch(options.useIntegral ?? 0);\n",
+            "    const [cartInfo, account, address] = await Promise.all([\n",
+            "      new StoreCartService(this.container, this.env).listAssistedLegacyV2({\n",
+            "        adminId,\n",
+            "        uid: selection.uid,\n",
+            "        touristUid: selection.touristUid,\n"
+          ]
+        },
+        {
+          "start": 619,
+          "after": [
+            "    });\n"
+          ],
+          "before": [
+            "    }, undefined, firstOrderConfig);\n"
+          ],
+          "anchorStart": 616,
+          "anchor": [
+            "      payType: normalizePayType(options.payType),\n",
+            "      type: 0,\n",
+            "      assisted: { adminId, touristUid: selection.touristUid },\n",
+            "    });\n",
+            "    const quoted = new Map(quote.items.map((item) => [item.cartId, item]));\n",
+            "    for (const row of cartInfo) {\n",
+            "      const item = quoted.get(Number(row.id));\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+        "path": "workers-ts/src/services/admin/AdminAssistedOrderService.ts",
+        "gitBlobSha1": "61c2b743a5e8aa5ceea0ccc41deeb3619eded070"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/order/CartComputationService.ts",
+      "current": {
+        "bytes": 15153,
+        "sha256": "a28cf1128a777db4a843d3d875fbdc93e06d315d9ab8e6e0caaad1dad0b4c0bb",
+        "gitBlobSha1": "d1947c3c3787583caa85c9c24e2205e3ec339ee4"
+      },
+      "predecessor": {
+        "bytes": 15353,
+        "sha256": "0ad8525aee660d65acca7ba67248908b3f23ec70241b45123370da8d37698c0c",
+        "gitBlobSha1": "21f62d549c89997bc5f543ad4cf2d8346b64bfda"
+      },
+      "inverseEdits": [
+        {
+          "start": 12,
+          "after": [
+            "import { quoteFirstOrderDiscountFromDb } from '@/services/activity/StoreNewcomerService';\n"
+          ],
+          "before": [
+            "import { quoteFirstOrderDiscount } from '@/services/activity/StoreNewcomerService';\n"
+          ],
+          "anchorStart": 9,
+          "anchor": [
+            "import { type PricedCouponItem } from '@/services/activity/OrderCouponService';\n",
+            "import { claimableOrdinaryEstimatedCoupon, readBestEstimatedCoupon } from '@/services/activity/PublicCouponEstimateService';\n",
+            "import { legacyCouponProjection } from '@/services/activity/V2CouponCompatibilityService';\n",
+            "import { quoteFirstOrderDiscountFromDb } from '@/services/activity/StoreNewcomerService';\n",
+            "import { allocateCheckoutLineUnits, fitCheckoutLineCapacities } from './CheckoutLineAllocation';\n",
+            "import { quoteOrderPromotionGifts } from '@/services/activity/OrderPromotionGiftService';\n",
+            "import type { OrderPromotionQuoteLine } from '@/services/activity/OrderPromotionQuoteService';\n"
+          ]
+        },
+        {
+          "start": 29,
+          "after": [],
+          "before": [
+            "// Force fresh SQL configuration without a KV write, even when a caller has Worker bindings.\n",
+            "const READ_CONFIG = { CONFIG_KV: { get: async () => null, put: async () => {}, delete: async () => {} } };\n"
+          ],
+          "anchorStart": 26,
+          "anchor": [
+            "  unique: string; isValid: boolean; truePrice: string; trueSumPrice: string; sumPrice: string;\n",
+            "  productInfo: { productType: number; stock: number; integral: number } | null; promotion?: OrderPromotionQuoteLine }\n",
+            "export interface CartComputationActor { uid: number; passwordVersion: string; expiresAt: number }\n",
+            "const cents = (value: string | number) => {\n",
+            "  const result = decimalToCents(value);\n",
+            "  if (!Number.isSafeInteger(result) || result < 0) throw new ValidateException('购物车预算金额无效');\n"
+          ]
+        },
+        {
+          "start": 147,
+          "after": [
+            "    const first = normal ? await quoteFirstOrderDiscountFromDb(container,uid,total,Math.floor(now/1000)) : null;\n"
+          ],
+          "before": [
+            "    const first = normal ? await quoteFirstOrderDiscount(container,READ_CONFIG,uid,total,Math.floor(now/1000)) : null;\n"
+          ],
+          "anchorStart": 144,
+          "anchor": [
+            "    const promotions = sum(rows.map(row => row.promotion?.promotionSavingsCents ?? 0));\n",
+            "    const member = sum(rows.map(row => row.promotion?.membershipSavingsCents ?? Math.max(0,cents(row.sumPrice)-cents(row.trueSumPrice))));\n",
+            "    if (raw - member - promotions !== total) throw new ValidateException('购物车预算价格不一致，请重新读取');\n",
+            "    const first = normal ? await quoteFirstOrderDiscountFromDb(container,uid,total,Math.floor(now/1000)) : null;\n",
+            "    const firstOrder = first ? cents(first.firstOrderPrice) : 0;\n",
+            "    const items: PricedCouponItem[] = rows.map(row => ({ cart:{cartNum:row.cartNum},product:products.get(row.productId)!,\n",
+            "      unitPriceCents:cents(row.truePrice),promotion:row.promotion,couponEligibleGrossCents:row.promotion?.couponEligibleGrossCents }));\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+        "path": "workers-ts/src/services/order/CartComputationService.ts",
+        "gitBlobSha1": "21f62d549c89997bc5f543ad4cf2d8346b64bfda"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/order/CheckoutPricingSources.ts",
+      "current": {
+        "bytes": 5640,
+        "sha256": "1e12b19c791774f6ce4ef4d9890d367d9571153c462978ac0041bf6ffef272f8",
+        "gitBlobSha1": "923381804c6c0db78d9d52b4bf86d942b128cb64"
+      },
+      "predecessor": {
+        "bytes": 4839,
+        "sha256": "f17baadb0242d9524b4d4bc681b18d1ae9c9df9ca70a01748c5ee6ede559a764",
+        "gitBlobSha1": "b9ab78848aa09fa0c1275b98c3311d1af820740e"
+      },
+      "inverseEdits": [
+        {
+          "start": 10,
+          "after": [
+            "const FIRST_ORDER_KEYS = [\n",
+            "  'newcomer_status', 'first_order_status', 'first_order_discount',\n",
+            "  'first_order_discount_limit', 'newcomer_limit_status', 'newcomer_limit_time',\n",
+            "] as const;\n"
+          ],
+          "before": [],
+          "anchorStart": 7,
+          "anchor": [
+            "const MEMBERSHIP_KEYS = [\n",
+            "  'member_func_status', 'member_card_status', 'svip_price_status',\n",
+            "] as const;\n",
+            "const FIRST_ORDER_KEYS = [\n",
+            "  'newcomer_status', 'first_order_status', 'first_order_discount',\n",
+            "  'first_order_discount_limit', 'newcomer_limit_status', 'newcomer_limit_time',\n",
+            "] as const;\n",
+            "const PRICING_KEYS = [\n",
+            "  ...MEMBERSHIP_KEYS,\n",
+            "  ...FIRST_ORDER_KEYS,\n"
+          ]
+        },
+        {
+          "start": 16,
+          "after": [
+            "  ...FIRST_ORDER_KEYS,\n"
+          ],
+          "before": [],
+          "anchorStart": 13,
+          "anchor": [
+            "] as const;\n",
+            "const PRICING_KEYS = [\n",
+            "  ...MEMBERSHIP_KEYS,\n",
+            "  ...FIRST_ORDER_KEYS,\n",
+            "  'integral_ratio_status', 'integral_ratio', 'integral_max_type', 'integral_max_num', 'integral_max_rate',\n",
+            "  'whole_free_shipping', 'store_free_postage', 'offline_postage',\n",
+            "] as const;\n"
+          ]
+        },
+        {
+          "start": 22,
+          "after": [
+            "/** One SQL/MVCC snapshot for the fixed 17 keys and two rights; no KV authority.\n"
+          ],
+          "before": [
+            "/** One SQL/MVCC snapshot for the fixed 11 keys and two rights; no KV authority.\n"
+          ],
+          "anchorStart": 19,
+          "anchor": [
+            "] as const;\n",
+            "type PricingRight = Pick<typeof memberRight.$inferSelect, 'rightType' | 'number' | 'status'>;\n",
+            "\n",
+            "/** One SQL/MVCC snapshot for the fixed 17 keys and two rights; no KV authority.\n",
+            " * Config priority matches SystemConfigDao (global scope, sort DESC/id DESC).\n",
+            " * Config status is field visibility, NOT a switch. Rights retain the legacy\n",
+            " * lowest-id winner, even when disabled. Missing/empty normalization is unchanged.\n"
+          ]
+        },
+        {
+          "start": 26,
+          "after": [
+            " * The six first-order values stay raw: their shared legacy parser performs the\n",
+            " * single scalar decode. The existing eleven fields retain their normalization.\n"
+          ],
+          "before": [],
+          "anchorStart": 23,
+          "anchor": [
+            " * Config priority matches SystemConfigDao (global scope, sort DESC/id DESC).\n",
+            " * Config status is field visibility, NOT a switch. Rights retain the legacy\n",
+            " * lowest-id winner, even when disabled. Missing/empty normalization is unchanged.\n",
+            " * The six first-order values stay raw: their shared legacy parser performs the\n",
+            " * single scalar decode. The existing eleven fields retain their normalization.\n",
+            " * Scalar LIMITs bound data returned to the Worker despite historical duplicates.\n",
+            " */\n",
+            "export async function readCheckoutPricingSources(db: DbClient) {\n"
+          ]
+        },
+        {
+          "start": 40,
+          "after": [
+            "/** The same bounded SQL projection for first-order advice/cart reads. No\n",
+            " * membership-right query, KV lookup or cache refill is needed for these keys. */\n",
+            "export async function readFirstOrderPricingSources(db: DbClient) {\n",
+            "  return (await readPricingSources(db, FIRST_ORDER_KEYS, false, false)).values;\n",
+            "}\n",
+            "\n",
+            "async function readPricingSources(db: DbClient, keys: readonly string[], includeExpress: boolean, includeVip = true) {\n"
+          ],
+          "before": [
+            "async function readPricingSources(db: DbClient, keys: readonly string[], includeExpress: boolean) {\n"
+          ],
+          "anchorStart": 37,
+          "anchor": [
+            "  return readPricingSources(db, MEMBERSHIP_KEYS, false);\n",
+            "}\n",
+            "\n",
+            "/** The same bounded SQL projection for first-order advice/cart reads. No\n",
+            " * membership-right query, KV lookup or cache refill is needed for these keys. */\n",
+            "export async function readFirstOrderPricingSources(db: DbClient) {\n",
+            "  return (await readPricingSources(db, FIRST_ORDER_KEYS, false, false)).values;\n",
+            "}\n",
+            "\n",
+            "async function readPricingSources(db: DbClient, keys: readonly string[], includeExpress: boolean, includeVip = true) {\n",
+            "  const configPairs = keys.flatMap(name => [sql`${name}::text`, sql`(\n",
+            "    SELECT ${systemConfig.value} FROM ${systemConfig}\n",
+            "    WHERE ${systemConfig.isStore} = 0 AND ${systemConfig.menuName} = ${name}\n"
+          ]
+        },
+        {
+          "start": 59,
+          "after": [
+            "    vip: includeVip ? right('vip_price') : sql<null>`NULL`, express: includeExpress ? right('express') : sql<null>`NULL`,\n"
+          ],
+          "before": [
+            "    vip: right('vip_price'), express: includeExpress ? right('express') : sql<null>`NULL`,\n"
+          ],
+          "anchorStart": 56,
+          "anchor": [
+            "  )`;\n",
+            "  const [row] = await db.select({\n",
+            "    values: sql<Record<string, string | null>>`json_build_object(${sql.join(configPairs, sql`, `)})`,\n",
+            "    vip: includeVip ? right('vip_price') : sql<null>`NULL`, express: includeExpress ? right('express') : sql<null>`NULL`,\n",
+            "  }).from(sql`(VALUES (1)) checkout_pricing_source(n)`);\n",
+            "  if (!row) throw new ValidateException('订单计价配置读取失败');\n",
+            "  return {\n"
+          ]
+        },
+        {
+          "start": 63,
+          "after": [
+            "    values: Object.fromEntries(keys.map(name => [name, FIRST_ORDER_KEYS.some(key => key === name)\n",
+            "      ? row.values[name] ?? '' : normalizeConfigScalar(row.values[name] ?? '')])),\n"
+          ],
+          "before": [
+            "    values: Object.fromEntries(keys.map(name => [name, normalizeConfigScalar(row.values[name] ?? '')])),\n"
+          ],
+          "anchorStart": 60,
+          "anchor": [
+            "  }).from(sql`(VALUES (1)) checkout_pricing_source(n)`);\n",
+            "  if (!row) throw new ValidateException('订单计价配置读取失败');\n",
+            "  return {\n",
+            "    values: Object.fromEntries(keys.map(name => [name, FIRST_ORDER_KEYS.some(key => key === name)\n",
+            "      ? row.values[name] ?? '' : normalizeConfigScalar(row.values[name] ?? '')])),\n",
+            "    rightRows: [row.vip, row.express].filter((value): value is PricingRight => value !== null),\n",
+            "  };\n",
+            "}\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+        "path": "workers-ts/src/services/order/CheckoutPricingSources.ts",
+        "gitBlobSha1": "b9ab78848aa09fa0c1275b98c3311d1af820740e"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/order/StoreCartService.ts",
+      "current": {
+        "bytes": 82708,
+        "sha256": "5242344f84edd36c7af2d63cd4d8c25f8f01f869eaba5f95efd511b99f25c159",
+        "gitBlobSha1": "d7bd5f5252d286868c5809c10e9f9670db94e27d"
+      },
+      "predecessor": {
+        "bytes": 83036,
+        "sha256": "f6e1c9ee21e8e882deab94045b5187ef1fa9395c2946dcb3697f0853ad4b8df8",
+        "gitBlobSha1": "dae78f80b2b06facd8b7ccf9d587dfd1f2f537bd"
+      },
+      "inverseEdits": [
+        {
+          "start": 21,
+          "after": [
+            "  quoteFirstOrderDiscountFromDb,\n"
+          ],
+          "before": [
+            "  quoteFirstOrderDiscount,\n"
+          ],
+          "anchorStart": 18,
+          "anchor": [
+            "import { assertOrdinaryVipCandidate, protectOrdinaryVipCart } from './OrdinaryVipCartAdmission';\n",
+            "import { ValidateException, NotFoundException } from \"@/utils/errors\";\n",
+            "import {\n",
+            "  quoteFirstOrderDiscountFromDb,\n",
+            "  isNewcomerEligibleFromDb,\n",
+            "  newcomerBaseProductIsEligible,\n",
+            "  StoreNewcomerService,\n"
+          ]
+        },
+        {
+          "start": 129,
+          "after": [],
+          "before": [
+            "    // SQL remains the source when the cart service is used without Worker bindings.\n",
+            "    const configEnv = this.env ?? { CONFIG_KV: { get: async () => null, put: async () => {}, delete: async () => {} } };\n"
+          ],
+          "anchorStart": 126,
+          "anchor": [
+            "\n",
+            "  private async applyPromotions(uid: number, lines: OrderPromotionInputLine[], result: Record<string, unknown>[], legacy = false, skipGifts = false) {\n",
+            "    if (!lines.length) return;\n",
+            "    const firstOrder = uid > 0\n",
+            "      ? await quoteFirstOrderDiscountFromDb(this.container, uid, lines.reduce((sum, line) => sum + line.memberUnitPriceCents * line.quantity, 0))\n",
+            "      : { eligible: false };\n"
+          ]
+        },
+        {
+          "start": 130,
+          "after": [
+            "      ? await quoteFirstOrderDiscountFromDb(this.container, uid, lines.reduce((sum, line) => sum + line.memberUnitPriceCents * line.quantity, 0))\n"
+          ],
+          "before": [
+            "      ? await quoteFirstOrderDiscount(this.container, configEnv, uid, lines.reduce((sum, line) => sum + line.memberUnitPriceCents * line.quantity, 0))\n"
+          ],
+          "anchorStart": 127,
+          "anchor": [
+            "  private async applyPromotions(uid: number, lines: OrderPromotionInputLine[], result: Record<string, unknown>[], legacy = false, skipGifts = false) {\n",
+            "    if (!lines.length) return;\n",
+            "    const firstOrder = uid > 0\n",
+            "      ? await quoteFirstOrderDiscountFromDb(this.container, uid, lines.reduce((sum, line) => sum + line.memberUnitPriceCents * line.quantity, 0))\n",
+            "      : { eligible: false };\n",
+            "    const quote = await quoteOrderPromotions(this.container, { uid, lines, firstOrderEligible: firstOrder.eligible });\n",
+            "    const byId = new Map(quote.lines.map(line => [String(line.key), line]));\n"
+          ]
+        },
+        {
+          "start": 1619,
+          "after": [
+            "    _configEnv?: SystemConfigEnv,\n"
+          ],
+          "before": [
+            "    configEnv?: SystemConfigEnv,\n"
+          ],
+          "anchorStart": 1616,
+          "anchor": [
+            "  async quoteFirstOrder(\n",
+            "    uid: number,\n",
+            "    cartIds: number[],\n",
+            "    _configEnv?: SystemConfigEnv,\n",
+            "  ): Promise<FirstOrderDiscountQuote> {\n",
+            "    if (!cartIds.length || cartIds.length > 200 || new Set(cartIds).size !== cartIds.length) {\n",
+            "      throw new ValidateException(\"请选择有效的结算商品\");\n"
+          ]
+        },
+        {
+          "start": 1621,
+          "after": [],
+          "before": [
+            "    const runtime = configEnv ?? this.env;\n",
+            "    if (!runtime) throw new ValidateException(\"首单优惠配置不可用\");\n"
+          ],
+          "anchorStart": 1618,
+          "anchor": [
+            "    cartIds: number[],\n",
+            "    _configEnv?: SystemConfigEnv,\n",
+            "  ): Promise<FirstOrderDiscountQuote> {\n",
+            "    if (!cartIds.length || cartIds.length > 200 || new Set(cartIds).size !== cartIds.length) {\n",
+            "      throw new ValidateException(\"请选择有效的结算商品\");\n",
+            "    }\n"
+          ]
+        },
+        {
+          "start": 1663,
+          "after": [
+            "    return quoteFirstOrderDiscountFromDb(this.container, uid, totalCents);\n"
+          ],
+          "before": [
+            "    return quoteFirstOrderDiscount(this.container, runtime, uid, totalCents);\n"
+          ],
+          "anchorStart": 1660,
+          "anchor": [
+            "      totalCents += lineCents;\n",
+            "    }\n",
+            "    assertProductPurchaseBatch(limitLines);\n",
+            "    return quoteFirstOrderDiscountFromDb(this.container, uid, totalCents);\n",
+            "  }\n",
+            "\n",
+            "  private async resolveIntegralSku(params: {\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+        "path": "workers-ts/src/services/order/StoreCartService.ts",
+        "gitBlobSha1": "dae78f80b2b06facd8b7ccf9d587dfd1f2f537bd"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+      "current": {
+        "bytes": 191209,
+        "sha256": "daf3feaa898242e42921dffdafb902d222582f3d4b364f4ad356fb8f4fc07acf",
+        "gitBlobSha1": "a446016577b4209af65236624dc71539f98cc9c9"
+      },
+      "predecessor": {
+        "bytes": 191481,
+        "sha256": "18cefa944abe4781d804d071222ea5800652b92033e885fe846902d5e0e70589",
+        "gitBlobSha1": "a638c46119519a55dfec655c7765dbeb8b02247f"
+      },
+      "inverseEdits": [
+        {
+          "start": 82,
+          "after": [
+            "  firstOrderDiscountConfig,\n"
+          ],
+          "before": [
+            "  loadFirstOrderDiscountConfig,\n"
+          ],
+          "anchorStart": 79,
+          "anchor": [
+            "import {\n",
+            "  allocateLegacyDiscountCents,\n",
+            "  calculateFirstOrderDiscountCents,\n",
+            "  firstOrderDiscountConfig,\n",
+            "  loadNewcomerEligibilityConfig,\n",
+            "  loadNewcomerEligibilityConfigFromDb,\n",
+            "  newcomerBaseProductIsEligible,\n"
+          ]
+        },
+        {
+          "start": 283,
+          "after": [
+            "  firstOrder: FirstOrderDiscountConfig | null;\n"
+          ],
+          "before": [],
+          "anchorStart": 280,
+          "anchor": [
+            "}\n",
+            "\n",
+            "interface OrderPricingConfig {\n",
+            "  firstOrder: FirstOrderDiscountConfig | null;\n",
+            "  memberFunctionEnabled: boolean;\n",
+            "  paidMemberEnabled: boolean;\n",
+            "  paidMemberPriceEnabled: boolean;\n"
+          ]
+        },
+        {
+          "start": 309,
+          "after": [
+            "  includeFirstOrder: boolean,\n"
+          ],
+          "before": [],
+          "anchorStart": 306,
+          "anchor": [
+            "\n",
+            "async function loadOrderPricingConfig(\n",
+            "  db: DbClient,\n",
+            "  includeFirstOrder: boolean,\n",
+            "): Promise<OrderPricingConfig> {\n",
+            "  const { values, rightRows } = await readCheckoutPricingSources(db);\n",
+            "  const rights = new Map<string, (typeof rightRows)[number]>();\n"
+          ]
+        },
+        {
+          "start": 326,
+          "after": [
+            "    firstOrder: includeFirstOrder ? firstOrderDiscountConfig(values) : null,\n"
+          ],
+          "before": [],
+          "anchorStart": 323,
+          "anchor": [
+            "    throw new ValidateException(\"满额包邮配置无效\");\n",
+            "  }\n",
+            "  return {\n",
+            "    firstOrder: includeFirstOrder ? firstOrderDiscountConfig(values) : null,\n",
+            "    memberFunctionEnabled: configInteger(values.member_func_status, 1) === 1,\n",
+            "    paidMemberEnabled,\n",
+            "    paidMemberPriceEnabled: paidMemberEnabled &&\n"
+          ]
+        },
+        {
+          "start": 960,
+          "after": [],
+          "before": [
+            "    // Trusted service input only, never copied from an HTTP DTO. Lets ordinary\n",
+            "    // assisted previews read SQL in one snapshot without doing KV I/O inside it.\n",
+            "    previewFirstOrderConfig?: FirstOrderDiscountConfig,\n"
+          ],
+          "anchorStart": 957,
+          "anchor": [
+            "  async quoteOrder(\n",
+            "    params: Omit<CreateOrderParams, \"key\" | \"userIp\">,\n",
+            "    couponQuery?: OrderCouponQuery,\n",
+            "  ): Promise<OrderPricingQuote> {\n",
+            "    return StoreOrderCreateService.createWithRuntime(\n",
+            "      this.container,\n"
+          ]
+        },
+        {
+          "start": 974,
+          "after": [
+            "      { preview: true, couponQuery },\n"
+          ],
+          "before": [
+            "      { preview: true, couponQuery, previewFirstOrderConfig },\n"
+          ],
+          "anchorStart": 971,
+          "anchor": [
+            "        key: `preview_${crypto.randomUUID().replaceAll(\"-\", \"\")}`,\n",
+            "        userIp: \"0.0.0.0\",\n",
+            "      },\n",
+            "      { preview: true, couponQuery },\n",
+            "    );\n",
+            "  }\n",
+            "\n"
+          ]
+        },
+        {
+          "start": 988,
+          "after": [
+            "    options: { preview: true; couponQuery?: OrderCouponQuery },\n"
+          ],
+          "before": [
+            "    options: { preview: true; couponQuery?: OrderCouponQuery; previewFirstOrderConfig?: FirstOrderDiscountConfig },\n"
+          ],
+          "anchorStart": 985,
+          "anchor": [
+            "    c: Container,\n",
+            "    runtime: StoreOrderCreationRuntime,\n",
+            "    params: CreateOrderParams,\n",
+            "    options: { preview: true; couponQuery?: OrderCouponQuery },\n",
+            "  ): Promise<OrderPricingQuote>;\n",
+            "  static async createWithRuntime(\n",
+            "    c: Container,\n"
+          ]
+        },
+        {
+          "start": 994,
+          "after": [
+            "    options?: { preview?: boolean; couponQuery?: OrderCouponQuery },\n"
+          ],
+          "before": [
+            "    options?: { preview?: boolean; couponQuery?: OrderCouponQuery; previewFirstOrderConfig?: FirstOrderDiscountConfig },\n"
+          ],
+          "anchorStart": 991,
+          "anchor": [
+            "    c: Container,\n",
+            "    runtime: StoreOrderCreationRuntime,\n",
+            "    params: CreateOrderParams,\n",
+            "    options?: { preview?: boolean; couponQuery?: OrderCouponQuery },\n",
+            "  ): Promise<{ orderId: string; key: string } | OrderPricingQuote> {\n",
+            "    const { uid, key, cartIds } = params;\n",
+            "    const assisted = params.assisted;\n"
+          ]
+        },
+        {
+          "start": 1163,
+          "after": [
+            "      loadOrderPricingConfig(c.db, type === 0 && uid > 0),\n"
+          ],
+          "before": [
+            "      loadOrderPricingConfig(c.db),\n"
+          ],
+          "anchorStart": 1160,
+          "anchor": [
+            "    }\n",
+            "    const [user, pricingConfig] = await Promise.all([\n",
+            "      uid > 0 ? c.userDao.findForAuth(uid) : Promise.resolve(null),\n",
+            "      loadOrderPricingConfig(c.db, type === 0 && uid > 0),\n",
+            "    ]);\n",
+            "    if (uid > 0 && !user) throw new NotFoundException(\"用户不存在\");\n",
+            "    const activeLevel = pricingConfig.memberFunctionEnabled && user?.levelStatus === 1;\n"
+          ]
+        },
+        {
+          "start": 1657,
+          "after": [
+            "      ? pricingConfig.firstOrder!\n"
+          ],
+          "before": [
+            "      ? (options?.preview && options.previewFirstOrderConfig\n",
+            "          ? options.previewFirstOrderConfig : await loadFirstOrderDiscountConfig(c, runtime))\n"
+          ],
+          "anchorStart": 1654,
+          "anchor": [
+            "    const orderMerId = merIds.size === 1 ? [...merIds][0] : 0;\n",
+            "\n",
+            "    const firstOrderConfig: FirstOrderDiscountConfig = type === 0 && user\n",
+            "      ? pricingConfig.firstOrder!\n",
+            "      : { enabled: false, limitEnabled: true, limitDays: 0, payPercent: 100, limitCents: 0 };\n",
+            "    const preliminaryNow = Math.floor(Date.now() / 1000);\n",
+            "    const preliminaryUsableIntegral = user\n"
+          ]
+        },
+        {
+          "start": 3204,
+          "after": [
+            "      if (JSON.stringify(await loadOrderPricingConfig(tx, type === 0 && uid > 0)) !== JSON.stringify(pricingConfig)) {\n"
+          ],
+          "before": [
+            "      if (JSON.stringify(await loadOrderPricingConfig(tx)) !== JSON.stringify(pricingConfig)) {\n"
+          ],
+          "anchorStart": 3201,
+          "anchor": [
+            "          throw new ValidateException('自提门店信息已变化，请重新确认');\n",
+            "        pickupPolicy = currentPickup;\n",
+            "      }\n",
+            "      if (JSON.stringify(await loadOrderPricingConfig(tx, type === 0 && uid > 0)) !== JSON.stringify(pricingConfig)) {\n",
+            "        throw new ValidateException(\"订单计价配置或会员权益已变化，请重新确认\");\n",
+            "      }\n",
+            "      if (confirmation) assertCheckoutConfirmation(confirmation, await confirmationFingerprint(), key);\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+        "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+        "gitBlobSha1": "a638c46119519a55dfec655c7765dbeb8b02247f"
+      }
+    },
+    {
+      "file": "workers-ts/test/assisted-purchase-runtime-cases.ts",
+      "current": {
+        "bytes": 105981,
+        "sha256": "e2250b8c932d0abde4c1e647f83f910e770175bad989c619c5a7661334482413",
+        "gitBlobSha1": "c3cbdcbcf506cb3eccfbaa52b4f920edff434de7"
+      },
+      "predecessor": {
+        "bytes": 102214,
+        "sha256": "12d2b537c6c68002e3f49ddaee4011570e4ba7afb51030edb5a8fba4f7a9960f",
+        "gitBlobSha1": "c4a5d4dc35d044849578dfc41894719a7555d4f6"
+      },
+      "inverseEdits": [
+        {
+          "start": 49,
+          "after": [
+            "  priceGroup: Quote['priceGroup'] & { totalPrice: string; deduction_price: string; first_order_price: string };\n"
+          ],
+          "before": [
+            "  priceGroup: Quote['priceGroup'] & { totalPrice: string; deduction_price: string };\n"
+          ],
+          "anchorStart": 46,
+          "anchor": [
+            "    isNew: number; shippingType: number; storeId: number; addressSource: string; addressRequired: boolean;\n",
+            "    useIntegral: boolean; couponId: number; payType: string; systemFormId: number };\n",
+            "  integralRatio: string; integral_ratio_status: number;\n",
+            "  priceGroup: Quote['priceGroup'] & { totalPrice: string; deduction_price: string; first_order_price: string };\n",
+            "};\n",
+            "type Created = { result: { order_id: string; extended: boolean } };\n",
+            "\n"
+          ]
+        },
+        {
+          "start": 553,
+          "after": [
+            "  it('keeps SQL first-order pricing inside the assisted snapshot despite cache outage and a concurrent admin edit',async()=>{\n",
+            "    for(const [menuName,value] of Object.entries({newcomer_status:'1',first_order_status:'1',first_order_discount:'90',\n",
+            "      first_order_discount_limit:'100',newcomer_limit_status:'0',newcomer_limit_time:'0'})){\n",
+            "      const rows=await f.db.update(systemConfig).set({value}).where(and(eq(systemConfig.menuName,menuName),eq(systemConfig.isStore,0)))\n",
+            "        .returning({id:systemConfig.id});\n",
+            "      if(!rows.length)await f.db.insert(systemConfig).values({menuName,value});\n",
+            "    }\n",
+            "    const firstKeys=new Set(['newcomer_status','first_order_status','first_order_discount',\n",
+            "      'first_order_discount_limit','newcomer_limit_status','newcomer_limit_time'].map(key=>'cfg_'+key));\n",
+            "    const kv=f.env.CONFIG_KV, get=kv.get.bind(kv), put=kv.put.bind(kv);\n",
+            "    // Preserve Cloudflare's single/bulk read overloads and every KV payload/options argument.\n",
+            "    const reads=vi.spyOn(kv,'get').mockImplementation(async(...args)=>{\n",
+            "      const keys=Array.isArray(args[0])?args[0]:[args[0]];\n",
+            "      if(keys.some(key=>firstKeys.has(key)))throw Error('First-order KV unavailable');return get(...args);\n",
+            "    });\n",
+            "    const writes=vi.spyOn(kv,'put').mockImplementation(async(...args)=>{\n",
+            "      if(firstKeys.has(args[0]))throw Error('First-order KV refill forbidden');return put(...args);\n",
+            "    });\n",
+            "    await profiles(async(app,admin)=>{\n",
+            "      const client=await http(app,admin),{body,quote}=await confirm(client,11);\n",
+            "      const old=await client.post<CompleteQuote>('confirm/11',body);\n",
+            "      expect(old.status,old.msg).toBe(200);expect(old.data.priceGroup.first_order_price).toBe('2.00');\n",
+            "      const original=StoreOrderCreateService.prototype.quoteOrder;\n",
+            "      let observed=false;\n",
+            "      const quoteSpy=vi.spyOn(StoreOrderCreateService.prototype,'quoteOrder').mockImplementationOnce(async function(this:StoreOrderCreateService,...args){\n",
+            "        const [context]=await this['container'].db.execute(sql`SELECT current_setting('transaction_isolation') AS isolation,\n",
+            "          current_setting('transaction_read_only') AS readonly`);\n",
+            "        expect(context).toMatchObject({isolation:'repeatable read',readonly:'on'});\n",
+            "        // Cart projection has already established this real snapshot. Maintenance\n",
+            "        // commits the edit on an independent connection before the real quote.\n",
+            "        await f.exec(\"UPDATE system_config SET value='80' WHERE menu_name='first_order_discount' AND is_store=0\");\n",
+            "        observed=true;return original.apply(this,args);\n",
+            "      });\n",
+            "      const current=await client.post<{result:CompleteQuote}>(`computed/${quote.orderKey}/11`,body);\n",
+            "      expect(observed).toBe(true);expect(current.status,current.msg).toBe(200);\n",
+            "      expect(current.data.result.priceGroup).toEqual(old.data.priceGroup);\n",
+            "      expect(current.data.result.cartInfo).toEqual(old.data.cartInfo);quoteSpy.mockRestore();\n",
+            "      const changed=await f.state();\n",
+            "      expect((await client.post(`create/${quote.orderKey}/11`,{...body,quoteToken:current.data.result.quoteToken})).status).toBe(400);\n",
+            "      expect(await f.state()).toEqual(changed);expect(client.sequence).not.toHaveBeenCalled();\n",
+            "      const fresh=await client.post<{result:CompleteQuote}>(`computed/${quote.orderKey}/11`,body);\n",
+            "      expect(fresh.status,fresh.msg).toBe(200);expect(fresh.data.result.priceGroup.first_order_price).toBe('4.00');\n",
+            "      expect((await client.post(`create/${quote.orderKey}/11`,{...body,quoteToken:fresh.data.result.quoteToken})).status).toBe(200);\n",
+            "      expect(reads.mock.calls.some(([key])=>(Array.isArray(key)?key:[key]).some(name=>firstKeys.has(name)))).toBe(false);\n",
+            "      expect(writes.mock.calls.some(([key])=>firstKeys.has(key))).toBe(false);\n",
+            "    });\n",
+            "  },60_000);\n",
+            "\n"
+          ],
+          "before": [],
+          "anchorStart": 550,
+          "anchor": [
+            "  },60_000);\n",
+            "\n",
+            "  } else if (phase === 'flow') {\n",
+            "  it('keeps SQL first-order pricing inside the assisted snapshot despite cache outage and a concurrent admin edit',async()=>{\n",
+            "    for(const [menuName,value] of Object.entries({newcomer_status:'1',first_order_status:'1',first_order_discount:'90',\n",
+            "      first_order_discount_limit:'100',newcomer_limit_status:'0',newcomer_limit_time:'0'})){\n",
+            "      const rows=await f.db.update(systemConfig).set({value}).where(and(eq(systemConfig.menuName,menuName),eq(systemConfig.isStore,0)))\n",
+            "        .returning({id:systemConfig.id});\n",
+            "      if(!rows.length)await f.db.insert(systemConfig).values({menuName,value});\n",
+            "    }\n",
+            "    const firstKeys=new Set(['newcomer_status','first_order_status','first_order_discount',\n",
+            "      'first_order_discount_limit','newcomer_limit_status','newcomer_limit_time'].map(key=>'cfg_'+key));\n",
+            "    const kv=f.env.CONFIG_KV, get=kv.get.bind(kv), put=kv.put.bind(kv);\n",
+            "    // Preserve Cloudflare's single/bulk read overloads and every KV payload/options argument.\n",
+            "    const reads=vi.spyOn(kv,'get').mockImplementation(async(...args)=>{\n",
+            "      const keys=Array.isArray(args[0])?args[0]:[args[0]];\n",
+            "      if(keys.some(key=>firstKeys.has(key)))throw Error('First-order KV unavailable');return get(...args);\n",
+            "    });\n",
+            "    const writes=vi.spyOn(kv,'put').mockImplementation(async(...args)=>{\n",
+            "      if(firstKeys.has(args[0]))throw Error('First-order KV refill forbidden');return put(...args);\n",
+            "    });\n",
+            "    await profiles(async(app,admin)=>{\n",
+            "      const client=await http(app,admin),{body,quote}=await confirm(client,11);\n",
+            "      const old=await client.post<CompleteQuote>('confirm/11',body);\n",
+            "      expect(old.status,old.msg).toBe(200);expect(old.data.priceGroup.first_order_price).toBe('2.00');\n",
+            "      const original=StoreOrderCreateService.prototype.quoteOrder;\n",
+            "      let observed=false;\n",
+            "      const quoteSpy=vi.spyOn(StoreOrderCreateService.prototype,'quoteOrder').mockImplementationOnce(async function(this:StoreOrderCreateService,...args){\n",
+            "        const [context]=await this['container'].db.execute(sql`SELECT current_setting('transaction_isolation') AS isolation,\n",
+            "          current_setting('transaction_read_only') AS readonly`);\n",
+            "        expect(context).toMatchObject({isolation:'repeatable read',readonly:'on'});\n",
+            "        // Cart projection has already established this real snapshot. Maintenance\n",
+            "        // commits the edit on an independent connection before the real quote.\n",
+            "        await f.exec(\"UPDATE system_config SET value='80' WHERE menu_name='first_order_discount' AND is_store=0\");\n",
+            "        observed=true;return original.apply(this,args);\n",
+            "      });\n",
+            "      const current=await client.post<{result:CompleteQuote}>(`computed/${quote.orderKey}/11`,body);\n",
+            "      expect(observed).toBe(true);expect(current.status,current.msg).toBe(200);\n",
+            "      expect(current.data.result.priceGroup).toEqual(old.data.priceGroup);\n",
+            "      expect(current.data.result.cartInfo).toEqual(old.data.cartInfo);quoteSpy.mockRestore();\n",
+            "      const changed=await f.state();\n",
+            "      expect((await client.post(`create/${quote.orderKey}/11`,{...body,quoteToken:current.data.result.quoteToken})).status).toBe(400);\n",
+            "      expect(await f.state()).toEqual(changed);expect(client.sequence).not.toHaveBeenCalled();\n",
+            "      const fresh=await client.post<{result:CompleteQuote}>(`computed/${quote.orderKey}/11`,body);\n",
+            "      expect(fresh.status,fresh.msg).toBe(200);expect(fresh.data.result.priceGroup.first_order_price).toBe('4.00');\n",
+            "      expect((await client.post(`create/${quote.orderKey}/11`,{...body,quoteToken:fresh.data.result.quoteToken})).status).toBe(200);\n",
+            "      expect(reads.mock.calls.some(([key])=>(Array.isArray(key)?key:[key]).some(name=>firstKeys.has(name)))).toBe(false);\n",
+            "      expect(writes.mock.calls.some(([key])=>firstKeys.has(key))).toBe(false);\n",
+            "    });\n",
+            "  },60_000);\n",
+            "\n",
+            "  it.each([[11,'saved'],[11,'manual'],[0,'manual'],[11,'pickup'],[11,'virtual'],[0,'virtual']] as const)(\n",
+            "    'returns complete confirm/recomputed projections for uid=%i %s without business writes',async(uid,delivery)=>{\n",
+            "      await profiles(async(app,admin)=>{\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+        "path": "workers-ts/test/assisted-purchase-runtime-cases.ts",
+        "gitBlobSha1": "c4a5d4dc35d044849578dfc41894719a7555d4f6"
+      }
+    },
+    {
+      "file": "workers-ts/test/checkout-confirmation.test.ts",
+      "current": {
+        "bytes": 9315,
+        "sha256": "e5ccc99cf1c1f2d5870e6c6ce019dc0aa9ad91bdbab6ceeec2b6d9fdb2bb00cf",
+        "gitBlobSha1": "b6d459ea2743ea05e2cc096d9ea5957aed5cca42"
+      },
+      "predecessor": {
+        "bytes": 9321,
+        "sha256": "7f45a7ed22121145cea7057688fe89e22a0c4637a5ab54bea9345f56e3c2583c",
+        "gitBlobSha1": "d495cefdbc9d732ba5dff8d0f91e7e14a8c34b15"
+      },
+      "inverseEdits": [
+        {
+          "start": 105,
+          "after": [
+            "    if (kind === 'first_order') await f.setConfig({ newcomer_status: '1', first_order_status: '1', first_order_discount: '90', first_order_discount_limit: '100', newcomer_limit_status: '0' });\n"
+          ],
+          "before": [
+            "    if (kind === 'first_order') Object.assign(f.config, { newcomer_status: '1', first_order_status: '1', first_order_discount: '90', first_order_discount_limit: '100', newcomer_limit_status: '0' });\n"
+          ],
+          "anchorStart": 102,
+          "anchor": [
+            "    expect((await f.snapshot()).orders[0].payPrice).toBe('26.00');\n",
+            "  });\n",
+            "  it.each(['first_order', 'integral'] as const)('rolls back if final transaction changes %s amount after initial quote admission', async kind => {\n",
+            "    if (kind === 'first_order') await f.setConfig({ newcomer_status: '1', first_order_status: '1', first_order_discount: '90', first_order_discount_limit: '100', newcomer_limit_status: '0' });\n",
+            "    else await f.setConfig({ integral_ratio_status: '1', integral_ratio: '0.01', integral_max_type: '1', integral_max_num: '50' });\n",
+            "    const params = { ...input, useIntegral: kind === 'integral' };\n",
+            "    const confirmed = await request('/api/order/confirm', params); expect(confirmed.status).toBe(200);\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+        "path": "workers-ts/test/checkout-confirmation.test.ts",
+        "gitBlobSha1": "d495cefdbc9d732ba5dff8d0f91e7e14a8c34b15"
+      }
+    },
+    {
+      "file": "workers-ts/test/checkout-pricing-config-authority.test.ts",
+      "current": {
+        "bytes": 19323,
+        "sha256": "1dcc8e0166363fbad116d14bebd4afcdef2d3d919910495488e3a5e4c11ea48f",
+        "gitBlobSha1": "3dd4b759ac17be2b1fcdf1befeba0339419e7c27"
+      },
+      "predecessor": {
+        "bytes": 13076,
+        "sha256": "36ca99750e6493b0b852211bc830eba9227500e11c3a3700667c30c6b53830ef",
+        "gitBlobSha1": "0199bf939ea7c1f340d9a99f7bb74271db3ac8a5"
+      },
+      "inverseEdits": [
+        {
+          "start": 53,
+          "after": [
+            "  const firstOrder = {\n",
+            "    newcomer_status: '1', first_order_status: '1', first_order_discount: '90',\n",
+            "    first_order_discount_limit: '100', newcomer_limit_status: '0', newcomer_limit_time: '1',\n",
+            "  };\n",
+            "  // The full ORM fixture exposes every business table. Configuration edits are\n",
+            "  // the controlled peer action; all other rows must survive rejected creation.\n",
+            "  const businessRows = async () => {\n",
+            "    const tables = await f.db.execute(sql`SELECT tablename FROM pg_catalog.pg_tables\n",
+            "      WHERE schemaname = current_schema() AND tablename <> 'system_config' ORDER BY tablename`);\n",
+            "    const rows: Record<string, unknown[]> = {};\n",
+            "    for (const table of tables) {\n",
+            "      const name = String(table.tablename); expect(name).toMatch(/^[a-z_][a-z0-9_]*$/);\n",
+            "      rows[name] = Array.from(await f.db.execute(sql`SELECT to_jsonb(t) AS body\n",
+            "        FROM ${sql.identifier(name)} AS t ORDER BY to_jsonb(t)::text`));\n",
+            "    }\n",
+            "    expect(Object.keys(rows).length).toBeGreaterThan(280);\n",
+            "    return rows;\n",
+            "  };\n",
+            "\n",
+            "  it.each([\n",
+            "    ['newcomer_status', '0'], ['first_order_status', '0'], ['first_order_discount', '80'],\n",
+            "    ['first_order_discount_limit', '1'], ['newcomer_limit_status', '1'], ['newcomer_limit_time', '1'],\n",
+            "  ])('rolls back every business table when SQL first-order %s changes after initial pricing', async (key, value) => {\n",
+            "    await f.setConfig({ ...firstOrder, ...(key === 'newcomer_limit_time'\n",
+            "      ? { newcomer_limit_status: '1', newcomer_limit_time: '0' } : {}) });\n",
+            "    expect(await quote()).toMatchObject({ firstOrderPriceCents: 200, payCents: 2400 });\n",
+            "    const r = await receipt(), before = await businessRows();\n",
+            "    beforeSequence = async () => { await setSql(key, value); };\n",
+            "    const result = await create(r);\n",
+            "    expect(result).toMatchObject({ status: 400, data: { errorCode: 'ORDER_QUOTE_RECONFIRM_REQUIRED' } });\n",
+            "    expect(await businessRows()).toEqual(before);\n",
+            "  }, 30_000);\n",
+            "\n",
+            "  it.each(['absent-insert', 'duplicate-insert', 'delete-winner', 'rename-winner'] as const)(\n",
+            "    'rechecks first-order %s semantics rather than trusting the pre-transaction config', async kind => {\n",
+            "      await f.setConfig(firstOrder);\n",
+            "      if (kind === 'absent-insert') await f.db.delete(systemConfig).where(eq(systemConfig.menuName, 'first_order_status'));\n",
+            "      const r = await receipt(), before = await businessRows();\n",
+            "      beforeSequence = async () => {\n",
+            "        if (kind === 'absent-insert') await f.db.insert(systemConfig).values({ menuName: 'first_order_status', value: '1' });\n",
+            "        else if (kind === 'duplicate-insert') await f.db.insert(systemConfig).values({ menuName: 'first_order_discount', value: '80', sort: 10 });\n",
+            "        else if (kind === 'delete-winner') await f.db.delete(systemConfig).where(eq(systemConfig.menuName, 'first_order_discount_limit'));\n",
+            "        else await f.db.update(systemConfig).set({ menuName: 'renamed_first_order_limit' }).where(eq(systemConfig.menuName, 'first_order_discount_limit'));\n",
+            "      };\n",
+            "      expect(await create(r)).toMatchObject({ status: 400, data: { errorCode: 'ORDER_QUOTE_RECONFIRM_REQUIRED' } });\n",
+            "      expect(await businessRows()).toEqual(before);\n",
+            "    }, 30_000);\n",
+            "\n",
+            "  it('accepts semantically identical first-order formatting, visibility and losing duplicate edits', async () => {\n",
+            "    await f.setConfig({ ...firstOrder, first_order_discount: '85.99' });\n",
+            "    const r = await receipt();\n",
+            "    beforeSequence = async () => {\n",
+            "      await f.db.update(systemConfig).set({ status: 0, info: 'display only' });\n",
+            "      await setSql('first_order_discount', '\"85.50\"');\n",
+            "      await f.db.insert(systemConfig).values({ menuName: 'first_order_discount', value: '0', sort: -1 });\n",
+            "    };\n",
+            "    expect((await create(r)).status).toBe(200);\n",
+            "    expect((await f.snapshot()).orders).toMatchObject([{ firstOrderPrice: '3.00', payPrice: '23.00' }]);\n",
+            "  });\n",
+            "\n",
+            "  it('replays an already committed first-order receipt without repricing or consuming eligibility twice', async () => {\n",
+            "    await f.setConfig(firstOrder);\n",
+            "    const r = await receipt(); expect((await create(r)).status).toBe(200);\n",
+            "    const before = await businessRows();\n",
+            "    await setSql('first_order_discount', '0');\n",
+            "    expect((await create(r)).status).toBe(200);\n",
+            "    expect(await businessRows()).toEqual(before);\n",
+            "  }, 30_000);\n",
+            "\n",
+            "  it.each(['update', 'insert-absent'] as const)('holds first-order %s writers behind the actual checkout fence until commit', async kind => {\n",
+            "    await f.setConfig(firstOrder);\n",
+            "    if (kind === 'insert-absent') await f.db.delete(systemConfig).where(eq(systemConfig.menuName, 'first_order_status'));\n",
+            "    const r = await receipt(), connect = owned.withPeer;\n",
+            "    if (!connect) throw new Error('Dedicated PG16 peers required');\n",
+            "    const [buyer] = await f.db.select({ pid: sql<number>`pg_backend_pid()` }).from(sql`(VALUES (1)) buyer(n)`);\n",
+            "    await connect(writer => connect(async observer => {\n",
+            "      expect(new Set([buyer.pid, writer.pid, observer.pid]).size).toBe(3);\n",
+            "      let writing: ReturnType<typeof outcome> | undefined, fenced = false;\n",
+            "      const execute = PostgresJsPreparedQuery.prototype.execute;\n",
+            "      vi.spyOn(PostgresJsPreparedQuery.prototype, 'execute').mockImplementation(async function (\n",
+            "        this: PostgresJsPreparedQuery<PreparedQueryConfig>, ...args\n",
+            "      ) {\n",
+            "        const result = await execute.apply(this, args);\n",
+            "        if (!fenced && this.getQuery().sql === 'SELECT \"public\".checkout_lock_pricing_v1()') {\n",
+            "          fenced = true;\n",
+            "          writing = outcome(writer.exec(kind === 'update'\n",
+            "            ? \"UPDATE system_config SET value='80' WHERE menu_name='first_order_discount'\"\n",
+            "            : \"INSERT INTO system_config(menu_name,value) VALUES('first_order_status','1')\"));\n",
+            "          await waitForFinanceBlock(observer.db, writer.pid, buyer.pid);\n",
+            "        }\n",
+            "        return result;\n",
+            "      });\n",
+            "      try { expect((await create(r)).status).toBe(200); } finally { vi.restoreAllMocks(); }\n",
+            "      expect(fenced).toBe(true); expect((await writing)?.ok).toBe(true);\n",
+            "    }));\n",
+            "    expect((await f.snapshot()).orders).toMatchObject([{ firstOrderPrice: kind === 'update' ? '2.00' : '0.00',\n",
+            "      payPrice: kind === 'update' ? '24.00' : '26.00' }]);\n",
+            "    expect((await readCheckoutPricingSources(f.db)).values[kind === 'update' ? 'first_order_discount' : 'first_order_status'])\n",
+            "      .toBe(kind === 'update' ? '80' : '1');\n",
+            "  }, 20_000);\n"
+          ],
+          "before": [],
+          "anchorStart": 50,
+          "anchor": [
+            "  const create = (r: { orderKey: string; quoteToken: string }) => request(`/api/order/create/${r.orderKey}`, {\n",
+            "    cartIds: [1], addressId: 11, quoteToken: r.quoteToken,\n",
+            "  });\n",
+            "  const firstOrder = {\n",
+            "    newcomer_status: '1', first_order_status: '1', first_order_discount: '90',\n",
+            "    first_order_discount_limit: '100', newcomer_limit_status: '0', newcomer_limit_time: '1',\n",
+            "  };\n",
+            "  // The full ORM fixture exposes every business table. Configuration edits are\n",
+            "  // the controlled peer action; all other rows must survive rejected creation.\n",
+            "  const businessRows = async () => {\n",
+            "    const tables = await f.db.execute(sql`SELECT tablename FROM pg_catalog.pg_tables\n",
+            "      WHERE schemaname = current_schema() AND tablename <> 'system_config' ORDER BY tablename`);\n",
+            "    const rows: Record<string, unknown[]> = {};\n",
+            "    for (const table of tables) {\n",
+            "      const name = String(table.tablename); expect(name).toMatch(/^[a-z_][a-z0-9_]*$/);\n",
+            "      rows[name] = Array.from(await f.db.execute(sql`SELECT to_jsonb(t) AS body\n",
+            "        FROM ${sql.identifier(name)} AS t ORDER BY to_jsonb(t)::text`));\n",
+            "    }\n",
+            "    expect(Object.keys(rows).length).toBeGreaterThan(280);\n",
+            "    return rows;\n",
+            "  };\n",
+            "\n",
+            "  it.each([\n",
+            "    ['newcomer_status', '0'], ['first_order_status', '0'], ['first_order_discount', '80'],\n",
+            "    ['first_order_discount_limit', '1'], ['newcomer_limit_status', '1'], ['newcomer_limit_time', '1'],\n",
+            "  ])('rolls back every business table when SQL first-order %s changes after initial pricing', async (key, value) => {\n",
+            "    await f.setConfig({ ...firstOrder, ...(key === 'newcomer_limit_time'\n",
+            "      ? { newcomer_limit_status: '1', newcomer_limit_time: '0' } : {}) });\n",
+            "    expect(await quote()).toMatchObject({ firstOrderPriceCents: 200, payCents: 2400 });\n",
+            "    const r = await receipt(), before = await businessRows();\n",
+            "    beforeSequence = async () => { await setSql(key, value); };\n",
+            "    const result = await create(r);\n",
+            "    expect(result).toMatchObject({ status: 400, data: { errorCode: 'ORDER_QUOTE_RECONFIRM_REQUIRED' } });\n",
+            "    expect(await businessRows()).toEqual(before);\n",
+            "  }, 30_000);\n",
+            "\n",
+            "  it.each(['absent-insert', 'duplicate-insert', 'delete-winner', 'rename-winner'] as const)(\n",
+            "    'rechecks first-order %s semantics rather than trusting the pre-transaction config', async kind => {\n",
+            "      await f.setConfig(firstOrder);\n",
+            "      if (kind === 'absent-insert') await f.db.delete(systemConfig).where(eq(systemConfig.menuName, 'first_order_status'));\n",
+            "      const r = await receipt(), before = await businessRows();\n",
+            "      beforeSequence = async () => {\n",
+            "        if (kind === 'absent-insert') await f.db.insert(systemConfig).values({ menuName: 'first_order_status', value: '1' });\n",
+            "        else if (kind === 'duplicate-insert') await f.db.insert(systemConfig).values({ menuName: 'first_order_discount', value: '80', sort: 10 });\n",
+            "        else if (kind === 'delete-winner') await f.db.delete(systemConfig).where(eq(systemConfig.menuName, 'first_order_discount_limit'));\n",
+            "        else await f.db.update(systemConfig).set({ menuName: 'renamed_first_order_limit' }).where(eq(systemConfig.menuName, 'first_order_discount_limit'));\n",
+            "      };\n",
+            "      expect(await create(r)).toMatchObject({ status: 400, data: { errorCode: 'ORDER_QUOTE_RECONFIRM_REQUIRED' } });\n",
+            "      expect(await businessRows()).toEqual(before);\n",
+            "    }, 30_000);\n",
+            "\n",
+            "  it('accepts semantically identical first-order formatting, visibility and losing duplicate edits', async () => {\n",
+            "    await f.setConfig({ ...firstOrder, first_order_discount: '85.99' });\n",
+            "    const r = await receipt();\n",
+            "    beforeSequence = async () => {\n",
+            "      await f.db.update(systemConfig).set({ status: 0, info: 'display only' });\n",
+            "      await setSql('first_order_discount', '\"85.50\"');\n",
+            "      await f.db.insert(systemConfig).values({ menuName: 'first_order_discount', value: '0', sort: -1 });\n",
+            "    };\n",
+            "    expect((await create(r)).status).toBe(200);\n",
+            "    expect((await f.snapshot()).orders).toMatchObject([{ firstOrderPrice: '3.00', payPrice: '23.00' }]);\n",
+            "  });\n",
+            "\n",
+            "  it('replays an already committed first-order receipt without repricing or consuming eligibility twice', async () => {\n",
+            "    await f.setConfig(firstOrder);\n",
+            "    const r = await receipt(); expect((await create(r)).status).toBe(200);\n",
+            "    const before = await businessRows();\n",
+            "    await setSql('first_order_discount', '0');\n",
+            "    expect((await create(r)).status).toBe(200);\n",
+            "    expect(await businessRows()).toEqual(before);\n",
+            "  }, 30_000);\n",
+            "\n",
+            "  it.each(['update', 'insert-absent'] as const)('holds first-order %s writers behind the actual checkout fence until commit', async kind => {\n",
+            "    await f.setConfig(firstOrder);\n",
+            "    if (kind === 'insert-absent') await f.db.delete(systemConfig).where(eq(systemConfig.menuName, 'first_order_status'));\n",
+            "    const r = await receipt(), connect = owned.withPeer;\n",
+            "    if (!connect) throw new Error('Dedicated PG16 peers required');\n",
+            "    const [buyer] = await f.db.select({ pid: sql<number>`pg_backend_pid()` }).from(sql`(VALUES (1)) buyer(n)`);\n",
+            "    await connect(writer => connect(async observer => {\n",
+            "      expect(new Set([buyer.pid, writer.pid, observer.pid]).size).toBe(3);\n",
+            "      let writing: ReturnType<typeof outcome> | undefined, fenced = false;\n",
+            "      const execute = PostgresJsPreparedQuery.prototype.execute;\n",
+            "      vi.spyOn(PostgresJsPreparedQuery.prototype, 'execute').mockImplementation(async function (\n",
+            "        this: PostgresJsPreparedQuery<PreparedQueryConfig>, ...args\n",
+            "      ) {\n",
+            "        const result = await execute.apply(this, args);\n",
+            "        if (!fenced && this.getQuery().sql === 'SELECT \"public\".checkout_lock_pricing_v1()') {\n",
+            "          fenced = true;\n",
+            "          writing = outcome(writer.exec(kind === 'update'\n",
+            "            ? \"UPDATE system_config SET value='80' WHERE menu_name='first_order_discount'\"\n",
+            "            : \"INSERT INTO system_config(menu_name,value) VALUES('first_order_status','1')\"));\n",
+            "          await waitForFinanceBlock(observer.db, writer.pid, buyer.pid);\n",
+            "        }\n",
+            "        return result;\n",
+            "      });\n",
+            "      try { expect((await create(r)).status).toBe(200); } finally { vi.restoreAllMocks(); }\n",
+            "      expect(fenced).toBe(true); expect((await writing)?.ok).toBe(true);\n",
+            "    }));\n",
+            "    expect((await f.snapshot()).orders).toMatchObject([{ firstOrderPrice: kind === 'update' ? '2.00' : '0.00',\n",
+            "      payPrice: kind === 'update' ? '24.00' : '26.00' }]);\n",
+            "    expect((await readCheckoutPricingSources(f.db)).values[kind === 'update' ? 'first_order_discount' : 'first_order_status'])\n",
+            "      .toBe(kind === 'update' ? '80' : '1');\n",
+            "  }, 20_000);\n",
+            "\n",
+            "  it('ignores a stale cached free-shipping grant when SQL disables it', async () => {\n",
+            "    f.config.whole_free_shipping = '1';\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+        "path": "workers-ts/test/checkout-pricing-config-authority.test.ts",
+        "gitBlobSha1": "0199bf939ea7c1f340d9a99f7bb74271db3ac8a5"
+      }
+    },
+    {
+      "file": "workers-ts/test/helpers/pcCheckoutQuoteFixture.ts",
+      "current": {
+        "bytes": 8785,
+        "sha256": "c2fc49e4faaaeb0b63f6c8da15b5422ab457243f09959d79347eeab41a0e9ccb",
+        "gitBlobSha1": "470ddb063538c4cdb73534afbe50536b8a08fe8f"
+      },
+      "predecessor": {
+        "bytes": 8638,
+        "sha256": "f7e317ceab8a8e5a45dd1309bfa2b68f15911dd2565f717b218fe6627beb7a6e",
+        "gitBlobSha1": "da0e28818cce50a6124ee7ec9ace43944cdd28c2"
+      },
+      "inverseEdits": [
+        {
+          "start": 42,
+          "after": [
+            "    'integral_ratio', 'integral_max_type', 'integral_max_num', 'integral_max_rate', 'whole_free_shipping', 'store_free_postage', 'offline_postage',\n",
+            "    'newcomer_status', 'first_order_status', 'first_order_discount', 'first_order_discount_limit', 'newcomer_limit_status', 'newcomer_limit_time'];\n"
+          ],
+          "before": [
+            "    'integral_ratio', 'integral_max_type', 'integral_max_num', 'integral_max_rate', 'whole_free_shipping', 'store_free_postage', 'offline_postage'];\n"
+          ],
+          "anchorStart": 39,
+          "anchor": [
+            "  const container = createContainerFromDb(fixture.db);\n",
+            "  const cache = new Map<string, string>();\n",
+            "  const pricingKeys = ['store_func_status', 'store_self_mention', 'member_func_status', 'member_card_status', 'svip_price_status', 'integral_ratio_status',\n",
+            "    'integral_ratio', 'integral_max_type', 'integral_max_num', 'integral_max_rate', 'whole_free_shipping', 'store_free_postage', 'offline_postage',\n",
+            "    'newcomer_status', 'first_order_status', 'first_order_discount', 'first_order_discount_limit', 'newcomer_limit_status', 'newcomer_limit_time'];\n",
+            "  const config: Record<string, string> = {\n",
+            "    ...Object.fromEntries(pricingKeys.map(key => [key, '0'])),\n",
+            "    store_func_status: \"1\", store_self_mention: \"1\",\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+        "path": "workers-ts/test/helpers/pcCheckoutQuoteFixture.ts",
+        "gitBlobSha1": "da0e28818cce50a6124ee7ec9ace43944cdd28c2"
+      }
+    },
+    {
+      "file": "workers-ts/test/helpers/pcCouponFixture.ts",
+      "current": {
+        "bytes": 2642,
+        "sha256": "c2c824f85ef88864626c514ef4a2f97452fe4bdea667586edf767aebb55c1aef",
+        "gitBlobSha1": "3025a9a8302abb85ed45429ae6ed33a6132e1a37"
+      },
+      "predecessor": {
+        "bytes": 2629,
+        "sha256": "3241023aa5be5f5ac662efe75ab02ed767acd4c52deb14e476e70437c5dcc118",
+        "gitBlobSha1": "d2c2efbb6f402ad95864a6bd3ee8d7ec04ae4950"
+      },
+      "inverseEdits": [
+        {
+          "start": 8,
+          "after": [
+            "    await fixture.setConfig({ first_order_status: \"0\" });\n"
+          ],
+          "before": [
+            "    fixture.config.first_order_status = \"0\";\n"
+          ],
+          "anchorStart": 5,
+          "anchor": [
+            "export async function createPcCouponFixture(extraTables: PgTable[] = []) {\n",
+            "  const fixture = await createPcCheckoutQuoteFixture([storeCouponIssue, storeCouponUser, storeCouponProduct, storeOrderCartInfo, storeOrderStatus, printDocument, ...extraTables]);\n",
+            "  try {\n",
+            "    await fixture.setConfig({ first_order_status: \"0\" });\n",
+            "    await fixture.db.insert(storeCouponIssue).values([\n",
+            "      { id: 1, couponType: 0, type: 1, couponTitle: \"现金券\", status: 1 },\n",
+            "      { id: 2, couponType: 0, type: 2, couponTitle: \"折扣券\", status: 1 },\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+        "path": "workers-ts/test/helpers/pcCouponFixture.ts",
+        "gitBlobSha1": "d2c2efbb6f402ad95864a6bd3ee8d7ec04ae4950"
+      }
+    },
+    {
+      "file": "workers-ts/test/helpers/providerTransportSourceContinuity.ts",
+      "current": {
+        "bytes": 5942,
+        "sha256": "e8f1fc043b1326ee0a1ce32442d725ea234e224818ce182625b4d9e2734020c3",
+        "gitBlobSha1": "7821171e1e6da3ddbbd20e1811462d35fa62d768"
+      },
+      "predecessor": {
+        "bytes": 5314,
+        "sha256": "8e7952d4bed8f55ae5621ee0911bf9de89c7ec045b0d5023442cf5c5edd6c99b",
+        "gitBlobSha1": "4cb4f6cbb81d0ffa1082411e9ef50faa9dd75160"
+      },
+      "inverseEdits": [
+        {
+          "start": 3,
+          "after": [
+            "import { isFirstOrderAuthoritySource, projectFirstOrderAuthorityPredecessor } from './firstOrderAuthoritySourceContinuity';\n"
+          ],
+          "before": [],
+          "anchorStart": 0,
+          "anchor": [
+            "/** Historical source projection only. Production and runtime acceptance import\n",
+            " * the real providers. No older proof file/hash, inventory or assertion is replaced. */\n",
+            "import { createHash } from 'node:crypto';\n",
+            "import { isFirstOrderAuthoritySource, projectFirstOrderAuthorityPredecessor } from './firstOrderAuthoritySourceContinuity';\n",
+            "import { isPublicProductEstimateSource, projectPublicProductEstimatePredecessor } from './publicProductEstimateSourceContinuity';\n",
+            "import { readFileSync } from 'node:fs';\n",
+            "import { resolve } from 'node:path';\n"
+          ]
+        },
+        {
+          "start": 40,
+          "after": [
+            "export const isProviderTransportSource = (file: string) => isFirstOrderAuthoritySource(file) || isPublicProductEstimateSource(file) || isPurchasedLabelOperationsSource(file) || isPurchasedLabelAuthorSource(file) || isOutLabelRunnerSource(file) || isUnitDiscoverySource(file) || proof.sources.some(row => row.file === file);\n"
+          ],
+          "before": [
+            "export const isProviderTransportSource = (file: string) => isPublicProductEstimateSource(file) || isPurchasedLabelOperationsSource(file) || isPurchasedLabelAuthorSource(file) || isOutLabelRunnerSource(file) || isUnitDiscoverySource(file) || proof.sources.some(row => row.file === file);\n"
+          ],
+          "anchorStart": 37,
+          "anchor": [
+            "\n",
+            "// Peel the later discovery-only images before the unchanged older views. This\n",
+            "// reader is historical; runtime tests and production always import native code.\n",
+            "export const isProviderTransportSource = (file: string) => isFirstOrderAuthoritySource(file) || isPublicProductEstimateSource(file) || isPurchasedLabelOperationsSource(file) || isPurchasedLabelAuthorSource(file) || isOutLabelRunnerSource(file) || isUnitDiscoverySource(file) || proof.sources.some(row => row.file === file);\n",
+            "\n",
+            "/** A selected old image is refused, including an otherwise valid predecessor.\n",
+            " * Every changed line must match exactly; the whole output must be fixed353. */\n"
+          ]
+        },
+        {
+          "start": 45,
+          "after": [
+            "  return projectProviderTransportFromPublicProductEstimateView(file, projectFirstOrderAuthorityPredecessor(file, source));\n",
+            "}\n",
+            "\n",
+            "/** Explicit fixed9743 historical view only. The public-product-estimate proof\n",
+            " * tests retain their exact old current-image checks through this entry point.\n",
+            " * Native readers must use projectProviderTransportPredecessor above. */\n",
+            "export function projectProviderTransportFromPublicProductEstimateView(file: string, source: string): string {\n"
+          ],
+          "before": [],
+          "anchorStart": 42,
+          "anchor": [
+            "/** A selected old image is refused, including an otherwise valid predecessor.\n",
+            " * Every changed line must match exactly; the whole output must be fixed353. */\n",
+            "export function projectProviderTransportPredecessor(file: string, source: string): string {\n",
+            "  return projectProviderTransportFromPublicProductEstimateView(file, projectFirstOrderAuthorityPredecessor(file, source));\n",
+            "}\n",
+            "\n",
+            "/** Explicit fixed9743 historical view only. The public-product-estimate proof\n",
+            " * tests retain their exact old current-image checks through this entry point.\n",
+            " * Native readers must use projectProviderTransportPredecessor above. */\n",
+            "export function projectProviderTransportFromPublicProductEstimateView(file: string, source: string): string {\n",
+            "  source = projectPublicProductEstimatePredecessor(file, source);\n",
+            "  source = projectPurchasedLabelOperationsPredecessor(file, source);\n",
+            "  source = projectPurchasedLabelAuthorPredecessor(file, source);\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+        "path": "workers-ts/test/helpers/providerTransportSourceContinuity.ts",
+        "gitBlobSha1": "4cb4f6cbb81d0ffa1082411e9ef50faa9dd75160"
+      }
+    },
+    {
+      "file": "workers-ts/test/integration/FirstOrderDiscountPostgresScenario.ts",
+      "current": {
+        "bytes": 26878,
+        "sha256": "a18cd6a79a6e8f86b1747147f78fa03bb3a2d53ba7328c82ca7b0019cffd4041",
+        "gitBlobSha1": "28d7576d03bf7aa15ee16ed8b53d04f3cf15295a"
+      },
+      "predecessor": {
+        "bytes": 26761,
+        "sha256": "05f79618c18cf54db87e9e886d75809762c48702ab1df6af68e109e357f62708",
+        "gitBlobSha1": "c71574e27b755f02ff79ce89d7f7ae3e1e9ca1a4"
+      },
+      "inverseEdits": [
+        {
+          "start": 269,
+          "after": [
+            "    await tx.insert(systemConfig).values(Object.entries(CONFIG).map(([menuName, value]) => ({ menuName, value })));\n",
+            "\n"
+          ],
+          "before": [],
+          "anchorStart": 266,
+          "anchor": [
+            "  const now = Math.floor(Date.now() / 1000);\n",
+            "  await withSchema(db, schemaName, async ({ db: tx }) => {\n",
+            "    await tx.insert(systemConfig).values(['store_func_status', 'store_self_mention'].map(menuName => ({ menuName, value: '1' })));\n",
+            "    await tx.insert(systemConfig).values(Object.entries(CONFIG).map(([menuName, value]) => ({ menuName, value })));\n",
+            "\n",
+            "    await tx.insert(user).values(ids.users.map((uid, index) => ({\n",
+            "      uid,\n",
+            "      account: `first-order-${uid}`.slice(0, 32),\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+        "path": "workers-ts/test/integration/FirstOrderDiscountPostgresScenario.ts",
+        "gitBlobSha1": "c71574e27b755f02ff79ce89d7f7ae3e1e9ca1a4"
+      }
+    },
+    {
+      "file": "workers-ts/test/membership-pricing-policy.test.ts",
+      "current": {
+        "bytes": 10304,
+        "sha256": "8e708013655eec3af117b200b0218e007dc8bd6718f53ab1bf1105728967f4d8",
+        "gitBlobSha1": "2c1fae6336db2a0d1d8ed51c3488af9723ec463d"
+      },
+      "predecessor": {
+        "bytes": 10850,
+        "sha256": "2a1ae06fd469e362a871c5245583a6a24f9c216643e1ec4c48ad105fdc8c27f6",
+        "gitBlobSha1": "83eef70b13aaf3456fbe9ef2329583482f2ec081"
+      },
+      "inverseEdits": [
+        {
+          "start": 127,
+          "after": [
+            "  it('keeps membership display and full-cart promotions SQL-only and read-only during a KV outage', async () => {\n"
+          ],
+          "before": [
+            "  it('keeps membership display SQL-only and full-cart promotion failure read-only during a KV outage', async () => {\n"
+          ],
+          "anchorStart": 124,
+          "anchor": [
+            "      rightRows: [{ rightType: 'vip_price', status: 1, number: 1 }] });\n",
+            "  });\n",
+            "\n",
+            "  it('keeps membership display and full-cart promotions SQL-only and read-only during a KV outage', async () => {\n",
+            "    const get = vi.spyOn(f.env.CONFIG_KV, 'get').mockImplementation(async () => { throw new Error('synthetic KV outage'); });\n",
+            "    const put = vi.spyOn(f.env.CONFIG_KV, 'put');\n",
+            "    const snapshot = async () => ({ ...await f.snapshot(), configs: await f.db.select().from(systemConfig),\n"
+          ]
+        },
+        {
+          "start": 135,
+          "after": [
+            "    expect(await cart()).toMatchObject([{ truePrice: 70, price_type: 'member' }]);\n",
+            "    expect(get).not.toHaveBeenCalled(); expect(put).not.toHaveBeenCalled();\n"
+          ],
+          "before": [
+            "    await expect(cart()).rejects.toThrow('synthetic KV outage');\n",
+            "    const observedCalls: readonly (readonly unknown[])[] = get.mock.calls;\n",
+            "    const observedKeys = observedCalls.map(([key]) => {\n",
+            "      expect(typeof key).toBe('string');\n",
+            "      if (typeof key !== 'string') throw new Error('Expected an individual KV key');\n",
+            "      return key;\n",
+            "    });\n",
+            "    expect(observedKeys).toEqual([\n",
+            "      'cfg_newcomer_status', 'cfg_first_order_status', 'cfg_first_order_discount',\n",
+            "      'cfg_first_order_discount_limit', 'cfg_newcomer_limit_status', 'cfg_newcomer_limit_time',\n",
+            "    ]);\n",
+            "    expect(observedKeys.some(key => keys.some(name => key === `cfg_${name}`))).toBe(false);\n",
+            "    expect(put).not.toHaveBeenCalled();\n"
+          ],
+          "anchorStart": 132,
+          "anchor": [
+            "    const before = await snapshot();\n",
+            "    await display('70.00', 'member', true);\n",
+            "    expect(get).not.toHaveBeenCalled(); expect(put).not.toHaveBeenCalled();\n",
+            "    expect(await cart()).toMatchObject([{ truePrice: 70, price_type: 'member' }]);\n",
+            "    expect(get).not.toHaveBeenCalled(); expect(put).not.toHaveBeenCalled();\n",
+            "    expect(await snapshot()).toEqual(before);\n",
+            "  });\n",
+            "\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+        "path": "workers-ts/test/membership-pricing-policy.test.ts",
+        "gitBlobSha1": "83eef70b13aaf3456fbe9ef2329583482f2ec081"
+      }
+    },
+    {
+      "file": "workers-ts/test/newcomer-migration.test.ts",
+      "current": {
+        "bytes": 5673,
+        "sha256": "f3352305ffeae303987d40d85d54ed78618dee449b13cb02a04bb5684eb7c25c",
+        "gitBlobSha1": "7ee10411e86eb4b3ce5942bae94633d33c24df20"
+      },
+      "predecessor": {
+        "bytes": 5510,
+        "sha256": "493cf2adf22d844d470e687dccd88d8c76a139ed6ce88bee5f156712a976bb79",
+        "gitBlobSha1": "ab6b17ad4a2445dff063a97128f693470aa98a32"
+      },
+      "inverseEdits": [
+        {
+          "start": 52,
+          "after": [
+            "    expect(order).toContain(\"firstOrderDiscountConfig(values)\");\n",
+            "    expect(order).toContain(\"loadOrderPricingConfig(tx, type === 0 && uid > 0)\");\n",
+            "    expect(order).not.toContain(\"loadFirstOrderDiscountConfig(c, runtime)\");\n"
+          ],
+          "before": [
+            "    expect(order).toContain(\"loadFirstOrderDiscountConfig\");\n"
+          ],
+          "anchorStart": 49,
+          "anchor": [
+            "    expect(order).toContain(\"isNewcomer: 1\");\n",
+            "    expect(order).toContain('.for(\"update\")');\n",
+            "    expect(order).toContain(\"type === 7\");\n",
+            "    expect(order).toContain(\"firstOrderDiscountConfig(values)\");\n",
+            "    expect(order).toContain(\"loadOrderPricingConfig(tx, type === 0 && uid > 0)\");\n",
+            "    expect(order).not.toContain(\"loadFirstOrderDiscountConfig(c, runtime)\");\n",
+            "    expect(order).toContain(\"firstOrderPriceCents\");\n",
+            "    expect(order).toContain(\"isFirstOrder: 1\");\n",
+            "    expect(order).toContain(\"hasPaidNonNewcomerOrder\");\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+        "path": "workers-ts/test/newcomer-migration.test.ts",
+        "gitBlobSha1": "ab6b17ad4a2445dff063a97128f693470aa98a32"
+      }
+    },
+    {
+      "file": "workers-ts/test/newcomer-purchase-postgres.test.ts",
+      "current": {
+        "bytes": 33357,
+        "sha256": "ca7e04702a96d6e41cc9c56f93b3004fbff02588c8a88a07a81a6f121580de24",
+        "gitBlobSha1": "7bba455da2101442c3f2de2dbbf5cf697c991208"
+      },
+      "predecessor": {
+        "bytes": 32840,
+        "sha256": "c31e2f0b99a9e2ea18ce72b03cfcce806729c9c78bcae8dbd5bfe958b483546b",
+        "gitBlobSha1": "26903552b79436062bcebe084c43a6c7e130e5ac"
+      },
+      "inverseEdits": [
+        {
+          "start": 1,
+          "after": [
+            "import { and, desc, eq, sql } from 'drizzle-orm';\n"
+          ],
+          "before": [
+            "import { eq, sql } from 'drizzle-orm';\n"
+          ],
+          "anchorStart": 0,
+          "anchor": [
+            "import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';\n",
+            "import { and, desc, eq, sql } from 'drizzle-orm';\n",
+            "import { createContainerFromDb } from '../src/lib/di';\n",
+            "import { cartAdd, cartAddNewcomerReplay, cartList, orderCreate } from '../src/controllers/api/v1/OrderController';\n",
+            "import { addNewcomerCartWithReplay } from '../src/services/order/NewcomerCartAddReplayService';\n"
+          ]
+        },
+        {
+          "start": 472,
+          "after": [
+            "    const globalNewcomerStatus = and(eq(systemConfig.isStore, 0), eq(systemConfig.menuName, 'newcomer_status'));\n",
+            "    const [config] = await f.db.select({ id: systemConfig.id, value: systemConfig.value }).from(systemConfig)\n",
+            "      .where(globalNewcomerStatus).orderBy(desc(systemConfig.sort), desc(systemConfig.id)).limit(1);\n"
+          ],
+          "before": [
+            "    const [config] = await f.db.select({ value: systemConfig.value }).from(systemConfig)\n",
+            "      .where(eq(systemConfig.menuName, 'newcomer_status'));\n"
+          ],
+          "anchorStart": 469,
+          "anchor": [
+            "    const state = await f.snapshot();\n",
+            "    expect(state.orders).toHaveLength(commit ? 0 : 1);\n",
+            "    expect(state.users.find(row => row.uid === 11)).toMatchObject({ isNewcomer: commit ? 0 : 1 });\n",
+            "    const globalNewcomerStatus = and(eq(systemConfig.isStore, 0), eq(systemConfig.menuName, 'newcomer_status'));\n",
+            "    const [config] = await f.db.select({ id: systemConfig.id, value: systemConfig.value }).from(systemConfig)\n",
+            "      .where(globalNewcomerStatus).orderBy(desc(systemConfig.sort), desc(systemConfig.id)).limit(1);\n",
+            "    expect(config?.value).toBe(commit ? '0' : '1');\n",
+            "    const duplicates = await f.db.select({ id: systemConfig.id, value: systemConfig.value }).from(systemConfig)\n",
+            "      .where(globalNewcomerStatus).orderBy(desc(systemConfig.sort), desc(systemConfig.id));\n"
+          ]
+        },
+        {
+          "start": 476,
+          "after": [
+            "    const duplicates = await f.db.select({ id: systemConfig.id, value: systemConfig.value }).from(systemConfig)\n",
+            "      .where(globalNewcomerStatus).orderBy(desc(systemConfig.sort), desc(systemConfig.id));\n",
+            "    expect(duplicates).toHaveLength(2);\n",
+            "    expect(duplicates[0]).toEqual(config);\n",
+            "    expect(duplicates[1]?.value).toBe('1');\n"
+          ],
+          "before": [],
+          "anchorStart": 473,
+          "anchor": [
+            "    const [config] = await f.db.select({ id: systemConfig.id, value: systemConfig.value }).from(systemConfig)\n",
+            "      .where(globalNewcomerStatus).orderBy(desc(systemConfig.sort), desc(systemConfig.id)).limit(1);\n",
+            "    expect(config?.value).toBe(commit ? '0' : '1');\n",
+            "    const duplicates = await f.db.select({ id: systemConfig.id, value: systemConfig.value }).from(systemConfig)\n",
+            "      .where(globalNewcomerStatus).orderBy(desc(systemConfig.sort), desc(systemConfig.id));\n",
+            "    expect(duplicates).toHaveLength(2);\n",
+            "    expect(duplicates[0]).toEqual(config);\n",
+            "    expect(duplicates[1]?.value).toBe('1');\n",
+            "  }, 30_000);\n",
+            "\n",
+            "  it.each([true, false])('dedicated Admin SKU save %s while create waits: commit reconfirms, rollback preserves original quote', async commit => {\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+        "path": "workers-ts/test/newcomer-purchase-postgres.test.ts",
+        "gitBlobSha1": "26903552b79436062bcebe084c43a6c7e130e5ac"
+      }
+    },
+    {
+      "file": "workers-ts/test/order-coupon-picker.test.ts",
+      "current": {
+        "bytes": 11787,
+        "sha256": "b5e15e32b3d1886deb9e1cd819bd5a28057aee7b37d8d0cf6f8247b0c17337ea",
+        "gitBlobSha1": "9166bd40d4a7259409b23842a1ad9936311239e7"
+      },
+      "predecessor": {
+        "bytes": 11793,
+        "sha256": "b4fe3478594b340ec75d8edc07d19731b27a94664015d4032b730f0e214989f7",
+        "gitBlobSha1": "45268dde8e669d8c60d3ae04b1d7d693ecc59daf"
+      },
+      "inverseEdits": [
+        {
+          "start": 78,
+          "after": [
+            "    await fixture.setConfig({ first_order_status: \"1\", first_order_discount: \"100\" });\n"
+          ],
+          "before": [
+            "    fixture.config.first_order_status = \"1\"; fixture.config.first_order_discount = \"100\";\n"
+          ],
+          "anchorStart": 75,
+          "anchor": [
+            "    }\n",
+            "  });\n",
+            "  it(\"uses the exact first-order exclusion even when its configured discount rounds to zero, and excludes marketing\", async () => {\n",
+            "    await fixture.setConfig({ first_order_status: \"1\", first_order_discount: \"100\" });\n",
+            "    try { expect((await get()).body.data).toEqual([]); }\n",
+            "    finally { await fixture.setConfig({ first_order_status: \"0\", first_order_discount: \"90\" }); }\n",
+            "    try { await fixture.db.update(storeCart).set({ type: 1 }).where(eq(storeCart.id, 1)); expect((await get()).body.data).toEqual([]); }\n"
+          ]
+        },
+        {
+          "start": 80,
+          "after": [
+            "    finally { await fixture.setConfig({ first_order_status: \"0\", first_order_discount: \"90\" }); }\n"
+          ],
+          "before": [
+            "    finally { fixture.config.first_order_status = \"0\"; fixture.config.first_order_discount = \"90\"; }\n"
+          ],
+          "anchorStart": 77,
+          "anchor": [
+            "  it(\"uses the exact first-order exclusion even when its configured discount rounds to zero, and excludes marketing\", async () => {\n",
+            "    await fixture.setConfig({ first_order_status: \"1\", first_order_discount: \"100\" });\n",
+            "    try { expect((await get()).body.data).toEqual([]); }\n",
+            "    finally { await fixture.setConfig({ first_order_status: \"0\", first_order_discount: \"90\" }); }\n",
+            "    try { await fixture.db.update(storeCart).set({ type: 1 }).where(eq(storeCart.id, 1)); expect((await get()).body.data).toEqual([]); }\n",
+            "    finally { await fixture.db.update(storeCart).set({ type: 0 }).where(eq(storeCart.id, 1)); }\n",
+            "  });\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+        "path": "workers-ts/test/order-coupon-picker.test.ts",
+        "gitBlobSha1": "45268dde8e669d8c60d3ae04b1d7d693ecc59daf"
+      }
+    },
+    {
+      "file": "workers-ts/test/out-product-label-runner-source-continuity.test.ts",
+      "current": {
+        "bytes": 5009,
+        "sha256": "fa2d5c2cda5683364931663738a75d3e9754b3deffb450e1648ebc55a8b62dc9",
+        "gitBlobSha1": "4fc9f285ce8795b516a23832581c18f7612bab2e"
+      },
+      "predecessor": {
+        "bytes": 4593,
+        "sha256": "6fbdbb481c2608a9790a24d4eddf0ecb5f160c32e7e6201eeae62888f573399d",
+        "gitBlobSha1": "00cb1bb33081bfcf668722f5d1fd12c487c46c97"
+      },
+      "inverseEdits": [
+        {
+          "start": 0,
+          "after": [
+            "import { projectPublicProductEstimatePredecessor as projectPublicProductEstimate9743Predecessor } from './helpers/publicProductEstimateSourceContinuity';\n",
+            "import { projectFirstOrderAuthorityPredecessor } from './helpers/firstOrderAuthoritySourceContinuity';\n"
+          ],
+          "before": [
+            "import { projectPublicProductEstimatePredecessor } from './helpers/publicProductEstimateSourceContinuity';\n"
+          ],
+          "anchorStart": 0,
+          "anchor": [
+            "import { projectPublicProductEstimatePredecessor as projectPublicProductEstimate9743Predecessor } from './helpers/publicProductEstimateSourceContinuity';\n",
+            "import { projectFirstOrderAuthorityPredecessor } from './helpers/firstOrderAuthoritySourceContinuity';\n",
+            "import { projectPurchasedLabelOperationsPredecessor } from './helpers/purchasedLabelOperationsSourceContinuity';\n",
+            "import { execFileSync } from 'node:child_process';\n",
+            "import { createHash } from 'node:crypto';\n"
+          ]
+        },
+        {
+          "start": 16,
+          "after": [
+            "// Peel the exact current first-order layer before this unchanged older view.\n",
+            "const projectPublicProductEstimatePredecessor = (file: string, source: string) =>\n",
+            "  projectPublicProductEstimate9743Predecessor(file, projectFirstOrderAuthorityPredecessor(file, source));\n"
+          ],
+          "before": [],
+          "anchorStart": 13,
+          "anchor": [
+            "import { projectPurchasedLabelAuthorPredecessor } from './helpers/purchasedLabelAuthorSourceContinuity';\n",
+            "import { projectRechargeRefundPredecessor, readRechargeRefundPredecessorFile } from './helpers/rechargeRefundSourceContinuity';\n",
+            "\n",
+            "// Peel the exact current first-order layer before this unchanged older view.\n",
+            "const projectPublicProductEstimatePredecessor = (file: string, source: string) =>\n",
+            "  projectPublicProductEstimate9743Predecessor(file, projectFirstOrderAuthorityPredecessor(file, source));\n",
+            "const root = resolve(import.meta.dirname, '../..'), path = resolve(root, file);\n",
+            "const physical = readFileSync(path, 'utf8'), native = projectPurchasedLabelAuthorPredecessor(file, projectPurchasedLabelOperationsPredecessor(file, projectPublicProductEstimatePredecessor(file, physical)));\n",
+            "const current = projectPurchasedLabelRunnerPredecessor(file, native);\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+        "path": "workers-ts/test/out-product-label-runner-source-continuity.test.ts",
+        "gitBlobSha1": "00cb1bb33081bfcf668722f5d1fd12c487c46c97"
+      }
+    },
+    {
+      "file": "workers-ts/test/pc-coupon-wallet-postgres.test.ts",
+      "current": {
+        "bytes": 6260,
+        "sha256": "6a86869b212e817c352761d1062dc93fbc921d4016599310aaff2afe5f027359",
+        "gitBlobSha1": "cedcf3a517fc49bcf2bf7c42f29187c1acbaf74b"
+      },
+      "predecessor": {
+        "bytes": 6234,
+        "sha256": "cf1d9a2f14014d60222676e195e952fd752070b39c571489275a41918f9bc341",
+        "gitBlobSha1": "6f484983eb709abd29f2f38f6f0055b4869c679b"
+      },
+      "inverseEdits": [
+        {
+          "start": 61,
+          "after": [
+            "    await fixture.setConfig({ first_order_status: \"1\" });\n"
+          ],
+          "before": [
+            "    fixture.config.first_order_status = \"1\";\n"
+          ],
+          "anchorStart": 58,
+          "anchor": [
+            "    expect(await fixture.snapshot()).toEqual(before); expect(await fixture.db.select().from(storeCouponUser)).toEqual(coupons);\n",
+            "  });\n",
+            "  it(\"reports first-order priority explicitly in the real amounts without consuming the requested coupon\", async () => {\n",
+            "    await fixture.setConfig({ first_order_status: \"1\" });\n",
+            "    try {\n",
+            "      const result = await post(\"/api/order/confirm\", { cartIds: [1], addressId: 11, couponId: 41 });\n",
+            "      expect(result.status, result.msg).toBe(200);\n"
+          ]
+        },
+        {
+          "start": 66,
+          "after": [
+            "    } finally { await fixture.setConfig({ first_order_status: \"0\" }); }\n"
+          ],
+          "before": [
+            "    } finally { fixture.config.first_order_status = \"0\"; }\n"
+          ],
+          "anchorStart": 63,
+          "anchor": [
+            "      const result = await post(\"/api/order/confirm\", { cartIds: [1], addressId: 11, couponId: 41 });\n",
+            "      expect(result.status, result.msg).toBe(200);\n",
+            "      expect(result.data.priceGroup).toMatchObject({ couponPrice: \"0.00\", firstOrderPrice: \"1.80\", pay_price: \"19.20\" });\n",
+            "    } finally { await fixture.setConfig({ first_order_status: \"0\" }); }\n",
+            "  });\n",
+            "  it(\"creates exactly one unpaid order with the selected coupon and reserves it once on an identical retry\", async () => {\n",
+            "    vi.spyOn(StoreOrderCreateService.prototype, \"createOrder\").mockImplementation((params) => StoreOrderCreateService.createWithRuntime(fixture.container,\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+        "path": "workers-ts/test/pc-coupon-wallet-postgres.test.ts",
+        "gitBlobSha1": "6f484983eb709abd29f2f38f6f0055b4869c679b"
+      }
+    },
+    {
+      "file": "workers-ts/test/pc-order-coupon-postgres.test.ts",
+      "current": {
+        "bytes": 5342,
+        "sha256": "18fc94798443cca7866e987d1648807730859057860c7392e66e477d1c470ce7",
+        "gitBlobSha1": "8267f924251d3d08e547a85324fd01d5b4f4f229"
+      },
+      "predecessor": {
+        "bytes": 5316,
+        "sha256": "b0b4d062f139909a1827b30fd7d4a2387fcb9d2283fba352746adda764b41e7f",
+        "gitBlobSha1": "e3a3b263e3b0e8e861b76ac9f5ec67851561d366"
+      },
+      "inverseEdits": [
+        {
+          "start": 59,
+          "after": [
+            "    await fixture.setConfig({ first_order_status: \"1\" });\n"
+          ],
+          "before": [
+            "    fixture.config.first_order_status = \"1\";\n"
+          ],
+          "anchorStart": 56,
+          "anchor": [
+            "    } finally { await fixture.db.update(storeCouponUser).set({ isFail: 0 }).where(eq(storeCouponUser.id, 41)); }\n",
+            "  });\n",
+            "  it(\"renders the real first-order exclusion as a complete empty page, not a failed adapter or spendable coupon\", async () => {\n",
+            "    await fixture.setConfig({ first_order_status: \"1\" });\n",
+            "    try { expect(await fetchPage(orderCouponScope(await readItems(), 1, 0))).toEqual({ list: [], nextCursor: null }); }\n",
+            "    finally { await fixture.setConfig({ first_order_status: \"0\" }); }\n",
+            "  });\n"
+          ]
+        },
+        {
+          "start": 61,
+          "after": [
+            "    finally { await fixture.setConfig({ first_order_status: \"0\" }); }\n"
+          ],
+          "before": [
+            "    finally { fixture.config.first_order_status = \"0\"; }\n"
+          ],
+          "anchorStart": 58,
+          "anchor": [
+            "  it(\"renders the real first-order exclusion as a complete empty page, not a failed adapter or spendable coupon\", async () => {\n",
+            "    await fixture.setConfig({ first_order_status: \"1\" });\n",
+            "    try { expect(await fetchPage(orderCouponScope(await readItems(), 1, 0))).toEqual({ list: [], nextCursor: null }); }\n",
+            "    finally { await fixture.setConfig({ first_order_status: \"0\" }); }\n",
+            "  });\n",
+            "});\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+        "path": "workers-ts/test/pc-order-coupon-postgres.test.ts",
+        "gitBlobSha1": "e3a3b263e3b0e8e861b76ac9f5ec67851561d366"
+      }
+    },
+    {
+      "file": "workers-ts/test/presale-checkout-postgres.test.ts",
+      "current": {
+        "bytes": 46284,
+        "sha256": "eebfde00f0e36e3ec2b3c44f3ab8d6e3d36c384f03abaf81be5d36186c3dcb42",
+        "gitBlobSha1": "5d5682c7c0c19ae3e587be410f3bc1030e943efc"
+      },
+      "predecessor": {
+        "bytes": 46271,
+        "sha256": "0e2fa3618106948deac139255a9a7b50f94194f840a02de02fa71a942e101fd7",
+        "gitBlobSha1": "47c2bce69bf7782eb9e6026e211484d82b608cc3"
+      },
+      "inverseEdits": [
+        {
+          "start": 247,
+          "after": [
+            "    await f.setConfig({ first_order_status: '1' });\n"
+          ],
+          "before": [
+            "    f.config.first_order_status = '1';\n"
+          ],
+          "anchorStart": 244,
+          "anchor": [
+            "    await f.db.delete(storeCart);\n",
+            "    const added = await post<{ cartId: number }>('/cart/add', { productId: 70, uniqueId: 'qared001', cartNum: 2, new: 1 });\n",
+            "    expect(added).toMatchObject({ status: 200, data: { cartId: 1 } });\n",
+            "    await f.setConfig({ first_order_status: '1' });\n",
+            "    const before = await state(), receipt = await confirm({ type: undefined, couponId: 41 });\n",
+            "    expect(receipt.priceGroup.pay_price).toBe('21.00');\n",
+            "    expect(await quote({ couponId: 41 })).toMatchObject({ rawTotalCents: 2000, totalCents: 1800, payCents: 2100,\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+        "path": "workers-ts/test/presale-checkout-postgres.test.ts",
+        "gitBlobSha1": "47c2bce69bf7782eb9e6026e211484d82b608cc3"
+      }
+    },
+    {
+      "file": "workers-ts/test/public-product-estimate-source-continuity.test.ts",
+      "current": {
+        "bytes": 10132,
+        "sha256": "35d00169220f9ef2d0c3ededef73757dcc335bf7925a1099b404d3038b811fdb",
+        "gitBlobSha1": "7ae9164d662de9b4e040500db3899833c7153d81"
+      },
+      "predecessor": {
+        "bytes": 9524,
+        "sha256": "d7a81660b39a34c1c3e302f2fa4cf594c88e798d0f075c59a9097317af6a9364",
+        "gitBlobSha1": "4acc95c74ad89509d3ef99b0259ad5c48a1e4ee6"
+      },
+      "inverseEdits": [
+        {
+          "start": 0,
+          "after": [
+            "import { projectFirstOrderAuthorityPredecessor } from './helpers/firstOrderAuthoritySourceContinuity';\n"
+          ],
+          "before": [],
+          "anchorStart": 0,
+          "anchor": [
+            "import { projectFirstOrderAuthorityPredecessor } from './helpers/firstOrderAuthoritySourceContinuity';\n",
+            "import { createHash } from 'node:crypto';\n",
+            "import { readFileSync } from 'node:fs';\n",
+            "import { resolve } from 'node:path';\n"
+          ]
+        },
+        {
+          "start": 8,
+          "after": [
+            "import { isProviderTransportSource, projectProviderTransportFromPublicProductEstimateView as projectProviderTransportPredecessor, providerTransportSourceContinuity } from './helpers/providerTransportSourceContinuity';\n"
+          ],
+          "before": [
+            "import { isProviderTransportSource, projectProviderTransportPredecessor, providerTransportSourceContinuity } from './helpers/providerTransportSourceContinuity';\n"
+          ],
+          "anchorStart": 5,
+          "anchor": [
+            "import { PUBLIC_PRODUCT_ESTIMATE_PREDECESSOR, PUBLIC_PRODUCT_ESTIMATE_PROOF_FILE, PUBLIC_PRODUCT_ESTIMATE_PROOF_SHA256,\n",
+            "  publicProductEstimateImage, publicProductEstimateProof as proof, isPublicProductEstimateSource,\n",
+            "  projectPublicProductEstimatePredecessor } from './helpers/publicProductEstimateSourceContinuity';\n",
+            "import { isProviderTransportSource, projectProviderTransportFromPublicProductEstimateView as projectProviderTransportPredecessor, providerTransportSourceContinuity } from './helpers/providerTransportSourceContinuity';\n",
+            "import { projectPurchasedLabelOperationsPredecessor } from './helpers/purchasedLabelOperationsSourceContinuity';\n",
+            "import { projectPurchasedLabelAuthorPredecessor } from './helpers/purchasedLabelAuthorSourceContinuity';\n",
+            "import { projectPurchasedLabelRunnerPredecessor } from './helpers/purchasedLabelStorageRunnerSourceContinuity';\n"
+          ]
+        },
+        {
+          "start": 17,
+          "after": [
+            "// These original fifty assertions check the explicit fixed9743 view. The new\n",
+            "// first-order continuity suite separately binds every real physical current byte.\n",
+            "const atPublicProductEstimate9743 = (file: string) => projectFirstOrderAuthorityPredecessor(file, physical(file));\n"
+          ],
+          "before": [],
+          "anchorStart": 14,
+          "anchor": [
+            "import { readRechargeRefundPredecessorFile } from './helpers/rechargeRefundSourceContinuity';\n",
+            "const root = resolve(import.meta.dirname, '../..');\n",
+            "const physical = (file: string) => readFileSync(resolve(root, file), 'utf8');\n",
+            "// These original fifty assertions check the explicit fixed9743 view. The new\n",
+            "// first-order continuity suite separately binds every real physical current byte.\n",
+            "const atPublicProductEstimate9743 = (file: string) => projectFirstOrderAuthorityPredecessor(file, physical(file));\n",
+            "const sha = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');\n",
+            "const sources = [\n",
+            "  'view/uniapp-ts/scripts/product-coupons-runtime.test.cjs',\n"
+          ]
+        },
+        {
+          "start": 75,
+          "after": [
+            "      const native = physical(row.file), current = atPublicProductEstimate9743(row.file); expect(publicProductEstimateImage(current)).toEqual(row.current);\n"
+          ],
+          "before": [
+            "      const current = physical(row.file); expect(publicProductEstimateImage(current)).toEqual(row.current);\n"
+          ],
+          "anchorStart": 72,
+          "anchor": [
+            "  });\n",
+            "  for (const row of proof.sources) {\n",
+            "    it('binds every native byte and reconstructs the complete fixed Git image for ' + row.file, () => {\n",
+            "      const native = physical(row.file), current = atPublicProductEstimate9743(row.file); expect(publicProductEstimateImage(current)).toEqual(row.current);\n",
+            "      const previous = projectPublicProductEstimatePredecessor(row.file, current);\n",
+            "      expect(previous).not.toBe(current); expect(publicProductEstimateImage(previous)).toEqual(row.predecessor);\n",
+            "      expect(row.origin).toEqual({ commit: proof.predecessorCommit, path: row.file, gitBlobSha1: row.predecessor.gitBlobSha1 });\n"
+          ]
+        },
+        {
+          "start": 87,
+          "after": [
+            "      expect(physical(row.file)).toBe(native); expect(atPublicProductEstimate9743(row.file)).toBe(current);\n"
+          ],
+          "before": [
+            "      expect(physical(row.file)).toBe(current);\n"
+          ],
+          "anchorStart": 84,
+          "anchor": [
+            "        expect(historicalOutcome(() => previousProviderView(row.file, previous))).toEqual(expected);\n",
+            "        expect(historicalOutcome(() => projectProviderTransportPredecessor(row.file, current))).toEqual(expected);\n",
+            "      } else expect(projectProviderTransportPredecessor(row.file, current)).toBe(previousProviderView(row.file, previous));\n",
+            "      expect(physical(row.file)).toBe(native); expect(atPublicProductEstimate9743(row.file)).toBe(current);\n",
+            "    });\n",
+            "    it('rejects whole-image drift and all predecessor/duplicate input forms for ' + row.file, () => {\n",
+            "      const current = atPublicProductEstimate9743(row.file), previous = projectPublicProductEstimatePredecessor(row.file, current);\n"
+          ]
+        },
+        {
+          "start": 90,
+          "after": [
+            "      const current = atPublicProductEstimate9743(row.file), previous = projectPublicProductEstimatePredecessor(row.file, current);\n"
+          ],
+          "before": [
+            "      const current = physical(row.file), previous = projectPublicProductEstimatePredecessor(row.file, current);\n"
+          ],
+          "anchorStart": 87,
+          "anchor": [
+            "      expect(physical(row.file)).toBe(native); expect(atPublicProductEstimate9743(row.file)).toBe(current);\n",
+            "    });\n",
+            "    it('rejects whole-image drift and all predecessor/duplicate input forms for ' + row.file, () => {\n",
+            "      const current = atPublicProductEstimate9743(row.file), previous = projectPublicProductEstimatePredecessor(row.file, current);\n",
+            "      const changed = ['// unknown\\n' + current, current + '\\n// unknown\\n', current.replaceAll('\\n', '\\r\\n'),\n",
+            "        'X' + current.slice(1), previous, current + current, '', current.slice(0, -1)];\n",
+            "      for (const input of changed) {\n"
+          ]
+        },
+        {
+          "start": 112,
+          "after": [
+            "      const current = physical(file), before = projectPublicProductEstimatePredecessor(file, atPublicProductEstimate9743(file));\n"
+          ],
+          "before": [
+            "      const current = physical(file), before = projectPublicProductEstimatePredecessor(file, current);\n"
+          ],
+          "anchorStart": 109,
+          "anchor": [
+            "  });\n",
+            "  it('feeds Activity and ProductController through the existing historical read port while native source stays unchanged', () => {\n",
+            "    for (const file of ['workers-ts/src/services/activity/ActivityService.ts', 'workers-ts/src/controllers/api/v1/ProductController.ts']) {\n",
+            "      const current = physical(file), before = projectPublicProductEstimatePredecessor(file, atPublicProductEstimate9743(file));\n",
+            "      expect(readRechargeRefundPredecessorFile(resolve(root, file), 'utf8')).toBe(before);\n",
+            "      expect(readRechargeRefundPredecessorFile(resolve(root, file))).toEqual(Buffer.from(before));\n",
+            "      expect(physical(file)).toBe(current);\n"
+          ]
+        },
+        {
+          "start": 132,
+          "after": [
+            "      expect(publicProductEstimateImage(projectPublicProductEstimatePredecessor(row.file, atPublicProductEstimate9743(row.file)))).toEqual(row.predecessor);\n"
+          ],
+          "before": [
+            "      expect(publicProductEstimateImage(projectPublicProductEstimatePredecessor(row.file, physical(row.file)))).toEqual(row.predecessor);\n"
+          ],
+          "anchorStart": 129,
+          "anchor": [
+            "      }\n",
+            "      expect(Reflect.set(row.current, 'sha256', row.predecessor.sha256)).toBe(false);\n",
+            "      expect(Reflect.set(row.origin, 'commit', 'unknown')).toBe(false);\n",
+            "      expect(publicProductEstimateImage(projectPublicProductEstimatePredecessor(row.file, atPublicProductEstimate9743(row.file)))).toEqual(row.predecessor);\n",
+            "    }\n",
+            "    expect(sha(readFileSync(resolve(root, PUBLIC_PRODUCT_ESTIMATE_PROOF_FILE)))).toBe(PUBLIC_PRODUCT_ESTIMATE_PROOF_SHA256);\n",
+            "  });\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+        "path": "workers-ts/test/public-product-estimate-source-continuity.test.ts",
+        "gitBlobSha1": "4acc95c74ad89509d3ef99b0259ad5c48a1e4ee6"
+      }
+    },
+    {
+      "file": "workers-ts/test/purchased-label-author-source-continuity.test.ts",
+      "current": {
+        "bytes": 3729,
+        "sha256": "385e8939b4a0bb4b267dd2fd83e88f02b3cdc78ed79eb51f8a07a6d571368627",
+        "gitBlobSha1": "b69954896433c3718634faaee971250cec861974"
+      },
+      "predecessor": {
+        "bytes": 3313,
+        "sha256": "13e9f9dbe2db814bac331e569ae8e51ee6a05c507e9a12cf877c0852af7ae062",
+        "gitBlobSha1": "f871cf9dbf3e95399385c51f5a9dd07c9a27b068"
+      },
+      "inverseEdits": [
+        {
+          "start": 0,
+          "after": [
+            "import { projectPublicProductEstimatePredecessor as projectPublicProductEstimate9743Predecessor } from './helpers/publicProductEstimateSourceContinuity';\n",
+            "import { projectFirstOrderAuthorityPredecessor } from './helpers/firstOrderAuthoritySourceContinuity';\n"
+          ],
+          "before": [
+            "import { projectPublicProductEstimatePredecessor } from './helpers/publicProductEstimateSourceContinuity';\n"
+          ],
+          "anchorStart": 0,
+          "anchor": [
+            "import { projectPublicProductEstimatePredecessor as projectPublicProductEstimate9743Predecessor } from './helpers/publicProductEstimateSourceContinuity';\n",
+            "import { projectFirstOrderAuthorityPredecessor } from './helpers/firstOrderAuthoritySourceContinuity';\n",
+            "import { projectPurchasedLabelOperationsPredecessor } from './helpers/purchasedLabelOperationsSourceContinuity';\n",
+            "import { createHash } from 'node:crypto';\n",
+            "import { readFileSync } from 'node:fs';\n"
+          ]
+        },
+        {
+          "start": 9,
+          "after": [
+            "// Peel the exact current first-order layer before this unchanged older view.\n",
+            "const projectPublicProductEstimatePredecessor = (file: string, source: string) =>\n",
+            "  projectPublicProductEstimate9743Predecessor(file, projectFirstOrderAuthorityPredecessor(file, source));\n"
+          ],
+          "before": [],
+          "anchorStart": 6,
+          "anchor": [
+            "import { describe, expect, it } from 'vitest';\n",
+            "import { purchasedLabelAuthorImage, purchasedLabelAuthorProof as proof, projectPurchasedLabelAuthorPredecessor,\n",
+            "  PURCHASED_LABEL_AUTHOR_PROOF_FILE, PURCHASED_LABEL_AUTHOR_PROOF_SHA256 } from './helpers/purchasedLabelAuthorSourceContinuity';\n",
+            "// Peel the exact current first-order layer before this unchanged older view.\n",
+            "const projectPublicProductEstimatePredecessor = (file: string, source: string) =>\n",
+            "  projectPublicProductEstimate9743Predecessor(file, projectFirstOrderAuthorityPredecessor(file, source));\n",
+            "const root = resolve(import.meta.dirname, '../..');\n",
+            "const priorSource = (file:string) => projectPurchasedLabelOperationsPredecessor(file,projectPublicProductEstimatePredecessor(file,readFileSync(resolve(root,file),'utf8')));\n",
+            "describe('purchased label author exact current source successor', () => {\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+        "path": "workers-ts/test/purchased-label-author-source-continuity.test.ts",
+        "gitBlobSha1": "f871cf9dbf3e95399385c51f5a9dd07c9a27b068"
+      }
+    },
+    {
+      "file": "workers-ts/test/purchased-label-operations-source-continuity.test.ts",
+      "current": {
+        "bytes": 3770,
+        "sha256": "db41ea5ea58bc0b6f1c1473db55230ca11b409798ad8b43ca3d4d802d8823e1b",
+        "gitBlobSha1": "97a328b317163578d3f6d94eb2bec9735900e66a"
+      },
+      "predecessor": {
+        "bytes": 3354,
+        "sha256": "e9943d46aebee768d74fdb9c6c8ab23bf770c450b6d7af4b59e1bb1c36f9a540",
+        "gitBlobSha1": "02af1044f6d302e94018b7b9c5c24f5b4c87bf7d"
+      },
+      "inverseEdits": [
+        {
+          "start": 0,
+          "after": [
+            "import { projectPublicProductEstimatePredecessor as projectPublicProductEstimate9743Predecessor } from './helpers/publicProductEstimateSourceContinuity';\n",
+            "import { projectFirstOrderAuthorityPredecessor } from './helpers/firstOrderAuthoritySourceContinuity';\n"
+          ],
+          "before": [
+            "import { projectPublicProductEstimatePredecessor } from './helpers/publicProductEstimateSourceContinuity';\n"
+          ],
+          "anchorStart": 0,
+          "anchor": [
+            "import { projectPublicProductEstimatePredecessor as projectPublicProductEstimate9743Predecessor } from './helpers/publicProductEstimateSourceContinuity';\n",
+            "import { projectFirstOrderAuthorityPredecessor } from './helpers/firstOrderAuthoritySourceContinuity';\n",
+            "import { createHash } from 'node:crypto';\n",
+            "import { readFileSync } from 'node:fs';\n",
+            "import { resolve } from 'node:path';\n"
+          ]
+        },
+        {
+          "start": 8,
+          "after": [
+            "// Peel the exact current first-order layer before this unchanged older view.\n",
+            "const projectPublicProductEstimatePredecessor = (file: string, source: string) =>\n",
+            "  projectPublicProductEstimate9743Predecessor(file, projectFirstOrderAuthorityPredecessor(file, source));\n"
+          ],
+          "before": [],
+          "anchorStart": 5,
+          "anchor": [
+            "import { describe, expect, it } from 'vitest';\n",
+            "import { purchasedLabelOperationsImage, purchasedLabelOperationsProof as proof, projectPurchasedLabelOperationsPredecessor,\n",
+            "  PURCHASED_LABEL_OPERATIONS_PROOF_FILE, PURCHASED_LABEL_OPERATIONS_PROOF_SHA256 } from './helpers/purchasedLabelOperationsSourceContinuity';\n",
+            "// Peel the exact current first-order layer before this unchanged older view.\n",
+            "const projectPublicProductEstimatePredecessor = (file: string, source: string) =>\n",
+            "  projectPublicProductEstimate9743Predecessor(file, projectFirstOrderAuthorityPredecessor(file, source));\n",
+            "const root = resolve(import.meta.dirname, '../..');\n",
+            "const priorSource = (file: string) => projectPublicProductEstimatePredecessor(file, readFileSync(resolve(root, file), 'utf8'));\n",
+            "describe('purchased label operations exact current source successor', () => {\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+        "path": "workers-ts/test/purchased-label-operations-source-continuity.test.ts",
+        "gitBlobSha1": "02af1044f6d302e94018b7b9c5c24f5b4c87bf7d"
+      }
+    },
+    {
+      "file": "workers-ts/test/purchased-label-storage-runner-source-continuity.test.ts",
+      "current": {
+        "bytes": 3807,
+        "sha256": "bb020e21f3b803d1328e06e57b2c896c768eadc154a1cca7f8c4741d293a5506",
+        "gitBlobSha1": "f26ba8808df35d06f4b86adec6a563c19847b695"
+      },
+      "predecessor": {
+        "bytes": 3391,
+        "sha256": "c4a04818782a341000d3f15cc8568765f713b77a5358978b824ca3dadb69a9f4",
+        "gitBlobSha1": "1b5fcd6737fc0e7f73b871f64817bc19232838f8"
+      },
+      "inverseEdits": [
+        {
+          "start": 0,
+          "after": [
+            "import { projectPublicProductEstimatePredecessor as projectPublicProductEstimate9743Predecessor } from './helpers/publicProductEstimateSourceContinuity';\n",
+            "import { projectFirstOrderAuthorityPredecessor } from './helpers/firstOrderAuthoritySourceContinuity';\n"
+          ],
+          "before": [
+            "import { projectPublicProductEstimatePredecessor } from './helpers/publicProductEstimateSourceContinuity';\n"
+          ],
+          "anchorStart": 0,
+          "anchor": [
+            "import { projectPublicProductEstimatePredecessor as projectPublicProductEstimate9743Predecessor } from './helpers/publicProductEstimateSourceContinuity';\n",
+            "import { projectFirstOrderAuthorityPredecessor } from './helpers/firstOrderAuthoritySourceContinuity';\n",
+            "import { projectPurchasedLabelOperationsPredecessor } from './helpers/purchasedLabelOperationsSourceContinuity';\n",
+            "import { createHash } from 'node:crypto';\n",
+            "import { readFileSync } from 'node:fs';\n"
+          ]
+        },
+        {
+          "start": 12,
+          "after": [
+            "// Peel the exact current first-order layer before this unchanged older view.\n",
+            "const projectPublicProductEstimatePredecessor = (file: string, source: string) =>\n",
+            "  projectPublicProductEstimate9743Predecessor(file, projectFirstOrderAuthorityPredecessor(file, source));\n"
+          ],
+          "before": [],
+          "anchorStart": 9,
+          "anchor": [
+            "import { projectOutLabelRunnerPredecessor } from './helpers/outProductLabelRunnerSourceContinuity';\n",
+            "import { projectProviderTransportPredecessor } from './helpers/providerTransportSourceContinuity';\n",
+            "import { projectPurchasedLabelAuthorPredecessor } from './helpers/purchasedLabelAuthorSourceContinuity';\n",
+            "// Peel the exact current first-order layer before this unchanged older view.\n",
+            "const projectPublicProductEstimatePredecessor = (file: string, source: string) =>\n",
+            "  projectPublicProductEstimate9743Predecessor(file, projectFirstOrderAuthorityPredecessor(file, source));\n",
+            "const root = resolve(import.meta.dirname, '../..'), physical = readFileSync(resolve(root, file), 'utf8');\n",
+            "const native = projectPurchasedLabelAuthorPredecessor(file, projectPurchasedLabelOperationsPredecessor(file, projectPublicProductEstimatePredecessor(file, physical)));\n",
+            "const admission = \"    'test/purchased-product-label-storage-native.test.ts',\\n\";\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "9743df508e94eaafa2c724b62f8e181311b981fe",
+        "path": "workers-ts/test/purchased-label-storage-runner-source-continuity.test.ts",
+        "gitBlobSha1": "1b5fcd6737fc0e7f73b871f64817bc19232838f8"
+      }
+    }
+  ]
+}

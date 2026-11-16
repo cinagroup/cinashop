@@ -1,6 +1,7 @@
 /** Historical source projection only. Production and runtime acceptance import
  * the real providers. No older proof file/hash, inventory or assertion is replaced. */
 import { createHash } from 'node:crypto';
+import { isFirstOrderAuthoritySource, projectFirstOrderAuthorityPredecessor } from './firstOrderAuthoritySourceContinuity';
 import { isPublicProductEstimateSource, projectPublicProductEstimatePredecessor } from './publicProductEstimateSourceContinuity';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -37,11 +38,18 @@ if (proof.schema !== 'provider-transport-source-continuity/v1' || proof.predeces
 
 // Peel the later discovery-only images before the unchanged older views. This
 // reader is historical; runtime tests and production always import native code.
-export const isProviderTransportSource = (file: string) => isPublicProductEstimateSource(file) || isPurchasedLabelOperationsSource(file) || isPurchasedLabelAuthorSource(file) || isOutLabelRunnerSource(file) || isUnitDiscoverySource(file) || proof.sources.some(row => row.file === file);
+export const isProviderTransportSource = (file: string) => isFirstOrderAuthoritySource(file) || isPublicProductEstimateSource(file) || isPurchasedLabelOperationsSource(file) || isPurchasedLabelAuthorSource(file) || isOutLabelRunnerSource(file) || isUnitDiscoverySource(file) || proof.sources.some(row => row.file === file);
 
 /** A selected old image is refused, including an otherwise valid predecessor.
  * Every changed line must match exactly; the whole output must be fixed353. */
 export function projectProviderTransportPredecessor(file: string, source: string): string {
+  return projectProviderTransportFromPublicProductEstimateView(file, projectFirstOrderAuthorityPredecessor(file, source));
+}
+
+/** Explicit fixed9743 historical view only. The public-product-estimate proof
+ * tests retain their exact old current-image checks through this entry point.
+ * Native readers must use projectProviderTransportPredecessor above. */
+export function projectProviderTransportFromPublicProductEstimateView(file: string, source: string): string {
   source = projectPublicProductEstimatePredecessor(file, source);
   source = projectPurchasedLabelOperationsPredecessor(file, source);
   source = projectPurchasedLabelAuthorPredecessor(file, source);
