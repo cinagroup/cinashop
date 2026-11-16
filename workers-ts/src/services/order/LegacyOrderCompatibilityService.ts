@@ -30,6 +30,7 @@ import { readCheckoutPickupEnabled } from './CheckoutPickupPolicy';
 import { prepareStoreOrderPaymentAdmission } from './StoreOrderPayService';
 import { assertExternalPaymentReplay } from '@/services/payment/PaymentInitiationAdmission';
 import { decimalToCents } from './OrderBrokerageService';
+import { projectCartPictures } from './OrderPictureProjection';
 
 const CHECKOUT_TTL_SECONDS = 30 * 60;
 const LEGACY_ALIPAY_TTL_SECONDS = 5 * 60;
@@ -549,7 +550,7 @@ export class LegacyOrderCompatibilityService {
     return {
       addressInfo: legacyAddress(quote.deliveryAddress ?? (options.shippingType === 2 ? address : null)),
       upgrade_addr: false,
-      cartInfo: [...rows, ...giftRows],
+      cartInfo: await projectCartPictures(this.container.db, this.env.APP_KEY, [...rows, ...giftRows]),
       custom_form: [],
       product_type: Math.max(0, ...rows.map((item) => Number(record(item.productInfo).productType ?? 0))),
       userInfo: {

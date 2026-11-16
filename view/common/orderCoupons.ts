@@ -9,7 +9,11 @@ export interface OrderCouponScope {
   storeId: number;
   fingerprint: string;
 }
-export interface OrderCoupon extends OwnedCoupon { estimatedDiscount: string; eligibleSubtotal: string }
+export interface OrderCoupon extends OwnedCoupon {
+  estimatedDiscount: string; eligibleSubtotal: string;
+  /** Actual issue/template identity supplied by the order picker. Never infer it from an owned ID. */
+  issueId?: number;
+}
 export interface OrderCouponPage { list: OrderCoupon[]; nextCursor: number | null }
 export interface OrderCouponState extends OrderCouponPage { fingerprint: string; loading: boolean; error: string }
 
@@ -38,11 +42,14 @@ export function normalizeOrderCouponPage(value: unknown, cursor: unknown, before
   const rows = value as Record<string, unknown>[]; // The shared normalizer has validated the array and every object.
   const cents = (amount: string) => BigInt(amount.replace(".", ""));
   const list = base.list.map((coupon, index): OrderCoupon => {
+    const raw = rows[index];
+    if (Object.prototype.hasOwnProperty.call(raw, "cid") && (typeof raw.cid !== "number"
+      || !Number.isSafeInteger(raw.cid) || raw.cid <= 0 || raw.cid > 2147483647)) throw new Error("订单优惠券发行标识无效");
     const estimatedDiscount = quoteMoney(rows[index].estimated_discount);
     const eligibleSubtotal = quoteMoney(rows[index].eligible_subtotal);
     if (coupon.availability !== "available" || cents(eligibleSubtotal) <= 0n
       || cents(estimatedDiscount) > cents(eligibleSubtotal) || cents(coupon.minimum) > cents(eligibleSubtotal)) throw new Error("订单优惠券适用金额无效");
-    return { ...coupon, estimatedDiscount, eligibleSubtotal };
+    return { ...coupon, estimatedDiscount, eligibleSubtotal, ...(Object.prototype.hasOwnProperty.call(raw, "cid") ? { issueId: raw.cid as number } : {}) };
   });
   let nextCursor: number | null = null;
   if (cursor !== undefined && cursor !== null && cursor !== "") {

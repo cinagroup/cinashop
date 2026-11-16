@@ -3,7 +3,13 @@ import { useAuthStore } from '@/stores/auth';
 import { RequestError } from '@/utils/request';
 import { createProductCouponRequests, type ProductCoupon, type ProductCouponPage, type ProductCouponRequests } from '@/api/productCoupons';
 
-interface ClaimJournal { version: 1; uid: number; productId: number; couponId: number; title: string; attempt: string }
+export interface ClaimJournal { version: 1; uid: number; productId: number; couponId: number; title: string; attempt: string }
+export interface ProductCouponClaimHooks {
+  beforeDispatch?(row: ClaimJournal): void;
+  beforeConfirm?(row: ClaimJournal, ownedId: number | null, source: 'grant' | 'receipt'): void;
+}
+export type ProductCouponClaimOutcome = { kind: 'not-sent' | 'rejected' | 'uncertain' | 'stale' }
+  | { kind: 'received'; row: ClaimJournal; ownedId: number | null };
 const writers = new Set<number>();
 let serial = 0;
 export const productCouponClaimKey = (uid: number) => `cinashop-product-coupon-claim-v1-${uid}`;
@@ -21,6 +27,7 @@ function journal(uid: number): ClaimJournal | null {
     || typeof row.attempt !== 'string' || !/^\d{1,16}:\d{1,12}$/u.test(row.attempt)) throw invalid();
   return row as unknown as ClaimJournal;
 }
+export const readProductCouponClaimJournal = journal;
 function save(row: ClaimJournal) {
   const raw = JSON.stringify(row); uni.setStorageSync(productCouponClaimKey(row.uid), raw);
   if (uni.getStorageSync(productCouponClaimKey(row.uid)) !== raw) throw Error('领券恢复记录未能保存，本次没有提交领取');
@@ -103,42 +110,60 @@ export function useProductCoupons(productId: Ref<number>, active: Ref<boolean>) 
     state.notice = '当前账号已领取该优惠券，可在我的优惠券中查看'; state.actionError = '';
     try { remove(row); } catch (error) { state.actionError = message(error, '已领取，本机记录暂未清理'); }
   }
-  async function claim(couponId: number) {
-    const item = state.items.find(row => row.id === couponId); if (!item || !canClaim(item)) return;
+  async function claim(couponId: number, hooks: ProductCouponClaimHooks = {}, purchase?: { title: string }): Promise<ProductCouponClaimOutcome> {
+    const item = state.items.find(row => row.id === couponId);
+    if (purchase ? !validId(couponId) || !current() || !loggedIn.value || state.loading || state.loadingMore || state.writingId || state.checking || state.journalBlocked
+      : !item || !canClaim(item)) return { kind: 'not-sent' };
+    let outcome: ProductCouponClaimOutcome = { kind: 'not-sent' };
     const r = scope(), uid = r.owner.uid, id = productId.value; state.writingId = couponId; state.actionError = ''; state.notice = '';
     state.confirmedIssue = 0; state.confirmedOwnedId = 0;
     try {
       await exclusive(uid, async () => {
         if (!r.active()) return;
         if (journal(uid)) throw Error('请先核对原领取结果');
-        const row: ClaimJournal = { version: 1, uid, productId: id, couponId, title: item.title, attempt: `${Date.now()}:${++serial}` };
+        const row: ClaimJournal = { version: 1, uid, productId: id, couponId, title: purchase?.title ?? item!.title, attempt: `${Date.now()}:${++serial}` };
         save(row); state.pending = row;
+        // A purchase sidecar must record this exact claim attempt before the
+        // sole POST. A failed preflight is known-unsent, not an unknown grant.
+        try { hooks.beforeDispatch?.(row); }
+        catch (error) { try { remove(row); } catch { /* A remaining record is still a blocker. */ } throw error; }
         try {
-          const ownedId = await r.claim(couponId); if (!r.active() || !sameJournal(row)) return;
+          outcome = { kind: 'uncertain' };
+          const ownedId = await r.claim(couponId); if (!r.active() || !sameJournal(row)) { outcome = { kind: 'stale' }; return; }
+          hooks.beforeConfirm?.(row, ownedId, 'grant');
+          outcome = { kind: 'received', row, ownedId };
           confirmed(row, ownedId); state.writingId = 0; await load();
         } catch (error) {
-          if (!r.active()) return;
+          if (!r.active()) { outcome = { kind: 'stale' }; return; }
           // Only the controller's successful-HTTP business400 denotes a
           // rolled-back initial grant. Transport/5xx/shape/owner failures stay unknown.
           if (error instanceof RequestError && error.status === 400 && error.httpStatus !== undefined && error.httpStatus >= 200 && error.httpStatus < 300) {
             try { remove(row); } catch { /* Preserve the original durable evidence. */ }
+            outcome = { kind: 'rejected' };
             state.actionError = message(error, '优惠券领取未成功');
           } else state.actionError = '领取结果尚未确认，请核对领取状态；不要重复提交';
         }
       });
     } catch (error) { if (r.active()) { restore(); state.actionError = message(error, '领取暂不可操作，请核对原领取结果'); } }
     finally { if (r.active()) state.writingId = 0; finish(r); }
+    return outcome;
   }
-  async function check() {
-    if (!current() || !loggedIn.value || state.loading || state.loadingMore || state.writingId || state.checking) return;
-    restore(); const row = state.pending; if (!row) return;
+  async function check(hooks: ProductCouponClaimHooks = {}): Promise<ProductCouponClaimOutcome> {
+    if (!current() || !loggedIn.value || state.loading || state.loadingMore || state.writingId || state.checking) return { kind: 'not-sent' };
+    restore(); const row = state.pending; if (!row) return { kind: 'not-sent' };
+    let outcome: ProductCouponClaimOutcome = { kind: 'uncertain' };
     const r = scope(); state.checking = true; state.actionError = ''; state.notice = '';
     try {
-      const receipt = await r.receipt(row.productId, row.couponId); if (!r.active() || !sameJournal(row)) return;
-      if (receipt.receivedCount > 0) { confirmed(row, receipt.latestCouponUserId); state.checking = false; await load(); }
+      const receipt = await r.receipt(row.productId, row.couponId); if (!r.active() || !sameJournal(row)) return { kind: 'stale' };
+      if (receipt.receivedCount > 0) {
+        hooks.beforeConfirm?.(row, receipt.latestCouponUserId, 'receipt');
+        outcome = { kind: 'received', row, ownedId: receipt.latestCouponUserId };
+        confirmed(row, receipt.latestCouponUserId); state.checking = false; await load();
+      }
       else state.notice = '暂未查到领取记录，原请求仍可能处理中。请稍后再次核对，当前不会重复领取';
     } catch (error) { if (r.active()) state.actionError = message(error, '领取状态核对失败，请重试核对'); }
     finally { if (r.active()) state.checking = false; finish(r); }
+    return outcome;
   }
   function toggleRule(id: number) {
     if (!current() || !state.items.some(item => item.id === id && item.rule)) return;
@@ -182,7 +207,11 @@ export function useProductCoupons(productId: Ref<number>, active: Ref<boolean>) 
     return start && end ? `${start} 至 ${end} 可用` : end ? `有效期至 ${end}` : start ? `${start} 起可用` : '有效期以我的优惠券为准';
   }
   function amount(item: ProductCoupon) { return item.benefitType === 1 ? `¥${item.benefitValue}` : `${Number(item.benefitValue) / 10} 折`; }
-  return { state, loggedIn, load, claim, check, toggleRule, received, canClaim, wallet, login, membership, validity, amount,
+  return { state, loggedIn, load, claim, check,
+    // Only the purchase coordinator supplies this frozen issue. The server
+    // rechecks grant eligibility; a stale catalogue item never authorizes it.
+    claimForPurchase: (id: number, title: string, hooks: ProductCouponClaimHooks) => claim(id, hooks, { title }),
+    toggleRule, received, canClaim, wallet, login, membership, validity, amount,
     scope: (value: number) => ['通用券', '品类券', '商品券', '品牌券'][value] ?? '优惠券',
     retry: () => load(!!state.page && !state.invalidPagination), hasMore: computed(() => !!state.page && state.items.length < state.page.total) };
 }

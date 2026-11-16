@@ -44,6 +44,9 @@ export function productDetailDesignSourceFiles(): Record<string, string> {
     mobileDecoder: 'view/uniapp-ts/src/utils/productDetailDesign.ts',
     mobileProduct: 'view/uniapp-ts/src/api/productDetail.ts', orderApi: 'view/uniapp-ts/src/api/order.ts', activityApi: 'view/uniapp-ts/src/api/activity.ts', ordinary: 'view/uniapp-ts/src/pages/goods/detail.vue',
     couponFlow: 'view/uniapp-ts/src/composables/useProductCoupons.ts', couponApi: 'view/uniapp-ts/src/api/productCoupons.ts',
+    couponBuy: 'view/uniapp-ts/src/composables/useProductCouponBuy.ts', couponBuyJournal: 'view/common/productCouponBuyIntent.ts',
+    couponBuyPreselection: 'view/common/productCouponBuyPreselection.ts', checkout: 'view/uniapp-ts/src/composables/useCheckout.ts',
+    checkoutApi: 'view/common/checkoutApi.ts', orderCoupons: 'view/common/orderCoupons.ts',
     couponCard: 'view/uniapp-ts/src/components/productDetail/ProductCoupons.vue', couponRequests: 'view/uniapp-ts/src/api/userCenter.ts',
     couponContract: 'view/common/pcProductDetailContent.ts',
     community: 'view/uniapp-ts/src/pages/goods/productCommunity.vue', media: 'view/uniapp-ts/src/components/productDetail/ProductMedia.vue',
@@ -398,9 +401,10 @@ export function inspectProductDetailDesignCoverage(screens: readonly string[], s
     && s('recovery').in('parseOrdinaryRecovery','row.actor !== actor',"row.state === 'unknown' && row.cartId !== null", "row.state === 'acknowledged' && (!Number.isSafeInteger(row.cartId)")
     && !ordinary.body('clearView').includes('removeStorageSync(') && ordinary.has('onHide(', 'onUnload(')
     && ordinary.imports('@/composables/useProductCoupons','useProductCoupons')
-    && ordinary.call('productCoupons','useProductCoupons','computed(()=>detail.value?.id??0)', 'computed(()=>visible.value&&marketingVisible.value&&design.value.showService.includes(0))')
+    && ordinary.call('productCoupons','useProductCoupons','computed(()=>detail.value?.id??0)', 'computed(()=>visible.value&&(marketingVisible.value&&design.value.showService.includes(0)||couponPurchaseActive.value))')
+    && ordinary.has('watch(()=>!!couponBuy.state.selected||!!couponBuy.state.intent||couponBuy.state.invalid,value=>{couponPurchaseActive.value=value;},{flush:\'sync\'})')
     && ordinary.html('<ProductCoupons', ':coupons="productCoupons"', ':owner-uid="authStore.uid"', ':product-id="detail.id"')
-    && s('couponCard').html(':disabled="!coupons.canClaim(item)"', '@tap="coupons.claim(item.id)"', '@tap="coupons.check"')
+    && s('couponCard').html(':disabled="!coupons.canClaim(item)"', '@tap="coupons.claim(item.id)"', '@tap="purchasePending?emit(\'checkBuy\'):coupons.check()"')
     && s('couponFlow').imports('@/api/productCoupons','createProductCouponRequests')
     && s('couponFlow').call('scope','createProductCouponRequests','()=>current()&&epoch===generation&&id===productId.value')
     && s('couponFlow').in('current','!disposed&&active.value&&browserVisible&&validId(productId.value)&&persisted()')
@@ -412,12 +416,12 @@ export function inspectProductDetailDesignCoverage(screens: readonly string[], s
     && s('couponFlow').call('save','uni.getStorageSync','productCouponClaimKey(row.uid)')
     && s('couponFlow').in('sameJournal','journal(row.uid)','live.attempt===row.attempt','live.couponId===row.couponId','live.productId===row.productId')
     && s('couponFlow').in('claim','!canClaim(item)','uid=r.owner.uid','productId:id','if(!r.active())return','if(journal(uid))throw')
-    && s('couponFlow').ordered('claim','save(row);state.pending=row','const ownedId=await r.claim(couponId)','if(!r.active()||!sameJournal(row))return','confirmed(row,ownedId)')
+    && s('couponFlow').ordered('claim','save(row);state.pending=row','hooks.beforeDispatch?.(row)','const ownedId=await r.claim(couponId)',"if(!r.active()||!sameJournal(row)){outcome={kind:'stale'};return;}",'hooks.beforeConfirm?.(row,ownedId,\'grant\')','confirmed(row,ownedId)')
     && s('couponFlow').call('claim','exclusive','uid') && s('couponFlow').call('claim','r.claim','couponId')
     && s('couponFlow').call('claim','save','row') && s('couponFlow').call('claim','confirmed','row','ownedId')
     && s('couponFlow').call('check','r.receipt','row.productId','row.couponId')
     && s('couponFlow').call('check','confirmed','row','receipt.latestCouponUserId')
-    && s('couponFlow').ordered('check','const row=state.pending','await r.receipt(row.productId,row.couponId)','if(!r.active()||!sameJournal(row))return','if(receipt.receivedCount>0)','confirmed(row,receipt.latestCouponUserId)')
+    && s('couponFlow').ordered('check','const row=state.pending','await r.receipt(row.productId,row.couponId)',"if(!r.active()||!sameJournal(row))return{kind:'stale'}",'if(receipt.receivedCount>0)',"hooks.beforeConfirm?.(row,receipt.latestCouponUserId,'receipt')",'confirmed(row,receipt.latestCouponUserId)')
     && !s('couponFlow').body('check').includes('r.claim(')
     && s('couponFlow').ordered('remove','if(!sameJournal(row))throw','uni.removeStorageSync(productCouponClaimKey(row.uid))')
     && s('couponApi').imports('@/api/userCenter','createUserCenterRequests')
@@ -432,7 +436,46 @@ export function inspectProductDetailDesignCoverage(screens: readonly string[], s
     && s('couponRequests').in('request','if(!active())return Promise.reject(', 'if(force&&(!owner.token||owner.uid<1))return Promise.reject(', 'if(!active()){cancel();return;}', 'owner.token', 'Bearer ${owner.token}')
     && s('couponRequests').call('request','uni.request')
     && s('orderApi').call('apiCartAdd','http.post',"'/cart/add'",'params as Record<string,unknown>')
-    && s('couponFlow').in('useProductCoupons','return{state,loggedIn,load,claim,check,');
+    && s('couponFlow').in('useProductCoupons','return{state,loggedIn,load,claim,check,')
+    // Selected-coupon buying has its own durable sidecar. Follow the real page,
+    // coordinator, sole grant hooks and current checkout picker, rather than
+    // accepting the old drawer-only liveness or a second cart/claim writer.
+    && ordinary.imports('@/composables/useProductCouponBuy','useProductCouponBuy')
+    && ordinary.call('couponBuy','useProductCouponBuy','{coupons:productCoupons,productId:()=>productId,capture:currentView,navigate}')
+    && ordinary.html('@buy="chooseCouponBuy"','@check-buy="couponBuy.resume"',':purchase-pending="!!couponBuy.state.intent"')
+    && ordinary.in('chooseCouponBuy','!visible.value||disposed||!detail.value||loading.value||ordinaryLocked.value||detail.value.is_presale_product','if(!couponBuy.choose(item))return')
+    && ordinary.call('confirmSku','couponBuy.begin','sku.unique','num.value')
+    && s('couponCard').html('@tap="emit(\'buy\',item)"',':disabled="busy||buyDisabled||!!s.pending||s.journalBlocked||(!coupons.received(item)&&!coupons.canClaim(item))"')
+    && s('couponBuy').imports('../../../common/productCouponBuyIntent','ProductCouponBuyJournal')
+    && s('couponBuy').in('persisted',"Number(storage.get('uni_uid'))===auth.uid","storage.get('uni_token')===auth.token")
+    && s('couponBuy').in('choose','state.intent','deps.coupons.state.pending','!deps.coupons.state.items.includes(item)','!deps.coupons.received(item)&&!deps.coupons.canClaim(item)')
+    && s('couponBuy').ordered('begin','state.intent=journal.begin(intent)',"state:'unknown'",'storage.set(ordinaryRecoveryKey(uid),raw)','storage.get(ordinaryRecoveryKey(uid))!==raw','journal.assertCurrent(intent)',"if(!current()||!persisted())throw",'await apiCartAdd({productId,unique,cartNum:quantity,new:1})','prepareProductCart(result,0).ids[0]',"journal.update(intent,{phase:'cart-ready',cartId})",'storage.get(ordinaryRecoveryKey(uid))!==raw',"state:'acknowledged',cartId",'storage.set(ordinaryRecoveryKey(uid),ack)','await advance(state.intent,current)')
+    && s('couponBuy').call('advance','checkoutApi.items',"{mode:'buy',ids:intent.cartId?[intent.cartId]:[]}",'[]')
+    && s('couponBuy').in('advance','rows.length!==1||row.id!==intent.cartId||row.type!==0||row.isNew!==1||!row.isValid','row.productId!==intent.productId||row.unique!==intent.unique||row.cartNum!==intent.quantity')
+    && s('couponBuy').in('sameClaim','row.uid===intent.uid&&row.productId===intent.productId&&row.couponId===intent.issueId','intent.claimAttempt===null||intent.claimAttempt===row.attempt')
+    && s('couponBuy').ordered('beforeDispatch',"!current()||!persisted()||!sameClaim(intent,claim)||intent.phase!=='cart-ready'","journal.update(intent,{phase:'claim-unknown',claimAttempt:claim.attempt})")
+    && s('couponBuy').in('beforeConfirm',"!current()||!persisted()||intent.phase!=='claim-unknown'||!sameClaim(intent,claim)","journal.update(intent,{phase:'ready',evidence:source,ownedId:source==='grant'?ownedId:null})")
+    && s('couponBuy').call('advance','deps.coupons.claimForPurchase','intent.issueId','intent.title','hooks')
+    && s('couponBuy').call('advance','deps.coupons.check','hooks')
+    && s('couponBuy').call('advance','r.receipt','intent.productId','intent.issueId')
+    && s('couponBuy').in('advance',"if(receipt.receivedCount<=0)throw","journal.update(intent,{phase:'ready',evidence:'receipt',ownedId:null})",'couponBuy=${encodeURIComponent(intent.attempt)}')
+    && s('couponBuy').in('resume',"if(intent.phase==='cart-unknown'){throw Error('原加购结果尚未确认，请到购物车核对；当前不会重复加购');}")
+    && !s('couponBuy').body('resume').includes('apiCartAdd(') && !s('couponBuy').body('advance').includes('apiCartAdd(')
+    && s('couponBuyJournal').in('decodeProductCouponBuyIntent','row.uid!==uid',"row.phase==='cart-unknown'?row.cartId!==null:row.cartId===null","row.phase==='ready'&&(row.evidence==='none'||row.evidence==='grant'&&row.ownedId===null)")
+    && s('couponBuyJournal').in('assertCurrent','JSON.stringify(live)!==JSON.stringify(intent)')
+    && s('couponBuyJournal').ordered('save','this.storage.set(productCouponBuyKey(intent.uid),raw)','this.storage.get(productCouponBuyKey(intent.uid))!==raw')
+    && s('couponBuyJournal').in('completed',"ordinary.state==='acknowledged'&&ordinary.mode==='buy'&&ordinary.cartId===intent.cartId",'ordinary.productId===intent.productId&&ordinary.unique===intent.unique&&ordinary.quantity===intent.quantity')
+    && s('couponBuyPreselection').in('parseProductCouponBuySelection',"query.mode!=='buy'||own(query,'couponId')||own(query,'cartIds')")
+    && s('couponBuyPreselection').in('assertProductCouponBuyRows',"intent.uid!==uid||intent.attempt!==selection.attempt||intent.phase!=='ready'||intent.evidence==='none'",'intent.cartId!==selection.cartId||rows.length!==1||!row||row.id!==intent.cartId','row.productId!==intent.productId||row.unique!==intent.unique||row.cartNum!==intent.quantity')
+    && s('couponBuyPreselection').in('current','owner.uid!==this.owner.uid||owner.version!==this.owner.version','this.journal.assertCurrent(this.intent)')
+    && s('couponBuyPreselection').in('accept',"row.issueId===intent.issueId&&row.availability==='available'",'intent.ownedId===null||row.id===intent.ownedId','this.journal.update(intent,{ownedId:coupon.id})')
+    && s('orderCoupons').in('normalizeOrderCouponPage',"typeof raw.cid!=='number'",'!Number.isSafeInteger(raw.cid)||raw.cid<=0||raw.cid>2147483647','issueId:raw.cid as number')
+    && s('checkoutApi').call('coupons','transport.get',"'/coupons/order/0'",'orderCouponRequest(scope,before)')
+    && s('checkout').in('canSubmit','!couponBuyRequested.value||couponBuyValidated.value','ready.value')
+    && s('checkout').call('load','assertProductCouponBuyRows','intent','buySelection','auth.uid','rows')
+    && s('checkout').in('useCheckout','buyPreselection.bind(couponScope.value,{uid:auth.uid,version:auth.sessionVersion},items.value)','buyPreselection.accept(state,{uid:auth.uid,version:auth.sessionVersion})')
+    && s('checkout').ordered('submit','buyPreselection.assertSelection({uid:auth.uid,version:auth.sessionVersion},couponScope.value,coupons.value,couponId.value)','journal.begin(owner.uid,quote.value.result!.key','await apiOrderCreate(intent.key,intent.payload as Parameters<typeof apiOrderCreate>[1])')
+    && s('checkout').ordered('openResult','await new Promise<void>(', 'buyJournal.completed(completedBuy,intent.payload.cartIds)','journal.clear(intent)');
   const activityConsumers = data.in('readActivityDetailDesign','publicOrdinaryProductIdentitySql()','readProductDetailDesignSnapshot(tx)',
     '(activityType===6?design.showService.includes(3):!design.showService.includes(3))?integralDetailSpecs(activity.specs??base.specs,[]):[]',
     'replyService.replyList(base.id,1,design.replyNum,uid,0,false)','replyService.replyConfig(base.id)','activityType===6||activityType===7',

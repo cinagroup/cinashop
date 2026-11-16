@@ -172,3 +172,5 @@ module.exports={goods,baseDesign};
 
 // Included by the existing CI runtime entry without changing package scripts.
 require('./product-coupons-runtime.test.cjs');
+require('./product-coupon-buy-runtime.test.cjs');
+require('./product-coupon-buy-checkout-runtime.test.cjs');

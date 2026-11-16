@@ -7,7 +7,14 @@
       <button @tap="load">重新加载商品</button>
     </view>
     <view v-else-if="detail">
-      <view v-if="preparedCart || purchaseNeedsRefresh || ordinaryRecovery || ordinaryRecoveryInvalid" class="purchase-recovery" role="status">
+      <view v-if="couponBuy.state.intent || couponBuy.state.invalid || couponBuy.state.error" class="purchase-recovery" role="status" :data-coupon-buy-phase="couponBuy.state.intent?.phase || 'blocked'" :data-coupon-buy-cart="couponBuy.state.intent?.cartId || 0">
+        <view v-if="couponBuy.state.intent">原领券购买：{{couponBuy.state.intent.title}} · {{couponBuy.state.intent.quantity}} 件。继续将使用原购物车和原领取记录。</view>
+        <view v-if="couponBuy.state.error" role="alert">{{couponBuy.state.error}}</view>
+        <button v-if="couponBuy.state.intent?.productId===detail.id" :disabled="couponBuy.state.busy || navigating" @tap="couponBuy.resume">{{couponBuy.state.busy?'正在核对…':couponBuy.state.intent.phase==='claim-unknown'?'核对原领取并继续购买':'继续原领券购买'}}</button>
+        <button v-else-if="couponBuy.state.intent" :disabled="navigating" @tap="navigate('/pages/goods/detail?id='+couponBuy.state.intent.productId)">返回原购买商品</button>
+        <button v-if="couponBuy.state.intent?.phase==='cart-unknown' || couponBuy.state.invalid" :disabled="couponBuy.state.busy || navigating" @tap="goCart">到购物车核对</button>
+      </view>
+      <view v-if="!couponBuy.state.intent && !couponBuy.state.invalid && (preparedCart || purchaseNeedsRefresh || ordinaryRecovery || ordinaryRecoveryInvalid)" class="purchase-recovery" role="status">
         <view>{{ preparedCart ? '购买记录已创建，继续结算不会重复加购。' : ordinaryRecovery || ordinaryRecoveryInvalid ? '本账号上次加购结果尚未确认，当前暂停普通商品加购，请到购物车核对。' : '本次操作结果未确认，请重新加载商品后再选择。' }}</view>
         <view v-if="checkoutError" role="alert">{{ checkoutError }}</view>
         <button v-if="preparedCart" :disabled="navigating" @tap="resumeCheckout">继续结算</button>
@@ -141,7 +148,7 @@
       </view>
 
       <view v-if="servicePanel" class="mask" @tap="servicePanel='' "><view class="sheet service-sheet" @tap.stop><view class="module-heading">{{servicePanel==='ensure'?'服务保障':'商品参数'}}<button size="mini" @tap="servicePanel=''">关闭</button></view><scroll-view scroll-y class="service-scroll"><template v-if="servicePanel==='ensure'"><view v-for="entry in display.ensure" :key="entry.id" class="ensure-row"><image v-if="entry.image" :src="entry.image"/><view><text>{{entry.name}}</text><view>{{entry.desc}}</view></view></view></template><view v-else v-for="(entry,i) in display.specs" :key="i" class="spec-row"><text>{{entry.name}}</text><text>{{entry.value}}</text></view></scroll-view></view></view>
-      <view v-if="marketingVisible" class="mask" @tap="marketingVisible=false"><view class="sheet" @tap.stop><view class="module-heading">优惠与促销<button size="mini" @tap="marketingVisible=false">关闭</button></view><view v-if="marketingError" role="alert">{{marketingError}}<button size="mini" @tap="retryMarketing">重新读取活动</button></view><view v-for="promotion in promotions" :key="promotion.id" class="promotion-row"><view>{{promotion.name}}</view><view>{{promotion.desc}}</view></view><ProductCoupons :coupons="productCoupons" :owner-uid="authStore.uid" :product-id="detail.id"/></view></view>
+      <view v-if="marketingVisible" class="mask" @tap="marketingVisible=false"><view class="sheet" @tap.stop><view class="module-heading">优惠与促销<button size="mini" @tap="marketingVisible=false">关闭</button></view><view v-if="marketingError" role="alert">{{marketingError}}<button size="mini" @tap="retryMarketing">重新读取活动</button></view><view v-for="promotion in promotions" :key="promotion.id" class="promotion-row"><view>{{promotion.name}}</view><view>{{promotion.desc}}</view></view><ProductCoupons :coupons="productCoupons" :owner-uid="authStore.uid" :product-id="detail.id" :purchase-pending="!!couponBuy.state.intent" :buy-disabled="ordinaryLocked || !!detail.is_presale_product" @buy="chooseCouponBuy" @check-buy="couponBuy.resume"/></view></view>
       <view v-if="shareVisible" class="mask" @tap="shareVisible=false"><view class="sheet share-sheet" @tap.stop><view class="module-heading">分享商品<button size="mini" @tap="shareVisible=false">关闭</button></view>
         <!-- #ifdef MP-WEIXIN --><button open-type="share">发送给微信好友</button><!-- #endif -->
         <!-- #ifdef APP-PLUS --><button :disabled="sharing" @tap="appShare('WXSceneSession')">微信好友</button><button :disabled="sharing" @tap="appShare('WXSceneTimeline')">朋友圈</button><!-- #endif -->
@@ -196,7 +203,7 @@
           </view>
 
           <button class="sheet-btn" :disabled="ordinaryLocked || maxNum <= 0" :loading="buying" @tap="confirmSku">
-            {{ buying ? "处理中…" : maxNum <= 0 ? "暂无库存" : skuMode === "buy" ? "立即购买" : "加入购物车" }}
+            {{ buying || couponBuy.state.busy ? "处理中…" : maxNum <= 0 ? "暂无库存" : couponBuy.state.selected ? '确认规格并领券购买' : skuMode === "buy" ? "立即购买" : "加入购物车" }}
           </button>
         </view>
       </view>
@@ -254,6 +261,8 @@ import ThemePage from '@/components/ThemePage.vue';
 import ProductMedia from '@/components/productDetail/ProductMedia.vue';
 import ProductCoupons from '@/components/productDetail/ProductCoupons.vue';
 import { useProductCoupons } from '@/composables/useProductCoupons';
+import { useProductCouponBuy } from '@/composables/useProductCouponBuy';
+import type { ProductCoupon } from '@/api/productCoupons';
 import ProductSharePoster from '@/components/productDetail/ProductSharePoster.vue';
 import LegacyShareCode from '@/components/LegacyShareCode.vue';
 import { ref, computed, reactive, watch } from "vue";
@@ -296,7 +305,8 @@ const footerEntries=computed(()=>design.value.menuList.map(id=>({id,name:footerN
 const skuMedia=ref(false),mediaImages=computed(()=>skuMedia.value&&selectedSku.value?.image?[selectedSku.value.image]:detail.value?.slider_image??[]);
 const servicePanel=ref<''|'ensure'|'specs'>(''),marketingVisible=ref(false),marketingError=ref(''),replyError=ref(''),recommendError=ref('');
 const promotions=ref<Array<{id:number;name:string;desc:string}>>([]),cartCount=ref(0);
-const productCoupons=reactive(useProductCoupons(computed(()=>detail.value?.id??0),computed(()=>visible.value&&marketingVisible.value&&design.value.showService.includes(0))));
+const couponPurchaseActive=ref(false);
+const productCoupons=reactive(useProductCoupons(computed(()=>detail.value?.id??0),computed(()=>visible.value&&(marketingVisible.value&&design.value.showService.includes(0)||couponPurchaseActive.value))));
 const shareVisible=ref(false),posterVisible=ref(false),shareNotice=ref(''),sharing=ref(false);
 const officialCode=ref(''),officialCodeLoading=ref(false),officialCodeError=ref('');let shareGeneration=0,codeGeneration=0;
 watch(()=>[shareVisible.value,posterVisible.value],()=>{if(!shareVisible.value){shareGeneration++;sharing.value=false;}if(!shareVisible.value||!posterVisible.value){codeGeneration++;officialCode.value='';officialCodeLoading.value=false;officialCodeError.value='';}},{flush:'sync'});
@@ -336,7 +346,9 @@ const num = ref(1);
 const buying = ref(false);
 const preparedCart = ref<PreparedProductCart | null>(null), checkoutError = ref(''), purchaseNeedsRefresh = ref(false);
 const ordinaryRecovery = ref<OrdinaryCartRecovery | null>(null), ordinaryRecoveryInvalid = ref(false);
-const purchaseLocked = computed(() => buying.value || packageBuying.value || navigating.value || !!preparedCart.value || purchaseNeedsRefresh.value && !ordinaryRecovery.value);
+const couponBuy=useProductCouponBuy({coupons:productCoupons,productId:()=>productId,capture:currentView,navigate});
+watch(()=>!!couponBuy.state.selected||!!couponBuy.state.intent||couponBuy.state.invalid,value=>{couponPurchaseActive.value=value;},{flush:'sync'});
+const purchaseLocked = computed(() => buying.value || packageBuying.value || couponBuy.state.busy || !!couponBuy.state.intent || couponBuy.state.invalid || navigating.value || !!preparedCart.value || purchaseNeedsRefresh.value && !ordinaryRecovery.value);
 const ordinaryLocked = computed(() => purchaseLocked.value || ordinaryRecovery.value !== null || ordinaryRecoveryInvalid.value);
 let navigationGeneration = 0;
 const maxNum = computed(() => Math.min(selectedSku.value?.stock ?? 0, detail.value?.stock ?? 0, 32767));
@@ -350,14 +362,21 @@ function goPresale() {
   if (!visible.value || disposed || !detail.value?.is_presale_product || loading.value || purchaseLocked.value) return;
   navigate(`/pages/activity/presaleDetail?id=${detail.value.id}`);
 }
-function openSku(mode: "cart" | "buy") {
+function openSku(mode: "cart" | "buy", forCoupon = false) {
   if (!visible.value || disposed || !detail.value || loading.value || ordinaryLocked.value) return;
   if (detail.value.is_presale_product) return goPresale();
   if(mode==='cart'&&(!design.value.showCart||detail.value.cart_button!==1))return uni.showToast({title:'此商品请通过立即购买填写所需资料',icon:'none'});
   if (!authStore.isLoggedIn) return navigate('/pages/auth/login');
+  if(!forCoupon)couponBuy.state.selected=null;
   skuMode.value = mode;
   num.value = 1;
   skuVisible.value = true;
+}
+function chooseCouponBuy(item:ProductCoupon){
+  if(!visible.value||disposed||!detail.value||loading.value||ordinaryLocked.value||detail.value.is_presale_product)return;
+  if(!authStore.isLoggedIn)return navigate('/pages/auth/login');
+  if(!couponBuy.choose(item))return;
+  openSku('buy',true);marketingVisible.value=false;
 }
 
 function pickSku(sku: SkuItem) {
@@ -376,6 +395,8 @@ async function confirmSku() {
   if (!selectedSku.value) return uni.showToast({ title: "请选择规格", icon: "none" });
   const sku = selectedSku.value;
   if (!Number.isSafeInteger(num.value) || num.value < 1 || num.value > Math.min(sku.stock, detail.value.stock, 32767)) return uni.showToast({ title: "数量无效或库存不足", icon: "none" });
+
+  if(couponBuy.state.selected){skuVisible.value=false;await couponBuy.begin(sku.unique,num.value);restoreOrdinaryRecovery();return;}
 
   buying.value = true;
   const current = currentView();
@@ -551,6 +572,7 @@ function currentView() {
     && owner.version === authStore.sessionVersion && owner.token === authStore.token && owner.uid === authStore.uid;
 }
 function clearView() {
+  couponBuy.reset();
   revision++; detail.value = null; skuList.value = []; selectedSku.value = null; num.value = 1; skuVisible.value = false;
   discountPackages.value = []; selectedPackage.value = null; packageChoices.value = {}; packageVisible.value = false;
   replies.value = []; replyStats.value = { total: 0, avgScore: '0.0', goodRate: 100 };
@@ -576,6 +598,7 @@ function navigate(url: string, onFailure?: () => void) {
   try { uni.navigateTo({ url, fail }); } catch { fail(); }
 }
 function resumeCheckout() {
+  if(couponBuy.state.intent||couponBuy.state.invalid)return couponBuy.resume();
   const prepared = preparedCart.value;
   if (!visible.value || disposed || !detail.value || !prepared || navigating.value || !authStore.isLoggedIn) return;
   checkoutError.value = '';
@@ -583,6 +606,7 @@ function resumeCheckout() {
     : `/pages/order/confirm?mode=buy&cartId=${prepared.ids[0]}&from=sku`, () => { if (preparedCart.value === prepared) checkoutError.value = '结算页面未打开，请点击继续结算'; });
 }
 function restartPurchase() {
+  if(couponBuy.state.intent||couponBuy.state.invalid)return;
   if (!visible.value || disposed || navigating.value || buying.value || packageBuying.value) return;
   if(ordinaryRecovery.value?.state==='unknown'||ordinaryRecoveryInvalid.value){goCart();return;}
   if(ordinaryRecovery.value?.state==='acknowledged'){uni.removeStorageSync(ordinaryRecoveryKey(ordinaryRecovery.value.actor));ordinaryRecovery.value=null;}
@@ -591,7 +615,7 @@ function restartPurchase() {
 async function load() {
   if (!visible.value || disposed || !productId) return;
   clearView(); loading.value = true;
-  restoreOrdinaryRecovery();
+  couponBuy.restore();restoreOrdinaryRecovery();
   const id = productId, current = currentView();
   try {
     const [goods, packages] = await Promise.all([

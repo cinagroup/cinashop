@@ -1,5 +1,6 @@
 import { captureCheckoutInvoice, persistCheckoutInvoice, assertCheckoutInvoiceActor, type CheckoutInvoiceInput, type CheckoutInvoiceActor } from './CheckoutInvoice';
 import { readOrderLifecycleLog } from './OrderLifecycleTimeline';
+import { projectOrderPictures } from './OrderPictureProjection';
 /**
  * 订单创建 Service (M3 最高风险模块)
  *
@@ -3469,9 +3470,11 @@ export class StoreOrderCreateService {
       .where(inArray(storeOrderCartInfo.oid, orders.map((order) => order.id)))
       .orderBy(storeOrderCartInfo.id);
     const cartsByOrder = new Map<number, Array<Record<string, unknown>>>();
-    for (const cart of cartRows) {
+    const presentedCarts = await projectOrderPictures(this.container.db, this.env.APP_KEY,
+      cartRows.map(cart => ({ ...cart, cartInfo: parseCartSnapshot(cart.cartInfo) })));
+    for (const cart of presentedCarts) {
       const list = cartsByOrder.get(cart.oid) ?? [];
-      list.push({ ...cart, cartInfo: parseCartSnapshot(cart.cartInfo) });
+      list.push(cart);
       cartsByOrder.set(cart.oid, list);
     }
     return orders.map((order) => ({
@@ -3534,9 +3537,11 @@ export class StoreOrderCreateService {
           .orderBy(storeOrderCartInfo.id)
       : [];
     const splitCartsByOrder = new Map<number, Array<Record<string, unknown>>>();
-    for (const cart of splitCartRows) {
+    const presentedSplitCarts = await projectOrderPictures(this.container.db, this.env.APP_KEY,
+      splitCartRows.map(cart => ({ ...cart, cartInfo: parseCartSnapshot(cart.cartInfo) })));
+    for (const cart of presentedSplitCarts) {
       const list = splitCartsByOrder.get(cart.oid) ?? [];
-      list.push({ ...cart, cartInfo: parseCartSnapshot(cart.cartInfo) });
+      list.push(cart);
       splitCartsByOrder.set(cart.oid, list);
     }
     const [economizeRows, invoiceRows, promotionsDetail, writeoffRecords, pinkRows, pickupStoreRows] = await Promise.all([
@@ -3630,10 +3635,10 @@ export class StoreOrderCreateService {
       pinkInfo: pinkRows[0] ?? null,
       pickupStore: pickupStoreRows[0] ?? null,
       refundEligibility: customerRefundEligibility(order, cartInfos),
-      cartInfo: cartInfos.map((ci) => ({
+      cartInfo: await projectOrderPictures(this.container.db, this.env.APP_KEY, cartInfos.map((ci) => ({
         ...ci,
         cartInfo: parseCartSnapshot(ci.cartInfo),
-      })),
+      }))),
       splitOrders: await Promise.all(splitOrders.map(async (child) => ({
         ...child,
         customForm: await readOrderSystemFormForOrder(this.container.db, new AttachmentService(this.container, this.env), child),

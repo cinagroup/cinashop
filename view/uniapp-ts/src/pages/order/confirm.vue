@@ -4,6 +4,7 @@
     <view v-if="loading" class="section">正在加载结算要求…</view>
     <view v-if="error" class="section error">
       <text>{{ error }}</text><button size="mini" :disabled="submitting" @tap="load">重新加载结算</button>
+      <button v-if="couponBuyRequested && couponBuyProductId" size="mini" :disabled="locked" @tap="reviewCouponBuy">返回原商品核对</button>
     </view>
     <view v-if="pending" class="section pending">
       <view class="heading">{{ pending.orderId ? '订单已创建' : '有一笔订单结果待确认' }}</view>
@@ -65,6 +66,14 @@
       </view>
       <view v-if="couponScope" class="section">
         <view class="heading">当前订单优惠券</view>
+        <view v-if="couponBuyRequested" class="pending-review">
+          <view v-if="couponBuyError" class="error">{{ couponBuyError }}</view>
+          <view v-else-if="couponBuyPending" class="muted">正在核对原商品、优惠券和最新报价，完成前不能提交。</view>
+          <view class="choices">
+            <button size="mini" :disabled="!canDeclineCouponBuy" @tap="declineCouponBuy">不用原优惠券，重新报价</button>
+            <button v-if="couponBuyProductId" size="mini" :disabled="locked" @tap="reviewCouponBuy">返回原商品核对</button>
+          </view>
+        </view>
         <view class="choices">
           <button size="mini" :disabled="locked || coupons.loading" @tap="selectCoupon(0)">不使用优惠券</button>
           <button size="mini" :disabled="locked || coupons.loading" @tap="loadCoupons(false)">刷新优惠券</button>
@@ -128,7 +137,8 @@ defineOptions({ inheritAttrs: false });
 const { invoiceState, invoiceFlow, loading, error, load, locked, formLocked, items, displayItems, addresses, stores, addressId, storeId, shippingType, setShipping, contact, mark,
   allowedShippingTypes, requiresAddress, shippingLoading,
   customForm, formName, formRevision, formValidation, uploads, activity, integralEligible, useIntegral, quote, ready, deliveryError, refreshQuote,
-  coupons, couponId, couponScope, selectCoupon, loadCoupons, pending, submissionError, submitting, canSubmit, submit } = useCheckout();
+  coupons, couponId, couponScope, selectCoupon, loadCoupons, couponBuyRequested, couponBuyPending, couponBuyError, canDeclineCouponBuy, declineCouponBuy, reviewCouponBuy, couponBuyProductId,
+  pending, submissionError, submitting, canSubmit, submit } = useCheckout();
 const auth = useAuthStore();
 const reviewingOrders = ref(false);
 let reviewGeneration = 0;

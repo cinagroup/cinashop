@@ -4,13 +4,14 @@
     <view v-if="s.error" class="coupon-error" role="alert">{{s.error}}<button size="mini" :disabled="busy" @tap="coupons.retry">{{s.invalidPagination?'刷新完整目录':'重新读取优惠券'}}</button></view>
     <view v-if="s.actionError" class="coupon-error" role="alert">{{s.actionError}}</view>
     <view v-if="s.notice" class="coupon-notice" role="status">{{s.notice}}</view>
-    <view v-if="s.pending" class="coupon-recovery" :data-pending-coupon="s.pending.couponId" role="status"><view>待核对：{{s.pending.title}}</view><view class="coupon-meta">{{s.writingId?'正在领取，请勿重复操作':'原领取结果尚未确认，刷新或离开页面不会重复提交。'}}{{s.pending.productId!==productId?'这是其他商品页面的原领取操作，核对仍使用原商品。':''}}</view><button size="mini" :disabled="busy" @tap="coupons.check">{{s.checking?'正在核对…':'核对领取状态'}}</button></view>
+    <view v-if="s.pending" class="coupon-recovery" :data-pending-coupon="s.pending.couponId" role="status"><view>待核对：{{s.pending.title}}</view><view class="coupon-meta">{{s.writingId?'正在领取，请勿重复操作':'原领取结果尚未确认，刷新或离开页面不会重复提交。'}}{{s.pending.productId!==productId?'这是其他商品页面的原领取操作，核对仍使用原商品。':''}}</view><button size="mini" :disabled="busy" @tap="purchasePending?emit('checkBuy'):coupons.check()">{{s.checking?'正在核对…':'核对领取状态'}}</button></view>
     <view v-if="s.loading" class="coupon-empty" role="status">正在读取完整优惠券目录…</view>
     <view v-for="item in s.items" :key="item.id" class="coupon-group" :data-product-coupon="item.id">
       <view class="coupon-card"><view class="coupon-benefit"><text>{{coupons.amount(item)}}</text><view>{{Number(item.minimum)>0?'满 ¥'+item.minimum+' 可用':'无门槛券'}}</view></view><view class="coupon-body"><view class="coupon-heading">{{item.title}}</view><view class="coupon-meta">{{coupons.validity(item)}}</view><view class="coupon-scope">{{coupons.scope(item.scopeType)}}<text v-if="item.isMember"> · 会员专享</text></view>
         <button v-if="coupons.received(item)" size="mini" :disabled="busy" @tap="coupons.wallet">已领取 · 查看我的优惠券</button>
         <button v-else-if="!coupons.loggedIn" size="mini" :disabled="busy" @tap="coupons.login">登录后领取</button>
         <button v-else size="mini" :disabled="!coupons.canClaim(item)" @tap="coupons.claim(item.id)">{{s.writingId===item.id?'领取中…':s.pending?.couponId===item.id?'待核对领取状态':item.claimable?'立即领取':'暂不可领'}}</button>
+        <button v-if="coupons.loggedIn&&(coupons.received(item)||item.claimable)" size="mini" :disabled="busy||buyDisabled||!!s.pending||s.journalBlocked||(!coupons.received(item)&&!coupons.canClaim(item))" @tap="emit('buy',item)">{{coupons.received(item)?'使用此券购买':'领券并购买'}}</button>
         <view v-if="!coupons.received(item)&&!item.claimable" class="coupon-meta">{{item.claimReason}}</view><button v-if="item.isMember&&!item.claimable&&!coupons.received(item)&&coupons.loggedIn" size="mini" :disabled="busy" @tap="coupons.membership">查看会员权益</button>
       </view></view>
       <button v-if="item.rule" class="coupon-rule-toggle" :aria-expanded="s.expanded.includes(item.id)" :aria-label="(s.expanded.includes(item.id)?'收起':'查看')+item.title+'用券规则'" @tap="coupons.toggleRule(item.id)">{{s.expanded.includes(item.id)?'收起用券规则 ⌃':'查看用券规则 ⌄'}}</button>
@@ -25,7 +26,9 @@
 <script setup lang="ts">
 import { computed, type UnwrapNestedRefs } from 'vue';
 import type { useProductCoupons } from '@/composables/useProductCoupons';
-const props = defineProps<{ coupons: UnwrapNestedRefs<ReturnType<typeof useProductCoupons>>; ownerUid: number; productId: number }>();
+import type { ProductCoupon } from '@/api/productCoupons';
+const props = defineProps<{ coupons: UnwrapNestedRefs<ReturnType<typeof useProductCoupons>>; ownerUid: number; productId: number; purchasePending?: boolean; buyDisabled?: boolean }>();
+const emit=defineEmits<{buy:[item:ProductCoupon];checkBuy:[]}>();
 const s = computed(() => props.coupons.state), busy = computed(() => s.value.loading || s.value.loadingMore || !!s.value.writingId || s.value.checking);
 </script>
 <style scoped>

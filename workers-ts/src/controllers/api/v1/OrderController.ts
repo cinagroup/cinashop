@@ -11,6 +11,7 @@ import { StoreCartService } from "@/services/order/StoreCartService";
 import { addNewcomerCartWithReplay } from "@/services/order/NewcomerCartAddReplayService";
 import { parseBargainSelection } from "@/services/activity/BargainParticipationSelection";
 import { StoreOrderCreateService } from "@/services/order/StoreOrderCreateService";
+import { projectCartPictures } from '@/services/order/OrderPictureProjection';
 import { checkoutAddressId } from '@/services/order/OrderDeliveryAddress';
 import { OrderQuoteReconfirmRequired } from '@/services/order/CheckoutConfirmation';
 import { OrderFormRejectedException } from "@/services/order/OrderSystemFormService";
@@ -210,15 +211,16 @@ export async function cartList(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
   const svc = new StoreCartService(c.get("container"));
+  const present = async (rows: unknown[]) => jsonOk(c, await projectCartPictures(c.get('container').db, c.env.APP_KEY, rows));
   try {
     const scope = c.req.query("scope");
     const rawIds = c.req.query("ids");
-    if (scope === undefined && rawIds === undefined) return jsonOk(c, await svc.list(uid));
-    if (scope === "cart" && rawIds === undefined) return jsonOk(c, await svc.list(uid, { mode: "cart" }));
+    if (scope === undefined && rawIds === undefined) return await present(await svc.list(uid));
+    if (scope === "cart" && rawIds === undefined) return await present(await svc.list(uid, { mode: "cart" }));
     if (scope !== "buy" || !rawIds || rawIds.length > 1600 || !/^[1-9]\d*(?:,[1-9]\d*)*$/.test(rawIds)) {
       return jsonFail(c, "购物车读取范围无效");
     }
-    return jsonOk(c, await svc.list(uid, { mode: "buy", ids: rawIds.split(",").map(Number) }));
+    return await present(await svc.list(uid, { mode: "buy", ids: rawIds.split(",").map(Number) }));
   } catch (error) {
     if (error instanceof ValidateException) return jsonFail(c, error.message);
     throw error;
@@ -279,7 +281,8 @@ export async function cartResetV2(c: C) {
 export async function cartListV2(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
-  return jsonOk(c, await new StoreCartService(c.get("container"), c.env).listLegacyV2(uid));
+  const rows = await new StoreCartService(c.get("container"), c.env).listLegacyV2(uid);
+  return jsonOk(c, await projectCartPictures(c.get('container').db, c.env.APP_KEY, rows));
 }
 
 /** POST /api/v2/set_cart_num */

@@ -16,6 +16,8 @@ import { CheckoutIntentJournal, type CheckoutIntent } from "../../../common/chec
 import { prepareOrderSystemFormSubmission } from "../../../common/order-system-form";
 import type { BargainShippingSelection } from '../../../common/bargainShipping';
 import { CartCouponPreselection } from '../../../common/cartCouponPreselection';
+import { ProductCouponBuyJournal, type ProductCouponBuyIntent } from '../../../common/productCouponBuyIntent';
+import { assertProductCouponBuyRows, parseProductCouponBuySelection, ProductCouponBuyPreselection, type ProductCouponBuySelection } from '../../../common/productCouponBuyPreselection';
 
 export function useCheckout() {
   const auth = useAuthStore(), cart = useCartStore();
@@ -30,6 +32,9 @@ export function useCheckout() {
   const activity = ref<Pick<CheckoutQuoteOptions, "type" | "pinkId" | "combinationId" | "seckillId" | "bargainUserId">>({ type: 0 });
   const pending = shallowRef<CheckoutIntent | null>(null), submissionError = ref("");
   const journal = new CheckoutIntentJournal({ get: (key) => uni.getStorageSync(key), set: (key, value) => uni.setStorageSync(key, value), remove: (key) => uni.removeStorageSync(key) });
+  const buyJournal = new ProductCouponBuyJournal({ get: (key) => uni.getStorageSync(key), set: (key, value) => uni.setStorageSync(key, value), remove: (key) => uni.removeStorageSync(key) });
+  const couponBuyRequested = ref(false), couponBuyError = ref(''), couponBuyValidated = ref(false), couponBuyBound = ref(false), couponBuyProductId = ref(0);
+  let buySelection: ProductCouponBuySelection | null = null, buyPreselection: ProductCouponBuyPreselection | null = null, buyRouteError = '';
   let query: Record<string, unknown> = {}, checkedIds: number[] = [], generation = 0;
   let uncertain = false;
   let resumeForm = false;
@@ -68,13 +73,16 @@ export function useCheckout() {
   const coupons = shallowRef<OrderCouponState>({ list: [], nextCursor: null, fingerprint: "", loading: false, error: "" });
   const couponSession = new OrderCouponSession(checkoutApi.coupons, (state) => { coupons.value = state; });
   const couponScope = computed(() => {
-    if (loading.value || error.value || !items.value.length || activity.value.type !== 0) return null;
+    if (loading.value || error.value || !items.value.length || activity.value.type !== 0 || couponBuyRequested.value && deliveryError.value) return null;
     try { return orderCouponScope(items.value, shippingType.value, storeId.value); } catch { return null; }
   });
   const ready = computed(() => !locked.value && !error.value && !deliveryError.value && !quote.value.loading && !!quote.value.result
     && quote.value.fingerprint === checkoutQuoteFingerprint(items.value, options.value));
   const canSubmit = computed(() => invoiceRouteCurrent() && !submitting.value && !error.value && visible.value && auth.isLoggedIn
-    && (pending.value ? pending.value.uid === auth.uid : ready.value && invoiceFlow.ready() && !formValidation.value && uploads.value === 0));
+    && (pending.value ? pending.value.uid === auth.uid : (!couponBuyRequested.value || couponBuyValidated.value)
+      && ready.value && invoiceFlow.ready() && !formValidation.value && uploads.value === 0));
+  const couponBuyPending = computed(() => couponBuyRequested.value && !pending.value && (!couponBuyValidated.value || !ready.value));
+  const canDeclineCouponBuy = computed(() => couponBuyRequested.value && couponBuyBound.value && !locked.value && !submitting.value);
   const displayItems = computed(() => ready.value ? quote.value.result!.items : items.value);
   function message(e: unknown, fallback: string) { return e instanceof Error ? e.message : fallback; }
   async function refreshQuote(renew = false) {
@@ -87,11 +95,31 @@ export function useCheckout() {
   function selectCoupon(id: number) {
     if (locked.value || coupons.value.loading || coupons.value.fingerprint !== couponScope.value?.fingerprint) return;
     if (id !== 0 && !coupons.value.list.some((c) => c.id === id && c.availability === "available")) return;
+    if (couponBuyRequested.value) {
+      try {
+        if (!buyPreselection || !couponBuyBound.value) throw Error('原领券购买尚未核实，请返回原商品核对');
+        buyPreselection.decline({ uid: auth.uid, version: auth.sessionVersion });
+        buyPreselection.assertSelection({ uid: auth.uid, version: auth.sessionVersion }, couponScope.value, coupons.value, id);
+        couponBuyError.value = ''; couponBuyValidated.value = true;
+      } catch (e) { couponBuyValidated.value = false; couponBuyError.value = message(e, '未能保存选券决定'); return; }
+    }
     couponId.value = id;
+  }
+  function declineCouponBuy() {
+    if (!canDeclineCouponBuy.value || !buyPreselection) return;
+    try {
+      buyPreselection.decline({ uid: auth.uid, version: auth.sessionVersion });
+      buyPreselection.assertSelection({ uid: auth.uid, version: auth.sessionVersion }, couponScope.value, coupons.value, 0);
+      couponId.value = 0; couponBuyError.value = ''; couponBuyValidated.value = true;
+      void refreshQuote();
+    } catch (e) { couponBuyValidated.value = false; couponBuyError.value = message(e, '未能保存不用券决定'); }
+  }
+  function reviewCouponBuy() {
+    if (!locked.value && couponBuyProductId.value > 0) uni.navigateTo({ url: `/pages/goods/detail?id=${couponBuyProductId.value}` });
   }
   async function loadCoupons(append = false) {
     if (locked.value || !couponScope.value) return;
-    if (!append) { couponId.value = 0; void refreshQuote(); }
+    if (!append) { couponId.value = 0; if (couponBuyRequested.value) couponBuyValidated.value = false; void refreshQuote(); }
     await couponSession.load(couponScope.value, append);
   }
   function setShipping(type: 1 | 2) {
@@ -116,6 +144,7 @@ export function useCheckout() {
   async function load() {
     if (!visible.value || submitting.value) return;
     const current = ++generation;
+    buyPreselection?.invalidate(); buyPreselection = null; couponBuyValidated.value = false; couponBuyBound.value = false; couponBuyError.value = ''; couponBuyProductId.value = 0;
     shippingGeneration++; shippingSelection.value = null; shippingLoading.value = false; shippingError.value = '';
     quoteSession.reset(); couponSession.reset(); loading.value = true; error.value = "";
     items.value = []; customForm.value = []; formRevision.value++; uploads.value = 0;
@@ -126,11 +155,22 @@ export function useCheckout() {
       pending.value = journal.read(auth.uid);
       if (pending.value) { uncertain = true; return; }
       uncertain = false;
+      if (buyRouteError) throw Error(buyRouteError);
+      if (buySelection) {
+        const intent = buyJournal.read(auth.uid);
+        if (intent?.attempt === buySelection.attempt && intent.cartId === buySelection.cartId) couponBuyProductId.value = intent.productId;
+        buyPreselection = new ProductCouponBuyPreselection(buySelection, buyJournal, { uid: auth.uid, version: auth.sessionVersion });
+      }
       const selection = parseCheckoutSelection(query);
       if (cartCouponError) throw new Error(cartCouponError);
       if (query.couponId !== undefined && selection.mode !== 'cart') throw new Error('购物车优惠券不能用于立即购买');
       const rows = await checkoutApi.items(selection, checkedIds);
       if (current !== generation) return;
+      if (buySelection) {
+        const intent = buyJournal.read(auth.uid);
+        if (!intent) throw Error('原领券购买记录不存在，请返回原商品核对');
+        assertProductCouponBuyRows(intent, buySelection, auth.uid, rows);
+      }
       const type = rows[0].type;
       if (query.couponId !== undefined && type !== 0) throw new Error('活动购物车不能预选普通优惠券');
       if (rows.some((row) => row.type !== type)) throw new Error("不同活动商品请分开结算");
@@ -176,8 +216,14 @@ export function useCheckout() {
   async function openResult() {
     const intent = pending.value;
     if (!intent?.orderId || intent.uid !== auth.uid) return;
+    let buy: ProductCouponBuyIntent | null = null;
+    try { buy = buyJournal.read(intent.uid); }
+    catch (e) { if (couponBuyRequested.value) throw e; }
+    const completedBuy = buy?.phase === 'ready' && intent.payload.cartIds.length === 1 && intent.payload.cartIds[0] === buy.cartId
+      && (!buySelection || buySelection.attempt === buy.attempt) ? buy : null;
     // Clear only after navigation has succeeded. A navigation/storage failure must not resubmit payment.
     await new Promise<void>((resolve, reject) => uni.redirectTo({ url: `/pages/order/detail?orderId=${encodeURIComponent(intent.orderId!)}`, success: () => resolve(), fail: reject }));
+    if (completedBuy) buyJournal.completed(completedBuy, intent.payload.cartIds);
     journal.clear(intent);
   }
   async function submit() {
@@ -190,6 +236,10 @@ export function useCheckout() {
     const owner = { uid: auth.uid, version: auth.sessionVersion }, current = generation;
     let sent = false;
     try {
+      if (!pending.value && couponBuyRequested.value) {
+        if (!buyPreselection) throw Error('原领券购买尚未核实');
+        buyPreselection.assertSelection({ uid: auth.uid, version: auth.sessionVersion }, couponScope.value, coupons.value, couponId.value);
+      }
       if (!pending.value) pending.value = journal.begin(owner.uid, quote.value.result!.key, {
         quoteToken: quote.value.result!.quoteToken,
         ...options.value, cartIds: items.value.map((row) => row.id), mark: mark.value,
@@ -220,15 +270,59 @@ export function useCheckout() {
       }
     } finally { submitting.value = false; if (visible.value && current !== generation) void load(); }
   }
-  function suspend() { invoiceFlow.clear(true); cartCouponPreselection?.revoke(); resumeForm = uploads.value > 0; visible.value = false; generation++; shippingGeneration++; shippingLoading.value = false; quoteSession.reset(); couponSession.reset(); }
+  function suspend() { invoiceFlow.clear(true); cartCouponPreselection?.revoke(); buyPreselection?.invalidate(); couponBuyValidated.value = false; couponBuyBound.value = false; resumeForm = uploads.value > 0; visible.value = false; generation++; shippingGeneration++; shippingLoading.value = false; quoteSession.reset(); couponSession.reset(); }
+  async function resumeBuyForm() {
+    // Native image selection temporarily hides this page. Preserve the user's
+    // form/upload references while re-reading the actual cart before unlocking.
+    const current = ++generation;
+    loading.value = true; couponBuyValidated.value = false; couponBuyBound.value = false;
+    quoteSession.reset(); couponSession.reset();
+    try {
+      if (!buySelection || !auth.isLoggedIn) throw Error('请重新读取原领券购买记录');
+      const rows = await checkoutApi.items(parseCheckoutSelection(query), checkedIds);
+      if (current !== generation) return;
+      const intent = buyJournal.read(auth.uid);
+      if (!intent) throw Error('原领券购买记录不存在');
+      assertProductCouponBuyRows(intent, buySelection, auth.uid, rows);
+      if (rows[0].productInfo!.systemFormId !== items.value[0]?.productInfo?.systemFormId
+        || rows[0].productInfo!.productType !== items.value[0]?.productInfo?.productType) throw Error('商品结算要求已变化，请重新加载结算');
+      items.value = rows;
+      buyPreselection = new ProductCouponBuyPreselection(buySelection, buyJournal, { uid: auth.uid, version: auth.sessionVersion });
+      void invoiceFlow.load();
+    } catch (e) { if (current === generation) error.value = message(e, '原领券购买尚未核实'); }
+    finally { if (current === generation) { loading.value = false; await refreshQuote(); } }
+  }
   watch(() => couponScope.value?.fingerprint ?? "", () => {
     cartCouponPreselection?.bind(couponScope.value, { uid: auth.uid, version: auth.sessionVersion }, items.value.map(row => row.id),
       !items.value.length || items.value.every(row => row.type === 0 && row.isNew === 0));
     if (pending.value) { couponSession.pause(); return; }
+    if (couponBuyRequested.value) {
+      couponBuyValidated.value = false; couponBuyBound.value = false; buyPreselection?.invalidate();
+      if (couponScope.value && buyPreselection) {
+        try {
+          const intent = buyPreselection.bind(couponScope.value, { uid: auth.uid, version: auth.sessionVersion }, items.value);
+          couponBuyBound.value = true; couponBuyError.value = ''; couponBuyValidated.value = intent.decision === 'declined';
+        } catch (e) { couponBuyError.value = message(e, '原领券购买尚未核实'); }
+      }
+    }
     couponId.value = 0; couponSession.reset();
     if (couponScope.value && !locked.value) void couponSession.load(couponScope.value);
   }, { flush: "sync" });
   watch(coupons, state => {
+    if (couponBuyRequested.value) {
+      if (!buyPreselection || !couponBuyBound.value || !couponScope.value || state.fingerprint !== couponScope.value.fingerprint) return;
+      try {
+        const result = buyPreselection.accept(state, { uid: auth.uid, version: auth.sessionVersion });
+        couponBuyValidated.value = false;
+        if (result.couponId !== null) couponId.value = result.couponId;
+        if (result.couponId !== null || result.declined) {
+          buyPreselection.assertSelection({ uid: auth.uid, version: auth.sessionVersion }, couponScope.value, state, couponId.value);
+          couponBuyValidated.value = true; couponBuyError.value = '';
+        }
+        if (result.loadMore) void loadCoupons(true);
+      } catch (e) { couponBuyValidated.value = false; couponBuyError.value = message(e, '原优惠券尚未核实'); }
+      return;
+    }
     const suggestion = cartCouponPreselection?.accept(state);
     if (suggestion?.couponId) selectCoupon(suggestion.couponId);
     else if (suggestion?.loadMore) void loadCoupons(true);
@@ -236,6 +330,7 @@ export function useCheckout() {
   watch(options, () => { void refreshQuote(); }, { flush: "sync" });
   watch(() => auth.sessionVersion, () => {
     invoiceFlow.clear(); cartCouponPreselection?.revoke();
+    buyPreselection?.invalidate(); couponBuyValidated.value = false; couponBuyBound.value = false;
     generation++; quoteSession.reset(); couponSession.reset(); pending.value = null; items.value = [];
     shippingGeneration++; shippingSelection.value = null; shippingLoading.value = false; shippingError.value = '';
     customForm.value = []; formRevision.value++; formName.value = ""; uploads.value = 0;
@@ -251,6 +346,10 @@ export function useCheckout() {
   onLoad((params) => {
     invoiceHash = typeof location === 'undefined' ? null : location.hash;
     query = params ?? {}; checkedIds = cart.checkedItems.map((row) => row.id);
+    couponBuyRequested.value = Object.prototype.hasOwnProperty.call(query, 'couponBuy');
+    buyRouteError = ''; buySelection = null;
+    try { buySelection = parseProductCouponBuySelection(query); }
+    catch (e) { buyRouteError = message(e, '领券购买参数无效'); }
     if (query.couponId !== undefined) {
       try { cartCouponPreselection = new CartCouponPreselection(query.couponId, { uid: auth.uid, version: auth.sessionVersion }, checkedIds); }
       catch (error) { cartCouponError = message(error, '购物车优惠券参数无效'); }
@@ -258,12 +357,17 @@ export function useCheckout() {
   });
   onShow(() => {
     visible.value = true;
-    if (resumeForm && items.value.length && !error.value) { resumeForm = false; void invoiceFlow.load(); void refreshQuote(activity.value.type === 2); void loadCoupons(); }
+    if (resumeForm && items.value.length && !error.value) {
+      resumeForm = false;
+      if (couponBuyRequested.value) void resumeBuyForm();
+      else { void invoiceFlow.load(); void refreshQuote(activity.value.type === 2); void loadCoupons(); }
+    }
     else void load();
   });
   onHide(suspend); onUnload(suspend);
   return { invoiceState, invoiceFlow, loading, error, load, locked, formLocked, items, displayItems, addresses, stores, addressId, storeId, shippingType, setShipping, contact, mark,
     allowedShippingTypes, requiresAddress, shippingLoading,
     customForm, formName, formRevision, formValidation, uploads, activity, integralEligible, useIntegral, quote, ready, deliveryError, refreshQuote,
-    coupons, couponId, couponScope, selectCoupon, loadCoupons, pending, submissionError, submitting, canSubmit, submit };
+    coupons, couponId, couponScope, selectCoupon, loadCoupons, couponBuyRequested, couponBuyPending, couponBuyError, canDeclineCouponBuy, declineCouponBuy, reviewCouponBuy, couponBuyProductId,
+    pending, submissionError, submitting, canSubmit, submit };
 }
