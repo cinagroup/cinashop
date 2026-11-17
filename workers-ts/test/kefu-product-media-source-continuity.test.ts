@@ -1,15 +1,18 @@
+import { projectKefuOrderMediaPredecessor } from './helpers/kefuOrderMediaSourceContinuity';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { KEFU_PRODUCT_MEDIA_PREDECESSOR, KEFU_PRODUCT_MEDIA_PROOF_FILE, KEFU_PRODUCT_MEDIA_PROOF_SHA256,
   KEFU_PRODUCT_MEDIA_SOURCES, kefuProductMediaImage, kefuProductMediaProof as proof,
-  isKefuProductMediaSource, projectKefuProductMediaPredecessor } from './helpers/kefuProductMediaSourceContinuity';
-import { isProviderTransportSource, projectProviderTransportPredecessor,
+  isKefuProductMediaSource, projectKefuProductMediaFromOrder4428View as projectKefuProductMediaPredecessor } from './helpers/kefuProductMediaSourceContinuity';
+import { isProviderTransportSource, projectProviderTransportFromOrder4428View as projectProviderTransportPredecessor,
   projectProviderTransportFromFirstOrderAuthorityView } from './helpers/providerTransportSourceContinuity';
 import { projectFirstOrderAuthorityPredecessor } from './helpers/firstOrderAuthoritySourceContinuity';
 const root = resolve(import.meta.dirname, '../..');
-const physical = (file: string) => readFileSync(resolve(root, file), 'utf8');
+// Original28 assertions keep their verified fixed4428 product-media view.
+// The new order-media suite binds all complete physical current bytes.
+const physical = (file: string) => projectKefuOrderMediaPredecessor(file, readFileSync(resolve(root, file), 'utf8'));
 const sha = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
 const sources = [
   "view/kefu-ts/src/styles/main.css",
@@ -144,7 +147,7 @@ const immutablePredecessors = [
   }
 ];
 
-describe('Kefu product media exact physical current source before fixed9d historical views', () => {
+describe('Kefu product media verified fixed4428 source before fixed9d historical views', () => {
   it('pins the entire immutable proof, twelve-source literal inventory and complete fixed9d origins', () => {
     expect(sha(readFileSync(resolve(root, KEFU_PRODUCT_MEDIA_PROOF_FILE)))).toBe(KEFU_PRODUCT_MEDIA_PROOF_SHA256);
     expect(proof.schema).toBe('kefu-product-media-source-continuity/v1');
@@ -158,7 +161,7 @@ describe('Kefu product media exact physical current source before fixed9d histor
     expect(sources.every(file => isKefuProductMediaSource(file) && isProviderTransportSource(file))).toBe(true);
   });
   for (const row of proof.sources) {
-    it('binds every physical current byte and reconstructs the complete fixed9d Git image for ' + row.file, () => {
+    it('binds every verified fixed4428 byte and reconstructs the complete fixed9d Git image for ' + row.file, () => {
       const current = physical(row.file);
       expect(kefuProductMediaImage(current)).toEqual(row.current);
       const previous = projectKefuProductMediaPredecessor(row.file, current);

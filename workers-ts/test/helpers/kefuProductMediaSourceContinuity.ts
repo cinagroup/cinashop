@@ -1,6 +1,7 @@
 /** Exact historical source views only. Production, native SQL/App and browser
  * acceptance use the physical current files, never this predecessor projection. */
 import { createHash } from 'node:crypto';
+import { projectKefuOrderMediaPredecessor } from './kefuOrderMediaSourceContinuity';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 export const KEFU_PRODUCT_MEDIA_PROOF_FILE = 'workers-ts/test/fixtures/kefu-product-media-source-continuity-20261116.json';
@@ -46,6 +47,12 @@ const sameLines = (lines: string[], start: number, expected: string[]) => expect
 /** Bind the complete real current image. Every old complete image, including
  * the valid fixed9d predecessor, is refused as a current source. */
 export function projectKefuProductMediaPredecessor(file: string, source: string): string {
+  return projectKefuProductMediaFromOrder4428View(file, projectKefuOrderMediaPredecessor(file, source));
+}
+
+/** Explicit verified fixed4428 view only. Physical readers use the current
+ * entry point above so the later historical-order layer is checked first. */
+export function projectKefuProductMediaFromOrder4428View(file: string, source: string): string {
   const row = proof.sources.find(item => item.file === file);
   if (!row) return source;
   if (typeof source !== 'string' || JSON.stringify(kefuProductMediaImage(source)) !== JSON.stringify(row.current))

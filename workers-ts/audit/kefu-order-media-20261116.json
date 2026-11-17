@@ -1,0 +1,533 @@
+{
+  "schema": "php-ts-kefu-order-media-delivery/v1",
+  "generatedAtUtc": "2026-11-17T02:45:21.712742+00:00",
+  "baseCommit": "4428de3da07bd2818bc07e9ed70c33425d24fcf7",
+  "branch": "codex/kefu-order-media",
+  "scope": {
+    "routes": [
+      "GET /kefuapi/order/list/:uid",
+      "GET /kefuapi/order/info/:id",
+      "GET /kefuapi/order/refund/detail/:id",
+      "GET /kefuapi/refund/list"
+    ],
+    "branches": 5,
+    "customerListIncludesActiveRefundTypeMinusOne": true,
+    "authority": "persisted store_order_cart_info.id/type/relation_id; never cart JSON, current product, order activity type or refund supplier_id",
+    "excluded": [
+      "mutations and fulfillment migration",
+      "buyer/admin/supplier order media surfaces",
+      "finance algorithm changes",
+      "realtime acceptance",
+      "production deployment",
+      "instant revocation of issued asset capabilities"
+    ]
+  },
+  "policy": {
+    "platform": "type0/relation0",
+    "store": "type1/positive int32 store relation maps to platform",
+    "supplier": "type2/positive int32; registered assets require current active canonical supplier ownership",
+    "projection": "original SKU/image nullish precedence, exact empty/nonstring behavior, selected refund lines, duplicate positions and shared _info targets preserved",
+    "legacyReferenceBound": "existing cart JSON256*1024 UTF16 units; no255/256/4096 legacy truncation; safe references normalized once, never fetched or proxied",
+    "canonicalAssets": "current attachment metadata/namespace/object-key/MIME validated before real HMAC signing; no R2 during JSON projection",
+    "completeSelectedProjectionBudget": 10000,
+    "overBudget": "whole response rejected before attachment SQL; mirrored image fields do not double count",
+    "queryBatching": "one supplier and one attachment read for both1 and100 supplier cart projections on all5 branches"
+  },
+  "transactions": {
+    "owned": "bounded REPEATABLE READ READ ONLY; permission predicates, persisted carts, owners and attachment metadata under one snapshot; signatures after owned commit",
+    "snapshotBoundary": "first snapshot-bearing timeout-setup SELECT after any initial separate customer grant; a transfer committed before acquisition is visible; authorized in-flight snapshots may finish coherently",
+    "caller": "reuse existing PgTransaction without SET/nested transaction/commit/rollback takeover; original isolation retained, established RR can retain old grants, and signing can precede later caller completion",
+    "sqlStatementTimeoutMs": 5000,
+    "nativeFileTestTimeoutMs": 30000,
+    "nativeTimeoutIsNotProductionDeadline": true,
+    "issuedTickets": "existing short-lived signed tickets remain bearer capabilities until expiry; a completed conversation transfer or removal visible before new snapshot acquisition prevents subsequent context authorization, subject to documented in-flight/caller limits; original order/refund/customer filters remain unchanged"
+  },
+  "preservation": {
+    "pureMoneyAndPromotionProjectionBytesUnchangedFromBase": true,
+    "existingFiltersCountsPaginationDatesInvoiceAndPromotionsPreserved": true,
+    "sourceCount": 14,
+    "modifiedOriginals": 6,
+    "newSources": 8,
+    "dependencyCount": 9374,
+    "sourceManifestSha256": "5a2476de37a0c10ffda5b80f7aa29fd6b7151f6f867b6752f34a709e47f45a00",
+    "dependencyManifestSha256": "88680ab93b8c64b58c44251d263ef6ff1744c725d32a008a4fef0bc27dc70e75",
+    "sources": [
+      {
+        "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+        "sha256": "a53cc66f9c764e1d80576fdf1a7740a860b37fca5ac37aea6aa9644721a1aa5b"
+      },
+      {
+        "path": "workers-ts/src/controllers/kefu/KefuController.ts",
+        "sha256": "1045f78b45c50b05050ec2c925daca7452a13694104f808557b4a929ab19149a"
+      },
+      {
+        "path": "workers-ts/src/services/kefu/KefuOrderMediaPolicy.ts",
+        "sha256": "796ee1bd280b9b8e2b99fa257091a0522577fc821522ab074a7bbd219e2088bb"
+      },
+      {
+        "path": "workers-ts/src/services/kefu/KefuOrderService.ts",
+        "sha256": "b02b5bc66d8f53643418fbd5d84bc344cb9185f48b52f6e8e799d19359a8e5a7"
+      },
+      {
+        "path": "workers-ts/test/browser/kefu-order-media.acceptance.ts",
+        "sha256": "2bbfe2114621770df6450e3cd4b89fc25c95c6d9c553e652cb4d7365f82aa9d3"
+      },
+      {
+        "path": "workers-ts/test/fixtures/kefu-order-media-source-continuity-20261116.json",
+        "sha256": "c0422684791526ededf02b193bae0bfeab0cfa5643e4d095d10628177d6cebb1"
+      },
+      {
+        "path": "workers-ts/test/helpers/kefuOrderMediaFixture.ts",
+        "sha256": "df747dc1229f7d52bdc78ed35617aab091867ddc5c382204261ea1167ef7c7d8"
+      },
+      {
+        "path": "workers-ts/test/helpers/kefuOrderMediaSourceContinuity.ts",
+        "sha256": "8e37af9123160a22fc608f6c4c1ef381ad3195ad293129d3552183cad554f0ba"
+      },
+      {
+        "path": "workers-ts/test/helpers/kefuProductMediaSourceContinuity.ts",
+        "sha256": "e0e325a80be117d47c8ab12f3167c0366450aa5c8b002e0e430ee909c50afe22"
+      },
+      {
+        "path": "workers-ts/test/helpers/providerTransportSourceContinuity.ts",
+        "sha256": "daaeae07539cb1a3f0cfb9dee7f298d7282d1e41ff723227a58b12b2683b7241"
+      },
+      {
+        "path": "workers-ts/test/kefu-order-media-postgres.test.ts",
+        "sha256": "f8e4d15c65e1e3b8ad1870b51db4bbdd1877f007eeab66209d5081ffe6a2f378"
+      },
+      {
+        "path": "workers-ts/test/kefu-order-media-source-continuity.test.ts",
+        "sha256": "b9d4a1bc007388cfe57e5969806dd79fa8886068b75e31e8a0550eb27beb4942"
+      },
+      {
+        "path": "workers-ts/test/kefu-product-media-source-continuity.test.ts",
+        "sha256": "89d1fbab970b2c5f00fb5563b4d64f240ca27e3c138eedcacc0cb0e41110a71e"
+      },
+      {
+        "path": "workers-ts/vitest.kefu-order-media-browser.config.ts",
+        "sha256": "030d964d65a023269f6b6fa10e9e6e737ccaacf32a208885b701b47c72cbadd4"
+      }
+    ],
+    "fiveUserSymlinksAnd150IgnoredResourcesPreserved": true,
+    "realPhpReadOnlyHead": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+    "configUnchanged": true
+  },
+  "localValidation": {
+    "actualOuter": {
+      "sessionId": 46557,
+      "chunkId": "76e5da",
+      "exitCode": 0,
+      "terminalStatus": "completed",
+      "actualToolTerminalObserved": true,
+      "allTestsPassed": true,
+      "allFresh": true,
+      "commands": 13,
+      "reusedCommands": 0,
+      "driverSha256": "dfa20e0de0c0e2470421e8a15bd90404d2966727dc0003d2bde92995d6a89d21",
+      "commonSha256": "683adeadf72b6ce05131c953bb2e62d34a7744b105b889ee36805487aaf11fce",
+      "resultsSha256": "6c1f4616f87637fe9ea97508d9950ca88bc590055e72295451c56db78085bc07",
+      "manifestSha256": "da8cb09cfb16b619c64d6b851440362e8e319b0a097d0a034283abfa3193db51",
+      "sourceManifestSha256": "5a2476de37a0c10ffda5b80f7aa29fd6b7151f6f867b6752f34a709e47f45a00",
+      "dependencyManifestSha256": "88680ab93b8c64b58c44251d263ef6ff1744c725d32a008a4fef0bc27dc70e75",
+      "unitFiles": 28,
+      "unitTests": 1197,
+      "nativeFiles": 5,
+      "nativeTests": 91,
+      "workerdFiles": 30,
+      "workerdTests": 410,
+      "skipped": 0,
+      "pgFinalClustersCleaned": 6
+    },
+    "freshCommands": 13,
+    "reusedCommands": 0,
+    "unit": {
+      "files": 28,
+      "tests": 1197,
+      "failed": 0,
+      "skipped": 0,
+      "rawJsonSha256": "195853332186bb2c51e4016b1cd52833335f12007c43a20c0cec1ff3a2a33154"
+    },
+    "native": [
+      {
+        "file": "test/kefu-order-media-postgres.test.ts",
+        "tests": 26,
+        "logSha256": "1cb5aa3ca13dc22e2b53f1dccfafe36f4d1f6d8cbdf4bfa858d033580c3aa3f0",
+        "cleanup": {
+          "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-Nkqhih",
+          "port": 36299,
+          "fixturesRemaining": 0,
+          "pgCtlExitCode": 3,
+          "portClosed": true
+        }
+      },
+      {
+        "file": "test/kefu-product-media-postgres.test.ts",
+        "tests": 19,
+        "logSha256": "402851f8aea89001ee06539da43ee8fe6c882b241f851c7333aa9c96c89f38b5",
+        "cleanup": {
+          "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-vrFsEn",
+          "port": 39271,
+          "fixturesRemaining": 0,
+          "pgCtlExitCode": 3,
+          "portClosed": true
+        }
+      },
+      {
+        "file": "test/kefu-mobile-workbench-postgres.test.ts",
+        "tests": 23,
+        "logSha256": "f7a93fe3163d522eb575c6c47ab317fdd583764895094a9e0e9dfb4653e13420",
+        "cleanup": {
+          "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-tAcLyL",
+          "port": 39643,
+          "fixturesRemaining": 0,
+          "pgCtlExitCode": 3,
+          "portClosed": true
+        }
+      },
+      {
+        "file": "test/kefu-mobile-entry-postgres.test.ts",
+        "tests": 6,
+        "logSha256": "8b7a93d2e0bba0c71cc119407760f161a7613bdde7a1c72d72a8c27906348f89",
+        "cleanup": {
+          "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-daMrhF",
+          "port": 35695,
+          "fixturesRemaining": 0,
+          "pgCtlExitCode": 3,
+          "portClosed": true
+        }
+      },
+      {
+        "file": "test/public-commerce-product-media-postgres.test.ts",
+        "tests": 17,
+        "logSha256": "882e117517587105adc5d0f62e0876781cc93f52ab7dad98fd997585247d70ac",
+        "cleanup": {
+          "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-ZyKKQ1",
+          "port": 33895,
+          "fixturesRemaining": 0,
+          "pgCtlExitCode": 3,
+          "portClosed": true
+        }
+      }
+    ],
+    "workerd": {
+      "files": 30,
+      "tests": 410,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "types": {
+      "originalRoots": 4493,
+      "commonRoots": 1953,
+      "testRoots": 2540,
+      "shardTestCounts": [
+        1270,
+        1270
+      ],
+      "unionExactlyMatchesOriginal": true,
+      "optionsExactlyMatchOriginal": true,
+      "explicitTypeLibrariesResolveExactlyAsOriginal": true,
+      "generatedConfigs": [
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts/.cache/kefu-order-media-types-20261116/tsconfig.worker-kefu-order-media-shard-1.generated.json",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/workers-ts/.cache/kefu-order-media-types-20261116/tsconfig.worker-kefu-order-media-shard-2.generated.json"
+      ]
+    },
+    "originalRuntimeConfigChecked": true,
+    "productionAuditVulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "newNativeEvidence": {
+      "rows": 232,
+      "gets": 213,
+      "tables": 23,
+      "sequences": 21,
+      "sha256": "fe26ada2dab292b648ad3291aa23175392fdae2c235833099908f3ae4241e3df",
+      "batchTracesCopiedIndependently": true
+    },
+    "frontend": {
+      "files": 5,
+      "tests": 30,
+      "skipped": 0,
+      "vueTscAndViteBuildPassed": true,
+      "actualOuter": {
+        "actualOuterSessionId": 71772,
+        "actualOuterChunkId": "4ba59b",
+        "actualOuterExitCode": 0,
+        "testAndBuildChildExitCodes": [
+          0,
+          0
+        ],
+        "frontendFiles": 5,
+        "frontendTests": 30,
+        "skipped": 0,
+        "vueTscAndViteBuildPassed": true,
+        "resultsSha256": "cba04f64d696c8c3bfadb58d4d2be61cc1bf2e3116fb20a0e1f4c2ddb07ecccd",
+        "testLogSha256": "937040008b872b4f1a2cfec679ebdac50124fc0adc77d14ae6e1b1fa1aa919ff",
+        "buildLogSha256": "ed3f1458c7be2b5cdeed770f2a6ec319eb62e48d437fd8e4ce9619a2071fba69"
+      }
+    }
+  },
+  "browser": {
+    "actualOuter": {
+      "actualOuterSessionId": 34457,
+      "actualOuterChunkId": "58f224",
+      "actualOuterExitCode": 0,
+      "nativeChildExitCode": 0,
+      "files": 1,
+      "tests": 1,
+      "skipped": 0,
+      "runtimeInputsUnchanged": true,
+      "inputsSha256": "8385713f6902f774fe4afe3c0a22455c4aa9e91d155e23134f063c6a7c0d48a3",
+      "resultSha256": "8746d0951276df2b618878b28d9469f6c66603a3bddf0e8d60879a81e1ba6c49",
+      "executionSha256": "72be122b6cc6f4d617184c9bfeac3e994ae908bc0a30454856a21d5beb92942f",
+      "guiQaSha256": "971954a4e9deb9bfa614f28113fd6bf9216414336a9189d1bc22eed8427fb053",
+      "guiCapturesSha256": "6e9bfe82d93e070f4533c0b827b7d248c53c49ef7a97772d14284151908383cf",
+      "protectedGets": 19,
+      "orderJsonGets": 8,
+      "assetPngGets": 10,
+      "legacyStaticPngGets": 1,
+      "jsonHmacOccurrencesVerified": 92,
+      "jsonUniqueTicketsVerified": 12,
+      "completeTables": 25,
+      "completeSequences": 23,
+      "allProtectedGetWritesZero": true,
+      "actualTransfer101To102": true,
+      "postTransferImages": 0,
+      "screenshots": [
+        {
+          "path": "orders-desktop.jpg",
+          "width": 1280,
+          "height": 720,
+          "sha256": "21042101c339ffcf22ce7ce72f0ec7bed4834fa955ae79dca0a61bb71a2c3c1f"
+        },
+        {
+          "path": "order-detail-desktop.jpg",
+          "width": 1280,
+          "height": 720,
+          "sha256": "d3b2f79209701bb9255e32e1e58d7d2dcd4154d0b6f87c000c040924eb99db33"
+        },
+        {
+          "path": "order-detail-mobile.jpg",
+          "width": 390,
+          "height": 843,
+          "sha256": "fef5ab56ff0658f949a2f5276bd3159b4f810133f730b79a5f43dfc0570434c7"
+        },
+        {
+          "path": "refund-detail-mobile.jpg",
+          "width": 390,
+          "height": 843,
+          "sha256": "3104a4a6add41f1ac02bfe5a4af62a69b8b3e15d58ca9c4579e2ac351e8eefc9"
+        },
+        {
+          "path": "refund-list-desktop.jpg",
+          "width": 1178,
+          "height": 869,
+          "sha256": "2b45f23afbbba59145b7dbca587b6652db7cabd3a3a13419fa527ecc0256e2f7"
+        },
+        {
+          "path": "refund-detail-desktop.jpg",
+          "width": 1178,
+          "height": 869,
+          "sha256": "7e2b29d109707656cab6226e6248ea76c333d810a75fd357da2c9b90901b9e03"
+        },
+        {
+          "path": "transferred-empty-context.jpg",
+          "width": 1178,
+          "height": 869,
+          "sha256": "daf7491f6c51cf95ca0389eeaf5fe63de9e709c166e88ae0438c8fa24c9e6232"
+        }
+      ],
+      "pgCleanup": {
+        "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-vDl52u",
+        "port": 37319,
+        "fixturesRemaining": 0,
+        "pgCtlExitCode": 3,
+        "portClosed": true
+      },
+      "priorBrowserAttemptAccepted": false,
+      "globalRefundListGui": false,
+      "globalRefundListThisBrowserHttp": false,
+      "nodeFixtureRealtimeAccepted": false
+    },
+    "identity": "installed Browser plugin; real dedicated Kefu login, SQL/Hono/HMAC and actual transfer101 to102",
+    "protectedGets": 19,
+    "orderJsonGets": 8,
+    "signedPngGets": 10,
+    "localLegacyPngGets": 1,
+    "tables": 25,
+    "sequences": 23,
+    "protectedWrites": 0,
+    "hmacOccurrencesIndependentlyVerified": 92,
+    "uniqueTickets": 12,
+    "screenshots": [
+      {
+        "path": "orders-desktop.jpg",
+        "width": 1280,
+        "height": 720,
+        "sha256": "21042101c339ffcf22ce7ce72f0ec7bed4834fa955ae79dca0a61bb71a2c3c1f"
+      },
+      {
+        "path": "order-detail-desktop.jpg",
+        "width": 1280,
+        "height": 720,
+        "sha256": "d3b2f79209701bb9255e32e1e58d7d2dcd4154d0b6f87c000c040924eb99db33"
+      },
+      {
+        "path": "order-detail-mobile.jpg",
+        "width": 390,
+        "height": 843,
+        "sha256": "fef5ab56ff0658f949a2f5276bd3159b4f810133f730b79a5f43dfc0570434c7"
+      },
+      {
+        "path": "refund-detail-mobile.jpg",
+        "width": 390,
+        "height": 843,
+        "sha256": "3104a4a6add41f1ac02bfe5a4af62a69b8b3e15d58ca9c4579e2ac351e8eefc9"
+      },
+      {
+        "path": "refund-list-desktop.jpg",
+        "width": 1178,
+        "height": 869,
+        "sha256": "2b45f23afbbba59145b7dbca587b6652db7cabd3a3a13419fa527ecc0256e2f7"
+      },
+      {
+        "path": "refund-detail-desktop.jpg",
+        "width": 1178,
+        "height": 869,
+        "sha256": "7e2b29d109707656cab6226e6248ea76c333d810a75fd357da2c9b90901b9e03"
+      },
+      {
+        "path": "transferred-empty-context.jpg",
+        "width": 1178,
+        "height": 869,
+        "sha256": "daf7491f6c51cf95ca0389eeaf5fe63de9e709c166e88ae0438c8fa24c9e6232"
+      }
+    ],
+    "ui": "4 normal order cards /5 active-refund cards are text-only; decoded images are2 rich previews,6 history-detail images(5signed+1legacy),2 selected-refund images; transferred context has0images",
+    "viewports": "actual1280x720 then390x843(requested390x844), reset1178x869",
+    "png": "real70byte1x1PNG verifies browser decoding, not visual artwork",
+    "noGlobalRefundListGui": true,
+    "globalRefundListThisBrowserHttp": false,
+    "globalRefundListCoveredByNative": true,
+    "realtime": "Node adapter does not implement Cloudflare WebSocket upgrade; realtime excluded",
+    "consoleRelevantErrors": 0
+  },
+  "historicalDiagnostic": {
+    "allTestsPassed": false,
+    "baselineActualOuter": 40123,
+    "baselineActualCheckout": "9d1d455e844e01efc389646bb8ed43963134f7f7",
+    "baselineSourceContent": "4428de3da07bd2818bc07e9ed70c33425d24fcf7",
+    "completeFixedGitBlobs": 9378,
+    "excludedPostRunReports": [
+      "docs/php-ts-kefu-product-media-20261116.md",
+      "workers-ts/audit/kefu-product-media-20261116.json"
+    ],
+    "currentAdditionalInventoryPaths": [
+      "docs/php-ts-kefu-product-media-20261116.md",
+      "workers-ts/audit/kefu-product-media-20261116.json",
+      "workers-ts/src/services/kefu/KefuOrderMediaPolicy.ts",
+      "workers-ts/test/browser/kefu-order-media.acceptance.ts",
+      "workers-ts/test/fixtures/kefu-order-media-source-continuity-20261116.json",
+      "workers-ts/test/helpers/kefuOrderMediaFixture.ts",
+      "workers-ts/test/helpers/kefuOrderMediaSourceContinuity.ts",
+      "workers-ts/test/kefu-order-media-postgres.test.ts",
+      "workers-ts/test/kefu-order-media-source-continuity.test.ts",
+      "workers-ts/vitest.kefu-order-media-browser.config.ts"
+    ],
+    "counts": {
+      "physicalFiles": 16,
+      "passedFiles": 2,
+      "failedFiles": 14,
+      "collectionErrorFiles": 2,
+      "tests": 1714,
+      "passed": 1404,
+      "failed": 310,
+      "skipped": 0,
+      "todo": 0
+    },
+    "childExitCode": 1,
+    "exactOutcomesAndErrorMessagesPreserved": true,
+    "comparison": "failed assertion first error class/message plus full suite/collection messages; only literal physical root normalization; complete raw stacks retained",
+    "environmentEqualityClaimed": false
+  },
+  "retainedAttempts": {
+    "initialContinuity": "44 cases3pass41fail due generated export name; complete rawJSON and6sources retained before fix",
+    "browser1": "actual69199 exit143, cause unestablished; GUI records exist but no native/server terminal, not accepted; fixture remaining count unavailable; owned processes subsequently stopped",
+    "nativeOriginalTrace": "actual85802 26pass; shared10batch arrays could not independently support per-entrance raw traces; original source/raw preserved before clone fix",
+    "firstFinal": "actual81058 outer1;28files1197pass then native24pass2fail due5second test timeout and async reset overlap; full inputs/logs/partial203records archived before test-only deadline fix"
+  },
+  "continuity": {
+    "newCases": 16,
+    "oldProductCases": 28,
+    "changedOriginals": 6,
+    "fixedBase": "4428de3da07bd2818bc07e9ed70c33425d24fcf7",
+    "retainedOldImages": 30,
+    "completeCurrentAndPredecessorGitImagesAndUniqueInverseAnchorsVerified": true,
+    "oldAssertionsPreserved": true,
+    "runtimeUsesPhysicalCurrentCode": true
+  },
+  "ci": {
+    "newPushRun": "pending until this audited candidate is committed and pushed; actual run and all raw job logs collected separately after push",
+    "baselineRunId": 43991040953,
+    "baselineUrl": "https://github.com/cinagroup/cinashop/actions/runs/43991040953",
+    "baselineJobs": 13,
+    "baselineSuccess": 10,
+    "baselineKnownFailures": 3,
+    "knownFailures": "two Worker shards fail fixed PHP8ed2 checkout not-our-ref; aggregate fails dependencies; Worker unit/coverage are skipped, never passing"
+  },
+  "evidence": [
+    {
+      "path": "/tmp/php-ts-kefu-order-media-20261116/final-validation-outer-terminal.json",
+      "sha256": "b56463d327094ccc9bd35dbd13109d72aa81a0d26c09156673818f2e6bf76bdd"
+    },
+    {
+      "path": "/tmp/php-ts-kefu-order-media-20261116/historical-outer-terminal.json",
+      "sha256": "be2ff8445d7f3261fc68261851bac8464246ebaccfdfa1e355802ee1d274f509"
+    },
+    {
+      "path": "/tmp/php-ts-kefu-order-media-20261116/frontend-outer-terminal.json",
+      "sha256": "fa825452037e72d46fdf202b2071cf4604d8589f085d9b410828d2f987085a4c"
+    },
+    {
+      "path": "/tmp/php-ts-kefu-order-media-20261116/browser-2/outer-terminal.json",
+      "sha256": "ba52471443fb6ca037fee5f7c8c02d6706df913076cff15bcaaf51d37337a758"
+    },
+    {
+      "path": "/tmp/php-ts-kefu-order-media-20261116/browser-independent-review.json",
+      "sha256": "3a52f9fbc46a23fae3d2a175220c06b6b98b78c4f6fd654824528f58e7a78aa9"
+    },
+    {
+      "path": "/tmp/php-ts-kefu-order-media-20261116/baseline-proof-outer-terminal.json",
+      "sha256": "163c27c71997f87a8028dda6a7dcdbdf9cab6f810225df55d6e1216a4ea52b8e"
+    },
+    {
+      "path": "/tmp/php-ts-kefu-order-media-20261116/independent-current-tools-review.json",
+      "sha256": "5123fc639f5a9329b0a4db1674b3c21cef09da2f6e533d16959bd3bdc82d7bef"
+    },
+    {
+      "path": "/tmp/php-ts-kefu-order-media-20261116/independent-current-native-review.json",
+      "sha256": "8e7e49ba5fc010eeabc581f945a6c5b90a908661db23fdb3a005825d29c1d4ed"
+    },
+    {
+      "path": "/tmp/php-ts-kefu-order-media-20261116/candidate-freeze.json",
+      "sha256": "934191ce28d32e8a49facb21ba710b69cc74af2dff83864e0785a4d40e53c4e7"
+    },
+    {
+      "path": "/tmp/php-ts-kefu-order-media-20261116/continuity-generation.json",
+      "sha256": "c5344cb12bd719f32624785f7c3d667ba01ed064e1afbcd9fde2e3c88b24cb11"
+    },
+    {
+      "path": "/tmp/php-ts-kefu-order-media-20261116/native-current-execution.json",
+      "sha256": "fe26ada2dab292b648ad3291aa23175392fdae2c235833099908f3ae4241e3df"
+    }
+  ],
+  "wholeMigrationComplete": false,
+  "turnClassification": "progress",
+  "generatedBeforeCommitAndPush": true
+}

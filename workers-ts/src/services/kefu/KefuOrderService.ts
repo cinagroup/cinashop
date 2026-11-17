@@ -12,7 +12,9 @@ import {
   sql,
   type SQL,
 } from "drizzle-orm";
-import type { Container } from "@/lib/di";
+import { PgTransaction } from "drizzle-orm/pg-core";
+import type { Env } from "@/env";
+import { withTx, type Container } from "@/lib/di";
 import {
   storeOrder,
   storeOrderCartInfo,
@@ -24,6 +26,12 @@ import {
   user,
 } from "@/models/schema";
 import { assertKefuConversation, parseKefuPageLimit } from "@/services/kefu/KefuCoreService";
+import {
+  readKefuOrderMedia,
+  renderKefuOrderMedia,
+  type KefuOrderMediaSlot,
+  type KefuOrderMediaTarget,
+} from "@/services/kefu/KefuOrderMediaPolicy";
 import { readPromotionLineEvidence } from "@/services/order/RefundSplitAllocation";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
@@ -439,7 +447,34 @@ function statusConditions(status: number | null): SQL[] {
 }
 
 export class KefuOrderService {
-  constructor(private readonly container: Container) {}
+  constructor(private readonly container: Container, private readonly env?: Pick<Env, "APP_KEY">) {}
+
+  /** The first snapshot-bearing SELECT (including timeout setup) is the read
+   * boundary. Transfers committed before it are visible; an authorized
+   * in-flight snapshot may finish coherently. Separate customer grants stay
+   * outside this boundary. Existing caller transactions keep their isolation,
+   * rollback ownership and eventual commit timing. */
+  private async readWithMedia<T>(
+    read: (service: KefuOrderService) => Promise<{ value: T; media: KefuOrderMediaSlot[] }>,
+  ): Promise<T> {
+    const result = this.container.db instanceof PgTransaction
+      ? await read(this)
+      : await withTx(this.container, async db => {
+        await db.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+        await db.execute(sql.raw(`SELECT
+          pg_catalog.set_config('statement_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true),
+          pg_catalog.set_config('idle_in_transaction_session_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000)::text || 'ms',true)`));
+        return read(new KefuOrderService({ ...this.container, db }, this.env));
+      });
+    // Only response projections are changed; stored cart JSON and finance
+    // evidence remain canonical. Owned read transactions have committed here.
+    await renderKefuOrderMedia(this.env?.APP_KEY, result.media);
+    return result.value;
+  }
+
+  private async mediaResponse<T>(value: T, carts: readonly CartRow[], groups: readonly (readonly KefuOrderMediaTarget[])[]) {
+    return { value, media: await readKefuOrderMedia(this.container.db, carts, groups) };
+  }
 
   private ownedCustomerConversation(kefuUid: number, customerUid: number) {
     return exists(this.container.db
@@ -558,6 +593,12 @@ export class KefuOrderService {
   async customerOrders(kefuUid: number, uidValue: unknown, query: Record<string, string>) {
     const uid = positiveInteger(uidValue, "用户ID");
     await assertKefuConversation(this.container, kefuUid, uid, 0);
+    return this.readWithMedia<ReturnType<typeof orderProjection>[] | ReturnType<typeof refundProjection>[]>(
+      service => service.readCustomerOrders(kefuUid, uid, query),
+    );
+  }
+
+  private async readCustomerOrders(kefuUid: number, uid: number, query: Record<string, string>) {
     const status = parseKefuOrderStatus(query.type);
     if (status === -1) return this.customerRefunds(kefuUid, uid, query);
     const page = parseKefuOrderPage(query.page);
@@ -585,7 +626,8 @@ export class KefuOrderService {
       this.cartsByOrder(orderIds),
       this.refundsByOrder(orderIds),
     ]);
-    return rows.map((row) => orderProjection(row, carts.get(row.id) ?? [], refunds.get(row.id) ?? []));
+    const value = rows.map((row) => orderProjection(row, carts.get(row.id) ?? [], refunds.get(row.id) ?? []));
+    return this.mediaResponse(value, [...carts.values()].flat(), value.map(row => row.cartInfo));
   }
 
   private async customerRefunds(
@@ -611,11 +653,16 @@ export class KefuOrderService {
       .limit(limit)
       .offset((page - 1) * limit);
     const carts = await this.cartsByOrder(rows.map((row) => row.storeOrderId));
-    return rows.map((row) => refundProjection(row, carts.get(row.storeOrderId) ?? [], true));
+    const value = rows.map((row) => refundProjection(row, carts.get(row.storeOrderId) ?? [], true));
+    return this.mediaResponse(value, [...carts.values()].flat(), value.map(row => row.cartInfo));
   }
 
   async orderInfo(kefuUid: number, idValue: unknown) {
     const id = positiveInteger(idValue, "订单ID");
+    return this.readWithMedia(service => service.readOrderInfo(kefuUid, id));
+  }
+
+  private async readOrderInfo(kefuUid: number, id: number) {
     const row = (await this.container.db.select().from(storeOrder).where(and(
       eq(storeOrder.id, id),
       eq(storeOrder.isSystemDel, 0),
@@ -668,7 +715,7 @@ export class KefuOrderService {
       }).from(storeOrderPromotions).where(eq(storeOrderPromotions.oid, row.id)).orderBy(storeOrderPromotions.id),
     ]);
     if (!users[0]) throw new NotFoundException("用户信息不存在");
-    return {
+    const value = {
       orderInfo: {
         ...orderProjection(row, carts, refunds),
         invoice: invoices[0] ?? null,
@@ -680,10 +727,15 @@ export class KefuOrderService {
       },
       userInfo: users[0],
     };
+    return this.mediaResponse(value, carts, [value.orderInfo.cartInfo]);
   }
 
   async refundDetail(kefuUid: number, idValue: unknown) {
     const id = positiveInteger(idValue, "退款ID");
+    return this.readWithMedia(service => service.readRefundDetail(kefuUid, id));
+  }
+
+  private async readRefundDetail(kefuUid: number, id: number) {
     const refund = (await this.container.db.select().from(storeOrderRefund).where(and(
       eq(storeOrderRefund.id, id),
       eq(storeOrderRefund.isCancel, 0),
@@ -714,7 +766,7 @@ export class KefuOrderService {
       }).from(user).where(eq(user.uid, refund.uid)).limit(1),
     ]);
     if (!users[0]) throw new NotFoundException("用户信息不存在");
-    return {
+    const value = {
       orderInfo: {
         ...refundProjection(refund, carts),
         store_order_sn: order.orderId,
@@ -728,9 +780,14 @@ export class KefuOrderService {
       },
       userInfo: users[0],
     };
+    return this.mediaResponse(value, carts, [value.orderInfo.cartInfo]);
   }
 
   async refundList(kefuUid: number, query: Record<string, string>) {
+    return this.readWithMedia(service => service.readRefundList(kefuUid, query));
+  }
+
+  private async readRefundList(kefuUid: number, query: Record<string, string>) {
     const page = parseKefuOrderPage(query.page);
     const limit = parseKefuPageLimit(query.limit);
     const keyword = queryText(query.order_id, "搜索词");
@@ -760,7 +817,7 @@ export class KefuOrderService {
     const carts = await this.cartsByOrder(rows.map((row) => row.storeOrderId));
     const counts = new Map(grouped.map((row) => [row.refund_type, Number(row.count)]));
     const names = ["", "仅退款", "退货退款", "拒绝退款", "商品待退货", "退货待收货", "已退款"];
-    return {
+    const value = {
       list: rows.map((row) => refundProjection(row, carts.get(row.storeOrderId) ?? [], true)),
       count: Number(total[0]?.count ?? 0),
       num: Object.fromEntries([1, 2, 3, 4, 5, 6].map((type) => [type, {
@@ -768,5 +825,6 @@ export class KefuOrderService {
         num: counts.get(type) ?? 0,
       }])),
     };
+    return this.mediaResponse(value, [...carts.values()].flat(), value.list.map(row => row.cartInfo));
   }
 }

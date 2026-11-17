@@ -1,7 +1,7 @@
 /** Historical source projection only. Production and runtime acceptance import
  * the real providers. No older proof file/hash, inventory or assertion is replaced. */
 import { createHash } from 'node:crypto';
-import { isKefuProductMediaSource, projectKefuProductMediaPredecessor } from './kefuProductMediaSourceContinuity';
+import { isKefuProductMediaSource, projectKefuProductMediaPredecessor, projectKefuProductMediaFromOrder4428View } from './kefuProductMediaSourceContinuity';
 import { isFirstOrderAuthoritySource, projectFirstOrderAuthorityPredecessor } from './firstOrderAuthoritySourceContinuity';
 import { isPublicProductEstimateSource, projectPublicProductEstimatePredecessor } from './publicProductEstimateSourceContinuity';
 import { readFileSync } from 'node:fs';
@@ -45,6 +45,11 @@ export const isProviderTransportSource = (file: string) => isKefuProductMediaSou
  * Every changed line must match exactly; the whole output must be fixed353. */
 export function projectProviderTransportPredecessor(file: string, source: string): string {
   return projectProviderTransportFromFirstOrderAuthorityView(file, projectKefuProductMediaPredecessor(file, source));
+}
+
+/** Explicit verified fixed4428 view for the original product-media contract. */
+export function projectProviderTransportFromOrder4428View(file: string, source: string): string {
+  return projectProviderTransportFromFirstOrderAuthorityView(file, projectKefuProductMediaFromOrder4428View(file, source));
 }
 
 /** Explicit fixed9d first-order view only. Native readers must use the complete

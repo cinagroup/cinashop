@@ -50,7 +50,7 @@ function tourist(c: C) {
 }
 
 function orders(c: C) {
-  return new KefuOrderService(c.get("container"));
+  return new KefuOrderService(c.get("container"), c.env);
 }
 
 function orderManagement(c: C) {
