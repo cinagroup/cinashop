@@ -41,7 +41,7 @@ function catalog(c: C) {
 }
 
 function products(c: C) {
-  return new KefuProductService(c.get("container"));
+  return new KefuProductService(c.get("container"), c.env);
 }
 
 function tourist(c: C) {

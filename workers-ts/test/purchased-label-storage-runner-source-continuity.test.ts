@@ -1,3 +1,4 @@
+import { projectKefuProductMediaPredecessor } from './helpers/kefuProductMediaSourceContinuity';
 import { projectPublicProductEstimatePredecessor as projectPublicProductEstimate9743Predecessor } from './helpers/publicProductEstimateSourceContinuity';
 import { projectFirstOrderAuthorityPredecessor } from './helpers/firstOrderAuthoritySourceContinuity';
 import { projectPurchasedLabelOperationsPredecessor } from './helpers/purchasedLabelOperationsSourceContinuity';
@@ -10,9 +11,9 @@ import { PURCHASED_LABEL_RUNNER_FILE as file, projectPurchasedLabelRunnerPredece
 import { projectOutLabelRunnerPredecessor } from './helpers/outProductLabelRunnerSourceContinuity';
 import { projectProviderTransportPredecessor } from './helpers/providerTransportSourceContinuity';
 import { projectPurchasedLabelAuthorPredecessor } from './helpers/purchasedLabelAuthorSourceContinuity';
-// Peel the exact current first-order layer before this unchanged older view.
+// Peel the exact Kefu and first-order layers before this unchanged older view.
 const projectPublicProductEstimatePredecessor = (file: string, source: string) =>
-  projectPublicProductEstimate9743Predecessor(file, projectFirstOrderAuthorityPredecessor(file, source));
+  projectPublicProductEstimate9743Predecessor(file, projectFirstOrderAuthorityPredecessor(file, projectKefuProductMediaPredecessor(file, source)));
 const root = resolve(import.meta.dirname, '../..'), physical = readFileSync(resolve(root, file), 'utf8');
 const native = projectPurchasedLabelAuthorPredecessor(file, projectPurchasedLabelOperationsPredecessor(file, projectPublicProductEstimatePredecessor(file, physical)));
 const admission = "    'test/purchased-product-label-storage-native.test.ts',\n";

@@ -1,3 +1,4 @@
+import { projectKefuProductMediaPredecessor } from './helpers/kefuProductMediaSourceContinuity';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -5,11 +6,14 @@ import { describe, expect, it } from 'vitest';
 import { FIRST_ORDER_AUTHORITY_PREDECESSOR, FIRST_ORDER_AUTHORITY_PROOF_FILE, FIRST_ORDER_AUTHORITY_PROOF_SHA256,
   FIRST_ORDER_AUTHORITY_SOURCES, firstOrderAuthorityImage, firstOrderAuthorityProof as proof,
   isFirstOrderAuthoritySource, projectFirstOrderAuthorityPredecessor } from './helpers/firstOrderAuthoritySourceContinuity';
-import { isProviderTransportSource, projectProviderTransportPredecessor,
+import { isProviderTransportSource, projectProviderTransportFromFirstOrderAuthorityView as projectProviderTransportPredecessor,
   projectProviderTransportFromPublicProductEstimateView } from './helpers/providerTransportSourceContinuity';
 import { PUBLIC_PRODUCT_ESTIMATE_PROOF_FILE, PUBLIC_PRODUCT_ESTIMATE_PROOF_SHA256 } from './helpers/publicProductEstimateSourceContinuity';
 const root = resolve(import.meta.dirname, '../..');
 const physical = (file: string) => readFileSync(resolve(root, file), 'utf8');
+// These original56 assertions retain their exact fixed9d first-order view.
+// The new Kefu suite independently binds every physical current source byte.
+const atFirstOrder9d = (file: string) => projectKefuProductMediaPredecessor(file, physical(file));
 const sha = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
 const sources = [
   'workers-ts/scripts/run-local-finance-postgres.mjs',
@@ -40,7 +44,7 @@ const sources = [
   'workers-ts/test/purchased-label-storage-runner-source-continuity.test.ts',
 ];
 
-describe('first-order SQL authority exact current source before fixed9743 historical views', () => {
+describe('first-order SQL authority fixed9d current source before fixed9743 historical views', () => {
   it('pins the entire immutable proof, twenty-six-source literal inventory and complete fixed9743 origins', () => {
     expect(sha(readFileSync(resolve(root, FIRST_ORDER_AUTHORITY_PROOF_FILE)))).toBe(FIRST_ORDER_AUTHORITY_PROOF_SHA256);
     expect(proof.schema).toBe('first-order-authority-source-continuity/v1');
@@ -54,8 +58,8 @@ describe('first-order SQL authority exact current source before fixed9743 histor
     expect(sources.every(file => isFirstOrderAuthoritySource(file) && isProviderTransportSource(file))).toBe(true);
   });
   for (const row of proof.sources) {
-    it('binds every physical current byte and reconstructs the fixed9743 Git image for ' + row.file, () => {
-      const current = physical(row.file);
+    it('binds every verified fixed9d current byte and reconstructs the fixed9743 Git image for ' + row.file, () => {
+      const current = atFirstOrder9d(row.file);
       expect(firstOrderAuthorityImage(current)).toEqual(row.current);
       const previous = projectFirstOrderAuthorityPredecessor(row.file, current);
       expect(previous).not.toBe(current);
@@ -71,10 +75,10 @@ describe('first-order SQL authority exact current source before fixed9743 histor
         const fixedView = projectProviderTransportFromPublicProductEstimateView(row.file, previous);
         expect(projectProviderTransportPredecessor(row.file, current)).toBe(fixedView);
       }
-      expect(physical(row.file)).toBe(current);
+      expect(atFirstOrder9d(row.file)).toBe(current);
     });
     it('rejects tampering, duplicate forms and every old complete image as current for ' + row.file, () => {
-      const current = physical(row.file), previous = projectFirstOrderAuthorityPredecessor(row.file, current);
+      const current = atFirstOrder9d(row.file), previous = projectFirstOrderAuthorityPredecessor(row.file, current);
       const invalid = ['// unknown\n' + current, current + '\n// unknown\n', current.replaceAll('\n', '\r\n'),
         'X' + current.slice(1), previous, current + current, '', current.slice(0, -1)];
       for (const input of invalid) {
@@ -91,14 +95,14 @@ describe('first-order SQL authority exact current source before fixed9743 histor
       'workers-ts/test/first-order-sql-authority.test.ts', 'workers-ts/test/first-order-authority-source-continuity.test.ts',
       'workers-ts/test/helpers/firstOrderAuthoritySourceContinuity.ts']) {
       expect(isFirstOrderAuthoritySource(file)).toBe(false);
-      const bytes = file.startsWith('workers-ts/test/') ? physical(file) : 'literal unknown bytes\0\r\n';
+      const bytes = file.startsWith('workers-ts/test/') ? atFirstOrder9d(file) : 'literal unknown bytes\0\r\n';
       expect(projectFirstOrderAuthorityPredecessor(file, bytes)).toBe(bytes);
     }
   });
   it('retains the complete old public-product proof and its helper without replacing old fixture bytes or hashes', () => {
     expect(PUBLIC_PRODUCT_ESTIMATE_PROOF_SHA256).toBe('bb78b85fe23a3ede3dbe57a97d13665a3c1367ad1a1803394d28fdbbc97388b2');
     expect(sha(readFileSync(resolve(root, PUBLIC_PRODUCT_ESTIMATE_PROOF_FILE)))).toBe(PUBLIC_PRODUCT_ESTIMATE_PROOF_SHA256);
-    expect(sha(physical('workers-ts/test/helpers/publicProductEstimateSourceContinuity.ts')))
+    expect(sha(atFirstOrder9d('workers-ts/test/helpers/publicProductEstimateSourceContinuity.ts')))
       .toBe('bc927b71a0e451b45737521e4ee7f4708b10a727594bdbc25a91c30b7f798407');
   });
   it('makes every complete image, fixed origin and unique-anchor inverse deeply immutable', () => {
@@ -115,7 +119,7 @@ describe('first-order SQL authority exact current source before fixed9743 histor
       }
       expect(Reflect.set(row.current, 'sha256', row.predecessor.sha256)).toBe(false);
       expect(Reflect.set(row.origin, 'commit', 'unknown')).toBe(false);
-      expect(firstOrderAuthorityImage(projectFirstOrderAuthorityPredecessor(row.file, physical(row.file)))).toEqual(row.predecessor);
+      expect(firstOrderAuthorityImage(projectFirstOrderAuthorityPredecessor(row.file, atFirstOrder9d(row.file)))).toEqual(row.predecessor);
     }
     expect(sha(readFileSync(resolve(root, FIRST_ORDER_AUTHORITY_PROOF_FILE)))).toBe(FIRST_ORDER_AUTHORITY_PROOF_SHA256);
   });

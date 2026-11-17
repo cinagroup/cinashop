@@ -40,7 +40,7 @@ export class KefuTouristService {
   }
 
   async productInfo(id: unknown) {
-    return new KefuProductService(this.container).productInfo(id, true);
+    return new KefuProductService(this.container, this.env).productInfo(id, true);
   }
 
   async submitFeedback(input: unknown, ip = "") {

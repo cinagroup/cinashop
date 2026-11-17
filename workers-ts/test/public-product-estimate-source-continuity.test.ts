@@ -1,3 +1,4 @@
+import { projectKefuProductMediaPredecessor } from './helpers/kefuProductMediaSourceContinuity';
 import { projectFirstOrderAuthorityPredecessor } from './helpers/firstOrderAuthoritySourceContinuity';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -16,8 +17,8 @@ import { readRechargeRefundPredecessorFile } from './helpers/rechargeRefundSourc
 const root = resolve(import.meta.dirname, '../..');
 const physical = (file: string) => readFileSync(resolve(root, file), 'utf8');
 // These original fifty assertions check the explicit fixed9743 view. The new
-// first-order continuity suite separately binds every real physical current byte.
-const atPublicProductEstimate9743 = (file: string) => projectFirstOrderAuthorityPredecessor(file, physical(file));
+// Kefu continuity suite separately binds every real physical current byte.
+const atPublicProductEstimate9743 = (file: string) => projectFirstOrderAuthorityPredecessor(file, projectKefuProductMediaPredecessor(file, physical(file)));
 const sha = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
 const sources = [
   'view/uniapp-ts/scripts/product-coupons-runtime.test.cjs',

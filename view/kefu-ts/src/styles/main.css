@@ -438,6 +438,9 @@ svg { width: 1.35rem; height: 1.35rem; }
   .inspector { z-index: 12; width: min(92vw, 360px); }
   .inspector:has(.mobile-quick-open):not(.open) { width: 0; overflow: visible; border: 0; background: transparent; box-shadow: none; transform: none; pointer-events: none; }
   .quick-panel { position: fixed; z-index: 18; right: 0; bottom: 0; left: 0; max-height: 62dvh; overflow: auto; padding: 15px 16px calc(18px + env(safe-area-inset-bottom)); border: 1px solid var(--line); border-radius: 10px 10px 0 0; background: #fff; box-shadow: 0 -10px 32px rgba(25, 34, 39, .12); transform: translateY(105%); transition: transform .2s ease; pointer-events: auto; }
+  /* A transformed, scrolled inspector is the fixed panel's containing block.
+     Hide the closed panel explicitly so it cannot cover mobile product cards. */
+  .inspector.open .quick-panel:not(.mobile-quick-open) { display: none; }
   .quick-panel.mobile-quick-open { transform: translateY(0); }
   .drawer-handle { display: block; width: 38px; height: 4px; margin: -6px auto 14px; border-radius: 2px; background: #c8ced1; }
   .mobile-close-quick { display: grid; place-items: center; padding: 4px; border: 0; background: transparent; }

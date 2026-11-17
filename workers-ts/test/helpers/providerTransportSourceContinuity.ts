@@ -1,6 +1,7 @@
 /** Historical source projection only. Production and runtime acceptance import
  * the real providers. No older proof file/hash, inventory or assertion is replaced. */
 import { createHash } from 'node:crypto';
+import { isKefuProductMediaSource, projectKefuProductMediaPredecessor } from './kefuProductMediaSourceContinuity';
 import { isFirstOrderAuthoritySource, projectFirstOrderAuthorityPredecessor } from './firstOrderAuthoritySourceContinuity';
 import { isPublicProductEstimateSource, projectPublicProductEstimatePredecessor } from './publicProductEstimateSourceContinuity';
 import { readFileSync } from 'node:fs';
@@ -38,11 +39,17 @@ if (proof.schema !== 'provider-transport-source-continuity/v1' || proof.predeces
 
 // Peel the later discovery-only images before the unchanged older views. This
 // reader is historical; runtime tests and production always import native code.
-export const isProviderTransportSource = (file: string) => isFirstOrderAuthoritySource(file) || isPublicProductEstimateSource(file) || isPurchasedLabelOperationsSource(file) || isPurchasedLabelAuthorSource(file) || isOutLabelRunnerSource(file) || isUnitDiscoverySource(file) || proof.sources.some(row => row.file === file);
+export const isProviderTransportSource = (file: string) => isKefuProductMediaSource(file) || isFirstOrderAuthoritySource(file) || isPublicProductEstimateSource(file) || isPurchasedLabelOperationsSource(file) || isPurchasedLabelAuthorSource(file) || isOutLabelRunnerSource(file) || isUnitDiscoverySource(file) || proof.sources.some(row => row.file === file);
 
 /** A selected old image is refused, including an otherwise valid predecessor.
  * Every changed line must match exactly; the whole output must be fixed353. */
 export function projectProviderTransportPredecessor(file: string, source: string): string {
+  return projectProviderTransportFromFirstOrderAuthorityView(file, projectKefuProductMediaPredecessor(file, source));
+}
+
+/** Explicit fixed9d first-order view only. Native readers must use the complete
+ * physical-current entry point above, which verifies the later Kefu layer first. */
+export function projectProviderTransportFromFirstOrderAuthorityView(file: string, source: string): string {
   return projectProviderTransportFromPublicProductEstimateView(file, projectFirstOrderAuthorityPredecessor(file, source));
 }
 

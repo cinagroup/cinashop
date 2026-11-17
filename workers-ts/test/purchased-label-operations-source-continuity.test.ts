@@ -1,3 +1,4 @@
+import { projectKefuProductMediaPredecessor } from './helpers/kefuProductMediaSourceContinuity';
 import { projectPublicProductEstimatePredecessor as projectPublicProductEstimate9743Predecessor } from './helpers/publicProductEstimateSourceContinuity';
 import { projectFirstOrderAuthorityPredecessor } from './helpers/firstOrderAuthoritySourceContinuity';
 import { createHash } from 'node:crypto';
@@ -6,9 +7,9 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { purchasedLabelOperationsImage, purchasedLabelOperationsProof as proof, projectPurchasedLabelOperationsPredecessor,
   PURCHASED_LABEL_OPERATIONS_PROOF_FILE, PURCHASED_LABEL_OPERATIONS_PROOF_SHA256 } from './helpers/purchasedLabelOperationsSourceContinuity';
-// Peel the exact current first-order layer before this unchanged older view.
+// Peel the exact Kefu and first-order layers before this unchanged older view.
 const projectPublicProductEstimatePredecessor = (file: string, source: string) =>
-  projectPublicProductEstimate9743Predecessor(file, projectFirstOrderAuthorityPredecessor(file, source));
+  projectPublicProductEstimate9743Predecessor(file, projectFirstOrderAuthorityPredecessor(file, projectKefuProductMediaPredecessor(file, source)));
 const root = resolve(import.meta.dirname, '../..');
 const priorSource = (file: string) => projectPublicProductEstimatePredecessor(file, readFileSync(resolve(root, file), 'utf8'));
 describe('purchased label operations exact current source successor', () => {
