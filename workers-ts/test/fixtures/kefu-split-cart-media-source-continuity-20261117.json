@@ -1,0 +1,529 @@
+{
+  "schema": "kefu-split-cart-media-source-continuity/v1",
+  "predecessorCommit": "54047ef6536840536ffb0632153223ba594e41d4",
+  "boundary": "Historical source views only; production/native/browser import physical current sources. Complete current files and unique inverse anchors reconstruct exact fixed54047 blobs; all previous assertions and immutable images stay intact.",
+  "sources": [
+    {
+      "file": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "current": {
+        "bytes": 151959,
+        "sha256": "b431d2bbd2f231a3b7029e46dd647b17efd1aad8071e8388ac0e3a4e6eee85be",
+        "gitBlobSha1": "44788d5d1b06405b7d2c34eee0cd72be515d5e7f"
+      },
+      "predecessor": {
+        "bytes": 151271,
+        "sha256": "a53cc66f9c764e1d80576fdf1a7740a860b37fca5ac37aea6aa9644721a1aa5b",
+        "gitBlobSha1": "035fc5817798893102b702df6b45ce14f21bcb94"
+      },
+      "inverseEdits": [
+        {
+          "start": 78,
+          "after": [
+            "const kefuSplitCartMediaBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:kefu-split-cart-media-browser';\n"
+          ],
+          "before": [],
+          "anchorStart": 75,
+          "anchor": [
+            "const publicProductEstimateBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:public-product-estimate-browser';\n",
+            "const kefuProductMediaBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:kefu-product-media-browser';\n",
+            "const kefuOrderMediaBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:kefu-order-media-browser';\n",
+            "const kefuSplitCartMediaBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:kefu-split-cart-media-browser';\n",
+            "const publicProductReviewsBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:public-product-reviews-browser';\n",
+            "const checkoutInvoicesBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:checkout-invoices-browser';\n",
+            "const orderTimelineBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:order-lifecycle-timeline-browser';\n"
+          ]
+        },
+        {
+          "start": 196,
+          "after": [
+            "if (verboseTests) assert.ok(!purchasedLabelOperationsBrowser && !assignedFulfillmentBrowser && !catalogAudit && !unitShard && !browserAcceptance && !offlineAdminBrowser && !productEditorBrowser && !supplierVideoBrowser && !supplierRecycleBrowser && !supplierCopyBrowser && !supplierReviewBrowser && !supplierDetailBrowser && !supplierScheduleBrowser && !supplierBrandBrowser && !supplierEnsuresBrowser && !supplierParametersBrowser && !supplierSystemFormBrowser && !supplierSkuBatchBrowser && !supplierRecommendImageBrowser && !supplierUnitBrowser && !supplierShippingEditorBrowser && !supplierOrderTrackingBrowser && !supplierOrderDistributionBrowser && !supplierOrderFiltersBrowser && !supplierOrderReviewBrowser && !supplierOrderInvoiceReviewBrowser && !supplierOrderPromotionsReviewBrowser && !supplierOrderGiftIdentityBrowser && !supplierOrderVirtualReviewBrowser && !supplierRefundApplicationReviewBrowser && !refundApplicationEvidenceBrowser && !customerOrderRepurchaseBrowser && !integralPurchaseOriginBrowser && !integralPurchaseLimitsBrowser && !productPurchaseAdmissionBrowser && !supplierRuleInlineBrowser && !supplierOrderEditBrowser && !adminOrderEditBrowser && !adminOrderHistoryBrowser && !buyerTrackingBrowser && !buyerInvoicesBrowser && !buyerReviewsBrowser && !reviewCommunitySyncBrowser && !pcProductContentBrowser && !uniProductCouponsBrowser && !uniCouponBuyBrowser && !publicProductEstimateBrowser && !kefuProductMediaBrowser && !kefuOrderMediaBrowser && !kefuSplitCartMediaBrowser && !pcMessageCenterBrowser && !publicProductReviewsBrowser && !checkoutInvoicesBrowser && !orderTimelineBrowser && !supplierCashBrowser && !supplierProactiveRefundBrowser && !supplierRefundSettlementBrowser && !supplierBillBrowser && !supplierBillExportBrowser && !supplierFlowBrowser && !supplierExtractBrowser && !supplierExtractApplicationBrowser && !supplierFinanceAccountsBrowser && !supplierExtractMediaBrowser && !supplierExtractApplicationMediaBrowser,\n"
+          ],
+          "before": [
+            "if (verboseTests) assert.ok(!purchasedLabelOperationsBrowser && !assignedFulfillmentBrowser && !catalogAudit && !unitShard && !browserAcceptance && !offlineAdminBrowser && !productEditorBrowser && !supplierVideoBrowser && !supplierRecycleBrowser && !supplierCopyBrowser && !supplierReviewBrowser && !supplierDetailBrowser && !supplierScheduleBrowser && !supplierBrandBrowser && !supplierEnsuresBrowser && !supplierParametersBrowser && !supplierSystemFormBrowser && !supplierSkuBatchBrowser && !supplierRecommendImageBrowser && !supplierUnitBrowser && !supplierShippingEditorBrowser && !supplierOrderTrackingBrowser && !supplierOrderDistributionBrowser && !supplierOrderFiltersBrowser && !supplierOrderReviewBrowser && !supplierOrderInvoiceReviewBrowser && !supplierOrderPromotionsReviewBrowser && !supplierOrderGiftIdentityBrowser && !supplierOrderVirtualReviewBrowser && !supplierRefundApplicationReviewBrowser && !refundApplicationEvidenceBrowser && !customerOrderRepurchaseBrowser && !integralPurchaseOriginBrowser && !integralPurchaseLimitsBrowser && !productPurchaseAdmissionBrowser && !supplierRuleInlineBrowser && !supplierOrderEditBrowser && !adminOrderEditBrowser && !adminOrderHistoryBrowser && !buyerTrackingBrowser && !buyerInvoicesBrowser && !buyerReviewsBrowser && !reviewCommunitySyncBrowser && !pcProductContentBrowser && !uniProductCouponsBrowser && !uniCouponBuyBrowser && !publicProductEstimateBrowser && !kefuProductMediaBrowser && !kefuOrderMediaBrowser && !pcMessageCenterBrowser && !publicProductReviewsBrowser && !checkoutInvoicesBrowser && !orderTimelineBrowser && !supplierCashBrowser && !supplierProactiveRefundBrowser && !supplierRefundSettlementBrowser && !supplierBillBrowser && !supplierBillExportBrowser && !supplierFlowBrowser && !supplierExtractBrowser && !supplierExtractApplicationBrowser && !supplierFinanceAccountsBrowser && !supplierExtractMediaBrowser && !supplierExtractApplicationMediaBrowser,\n"
+          ],
+          "anchorStart": 193,
+          "anchor": [
+            "const customerCashierCapabilitiesBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:customer-cashier-capabilities-browser';\n",
+            "const customerCashierImagesBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:customer-cashier-images-browser';\n",
+            "const browserAcceptance = adminBrowserAcceptance || customerBrowserAcceptance || adminOrderBrowserAcceptance || customerCashierCapabilitiesBrowser || customerCashierImagesBrowser;\n",
+            "if (verboseTests) assert.ok(!purchasedLabelOperationsBrowser && !assignedFulfillmentBrowser && !catalogAudit && !unitShard && !browserAcceptance && !offlineAdminBrowser && !productEditorBrowser && !supplierVideoBrowser && !supplierRecycleBrowser && !supplierCopyBrowser && !supplierReviewBrowser && !supplierDetailBrowser && !supplierScheduleBrowser && !supplierBrandBrowser && !supplierEnsuresBrowser && !supplierParametersBrowser && !supplierSystemFormBrowser && !supplierSkuBatchBrowser && !supplierRecommendImageBrowser && !supplierUnitBrowser && !supplierShippingEditorBrowser && !supplierOrderTrackingBrowser && !supplierOrderDistributionBrowser && !supplierOrderFiltersBrowser && !supplierOrderReviewBrowser && !supplierOrderInvoiceReviewBrowser && !supplierOrderPromotionsReviewBrowser && !supplierOrderGiftIdentityBrowser && !supplierOrderVirtualReviewBrowser && !supplierRefundApplicationReviewBrowser && !refundApplicationEvidenceBrowser && !customerOrderRepurchaseBrowser && !integralPurchaseOriginBrowser && !integralPurchaseLimitsBrowser && !productPurchaseAdmissionBrowser && !supplierRuleInlineBrowser && !supplierOrderEditBrowser && !adminOrderEditBrowser && !adminOrderHistoryBrowser && !buyerTrackingBrowser && !buyerInvoicesBrowser && !buyerReviewsBrowser && !reviewCommunitySyncBrowser && !pcProductContentBrowser && !uniProductCouponsBrowser && !uniCouponBuyBrowser && !publicProductEstimateBrowser && !kefuProductMediaBrowser && !kefuOrderMediaBrowser && !kefuSplitCartMediaBrowser && !pcMessageCenterBrowser && !publicProductReviewsBrowser && !checkoutInvoicesBrowser && !orderTimelineBrowser && !supplierCashBrowser && !supplierProactiveRefundBrowser && !supplierRefundSettlementBrowser && !supplierBillBrowser && !supplierBillExportBrowser && !supplierFlowBrowser && !supplierExtractBrowser && !supplierExtractApplicationBrowser && !supplierFinanceAccountsBrowser && !supplierExtractMediaBrowser && !supplierExtractApplicationMediaBrowser,\n",
+            "  'Verbose reporting applies only to explicit native test files');\n",
+            "if (browserAcceptance) {\n",
+            "  for (const key of ['TEST_BROWSER_PACKAGE_JSON', 'TEST_BROWSER_EXECUTABLE', 'TEST_BROWSER_OUTPUT_DIR']) {\n"
+          ]
+        },
+        {
+          "start": 207,
+          "after": [
+            "for (const test of purchasedLabelOperationsBrowser || assignedFulfillmentBrowser || runtimeMode || catalogAudit || browserAcceptance || offlineAdminBrowser || productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser || supplierCopyBrowser || supplierReviewBrowser || supplierDetailBrowser || supplierScheduleBrowser || supplierBrandBrowser || supplierEnsuresBrowser || supplierParametersBrowser || supplierSystemFormBrowser || supplierSkuBatchBrowser || supplierRecommendImageBrowser || supplierUnitBrowser || supplierShippingEditorBrowser || supplierOrderTrackingBrowser || supplierOrderDistributionBrowser || supplierOrderFiltersBrowser || supplierOrderReviewBrowser || supplierOrderInvoiceReviewBrowser || supplierOrderPromotionsReviewBrowser || supplierOrderGiftIdentityBrowser || supplierOrderVirtualReviewBrowser || supplierRefundApplicationReviewBrowser || refundApplicationEvidenceBrowser || customerOrderRepurchaseBrowser || integralPurchaseOriginBrowser || integralPurchaseLimitsBrowser || productPurchaseAdmissionBrowser || supplierRuleInlineBrowser || supplierOrderEditBrowser || adminOrderEditBrowser || adminOrderHistoryBrowser || buyerTrackingBrowser || buyerInvoicesBrowser || buyerReviewsBrowser || reviewCommunitySyncBrowser || pcProductContentBrowser || uniProductCouponsBrowser || uniCouponBuyBrowser || publicProductEstimateBrowser || kefuProductMediaBrowser || kefuOrderMediaBrowser || kefuSplitCartMediaBrowser || pcMessageCenterBrowser || publicProductReviewsBrowser || checkoutInvoicesBrowser || orderTimelineBrowser || supplierCashBrowser || supplierProactiveRefundBrowser || supplierRefundSettlementBrowser || supplierBillBrowser || supplierBillExportBrowser || supplierFlowBrowser || supplierExtractBrowser || supplierExtractApplicationBrowser || supplierFinanceAccountsBrowser || supplierExtractMediaBrowser || supplierExtractApplicationMediaBrowser || unitShard ? [] : tests) {\n"
+          ],
+          "before": [
+            "for (const test of purchasedLabelOperationsBrowser || assignedFulfillmentBrowser || runtimeMode || catalogAudit || browserAcceptance || offlineAdminBrowser || productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser || supplierCopyBrowser || supplierReviewBrowser || supplierDetailBrowser || supplierScheduleBrowser || supplierBrandBrowser || supplierEnsuresBrowser || supplierParametersBrowser || supplierSystemFormBrowser || supplierSkuBatchBrowser || supplierRecommendImageBrowser || supplierUnitBrowser || supplierShippingEditorBrowser || supplierOrderTrackingBrowser || supplierOrderDistributionBrowser || supplierOrderFiltersBrowser || supplierOrderReviewBrowser || supplierOrderInvoiceReviewBrowser || supplierOrderPromotionsReviewBrowser || supplierOrderGiftIdentityBrowser || supplierOrderVirtualReviewBrowser || supplierRefundApplicationReviewBrowser || refundApplicationEvidenceBrowser || customerOrderRepurchaseBrowser || integralPurchaseOriginBrowser || integralPurchaseLimitsBrowser || productPurchaseAdmissionBrowser || supplierRuleInlineBrowser || supplierOrderEditBrowser || adminOrderEditBrowser || adminOrderHistoryBrowser || buyerTrackingBrowser || buyerInvoicesBrowser || buyerReviewsBrowser || reviewCommunitySyncBrowser || pcProductContentBrowser || uniProductCouponsBrowser || uniCouponBuyBrowser || publicProductEstimateBrowser || kefuProductMediaBrowser || kefuOrderMediaBrowser || pcMessageCenterBrowser || publicProductReviewsBrowser || checkoutInvoicesBrowser || orderTimelineBrowser || supplierCashBrowser || supplierProactiveRefundBrowser || supplierRefundSettlementBrowser || supplierBillBrowser || supplierBillExportBrowser || supplierFlowBrowser || supplierExtractBrowser || supplierExtractApplicationBrowser || supplierFinanceAccountsBrowser || supplierExtractMediaBrowser || supplierExtractApplicationMediaBrowser || unitShard ? [] : tests) {\n"
+          ],
+          "anchorStart": 204,
+          "anchor": [
+            "  const inside = relative(checkout, output);\n",
+            "  assert.ok(inside.startsWith('..') || isAbsolute(inside), 'Browser output must be outside the repository');\n",
+            "}\n",
+            "for (const test of purchasedLabelOperationsBrowser || assignedFulfillmentBrowser || runtimeMode || catalogAudit || browserAcceptance || offlineAdminBrowser || productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser || supplierCopyBrowser || supplierReviewBrowser || supplierDetailBrowser || supplierScheduleBrowser || supplierBrandBrowser || supplierEnsuresBrowser || supplierParametersBrowser || supplierSystemFormBrowser || supplierSkuBatchBrowser || supplierRecommendImageBrowser || supplierUnitBrowser || supplierShippingEditorBrowser || supplierOrderTrackingBrowser || supplierOrderDistributionBrowser || supplierOrderFiltersBrowser || supplierOrderReviewBrowser || supplierOrderInvoiceReviewBrowser || supplierOrderPromotionsReviewBrowser || supplierOrderGiftIdentityBrowser || supplierOrderVirtualReviewBrowser || supplierRefundApplicationReviewBrowser || refundApplicationEvidenceBrowser || customerOrderRepurchaseBrowser || integralPurchaseOriginBrowser || integralPurchaseLimitsBrowser || productPurchaseAdmissionBrowser || supplierRuleInlineBrowser || supplierOrderEditBrowser || adminOrderEditBrowser || adminOrderHistoryBrowser || buyerTrackingBrowser || buyerInvoicesBrowser || buyerReviewsBrowser || reviewCommunitySyncBrowser || pcProductContentBrowser || uniProductCouponsBrowser || uniCouponBuyBrowser || publicProductEstimateBrowser || kefuProductMediaBrowser || kefuOrderMediaBrowser || kefuSplitCartMediaBrowser || pcMessageCenterBrowser || publicProductReviewsBrowser || checkoutInvoicesBrowser || orderTimelineBrowser || supplierCashBrowser || supplierProactiveRefundBrowser || supplierRefundSettlementBrowser || supplierBillBrowser || supplierBillExportBrowser || supplierFlowBrowser || supplierExtractBrowser || supplierExtractApplicationBrowser || supplierFinanceAccountsBrowser || supplierExtractMediaBrowser || supplierExtractApplicationMediaBrowser || unitShard ? [] : tests) {\n",
+            "  assert.match(test, /^test\\/[a-z0-9-]+\\.test\\.ts$/, 'Only explicit unit test paths are accepted');\n",
+            "  assert.ok(existsSync(resolve(workerRoot, test)), `Test does not exist: ${test}`);\n",
+            "}\n"
+          ]
+        },
+        {
+          "start": 733,
+          "after": [
+            "    'test/kefu-split-cart-media-postgres.test.ts',\n"
+          ],
+          "before": [],
+          "anchorStart": 730,
+          "anchor": [
+            "    'test/first-order-sql-authority.test.ts',\n",
+            "    'test/kefu-product-media-postgres.test.ts',\n",
+            "    'test/kefu-order-media-postgres.test.ts',\n",
+            "    'test/kefu-split-cart-media-postgres.test.ts',\n",
+            "    // Uses the existing checkout NOLOGIN protocol before real refund materialization.\n",
+            "    'test/presale-refund-baseline-postgres.test.ts',\n",
+            "    // Full schema, atomic refunds, paid recovery and due delivery under an owned LOGIN.\n"
+          ]
+        },
+        {
+          "start": 1096,
+          "after": [
+            "    'audit:kefu-split-cart-media-browser',\n"
+          ],
+          "before": [],
+          "anchorStart": 1093,
+          "anchor": [
+            "    'audit:public-product-estimate-browser',\n",
+            "    'audit:kefu-product-media-browser',\n",
+            "    'audit:kefu-order-media-browser',\n",
+            "    'audit:kefu-split-cart-media-browser',\n",
+            "    'audit:pc-message-center-browser',\n",
+            "    'audit:checkout-invoices-browser',\n",
+            "    'audit:supplier-cash-browser',\n"
+          ]
+        },
+        {
+          "start": 1345,
+          "after": [
+            "    : kefuSplitCartMediaBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.kefu-split-cart-media-browser.config.ts', '--maxWorkers=1', '--no-file-parallelism']\n"
+          ],
+          "before": [],
+          "anchorStart": 1342,
+          "anchor": [
+            "    : pcProductContentBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.pc-product-content-browser.config.ts', '--maxWorkers=1', '--no-file-parallelism']\n",
+            "    : uniProductCouponsBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.uni-product-coupons-browser.config.ts', '--maxWorkers=1', '--no-file-parallelism']\n",
+            "    : uniCouponBuyBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.uni-coupon-buy-browser.config.ts', '--maxWorkers=1', '--no-file-parallelism']\n",
+            "    : kefuSplitCartMediaBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.kefu-split-cart-media-browser.config.ts', '--maxWorkers=1', '--no-file-parallelism']\n",
+            "    : kefuOrderMediaBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.kefu-order-media-browser.config.ts', '--maxWorkers=1', '--no-file-parallelism']\n",
+            "    : kefuProductMediaBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.kefu-product-media-browser.config.ts', '--maxWorkers=1', '--no-file-parallelism']\n",
+            "    : publicProductEstimateBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.public-product-estimate-browser.config.ts', '--maxWorkers=1', '--no-file-parallelism']\n"
+          ]
+        },
+        {
+          "start": 1929,
+          "after": [
+            "    'test/kefu-split-cart-media-postgres.test.ts',\n"
+          ],
+          "before": [],
+          "anchorStart": 1926,
+          "anchor": [
+            "    'test/first-order-sql-authority.test.ts',\n",
+            "    'test/kefu-product-media-postgres.test.ts',\n",
+            "    'test/kefu-order-media-postgres.test.ts',\n",
+            "    'test/kefu-split-cart-media-postgres.test.ts',\n",
+            "    'test/product-price-truncation.test.ts',\n",
+            "    'test/user-level-cache-authority.test.ts',\n",
+            "    'test/public-product-catalog-promotion-slots.test.ts',\n"
+          ]
+        },
+        {
+          "start": 1953,
+          "after": [
+            "    timeout: (kefuSplitCartMediaBrowser ? 95 : kefuOrderMediaBrowser || kefuProductMediaBrowser ? 20 : publicProductEstimateBrowser ? 95 : uniCouponBuyBrowser ? 95 : uniProductCouponsBrowser ? 95 : pcMessageCenterBrowser ? 95 : pcProductContentBrowser ? 95 : publicProductReviewsBrowser ? 95 : reviewCommunitySyncBrowser ? 95 : buyerTrackingBrowser || buyerInvoicesBrowser || buyerReviewsBrowser || reviewCommunitySyncBrowser || pcProductContentBrowser || uniProductCouponsBrowser || uniCouponBuyBrowser || publicProductEstimateBrowser || kefuProductMediaBrowser || kefuOrderMediaBrowser || kefuSplitCartMediaBrowser || pcMessageCenterBrowser || publicProductReviewsBrowser || checkoutInvoicesBrowser ? 40 : messageCenterBrowser || financeCenterBrowser || spreadPosterBrowser || distributionLevelBrowser || agentExplanationBrowser ? 60 : withdrawalApplicationBrowser ? 45 : distributionLedgersBrowser ? 40 : promoterPeopleBrowser ? 40 : promoterOrdersBrowser ? 40 : distributionRankingsBrowser ? 40 : memberLevelActivationBrowser ? 45 : membershipClauseBrowser ? 45 : membershipCouponsBrowser ? 50 : membershipHomeBrowser ? 50 : memberCardActivationBrowser ? 45 : membershipRightsBrowser ? 60 : customerProfileBrowser ? 60 : adminLevelDefinitionsBrowser ? 60 : memberLevelRecommendationsBrowser ? 60 : customerLevelOverviewBrowser ? 60 : customerGrowthRecordsBrowser ? 60 : adminMemberPackagesBrowser ? 60 : customerPointsCentreBrowser ? 60 : customerSignCentreBrowser ? 60 : adminUserFiltersBrowser ? 60 : adminWithdrawalDirectoryBrowser ? 60 : cartManagementBrowser ? 40 : diyCommunityAuthorBrowser ? 95 : diyCommerceAuthorBrowser ? 95 : diyEditorialAuthorBrowser ? 95 : diyStateAuthorBrowser ? 70 : diyListAuthorBrowser ? 70 : diyCarouselAuthorBrowser ? 70 : diyNavigationAuthorBrowser ? 70 : diyCarouselBrowser ? 70 : diyFooterBrowser ? 40 : diyCustomerServiceBrowser ? 40 : diyPageSettingsBrowser ? 50 : diyMediaReferenceBrowser ? 40 : diyPresentationBrowser ? 40 : diyNavigationBrowser ? 40 : unitShard ? 40 : (supplierRecommendImageBrowser || supplierUnitBrowser || supplierShippingEditorBrowser || supplierOrderTrackingBrowser || supplierOrderDistributionBrowser || supplierOrderFiltersBrowser || supplierOrderReviewBrowser || supplierOrderInvoiceReviewBrowser || supplierOrderPromotionsReviewBrowser || supplierOrderGiftIdentityBrowser || supplierOrderVirtualReviewBrowser || supplierRefundApplicationReviewBrowser || refundApplicationEvidenceBrowser || customerOrderRepurchaseBrowser || integralPurchaseOriginBrowser || integralPurchaseLimitsBrowser || productPurchaseAdmissionBrowser || supplierRuleInlineBrowser) ? 25 : (productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser || supplierCopyBrowser || supplierReviewBrowser || supplierDetailBrowser || supplierScheduleBrowser || supplierBrandBrowser || supplierEnsuresBrowser || supplierParametersBrowser || supplierSystemFormBrowser || supplierSkuBatchBrowser || supplierRecommendImageBrowser || supplierUnitBrowser || supplierShippingEditorBrowser || supplierOrderTrackingBrowser || supplierOrderDistributionBrowser || supplierOrderFiltersBrowser || supplierOrderReviewBrowser || supplierOrderInvoiceReviewBrowser || supplierOrderPromotionsReviewBrowser || supplierOrderGiftIdentityBrowser || supplierOrderVirtualReviewBrowser || supplierRefundApplicationReviewBrowser || refundApplicationEvidenceBrowser || customerOrderRepurchaseBrowser || integralPurchaseOriginBrowser || integralPurchaseLimitsBrowser || productPurchaseAdmissionBrowser || supplierRuleInlineBrowser || supplierOrderEditBrowser || adminOrderEditBrowser || adminOrderHistoryBrowser || buyerTrackingBrowser || buyerInvoicesBrowser || buyerReviewsBrowser || reviewCommunitySyncBrowser || pcProductContentBrowser || uniProductCouponsBrowser || uniCouponBuyBrowser || publicProductEstimateBrowser || kefuProductMediaBrowser || kefuOrderMediaBrowser || kefuSplitCartMediaBrowser || pcMessageCenterBrowser || publicProductReviewsBrowser || checkoutInvoicesBrowser || orderTimelineBrowser || supplierCashBrowser || supplierProactiveRefundBrowser || supplierRefundSettlementBrowser || supplierBillBrowser || supplierBillExportBrowser || supplierFlowBrowser || supplierExtractBrowser || supplierExtractApplicationBrowser || supplierFinanceAccountsBrowser || supplierExtractMediaBrowser || supplierExtractApplicationMediaBrowser) ? 20 : tests.some(test => new Set([\n"
+          ],
+          "before": [
+            "    timeout: (kefuOrderMediaBrowser || kefuProductMediaBrowser ? 20 : publicProductEstimateBrowser ? 95 : uniCouponBuyBrowser ? 95 : uniProductCouponsBrowser ? 95 : pcMessageCenterBrowser ? 95 : pcProductContentBrowser ? 95 : publicProductReviewsBrowser ? 95 : reviewCommunitySyncBrowser ? 95 : buyerTrackingBrowser || buyerInvoicesBrowser || buyerReviewsBrowser || reviewCommunitySyncBrowser || pcProductContentBrowser || uniProductCouponsBrowser || uniCouponBuyBrowser || publicProductEstimateBrowser || kefuProductMediaBrowser || kefuOrderMediaBrowser || pcMessageCenterBrowser || publicProductReviewsBrowser || checkoutInvoicesBrowser ? 40 : messageCenterBrowser || financeCenterBrowser || spreadPosterBrowser || distributionLevelBrowser || agentExplanationBrowser ? 60 : withdrawalApplicationBrowser ? 45 : distributionLedgersBrowser ? 40 : promoterPeopleBrowser ? 40 : promoterOrdersBrowser ? 40 : distributionRankingsBrowser ? 40 : memberLevelActivationBrowser ? 45 : membershipClauseBrowser ? 45 : membershipCouponsBrowser ? 50 : membershipHomeBrowser ? 50 : memberCardActivationBrowser ? 45 : membershipRightsBrowser ? 60 : customerProfileBrowser ? 60 : adminLevelDefinitionsBrowser ? 60 : memberLevelRecommendationsBrowser ? 60 : customerLevelOverviewBrowser ? 60 : customerGrowthRecordsBrowser ? 60 : adminMemberPackagesBrowser ? 60 : customerPointsCentreBrowser ? 60 : customerSignCentreBrowser ? 60 : adminUserFiltersBrowser ? 60 : adminWithdrawalDirectoryBrowser ? 60 : cartManagementBrowser ? 40 : diyCommunityAuthorBrowser ? 95 : diyCommerceAuthorBrowser ? 95 : diyEditorialAuthorBrowser ? 95 : diyStateAuthorBrowser ? 70 : diyListAuthorBrowser ? 70 : diyCarouselAuthorBrowser ? 70 : diyNavigationAuthorBrowser ? 70 : diyCarouselBrowser ? 70 : diyFooterBrowser ? 40 : diyCustomerServiceBrowser ? 40 : diyPageSettingsBrowser ? 50 : diyMediaReferenceBrowser ? 40 : diyPresentationBrowser ? 40 : diyNavigationBrowser ? 40 : unitShard ? 40 : (supplierRecommendImageBrowser || supplierUnitBrowser || supplierShippingEditorBrowser || supplierOrderTrackingBrowser || supplierOrderDistributionBrowser || supplierOrderFiltersBrowser || supplierOrderReviewBrowser || supplierOrderInvoiceReviewBrowser || supplierOrderPromotionsReviewBrowser || supplierOrderGiftIdentityBrowser || supplierOrderVirtualReviewBrowser || supplierRefundApplicationReviewBrowser || refundApplicationEvidenceBrowser || customerOrderRepurchaseBrowser || integralPurchaseOriginBrowser || integralPurchaseLimitsBrowser || productPurchaseAdmissionBrowser || supplierRuleInlineBrowser) ? 25 : (productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser || supplierCopyBrowser || supplierReviewBrowser || supplierDetailBrowser || supplierScheduleBrowser || supplierBrandBrowser || supplierEnsuresBrowser || supplierParametersBrowser || supplierSystemFormBrowser || supplierSkuBatchBrowser || supplierRecommendImageBrowser || supplierUnitBrowser || supplierShippingEditorBrowser || supplierOrderTrackingBrowser || supplierOrderDistributionBrowser || supplierOrderFiltersBrowser || supplierOrderReviewBrowser || supplierOrderInvoiceReviewBrowser || supplierOrderPromotionsReviewBrowser || supplierOrderGiftIdentityBrowser || supplierOrderVirtualReviewBrowser || supplierRefundApplicationReviewBrowser || refundApplicationEvidenceBrowser || customerOrderRepurchaseBrowser || integralPurchaseOriginBrowser || integralPurchaseLimitsBrowser || productPurchaseAdmissionBrowser || supplierRuleInlineBrowser || supplierOrderEditBrowser || adminOrderEditBrowser || adminOrderHistoryBrowser || buyerTrackingBrowser || buyerInvoicesBrowser || buyerReviewsBrowser || reviewCommunitySyncBrowser || pcProductContentBrowser || uniProductCouponsBrowser || uniCouponBuyBrowser || publicProductEstimateBrowser || kefuProductMediaBrowser || kefuOrderMediaBrowser || pcMessageCenterBrowser || publicProductReviewsBrowser || checkoutInvoicesBrowser || orderTimelineBrowser || supplierCashBrowser || supplierProactiveRefundBrowser || supplierRefundSettlementBrowser || supplierBillBrowser || supplierBillExportBrowser || supplierFlowBrowser || supplierExtractBrowser || supplierExtractApplicationBrowser || supplierFinanceAccountsBrowser || supplierExtractMediaBrowser || supplierExtractApplicationMediaBrowser) ? 20 : tests.some(test => new Set([\n"
+          ],
+          "anchorStart": 1950,
+          "anchor": [
+            "    // These complete-schema assisted suites create two independent LOGIN\n",
+            "    // profiles for every case. Retain every original case and allow their full\n",
+            "    // files to finish; the individual SQL/HTTP lock deadlines remain bounded.\n",
+            "    timeout: (kefuSplitCartMediaBrowser ? 95 : kefuOrderMediaBrowser || kefuProductMediaBrowser ? 20 : publicProductEstimateBrowser ? 95 : uniCouponBuyBrowser ? 95 : uniProductCouponsBrowser ? 95 : pcMessageCenterBrowser ? 95 : pcProductContentBrowser ? 95 : publicProductReviewsBrowser ? 95 : reviewCommunitySyncBrowser ? 95 : buyerTrackingBrowser || buyerInvoicesBrowser || buyerReviewsBrowser || reviewCommunitySyncBrowser || pcProductContentBrowser || uniProductCouponsBrowser || uniCouponBuyBrowser || publicProductEstimateBrowser || kefuProductMediaBrowser || kefuOrderMediaBrowser || kefuSplitCartMediaBrowser || pcMessageCenterBrowser || publicProductReviewsBrowser || checkoutInvoicesBrowser ? 40 : messageCenterBrowser || financeCenterBrowser || spreadPosterBrowser || distributionLevelBrowser || agentExplanationBrowser ? 60 : withdrawalApplicationBrowser ? 45 : distributionLedgersBrowser ? 40 : promoterPeopleBrowser ? 40 : promoterOrdersBrowser ? 40 : distributionRankingsBrowser ? 40 : memberLevelActivationBrowser ? 45 : membershipClauseBrowser ? 45 : membershipCouponsBrowser ? 50 : membershipHomeBrowser ? 50 : memberCardActivationBrowser ? 45 : membershipRightsBrowser ? 60 : customerProfileBrowser ? 60 : adminLevelDefinitionsBrowser ? 60 : memberLevelRecommendationsBrowser ? 60 : customerLevelOverviewBrowser ? 60 : customerGrowthRecordsBrowser ? 60 : adminMemberPackagesBrowser ? 60 : customerPointsCentreBrowser ? 60 : customerSignCentreBrowser ? 60 : adminUserFiltersBrowser ? 60 : adminWithdrawalDirectoryBrowser ? 60 : cartManagementBrowser ? 40 : diyCommunityAuthorBrowser ? 95 : diyCommerceAuthorBrowser ? 95 : diyEditorialAuthorBrowser ? 95 : diyStateAuthorBrowser ? 70 : diyListAuthorBrowser ? 70 : diyCarouselAuthorBrowser ? 70 : diyNavigationAuthorBrowser ? 70 : diyCarouselBrowser ? 70 : diyFooterBrowser ? 40 : diyCustomerServiceBrowser ? 40 : diyPageSettingsBrowser ? 50 : diyMediaReferenceBrowser ? 40 : diyPresentationBrowser ? 40 : diyNavigationBrowser ? 40 : unitShard ? 40 : (supplierRecommendImageBrowser || supplierUnitBrowser || supplierShippingEditorBrowser || supplierOrderTrackingBrowser || supplierOrderDistributionBrowser || supplierOrderFiltersBrowser || supplierOrderReviewBrowser || supplierOrderInvoiceReviewBrowser || supplierOrderPromotionsReviewBrowser || supplierOrderGiftIdentityBrowser || supplierOrderVirtualReviewBrowser || supplierRefundApplicationReviewBrowser || refundApplicationEvidenceBrowser || customerOrderRepurchaseBrowser || integralPurchaseOriginBrowser || integralPurchaseLimitsBrowser || productPurchaseAdmissionBrowser || supplierRuleInlineBrowser) ? 25 : (productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser || supplierCopyBrowser || supplierReviewBrowser || supplierDetailBrowser || supplierScheduleBrowser || supplierBrandBrowser || supplierEnsuresBrowser || supplierParametersBrowser || supplierSystemFormBrowser || supplierSkuBatchBrowser || supplierRecommendImageBrowser || supplierUnitBrowser || supplierShippingEditorBrowser || supplierOrderTrackingBrowser || supplierOrderDistributionBrowser || supplierOrderFiltersBrowser || supplierOrderReviewBrowser || supplierOrderInvoiceReviewBrowser || supplierOrderPromotionsReviewBrowser || supplierOrderGiftIdentityBrowser || supplierOrderVirtualReviewBrowser || supplierRefundApplicationReviewBrowser || refundApplicationEvidenceBrowser || customerOrderRepurchaseBrowser || integralPurchaseOriginBrowser || integralPurchaseLimitsBrowser || productPurchaseAdmissionBrowser || supplierRuleInlineBrowser || supplierOrderEditBrowser || adminOrderEditBrowser || adminOrderHistoryBrowser || buyerTrackingBrowser || buyerInvoicesBrowser || buyerReviewsBrowser || reviewCommunitySyncBrowser || pcProductContentBrowser || uniProductCouponsBrowser || uniCouponBuyBrowser || publicProductEstimateBrowser || kefuProductMediaBrowser || kefuOrderMediaBrowser || kefuSplitCartMediaBrowser || pcMessageCenterBrowser || publicProductReviewsBrowser || checkoutInvoicesBrowser || orderTimelineBrowser || supplierCashBrowser || supplierProactiveRefundBrowser || supplierRefundSettlementBrowser || supplierBillBrowser || supplierBillExportBrowser || supplierFlowBrowser || supplierExtractBrowser || supplierExtractApplicationBrowser || supplierFinanceAccountsBrowser || supplierExtractMediaBrowser || supplierExtractApplicationMediaBrowser) ? 20 : tests.some(test => new Set([\n",
+            "      'test/assisted-purchase-flow-postgres.test.ts',\n",
+            "      'test/assisted-purchase-runtime-postgres.test.ts',\n",
+            "    ]).has(test)) ? 25 : 10) * 60_000, maxBuffer: 32 * 1024 * 1024,\n"
+          ]
+        },
+        {
+          "start": 1958,
+          "after": [
+            "      : { ...process.env, TEST_FINANCE_POSTGRES_URL: testConnection, ...(purchasedLabelOperationsBrowser ? { TEST_PURCHASED_LABEL_OPERATIONS_BROWSER: '1' } : {}), ...(assignedFulfillmentBrowser ? { TEST_ASSIGNED_FULFILLMENT_BROWSER: '1' } : {}), ...(spreadPosterBrowser ? { TEST_SPREAD_POSTER_BROWSER: '1' } : {}), ...(financeCenterBrowser ? { TEST_FINANCE_CENTER_BROWSER: '1' } : {}), ...(productEditorBrowser ? { TEST_PRODUCT_EDITOR_BROWSER: '1' } : {}), ...(supplierVideoBrowser ? { TEST_SUPPLIER_VIDEO_BROWSER: '1' } : {}), ...(supplierRecycleBrowser ? { TEST_SUPPLIER_RECYCLE_BROWSER: '1' } : {}), ...(supplierCopyBrowser ? { TEST_SUPPLIER_COPY_BROWSER: '1' } : {}), ...(supplierReviewBrowser ? { TEST_SUPPLIER_REVIEW_BROWSER: '1' } : {}), ...(supplierDetailBrowser ? { TEST_SUPPLIER_DETAIL_BROWSER: '1' } : {}), ...(supplierScheduleBrowser ? { TEST_SUPPLIER_SCHEDULE_BROWSER: '1' } : {}), ...(supplierBrandBrowser ? { TEST_SUPPLIER_BRAND_BROWSER: '1' } : {}), ...(supplierEnsuresBrowser ? { TEST_SUPPLIER_ENSURES_BROWSER: '1' } : {}), ...(supplierParametersBrowser ? { TEST_SUPPLIER_PARAMETERS_BROWSER: '1' } : {}), ...(supplierSystemFormBrowser ? { TEST_SUPPLIER_SYSTEM_FORM_BROWSER: '1' } : {}), ...(supplierSkuBatchBrowser ? { TEST_SUPPLIER_SKU_BATCH_BROWSER: '1' } : {}), ...(supplierRecommendImageBrowser ? { TEST_SUPPLIER_PRODUCT_RECOMMEND_IMAGE_BROWSER: '1' } : {}), ...(supplierUnitBrowser ? { TEST_SUPPLIER_PRODUCT_UNIT_BROWSER: '1' } : {}), ...(supplierOrderTrackingBrowser ? { TEST_SUPPLIER_ORDER_TRACKING_BROWSER: '1' } : {}), ...(supplierOrderDistributionBrowser ? { TEST_SUPPLIER_ORDER_DISTRIBUTION_BROWSER: '1' } : {}), ...(supplierOrderFiltersBrowser ? { TEST_SUPPLIER_ORDER_FILTERS_BROWSER: '1' } : {}), ...(supplierOrderReviewBrowser ? { TEST_SUPPLIER_ORDER_REVIEW_BROWSER: '1' } : {}), ...(supplierOrderInvoiceReviewBrowser ? { TEST_SUPPLIER_ORDER_INVOICE_REVIEW_BROWSER: '1' } : {}), ...(supplierOrderPromotionsReviewBrowser ? { TEST_SUPPLIER_ORDER_PROMOTIONS_REVIEW_BROWSER: '1' } : {}), ...(supplierOrderGiftIdentityBrowser ? { TEST_SUPPLIER_ORDER_GIFT_IDENTITY_BROWSER: '1' } : {}), ...(supplierOrderVirtualReviewBrowser ? { TEST_SUPPLIER_ORDER_VIRTUAL_REVIEW_BROWSER: '1' } : {}), ...(supplierRefundApplicationReviewBrowser ? { TEST_SUPPLIER_REFUND_APPLICATION_REVIEW_BROWSER: '1' } : {}), ...(refundApplicationEvidenceBrowser ? { TEST_REFUND_APPLICATION_EVIDENCE_BROWSER: '1' } : {}), ...(customerOrderRepurchaseBrowser ? { TEST_CUSTOMER_ORDER_REPURCHASE_BROWSER: '1' } : {}), ...(repurchaseShortSkuBrowser ? { TEST_REPURCHASE_SHORT_SKU_BROWSER: '1' } : {}), ...(integralPurchaseOriginBrowser ? { TEST_INTEGRAL_PURCHASE_ORIGIN_BROWSER: '1' } : {}), ...(integralPurchaseLimitsBrowser ? { TEST_INTEGRAL_PURCHASE_LIMITS_BROWSER: '1' } : {}), ...(productPurchaseAdmissionBrowser ? { TEST_PRODUCT_PURCHASE_ADMISSION_BROWSER: '1' } : {}), ...(purchasePhysicalOriginBrowser ? { TEST_PURCHASE_PHYSICAL_ORIGIN_BROWSER: '1' } : {}), ...(ordinaryShortSkuBrowser ? { TEST_ORDINARY_SHORT_SKU_BROWSER: '1' } : {}), ...(customerSignCentreBrowser ? { TEST_CUSTOMER_SIGN_CENTRE_BROWSER: '1' } : {}), ...(customerPointsCentreBrowser ? { TEST_CUSTOMER_POINTS_CENTRE_BROWSER: '1' } : {}), ...(customerGrowthRecordsBrowser ? { TEST_CUSTOMER_GROWTH_RECORDS_BROWSER: '1' } : {}), ...(customerLevelOverviewBrowser ? { TEST_CUSTOMER_LEVEL_OVERVIEW_BROWSER: '1' } : {}), ...(withdrawalApplicationBrowser ? { TEST_WITHDRAWAL_APPLICATION_BROWSER: '1' } : {}), ...(distributionLedgersBrowser ? { TEST_DISTRIBUTION_LEDGERS_BROWSER: '1' } : {}), ...(promoterPeopleBrowser ? { TEST_PROMOTER_PEOPLE_BROWSER: '1' } : {}), ...(promoterOrdersBrowser ? { TEST_PROMOTER_ORDERS_BROWSER: '1' } : {}), ...(distributionRankingsBrowser ? { TEST_DISTRIBUTION_RANKINGS_BROWSER: '1' } : {}), ...(memberLevelRecommendationsBrowser ? { TEST_MEMBER_LEVEL_RECOMMENDATIONS_BROWSER: '1' } : {}), ...(memberLevelActivationBrowser ? { TEST_MEMBER_LEVEL_ACTIVATION_BROWSER: '1' } : {}), ...(membershipClauseBrowser ? { TEST_MEMBERSHIP_CLAUSE_BROWSER: '1' } : {}), ...(membershipCouponsBrowser ? { TEST_MEMBERSHIP_COUPONS_BROWSER: '1' } : {}), ...(membershipHomeBrowser ? { TEST_MEMBERSHIP_HOME_BROWSER: '1' } : {}), ...(memberCardActivationBrowser ? { TEST_MEMBER_CARD_ACTIVATION_BROWSER: '1' } : {}), ...(membershipRightsBrowser ? { TEST_MEMBERSHIP_RIGHTS_BROWSER: '1' } : {}), ...(customerProfileBrowser ? { TEST_CUSTOMER_PROFILE_BROWSER: '1' } : {}), ...(adminUserFiltersBrowser ? { TEST_ADMIN_USER_FILTERS_BROWSER: '1' } : {}), ...(agentExplanationBrowser ? { TEST_AGENT_EXPLANATION_BROWSER: '1' } : {}), ...(distributionLevelBrowser ? { TEST_DISTRIBUTION_LEVEL_BROWSER: '1' } : {}), ...(messageCenterBrowser ? { TEST_MESSAGE_CENTER_BROWSER: '1' } : {}), ...(adminWithdrawalDirectoryBrowser ? { TEST_ADMIN_WITHDRAWAL_DIRECTORY_BROWSER: '1' } : {}), ...(adminLevelDefinitionsBrowser ? { TEST_ADMIN_LEVEL_DEFINITIONS_BROWSER: '1' } : {}), ...(adminMemberPackagesBrowser ? { TEST_ADMIN_MEMBER_PACKAGES_BROWSER: '1' } : {}), ...(cartManagementBrowser ? { TEST_CART_MANAGEMENT_BROWSER: '1' } : {}), ...(diyFooterBrowser ? { TEST_DIY_FOOTER_BROWSER: '1' } : {}), ...(diyPresentationBrowser ? { TEST_DIY_PRESENTATION_BROWSER: '1' } : {}), ...(diyCustomerServiceBrowser ? { TEST_DIY_CUSTOMER_SERVICE_BROWSER: '1' } : {}), ...(diyPageSettingsBrowser ? { TEST_DIY_PAGE_SETTINGS_BROWSER: '1' } : {}), ...(diyMediaReferenceBrowser ? { TEST_DIY_MEDIA_REFERENCE_BROWSER: '1' } : {}), ...(diyNavigationAuthorBrowser ? { TEST_DIY_NAVIGATION_AUTHOR_BROWSER: '1' } : {}), ...(diyCarouselAuthorBrowser ? { TEST_DIY_CAROUSEL_AUTHOR_BROWSER: '1' } : {}), ...(diyListAuthorBrowser ? { TEST_DIY_LIST_AUTHOR_BROWSER: '1' } : {}), ...(diyStateAuthorBrowser ? { TEST_DIY_STATE_AUTHOR_BROWSER: '1' } : {}), ...(diyEditorialAuthorBrowser ? { TEST_DIY_EDITORIAL_AUTHOR_BROWSER: '1' } : {}), ...(diyCommerceAuthorBrowser ? { TEST_DIY_COMMERCE_AUTHOR_BROWSER: '1' } : {}), ...(diyCommunityAuthorBrowser ? { TEST_DIY_COMMUNITY_AUTHOR_BROWSER: '1' } : {}), ...(diyNavigationBrowser ? { TEST_DIY_NAVIGATION_BROWSER: '1' } : {}), ...(diyCarouselBrowser ? { TEST_DIY_CAROUSEL_BROWSER: '1' } : {}), ...(diyEditorialBrowser ? { TEST_DIY_EDITORIAL_BROWSER: '1' } : {}), ...(diyCommerceBrowser ? { TEST_DIY_COMMERCE_BROWSER: '1' } : {}), ...(diyStateBrowser ? { TEST_DIY_STATE_BROWSER: '1' } : {}), ...(diyCommunityBrowser ? { TEST_DIY_COMMUNITY_BROWSER: '1' } : {}), ...(communityMainFeedBrowser ? { TEST_COMMUNITY_MAIN_FEED_BROWSER: '1' } : {}), ...(communityAvailabilityBrowser ? { TEST_COMMUNITY_AVAILABILITY_BROWSER: '1' } : {}), ...(communityPublishEntryBrowser ? { TEST_COMMUNITY_PUBLISH_ENTRY_BROWSER: '1' } : {}), ...(communityEngagementBrowser ? { TEST_COMMUNITY_ENGAGEMENT_BROWSER: '1' } : {}), ...(communityCommentsBrowser ? { TEST_COMMUNITY_COMMENTS_BROWSER: '1' } : {}), ...(communityPeopleBrowser ? { TEST_COMMUNITY_PEOPLE_BROWSER: '1' } : {}), ...(communityAuthorBrowser ? { TEST_COMMUNITY_AUTHOR_BROWSER: '1' } : {}), ...(communityRelationsBrowser ? { TEST_COMMUNITY_RELATIONS_BROWSER: '1' } : {}), ...(communityImageBrowser ? { TEST_COMMUNITY_IMAGE_BROWSER: '1' } : {}), ...(communityVideoBrowser ? { TEST_COMMUNITY_VIDEO_BROWSER: '1' } : {}), ...(bargainParticipationCancelBrowser ? { TEST_BARGAIN_PARTICIPATION_CANCEL_BROWSER: '1' } : {}), ...(pcBargainInvitationsBrowser ? { TEST_PC_BARGAIN_INVITATIONS_BROWSER: '1' } : {}), ...(bargainFriendHelpBrowser ? { TEST_BARGAIN_FRIEND_HELP_BROWSER: '1' } : {}), ...(bargainShortSkuBrowser ? { TEST_BARGAIN_SHORT_SKU_BROWSER: '1' } : {}), ...(seckillShortSkuBrowser ? { TEST_SECKILL_SHORT_SKU_BROWSER: '1' } : {}), ...(newcomerShortSkuBrowser ? { TEST_NEWCOMER_SHORT_SKU_BROWSER: '1' } : {}), ...(presaleShortSkuBrowser ? { TEST_PRESALE_SHORT_SKU_BROWSER: '1' } : {}), ...(supplierRuleInlineBrowser ? { TEST_SUPPLIER_PRODUCT_RULE_INLINE_BROWSER: '1' } : {}), ...(supplierShippingEditorBrowser ? { TEST_SUPPLIER_PRODUCT_SHIPPING_EDITOR_BROWSER: '1' } : {}), ...(supplierOrderEditBrowser ? { TEST_SUPPLIER_ORDER_EDIT_BROWSER: '1' } : {}), ...(adminOrderEditBrowser ? { TEST_ADMIN_ORDER_EDIT_BROWSER: '1' } : {}), ...(adminOrderHistoryBrowser ? { TEST_ADMIN_ORDER_HISTORY_BROWSER: '1' } : {}), ...(buyerTrackingBrowser ? { TEST_BUYER_TRACKING_BROWSER: '1' } : {}), ...(buyerInvoicesBrowser ? { TEST_BUYER_INVOICES_BROWSER: '1' } : {}), ...(pcProductContentBrowser ? { TEST_PC_PRODUCT_CONTENT_BROWSER: '1' } : {}), ...(uniProductCouponsBrowser ? { TEST_UNI_PRODUCT_COUPONS_BROWSER: '1' } : {}), ...(uniCouponBuyBrowser ? { TEST_UNI_COUPON_BUY_BROWSER: '1' } : {}), ...(publicProductEstimateBrowser ? { TEST_PUBLIC_PRODUCT_ESTIMATE_BROWSER: '1' } : {}), ...(kefuProductMediaBrowser ? { TEST_KEFU_PRODUCT_MEDIA_BROWSER: '1' } : {}), ...(kefuOrderMediaBrowser ? { TEST_KEFU_ORDER_MEDIA_BROWSER: '1' } : {}), ...(kefuSplitCartMediaBrowser ? { TEST_KEFU_SPLIT_CART_MEDIA_BROWSER: '1' } : {}), ...(pcMessageCenterBrowser ? { TEST_PC_MESSAGE_CENTER_BROWSER: '1' } : {}), ...(publicProductReviewsBrowser ? { TEST_PUBLIC_PRODUCT_REVIEWS_BROWSER: '1' } : {}), ...(reviewCommunitySyncBrowser ? { TEST_REVIEW_COMMUNITY_SYNC_BROWSER: '1' } : {}), ...(buyerReviewsBrowser ? { TEST_BUYER_REVIEWS_BROWSER: '1' } : {}), ...(checkoutInvoicesBrowser ? { TEST_CHECKOUT_INVOICES_BROWSER: '1' } : {}), ...(orderTimelineBrowser ? { TEST_ORDER_TIMELINE_BROWSER: '1' } : {}), ...(supplierCashBrowser ? { TEST_SUPPLIER_CASH_BROWSER: '1' } : {}), ...(supplierProactiveRefundBrowser ? { TEST_SUPPLIER_PROACTIVE_REFUND_BROWSER: '1' } : {}), ...(supplierRefundSettlementBrowser ? { TEST_SUPPLIER_REFUND_SETTLEMENT_BROWSER: '1' } : {}), ...(supplierBillBrowser ? { TEST_SUPPLIER_BILL_BROWSER: '1' } : {}), ...(supplierBillExportBrowser ? { TEST_SUPPLIER_BILL_EXPORT_BROWSER: '1' } : {}), ...(supplierFlowBrowser ? { TEST_SUPPLIER_FLOW_BROWSER: '1' } : {}), ...(supplierExtractBrowser ? { TEST_SUPPLIER_EXTRACT_BROWSER: '1' } : {}), ...(supplierExtractApplicationBrowser ? { TEST_SUPPLIER_EXTRACT_APPLICATION_BROWSER: '1' } : {}), ...(supplierFinanceAccountsBrowser ? { TEST_SUPPLIER_FINANCE_ACCOUNTS_BROWSER: '1' } : {}), ...(supplierExtractMediaBrowser ? { TEST_SUPPLIER_EXTRACT_MEDIA_BROWSER: '1' } : {}), ...(supplierExtractApplicationMediaBrowser ? { TEST_SUPPLIER_EXTRACT_APPLICATION_MEDIA_BROWSER: '1' } : {}) },\n"
+          ],
+          "before": [
+            "      : { ...process.env, TEST_FINANCE_POSTGRES_URL: testConnection, ...(purchasedLabelOperationsBrowser ? { TEST_PURCHASED_LABEL_OPERATIONS_BROWSER: '1' } : {}), ...(assignedFulfillmentBrowser ? { TEST_ASSIGNED_FULFILLMENT_BROWSER: '1' } : {}), ...(spreadPosterBrowser ? { TEST_SPREAD_POSTER_BROWSER: '1' } : {}), ...(financeCenterBrowser ? { TEST_FINANCE_CENTER_BROWSER: '1' } : {}), ...(productEditorBrowser ? { TEST_PRODUCT_EDITOR_BROWSER: '1' } : {}), ...(supplierVideoBrowser ? { TEST_SUPPLIER_VIDEO_BROWSER: '1' } : {}), ...(supplierRecycleBrowser ? { TEST_SUPPLIER_RECYCLE_BROWSER: '1' } : {}), ...(supplierCopyBrowser ? { TEST_SUPPLIER_COPY_BROWSER: '1' } : {}), ...(supplierReviewBrowser ? { TEST_SUPPLIER_REVIEW_BROWSER: '1' } : {}), ...(supplierDetailBrowser ? { TEST_SUPPLIER_DETAIL_BROWSER: '1' } : {}), ...(supplierScheduleBrowser ? { TEST_SUPPLIER_SCHEDULE_BROWSER: '1' } : {}), ...(supplierBrandBrowser ? { TEST_SUPPLIER_BRAND_BROWSER: '1' } : {}), ...(supplierEnsuresBrowser ? { TEST_SUPPLIER_ENSURES_BROWSER: '1' } : {}), ...(supplierParametersBrowser ? { TEST_SUPPLIER_PARAMETERS_BROWSER: '1' } : {}), ...(supplierSystemFormBrowser ? { TEST_SUPPLIER_SYSTEM_FORM_BROWSER: '1' } : {}), ...(supplierSkuBatchBrowser ? { TEST_SUPPLIER_SKU_BATCH_BROWSER: '1' } : {}), ...(supplierRecommendImageBrowser ? { TEST_SUPPLIER_PRODUCT_RECOMMEND_IMAGE_BROWSER: '1' } : {}), ...(supplierUnitBrowser ? { TEST_SUPPLIER_PRODUCT_UNIT_BROWSER: '1' } : {}), ...(supplierOrderTrackingBrowser ? { TEST_SUPPLIER_ORDER_TRACKING_BROWSER: '1' } : {}), ...(supplierOrderDistributionBrowser ? { TEST_SUPPLIER_ORDER_DISTRIBUTION_BROWSER: '1' } : {}), ...(supplierOrderFiltersBrowser ? { TEST_SUPPLIER_ORDER_FILTERS_BROWSER: '1' } : {}), ...(supplierOrderReviewBrowser ? { TEST_SUPPLIER_ORDER_REVIEW_BROWSER: '1' } : {}), ...(supplierOrderInvoiceReviewBrowser ? { TEST_SUPPLIER_ORDER_INVOICE_REVIEW_BROWSER: '1' } : {}), ...(supplierOrderPromotionsReviewBrowser ? { TEST_SUPPLIER_ORDER_PROMOTIONS_REVIEW_BROWSER: '1' } : {}), ...(supplierOrderGiftIdentityBrowser ? { TEST_SUPPLIER_ORDER_GIFT_IDENTITY_BROWSER: '1' } : {}), ...(supplierOrderVirtualReviewBrowser ? { TEST_SUPPLIER_ORDER_VIRTUAL_REVIEW_BROWSER: '1' } : {}), ...(supplierRefundApplicationReviewBrowser ? { TEST_SUPPLIER_REFUND_APPLICATION_REVIEW_BROWSER: '1' } : {}), ...(refundApplicationEvidenceBrowser ? { TEST_REFUND_APPLICATION_EVIDENCE_BROWSER: '1' } : {}), ...(customerOrderRepurchaseBrowser ? { TEST_CUSTOMER_ORDER_REPURCHASE_BROWSER: '1' } : {}), ...(repurchaseShortSkuBrowser ? { TEST_REPURCHASE_SHORT_SKU_BROWSER: '1' } : {}), ...(integralPurchaseOriginBrowser ? { TEST_INTEGRAL_PURCHASE_ORIGIN_BROWSER: '1' } : {}), ...(integralPurchaseLimitsBrowser ? { TEST_INTEGRAL_PURCHASE_LIMITS_BROWSER: '1' } : {}), ...(productPurchaseAdmissionBrowser ? { TEST_PRODUCT_PURCHASE_ADMISSION_BROWSER: '1' } : {}), ...(purchasePhysicalOriginBrowser ? { TEST_PURCHASE_PHYSICAL_ORIGIN_BROWSER: '1' } : {}), ...(ordinaryShortSkuBrowser ? { TEST_ORDINARY_SHORT_SKU_BROWSER: '1' } : {}), ...(customerSignCentreBrowser ? { TEST_CUSTOMER_SIGN_CENTRE_BROWSER: '1' } : {}), ...(customerPointsCentreBrowser ? { TEST_CUSTOMER_POINTS_CENTRE_BROWSER: '1' } : {}), ...(customerGrowthRecordsBrowser ? { TEST_CUSTOMER_GROWTH_RECORDS_BROWSER: '1' } : {}), ...(customerLevelOverviewBrowser ? { TEST_CUSTOMER_LEVEL_OVERVIEW_BROWSER: '1' } : {}), ...(withdrawalApplicationBrowser ? { TEST_WITHDRAWAL_APPLICATION_BROWSER: '1' } : {}), ...(distributionLedgersBrowser ? { TEST_DISTRIBUTION_LEDGERS_BROWSER: '1' } : {}), ...(promoterPeopleBrowser ? { TEST_PROMOTER_PEOPLE_BROWSER: '1' } : {}), ...(promoterOrdersBrowser ? { TEST_PROMOTER_ORDERS_BROWSER: '1' } : {}), ...(distributionRankingsBrowser ? { TEST_DISTRIBUTION_RANKINGS_BROWSER: '1' } : {}), ...(memberLevelRecommendationsBrowser ? { TEST_MEMBER_LEVEL_RECOMMENDATIONS_BROWSER: '1' } : {}), ...(memberLevelActivationBrowser ? { TEST_MEMBER_LEVEL_ACTIVATION_BROWSER: '1' } : {}), ...(membershipClauseBrowser ? { TEST_MEMBERSHIP_CLAUSE_BROWSER: '1' } : {}), ...(membershipCouponsBrowser ? { TEST_MEMBERSHIP_COUPONS_BROWSER: '1' } : {}), ...(membershipHomeBrowser ? { TEST_MEMBERSHIP_HOME_BROWSER: '1' } : {}), ...(memberCardActivationBrowser ? { TEST_MEMBER_CARD_ACTIVATION_BROWSER: '1' } : {}), ...(membershipRightsBrowser ? { TEST_MEMBERSHIP_RIGHTS_BROWSER: '1' } : {}), ...(customerProfileBrowser ? { TEST_CUSTOMER_PROFILE_BROWSER: '1' } : {}), ...(adminUserFiltersBrowser ? { TEST_ADMIN_USER_FILTERS_BROWSER: '1' } : {}), ...(agentExplanationBrowser ? { TEST_AGENT_EXPLANATION_BROWSER: '1' } : {}), ...(distributionLevelBrowser ? { TEST_DISTRIBUTION_LEVEL_BROWSER: '1' } : {}), ...(messageCenterBrowser ? { TEST_MESSAGE_CENTER_BROWSER: '1' } : {}), ...(adminWithdrawalDirectoryBrowser ? { TEST_ADMIN_WITHDRAWAL_DIRECTORY_BROWSER: '1' } : {}), ...(adminLevelDefinitionsBrowser ? { TEST_ADMIN_LEVEL_DEFINITIONS_BROWSER: '1' } : {}), ...(adminMemberPackagesBrowser ? { TEST_ADMIN_MEMBER_PACKAGES_BROWSER: '1' } : {}), ...(cartManagementBrowser ? { TEST_CART_MANAGEMENT_BROWSER: '1' } : {}), ...(diyFooterBrowser ? { TEST_DIY_FOOTER_BROWSER: '1' } : {}), ...(diyPresentationBrowser ? { TEST_DIY_PRESENTATION_BROWSER: '1' } : {}), ...(diyCustomerServiceBrowser ? { TEST_DIY_CUSTOMER_SERVICE_BROWSER: '1' } : {}), ...(diyPageSettingsBrowser ? { TEST_DIY_PAGE_SETTINGS_BROWSER: '1' } : {}), ...(diyMediaReferenceBrowser ? { TEST_DIY_MEDIA_REFERENCE_BROWSER: '1' } : {}), ...(diyNavigationAuthorBrowser ? { TEST_DIY_NAVIGATION_AUTHOR_BROWSER: '1' } : {}), ...(diyCarouselAuthorBrowser ? { TEST_DIY_CAROUSEL_AUTHOR_BROWSER: '1' } : {}), ...(diyListAuthorBrowser ? { TEST_DIY_LIST_AUTHOR_BROWSER: '1' } : {}), ...(diyStateAuthorBrowser ? { TEST_DIY_STATE_AUTHOR_BROWSER: '1' } : {}), ...(diyEditorialAuthorBrowser ? { TEST_DIY_EDITORIAL_AUTHOR_BROWSER: '1' } : {}), ...(diyCommerceAuthorBrowser ? { TEST_DIY_COMMERCE_AUTHOR_BROWSER: '1' } : {}), ...(diyCommunityAuthorBrowser ? { TEST_DIY_COMMUNITY_AUTHOR_BROWSER: '1' } : {}), ...(diyNavigationBrowser ? { TEST_DIY_NAVIGATION_BROWSER: '1' } : {}), ...(diyCarouselBrowser ? { TEST_DIY_CAROUSEL_BROWSER: '1' } : {}), ...(diyEditorialBrowser ? { TEST_DIY_EDITORIAL_BROWSER: '1' } : {}), ...(diyCommerceBrowser ? { TEST_DIY_COMMERCE_BROWSER: '1' } : {}), ...(diyStateBrowser ? { TEST_DIY_STATE_BROWSER: '1' } : {}), ...(diyCommunityBrowser ? { TEST_DIY_COMMUNITY_BROWSER: '1' } : {}), ...(communityMainFeedBrowser ? { TEST_COMMUNITY_MAIN_FEED_BROWSER: '1' } : {}), ...(communityAvailabilityBrowser ? { TEST_COMMUNITY_AVAILABILITY_BROWSER: '1' } : {}), ...(communityPublishEntryBrowser ? { TEST_COMMUNITY_PUBLISH_ENTRY_BROWSER: '1' } : {}), ...(communityEngagementBrowser ? { TEST_COMMUNITY_ENGAGEMENT_BROWSER: '1' } : {}), ...(communityCommentsBrowser ? { TEST_COMMUNITY_COMMENTS_BROWSER: '1' } : {}), ...(communityPeopleBrowser ? { TEST_COMMUNITY_PEOPLE_BROWSER: '1' } : {}), ...(communityAuthorBrowser ? { TEST_COMMUNITY_AUTHOR_BROWSER: '1' } : {}), ...(communityRelationsBrowser ? { TEST_COMMUNITY_RELATIONS_BROWSER: '1' } : {}), ...(communityImageBrowser ? { TEST_COMMUNITY_IMAGE_BROWSER: '1' } : {}), ...(communityVideoBrowser ? { TEST_COMMUNITY_VIDEO_BROWSER: '1' } : {}), ...(bargainParticipationCancelBrowser ? { TEST_BARGAIN_PARTICIPATION_CANCEL_BROWSER: '1' } : {}), ...(pcBargainInvitationsBrowser ? { TEST_PC_BARGAIN_INVITATIONS_BROWSER: '1' } : {}), ...(bargainFriendHelpBrowser ? { TEST_BARGAIN_FRIEND_HELP_BROWSER: '1' } : {}), ...(bargainShortSkuBrowser ? { TEST_BARGAIN_SHORT_SKU_BROWSER: '1' } : {}), ...(seckillShortSkuBrowser ? { TEST_SECKILL_SHORT_SKU_BROWSER: '1' } : {}), ...(newcomerShortSkuBrowser ? { TEST_NEWCOMER_SHORT_SKU_BROWSER: '1' } : {}), ...(presaleShortSkuBrowser ? { TEST_PRESALE_SHORT_SKU_BROWSER: '1' } : {}), ...(supplierRuleInlineBrowser ? { TEST_SUPPLIER_PRODUCT_RULE_INLINE_BROWSER: '1' } : {}), ...(supplierShippingEditorBrowser ? { TEST_SUPPLIER_PRODUCT_SHIPPING_EDITOR_BROWSER: '1' } : {}), ...(supplierOrderEditBrowser ? { TEST_SUPPLIER_ORDER_EDIT_BROWSER: '1' } : {}), ...(adminOrderEditBrowser ? { TEST_ADMIN_ORDER_EDIT_BROWSER: '1' } : {}), ...(adminOrderHistoryBrowser ? { TEST_ADMIN_ORDER_HISTORY_BROWSER: '1' } : {}), ...(buyerTrackingBrowser ? { TEST_BUYER_TRACKING_BROWSER: '1' } : {}), ...(buyerInvoicesBrowser ? { TEST_BUYER_INVOICES_BROWSER: '1' } : {}), ...(pcProductContentBrowser ? { TEST_PC_PRODUCT_CONTENT_BROWSER: '1' } : {}), ...(uniProductCouponsBrowser ? { TEST_UNI_PRODUCT_COUPONS_BROWSER: '1' } : {}), ...(uniCouponBuyBrowser ? { TEST_UNI_COUPON_BUY_BROWSER: '1' } : {}), ...(publicProductEstimateBrowser ? { TEST_PUBLIC_PRODUCT_ESTIMATE_BROWSER: '1' } : {}), ...(kefuProductMediaBrowser ? { TEST_KEFU_PRODUCT_MEDIA_BROWSER: '1' } : {}), ...(kefuOrderMediaBrowser ? { TEST_KEFU_ORDER_MEDIA_BROWSER: '1' } : {}), ...(pcMessageCenterBrowser ? { TEST_PC_MESSAGE_CENTER_BROWSER: '1' } : {}), ...(publicProductReviewsBrowser ? { TEST_PUBLIC_PRODUCT_REVIEWS_BROWSER: '1' } : {}), ...(reviewCommunitySyncBrowser ? { TEST_REVIEW_COMMUNITY_SYNC_BROWSER: '1' } : {}), ...(buyerReviewsBrowser ? { TEST_BUYER_REVIEWS_BROWSER: '1' } : {}), ...(checkoutInvoicesBrowser ? { TEST_CHECKOUT_INVOICES_BROWSER: '1' } : {}), ...(orderTimelineBrowser ? { TEST_ORDER_TIMELINE_BROWSER: '1' } : {}), ...(supplierCashBrowser ? { TEST_SUPPLIER_CASH_BROWSER: '1' } : {}), ...(supplierProactiveRefundBrowser ? { TEST_SUPPLIER_PROACTIVE_REFUND_BROWSER: '1' } : {}), ...(supplierRefundSettlementBrowser ? { TEST_SUPPLIER_REFUND_SETTLEMENT_BROWSER: '1' } : {}), ...(supplierBillBrowser ? { TEST_SUPPLIER_BILL_BROWSER: '1' } : {}), ...(supplierBillExportBrowser ? { TEST_SUPPLIER_BILL_EXPORT_BROWSER: '1' } : {}), ...(supplierFlowBrowser ? { TEST_SUPPLIER_FLOW_BROWSER: '1' } : {}), ...(supplierExtractBrowser ? { TEST_SUPPLIER_EXTRACT_BROWSER: '1' } : {}), ...(supplierExtractApplicationBrowser ? { TEST_SUPPLIER_EXTRACT_APPLICATION_BROWSER: '1' } : {}), ...(supplierFinanceAccountsBrowser ? { TEST_SUPPLIER_FINANCE_ACCOUNTS_BROWSER: '1' } : {}), ...(supplierExtractMediaBrowser ? { TEST_SUPPLIER_EXTRACT_MEDIA_BROWSER: '1' } : {}), ...(supplierExtractApplicationMediaBrowser ? { TEST_SUPPLIER_EXTRACT_APPLICATION_MEDIA_BROWSER: '1' } : {}) },\n"
+          ],
+          "anchorStart": 1955,
+          "anchor": [
+            "      'test/assisted-purchase-runtime-postgres.test.ts',\n",
+            "    ]).has(test)) ? 25 : 10) * 60_000, maxBuffer: 32 * 1024 * 1024,\n",
+            "    env: unitGate ? unitGate.unitGateEnvironment(process.env, testConnection, taskRoot)\n",
+            "      : { ...process.env, TEST_FINANCE_POSTGRES_URL: testConnection, ...(purchasedLabelOperationsBrowser ? { TEST_PURCHASED_LABEL_OPERATIONS_BROWSER: '1' } : {}), ...(assignedFulfillmentBrowser ? { TEST_ASSIGNED_FULFILLMENT_BROWSER: '1' } : {}), ...(spreadPosterBrowser ? { TEST_SPREAD_POSTER_BROWSER: '1' } : {}), ...(financeCenterBrowser ? { TEST_FINANCE_CENTER_BROWSER: '1' } : {}), ...(productEditorBrowser ? { TEST_PRODUCT_EDITOR_BROWSER: '1' } : {}), ...(supplierVideoBrowser ? { TEST_SUPPLIER_VIDEO_BROWSER: '1' } : {}), ...(supplierRecycleBrowser ? { TEST_SUPPLIER_RECYCLE_BROWSER: '1' } : {}), ...(supplierCopyBrowser ? { TEST_SUPPLIER_COPY_BROWSER: '1' } : {}), ...(supplierReviewBrowser ? { TEST_SUPPLIER_REVIEW_BROWSER: '1' } : {}), ...(supplierDetailBrowser ? { TEST_SUPPLIER_DETAIL_BROWSER: '1' } : {}), ...(supplierScheduleBrowser ? { TEST_SUPPLIER_SCHEDULE_BROWSER: '1' } : {}), ...(supplierBrandBrowser ? { TEST_SUPPLIER_BRAND_BROWSER: '1' } : {}), ...(supplierEnsuresBrowser ? { TEST_SUPPLIER_ENSURES_BROWSER: '1' } : {}), ...(supplierParametersBrowser ? { TEST_SUPPLIER_PARAMETERS_BROWSER: '1' } : {}), ...(supplierSystemFormBrowser ? { TEST_SUPPLIER_SYSTEM_FORM_BROWSER: '1' } : {}), ...(supplierSkuBatchBrowser ? { TEST_SUPPLIER_SKU_BATCH_BROWSER: '1' } : {}), ...(supplierRecommendImageBrowser ? { TEST_SUPPLIER_PRODUCT_RECOMMEND_IMAGE_BROWSER: '1' } : {}), ...(supplierUnitBrowser ? { TEST_SUPPLIER_PRODUCT_UNIT_BROWSER: '1' } : {}), ...(supplierOrderTrackingBrowser ? { TEST_SUPPLIER_ORDER_TRACKING_BROWSER: '1' } : {}), ...(supplierOrderDistributionBrowser ? { TEST_SUPPLIER_ORDER_DISTRIBUTION_BROWSER: '1' } : {}), ...(supplierOrderFiltersBrowser ? { TEST_SUPPLIER_ORDER_FILTERS_BROWSER: '1' } : {}), ...(supplierOrderReviewBrowser ? { TEST_SUPPLIER_ORDER_REVIEW_BROWSER: '1' } : {}), ...(supplierOrderInvoiceReviewBrowser ? { TEST_SUPPLIER_ORDER_INVOICE_REVIEW_BROWSER: '1' } : {}), ...(supplierOrderPromotionsReviewBrowser ? { TEST_SUPPLIER_ORDER_PROMOTIONS_REVIEW_BROWSER: '1' } : {}), ...(supplierOrderGiftIdentityBrowser ? { TEST_SUPPLIER_ORDER_GIFT_IDENTITY_BROWSER: '1' } : {}), ...(supplierOrderVirtualReviewBrowser ? { TEST_SUPPLIER_ORDER_VIRTUAL_REVIEW_BROWSER: '1' } : {}), ...(supplierRefundApplicationReviewBrowser ? { TEST_SUPPLIER_REFUND_APPLICATION_REVIEW_BROWSER: '1' } : {}), ...(refundApplicationEvidenceBrowser ? { TEST_REFUND_APPLICATION_EVIDENCE_BROWSER: '1' } : {}), ...(customerOrderRepurchaseBrowser ? { TEST_CUSTOMER_ORDER_REPURCHASE_BROWSER: '1' } : {}), ...(repurchaseShortSkuBrowser ? { TEST_REPURCHASE_SHORT_SKU_BROWSER: '1' } : {}), ...(integralPurchaseOriginBrowser ? { TEST_INTEGRAL_PURCHASE_ORIGIN_BROWSER: '1' } : {}), ...(integralPurchaseLimitsBrowser ? { TEST_INTEGRAL_PURCHASE_LIMITS_BROWSER: '1' } : {}), ...(productPurchaseAdmissionBrowser ? { TEST_PRODUCT_PURCHASE_ADMISSION_BROWSER: '1' } : {}), ...(purchasePhysicalOriginBrowser ? { TEST_PURCHASE_PHYSICAL_ORIGIN_BROWSER: '1' } : {}), ...(ordinaryShortSkuBrowser ? { TEST_ORDINARY_SHORT_SKU_BROWSER: '1' } : {}), ...(customerSignCentreBrowser ? { TEST_CUSTOMER_SIGN_CENTRE_BROWSER: '1' } : {}), ...(customerPointsCentreBrowser ? { TEST_CUSTOMER_POINTS_CENTRE_BROWSER: '1' } : {}), ...(customerGrowthRecordsBrowser ? { TEST_CUSTOMER_GROWTH_RECORDS_BROWSER: '1' } : {}), ...(customerLevelOverviewBrowser ? { TEST_CUSTOMER_LEVEL_OVERVIEW_BROWSER: '1' } : {}), ...(withdrawalApplicationBrowser ? { TEST_WITHDRAWAL_APPLICATION_BROWSER: '1' } : {}), ...(distributionLedgersBrowser ? { TEST_DISTRIBUTION_LEDGERS_BROWSER: '1' } : {}), ...(promoterPeopleBrowser ? { TEST_PROMOTER_PEOPLE_BROWSER: '1' } : {}), ...(promoterOrdersBrowser ? { TEST_PROMOTER_ORDERS_BROWSER: '1' } : {}), ...(distributionRankingsBrowser ? { TEST_DISTRIBUTION_RANKINGS_BROWSER: '1' } : {}), ...(memberLevelRecommendationsBrowser ? { TEST_MEMBER_LEVEL_RECOMMENDATIONS_BROWSER: '1' } : {}), ...(memberLevelActivationBrowser ? { TEST_MEMBER_LEVEL_ACTIVATION_BROWSER: '1' } : {}), ...(membershipClauseBrowser ? { TEST_MEMBERSHIP_CLAUSE_BROWSER: '1' } : {}), ...(membershipCouponsBrowser ? { TEST_MEMBERSHIP_COUPONS_BROWSER: '1' } : {}), ...(membershipHomeBrowser ? { TEST_MEMBERSHIP_HOME_BROWSER: '1' } : {}), ...(memberCardActivationBrowser ? { TEST_MEMBER_CARD_ACTIVATION_BROWSER: '1' } : {}), ...(membershipRightsBrowser ? { TEST_MEMBERSHIP_RIGHTS_BROWSER: '1' } : {}), ...(customerProfileBrowser ? { TEST_CUSTOMER_PROFILE_BROWSER: '1' } : {}), ...(adminUserFiltersBrowser ? { TEST_ADMIN_USER_FILTERS_BROWSER: '1' } : {}), ...(agentExplanationBrowser ? { TEST_AGENT_EXPLANATION_BROWSER: '1' } : {}), ...(distributionLevelBrowser ? { TEST_DISTRIBUTION_LEVEL_BROWSER: '1' } : {}), ...(messageCenterBrowser ? { TEST_MESSAGE_CENTER_BROWSER: '1' } : {}), ...(adminWithdrawalDirectoryBrowser ? { TEST_ADMIN_WITHDRAWAL_DIRECTORY_BROWSER: '1' } : {}), ...(adminLevelDefinitionsBrowser ? { TEST_ADMIN_LEVEL_DEFINITIONS_BROWSER: '1' } : {}), ...(adminMemberPackagesBrowser ? { TEST_ADMIN_MEMBER_PACKAGES_BROWSER: '1' } : {}), ...(cartManagementBrowser ? { TEST_CART_MANAGEMENT_BROWSER: '1' } : {}), ...(diyFooterBrowser ? { TEST_DIY_FOOTER_BROWSER: '1' } : {}), ...(diyPresentationBrowser ? { TEST_DIY_PRESENTATION_BROWSER: '1' } : {}), ...(diyCustomerServiceBrowser ? { TEST_DIY_CUSTOMER_SERVICE_BROWSER: '1' } : {}), ...(diyPageSettingsBrowser ? { TEST_DIY_PAGE_SETTINGS_BROWSER: '1' } : {}), ...(diyMediaReferenceBrowser ? { TEST_DIY_MEDIA_REFERENCE_BROWSER: '1' } : {}), ...(diyNavigationAuthorBrowser ? { TEST_DIY_NAVIGATION_AUTHOR_BROWSER: '1' } : {}), ...(diyCarouselAuthorBrowser ? { TEST_DIY_CAROUSEL_AUTHOR_BROWSER: '1' } : {}), ...(diyListAuthorBrowser ? { TEST_DIY_LIST_AUTHOR_BROWSER: '1' } : {}), ...(diyStateAuthorBrowser ? { TEST_DIY_STATE_AUTHOR_BROWSER: '1' } : {}), ...(diyEditorialAuthorBrowser ? { TEST_DIY_EDITORIAL_AUTHOR_BROWSER: '1' } : {}), ...(diyCommerceAuthorBrowser ? { TEST_DIY_COMMERCE_AUTHOR_BROWSER: '1' } : {}), ...(diyCommunityAuthorBrowser ? { TEST_DIY_COMMUNITY_AUTHOR_BROWSER: '1' } : {}), ...(diyNavigationBrowser ? { TEST_DIY_NAVIGATION_BROWSER: '1' } : {}), ...(diyCarouselBrowser ? { TEST_DIY_CAROUSEL_BROWSER: '1' } : {}), ...(diyEditorialBrowser ? { TEST_DIY_EDITORIAL_BROWSER: '1' } : {}), ...(diyCommerceBrowser ? { TEST_DIY_COMMERCE_BROWSER: '1' } : {}), ...(diyStateBrowser ? { TEST_DIY_STATE_BROWSER: '1' } : {}), ...(diyCommunityBrowser ? { TEST_DIY_COMMUNITY_BROWSER: '1' } : {}), ...(communityMainFeedBrowser ? { TEST_COMMUNITY_MAIN_FEED_BROWSER: '1' } : {}), ...(communityAvailabilityBrowser ? { TEST_COMMUNITY_AVAILABILITY_BROWSER: '1' } : {}), ...(communityPublishEntryBrowser ? { TEST_COMMUNITY_PUBLISH_ENTRY_BROWSER: '1' } : {}), ...(communityEngagementBrowser ? { TEST_COMMUNITY_ENGAGEMENT_BROWSER: '1' } : {}), ...(communityCommentsBrowser ? { TEST_COMMUNITY_COMMENTS_BROWSER: '1' } : {}), ...(communityPeopleBrowser ? { TEST_COMMUNITY_PEOPLE_BROWSER: '1' } : {}), ...(communityAuthorBrowser ? { TEST_COMMUNITY_AUTHOR_BROWSER: '1' } : {}), ...(communityRelationsBrowser ? { TEST_COMMUNITY_RELATIONS_BROWSER: '1' } : {}), ...(communityImageBrowser ? { TEST_COMMUNITY_IMAGE_BROWSER: '1' } : {}), ...(communityVideoBrowser ? { TEST_COMMUNITY_VIDEO_BROWSER: '1' } : {}), ...(bargainParticipationCancelBrowser ? { TEST_BARGAIN_PARTICIPATION_CANCEL_BROWSER: '1' } : {}), ...(pcBargainInvitationsBrowser ? { TEST_PC_BARGAIN_INVITATIONS_BROWSER: '1' } : {}), ...(bargainFriendHelpBrowser ? { TEST_BARGAIN_FRIEND_HELP_BROWSER: '1' } : {}), ...(bargainShortSkuBrowser ? { TEST_BARGAIN_SHORT_SKU_BROWSER: '1' } : {}), ...(seckillShortSkuBrowser ? { TEST_SECKILL_SHORT_SKU_BROWSER: '1' } : {}), ...(newcomerShortSkuBrowser ? { TEST_NEWCOMER_SHORT_SKU_BROWSER: '1' } : {}), ...(presaleShortSkuBrowser ? { TEST_PRESALE_SHORT_SKU_BROWSER: '1' } : {}), ...(supplierRuleInlineBrowser ? { TEST_SUPPLIER_PRODUCT_RULE_INLINE_BROWSER: '1' } : {}), ...(supplierShippingEditorBrowser ? { TEST_SUPPLIER_PRODUCT_SHIPPING_EDITOR_BROWSER: '1' } : {}), ...(supplierOrderEditBrowser ? { TEST_SUPPLIER_ORDER_EDIT_BROWSER: '1' } : {}), ...(adminOrderEditBrowser ? { TEST_ADMIN_ORDER_EDIT_BROWSER: '1' } : {}), ...(adminOrderHistoryBrowser ? { TEST_ADMIN_ORDER_HISTORY_BROWSER: '1' } : {}), ...(buyerTrackingBrowser ? { TEST_BUYER_TRACKING_BROWSER: '1' } : {}), ...(buyerInvoicesBrowser ? { TEST_BUYER_INVOICES_BROWSER: '1' } : {}), ...(pcProductContentBrowser ? { TEST_PC_PRODUCT_CONTENT_BROWSER: '1' } : {}), ...(uniProductCouponsBrowser ? { TEST_UNI_PRODUCT_COUPONS_BROWSER: '1' } : {}), ...(uniCouponBuyBrowser ? { TEST_UNI_COUPON_BUY_BROWSER: '1' } : {}), ...(publicProductEstimateBrowser ? { TEST_PUBLIC_PRODUCT_ESTIMATE_BROWSER: '1' } : {}), ...(kefuProductMediaBrowser ? { TEST_KEFU_PRODUCT_MEDIA_BROWSER: '1' } : {}), ...(kefuOrderMediaBrowser ? { TEST_KEFU_ORDER_MEDIA_BROWSER: '1' } : {}), ...(kefuSplitCartMediaBrowser ? { TEST_KEFU_SPLIT_CART_MEDIA_BROWSER: '1' } : {}), ...(pcMessageCenterBrowser ? { TEST_PC_MESSAGE_CENTER_BROWSER: '1' } : {}), ...(publicProductReviewsBrowser ? { TEST_PUBLIC_PRODUCT_REVIEWS_BROWSER: '1' } : {}), ...(reviewCommunitySyncBrowser ? { TEST_REVIEW_COMMUNITY_SYNC_BROWSER: '1' } : {}), ...(buyerReviewsBrowser ? { TEST_BUYER_REVIEWS_BROWSER: '1' } : {}), ...(checkoutInvoicesBrowser ? { TEST_CHECKOUT_INVOICES_BROWSER: '1' } : {}), ...(orderTimelineBrowser ? { TEST_ORDER_TIMELINE_BROWSER: '1' } : {}), ...(supplierCashBrowser ? { TEST_SUPPLIER_CASH_BROWSER: '1' } : {}), ...(supplierProactiveRefundBrowser ? { TEST_SUPPLIER_PROACTIVE_REFUND_BROWSER: '1' } : {}), ...(supplierRefundSettlementBrowser ? { TEST_SUPPLIER_REFUND_SETTLEMENT_BROWSER: '1' } : {}), ...(supplierBillBrowser ? { TEST_SUPPLIER_BILL_BROWSER: '1' } : {}), ...(supplierBillExportBrowser ? { TEST_SUPPLIER_BILL_EXPORT_BROWSER: '1' } : {}), ...(supplierFlowBrowser ? { TEST_SUPPLIER_FLOW_BROWSER: '1' } : {}), ...(supplierExtractBrowser ? { TEST_SUPPLIER_EXTRACT_BROWSER: '1' } : {}), ...(supplierExtractApplicationBrowser ? { TEST_SUPPLIER_EXTRACT_APPLICATION_BROWSER: '1' } : {}), ...(supplierFinanceAccountsBrowser ? { TEST_SUPPLIER_FINANCE_ACCOUNTS_BROWSER: '1' } : {}), ...(supplierExtractMediaBrowser ? { TEST_SUPPLIER_EXTRACT_MEDIA_BROWSER: '1' } : {}), ...(supplierExtractApplicationMediaBrowser ? { TEST_SUPPLIER_EXTRACT_APPLICATION_MEDIA_BROWSER: '1' } : {}) },\n",
+            "  });\n",
+            "  if (unitGate) {\n",
+            "    const result = await unitGate.finishUnitGate(workerRoot, taskRoot, preparedUnitGate, testRun);\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "54047ef6536840536ffb0632153223ba594e41d4",
+        "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+        "gitBlobSha1": "035fc5817798893102b702df6b45ce14f21bcb94"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/kefu/KefuFulfillmentService.ts",
+      "current": {
+        "bytes": 17968,
+        "sha256": "e837576ba10b6331b771c3a8d1e814a402d5f8be20a7de0e8d0721866675a0ad",
+        "gitBlobSha1": "7b70211cd83c7ae13bed170ce953366a0fae657d"
+      },
+      "predecessor": {
+        "bytes": 16401,
+        "sha256": "ea338d4efde8cb156cbee8ff30982246d81266c6706d7af4a21d2b7b1376e500",
+        "gitBlobSha1": "b2125d252f42d737bfae69b09c35c0909b3fb01f"
+      },
+      "inverseEdits": [
+        {
+          "start": 1,
+          "after": [
+            "import { PgTransaction } from \"drizzle-orm/pg-core\";\n"
+          ],
+          "before": [],
+          "anchorStart": 0,
+          "anchor": [
+            "import { and, asc, desc, eq, sql } from \"drizzle-orm\";\n",
+            "import { PgTransaction } from \"drizzle-orm/pg-core\";\n",
+            "import { createContainerFromDb, withTx, type Container, type DbClient } from \"@/lib/di\";\n",
+            "import {\n",
+            "  deliveryService,\n"
+          ]
+        },
+        {
+          "start": 14,
+          "after": [
+            "import {\n",
+            "  assertKefuSplitCartPreviewBudget,\n",
+            "  MAX_KEFU_SPLIT_CART_ROWS,\n",
+            "  readKefuSplitCartMedia,\n",
+            "  renderKefuSplitCartMedia,\n",
+            "} from \"@/services/kefu/KefuSplitCartMediaPolicy\";\n"
+          ],
+          "before": [],
+          "anchorStart": 11,
+          "anchor": [
+            "  lockKefuConversationOwnership,\n",
+            "  ownedKefuConversation,\n",
+            "} from \"@/services/kefu/KefuOwnership\";\n",
+            "import {\n",
+            "  assertKefuSplitCartPreviewBudget,\n",
+            "  MAX_KEFU_SPLIT_CART_ROWS,\n",
+            "  readKefuSplitCartMedia,\n",
+            "  renderKefuSplitCartMedia,\n",
+            "} from \"@/services/kefu/KefuSplitCartMediaPolicy\";\n",
+            "import {\n",
+            "  StoreOrderWriteoffService,\n",
+            "  type WriteoffActor,\n"
+          ]
+        },
+        {
+          "start": 355,
+          "after": [
+            "    const read = async (tx: DbClient) => {\n"
+          ],
+          "before": [
+            "    return withTx(this.container, async (tx) => {\n"
+          ],
+          "anchorStart": 352,
+          "anchor": [
+            "\n",
+            "  async splitCartInfo(kefuUidValue: unknown, orderIdValue: unknown) {\n",
+            "    const kefuUid = positiveInteger(kefuUidValue, \"客服身份\");\n",
+            "    const read = async (tx: DbClient) => {\n",
+            "      const reference = await this.visibleOrderByIdUsing(tx, kefuUid, orderIdValue);\n",
+            "      const rootId = reference.pid > 0 ? reference.pid : reference.id;\n",
+            "      let active = reference;\n"
+          ]
+        },
+        {
+          "start": 375,
+          "after": [
+            "          if (!pending.length) return { value: [], media: [] };\n"
+          ],
+          "before": [
+            "          if (!pending.length) return [];\n"
+          ],
+          "anchorStart": 372,
+          "anchor": [
+            "        .orderBy(asc(storeOrder.id))\n",
+            "        .limit(2);\n",
+            "        if (pending.length !== 1) {\n",
+            "          if (!pending.length) return { value: [], media: [] };\n",
+            "          throw new ValidateException(\"订单存在多个待发货子单，请先完成数据核对\");\n",
+            "        }\n",
+            "        active = pending[0];\n"
+          ]
+        },
+        {
+          "start": 392,
+          "after": [
+            "        .orderBy(asc(storeOrderCartInfo.id))\n",
+            "        .limit(MAX_KEFU_SPLIT_CART_ROWS + 1);\n",
+            "      const carts = rows.map((row) => row.cart);\n",
+            "      assertKefuSplitCartPreviewBudget(carts);\n",
+            "      const value = carts.map(cartProjection);\n",
+            "      return { value, media: await readKefuSplitCartMedia(tx, carts, value) };\n",
+            "    };\n",
+            "    // The timeout SELECT is the first snapshot-bearing statement. Completed\n",
+            "    // transfers visible before it deny new reads; authorized in-flight snapshots\n",
+            "    // can finish coherently. Existing caller transactions retain their owner,\n",
+            "    // original isolation and eventual commit/rollback timing.\n",
+            "    const result = this.container.db instanceof PgTransaction\n",
+            "      ? await read(this.container.db)\n",
+            "      : await withTx(this.container, async (tx) => {\n",
+            "        await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);\n",
+            "        await tx.execute(sql.raw(`SELECT\n",
+            "          pg_catalog.set_config('statement_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true),\n",
+            "          pg_catalog.set_config('idle_in_transaction_session_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000)::text || 'ms',true)`));\n",
+            "        return read(tx);\n",
+            "      });\n",
+            "    await renderKefuSplitCartMedia(this.env.APP_KEY, result.media);\n",
+            "    return result.value;\n"
+          ],
+          "before": [
+            "        .orderBy(asc(storeOrderCartInfo.id));\n",
+            "      return rows.map((row) => cartProjection(row.cart));\n",
+            "    });\n"
+          ],
+          "anchorStart": 389,
+          "anchor": [
+            "          eq(storeOrder.uid, reference.uid),\n",
+            "          ownedKefuConversation(tx, kefuUid, storeOrder.uid),\n",
+            "        ))\n",
+            "        .orderBy(asc(storeOrderCartInfo.id))\n",
+            "        .limit(MAX_KEFU_SPLIT_CART_ROWS + 1);\n",
+            "      const carts = rows.map((row) => row.cart);\n",
+            "      assertKefuSplitCartPreviewBudget(carts);\n",
+            "      const value = carts.map(cartProjection);\n",
+            "      return { value, media: await readKefuSplitCartMedia(tx, carts, value) };\n",
+            "    };\n",
+            "    // The timeout SELECT is the first snapshot-bearing statement. Completed\n",
+            "    // transfers visible before it deny new reads; authorized in-flight snapshots\n",
+            "    // can finish coherently. Existing caller transactions retain their owner,\n",
+            "    // original isolation and eventual commit/rollback timing.\n",
+            "    const result = this.container.db instanceof PgTransaction\n",
+            "      ? await read(this.container.db)\n",
+            "      : await withTx(this.container, async (tx) => {\n",
+            "        await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);\n",
+            "        await tx.execute(sql.raw(`SELECT\n",
+            "          pg_catalog.set_config('statement_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true),\n",
+            "          pg_catalog.set_config('idle_in_transaction_session_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000)::text || 'ms',true)`));\n",
+            "        return read(tx);\n",
+            "      });\n",
+            "    await renderKefuSplitCartMedia(this.env.APP_KEY, result.media);\n",
+            "    return result.value;\n",
+            "  }\n",
+            "\n",
+            "  async splitDelivery(\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "54047ef6536840536ffb0632153223ba594e41d4",
+        "path": "workers-ts/src/services/kefu/KefuFulfillmentService.ts",
+        "gitBlobSha1": "b2125d252f42d737bfae69b09c35c0909b3fb01f"
+      }
+    },
+    {
+      "file": "workers-ts/test/helpers/kefuOrderMediaSourceContinuity.ts",
+      "current": {
+        "bytes": 5389,
+        "sha256": "44346b05cf7b32b426728a62163efb5ccf6e76495609b18b54c0b5608a40ecdd",
+        "gitBlobSha1": "ceb446f4c69baee6208515c37b0323e645fa8bdd"
+      },
+      "predecessor": {
+        "bytes": 4933,
+        "sha256": "8e37af9123160a22fc608f6c4c1ef381ad3195ad293129d3552183cad554f0ba",
+        "gitBlobSha1": "763a78ed1e90d6d2af784a3d198837abdf06822d"
+      },
+      "inverseEdits": [
+        {
+          "start": 3,
+          "after": [
+            "import { projectKefuSplitCartMediaPredecessor } from './kefuSplitCartMediaSourceContinuity';\n"
+          ],
+          "before": [],
+          "anchorStart": 0,
+          "anchor": [
+            "/** Exact historical source views only. Production, native SQL/App and browser\n",
+            " * acceptance use the physical current files, never this predecessor projection. */\n",
+            "import { createHash } from 'node:crypto';\n",
+            "import { projectKefuSplitCartMediaPredecessor } from './kefuSplitCartMediaSourceContinuity';\n",
+            "import { readFileSync } from 'node:fs';\n",
+            "import { resolve } from 'node:path';\n",
+            "export const KEFU_ORDER_MEDIA_PROOF_FILE = 'workers-ts/test/fixtures/kefu-order-media-source-continuity-20261116.json';\n"
+          ]
+        },
+        {
+          "start": 43,
+          "after": [
+            "  return projectKefuOrderMediaFromSplit54047View(file, projectKefuSplitCartMediaPredecessor(file, source));\n",
+            "}\n",
+            "\n",
+            "/** Explicit verified fixed54047 view. Physical historical readers use the\n",
+            " * complete current-image entry point above; production/native stay physical. */\n",
+            "export function projectKefuOrderMediaFromSplit54047View(file: string, source: string): string {\n"
+          ],
+          "before": [],
+          "anchorStart": 40,
+          "anchor": [
+            "/** Bind the complete real current image. Every old complete image, including\n",
+            " * the valid fixed4428 predecessor, is refused as a current source. */\n",
+            "export function projectKefuOrderMediaPredecessor(file: string, source: string): string {\n",
+            "  return projectKefuOrderMediaFromSplit54047View(file, projectKefuSplitCartMediaPredecessor(file, source));\n",
+            "}\n",
+            "\n",
+            "/** Explicit verified fixed54047 view. Physical historical readers use the\n",
+            " * complete current-image entry point above; production/native stay physical. */\n",
+            "export function projectKefuOrderMediaFromSplit54047View(file: string, source: string): string {\n",
+            "  const row = proof.sources.find(item => item.file === file);\n",
+            "  if (!row) return source;\n",
+            "  if (typeof source !== 'string' || JSON.stringify(kefuOrderMediaImage(source)) !== JSON.stringify(row.current))\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "54047ef6536840536ffb0632153223ba594e41d4",
+        "path": "workers-ts/test/helpers/kefuOrderMediaSourceContinuity.ts",
+        "gitBlobSha1": "763a78ed1e90d6d2af784a3d198837abdf06822d"
+      }
+    },
+    {
+      "file": "workers-ts/test/kefu-order-media-source-continuity.test.ts",
+      "current": {
+        "bytes": 11172,
+        "sha256": "a5ec36ab1423c489cb2fdb31d9430fd43582a3290c847695850ce40e0c965cf1",
+        "gitBlobSha1": "5b1f4f3c8f7bfa491e71e348d2ecaa320c9f69e0"
+      },
+      "predecessor": {
+        "bytes": 10837,
+        "sha256": "b9d4a1bc007388cfe57e5969806dd79fa8886068b75e31e8a0550eb27beb4942",
+        "gitBlobSha1": "ec9e3b5727ae69c7d404c486641234f0ce41db07"
+      },
+      "inverseEdits": [
+        {
+          "start": 0,
+          "after": [
+            "import { projectKefuSplitCartMediaPredecessor } from './helpers/kefuSplitCartMediaSourceContinuity';\n"
+          ],
+          "before": [],
+          "anchorStart": 0,
+          "anchor": [
+            "import { projectKefuSplitCartMediaPredecessor } from './helpers/kefuSplitCartMediaSourceContinuity';\n",
+            "import { createHash } from 'node:crypto';\n",
+            "import { readFileSync } from 'node:fs';\n",
+            "import { resolve } from 'node:path';\n"
+          ]
+        },
+        {
+          "start": 7,
+          "after": [
+            "  isKefuOrderMediaSource, projectKefuOrderMediaFromSplit54047View as projectKefuOrderMediaPredecessor } from './helpers/kefuOrderMediaSourceContinuity';\n"
+          ],
+          "before": [
+            "  isKefuOrderMediaSource, projectKefuOrderMediaPredecessor } from './helpers/kefuOrderMediaSourceContinuity';\n"
+          ],
+          "anchorStart": 4,
+          "anchor": [
+            "import { describe, expect, it } from 'vitest';\n",
+            "import { KEFU_ORDER_MEDIA_PREDECESSOR, KEFU_ORDER_MEDIA_PROOF_FILE, KEFU_ORDER_MEDIA_PROOF_SHA256,\n",
+            "  KEFU_ORDER_MEDIA_SOURCES, kefuOrderMediaImage, kefuOrderMediaProof as proof,\n",
+            "  isKefuOrderMediaSource, projectKefuOrderMediaFromSplit54047View as projectKefuOrderMediaPredecessor } from './helpers/kefuOrderMediaSourceContinuity';\n",
+            "const root = resolve(import.meta.dirname, '../..');\n",
+            "// Original16 assertions keep the verified fixed54047 historical view.\n",
+            "// The split suite separately binds complete physical current sources.\n"
+          ]
+        },
+        {
+          "start": 9,
+          "after": [
+            "// Original16 assertions keep the verified fixed54047 historical view.\n",
+            "// The split suite separately binds complete physical current sources.\n",
+            "const physical = (file: string) => projectKefuSplitCartMediaPredecessor(file, readFileSync(resolve(root, file), 'utf8'));\n"
+          ],
+          "before": [
+            "const physical = (file: string) => readFileSync(resolve(root, file), 'utf8');\n"
+          ],
+          "anchorStart": 6,
+          "anchor": [
+            "  KEFU_ORDER_MEDIA_SOURCES, kefuOrderMediaImage, kefuOrderMediaProof as proof,\n",
+            "  isKefuOrderMediaSource, projectKefuOrderMediaFromSplit54047View as projectKefuOrderMediaPredecessor } from './helpers/kefuOrderMediaSourceContinuity';\n",
+            "const root = resolve(import.meta.dirname, '../..');\n",
+            "// Original16 assertions keep the verified fixed54047 historical view.\n",
+            "// The split suite separately binds complete physical current sources.\n",
+            "const physical = (file: string) => projectKefuSplitCartMediaPredecessor(file, readFileSync(resolve(root, file), 'utf8'));\n",
+            "const sha = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');\n",
+            "const sources = [\n",
+            "  \"workers-ts/scripts/run-local-finance-postgres.mjs\",\n"
+          ]
+        },
+        {
+          "start": 143,
+          "after": [
+            "describe('Kefu order media verified fixed54047 sources before fixed4428 historical views', () => {\n"
+          ],
+          "before": [
+            "describe('Kefu order media complete physical current sources before fixed4428 historical views', () => {\n"
+          ],
+          "anchorStart": 140,
+          "anchor": [
+            "    \"sha256\": \"05bd3e48df227081194a13eee8c3c8737a8ebae048b443aaee56f7a095aa6918\"\n",
+            "  }\n",
+            "];\n",
+            "describe('Kefu order media verified fixed54047 sources before fixed4428 historical views', () => {\n",
+            "  it('pins the complete immutable six-source inventory and fixed Git origins', () => {\n",
+            "    expect(sha(readFileSync(resolve(root, KEFU_ORDER_MEDIA_PROOF_FILE)))).toBe(KEFU_ORDER_MEDIA_PROOF_SHA256);\n",
+            "    expect(proof.schema).toBe('kefu-order-media-source-continuity/v1');\n"
+          ]
+        },
+        {
+          "start": 154,
+          "after": [
+            "    it('binds the entire verified fixed54047 source and reconstructs its complete fixed4428 Git blob for ' + row.file, () => {\n"
+          ],
+          "before": [
+            "    it('binds the entire physical source and reconstructs its complete fixed4428 Git blob for ' + row.file, () => {\n"
+          ],
+          "anchorStart": 151,
+          "anchor": [
+            "    expect(sources.every(isKefuOrderMediaSource)).toBe(true);\n",
+            "  });\n",
+            "  for (const row of proof.sources) {\n",
+            "    it('binds the entire verified fixed54047 source and reconstructs its complete fixed4428 Git blob for ' + row.file, () => {\n",
+            "      const current = physical(row.file); expect(kefuOrderMediaImage(current)).toEqual(row.current);\n",
+            "      const previous = projectKefuOrderMediaPredecessor(row.file, current);\n",
+            "      expect(previous).not.toBe(current); expect(kefuOrderMediaImage(previous)).toEqual(row.predecessor);\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "54047ef6536840536ffb0632153223ba594e41d4",
+        "path": "workers-ts/test/kefu-order-media-source-continuity.test.ts",
+        "gitBlobSha1": "ec9e3b5727ae69c7d404c486641234f0ce41db07"
+      }
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 /** Exact historical source views only. Production, native SQL/App and browser
  * acceptance use the physical current files, never this predecessor projection. */
 import { createHash } from 'node:crypto';
+import { projectKefuSplitCartMediaPredecessor } from './kefuSplitCartMediaSourceContinuity';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 export const KEFU_ORDER_MEDIA_PROOF_FILE = 'workers-ts/test/fixtures/kefu-order-media-source-continuity-20261116.json';
@@ -40,6 +41,12 @@ const sameLines = (lines: string[], start: number, expected: string[]) => expect
 /** Bind the complete real current image. Every old complete image, including
  * the valid fixed4428 predecessor, is refused as a current source. */
 export function projectKefuOrderMediaPredecessor(file: string, source: string): string {
+  return projectKefuOrderMediaFromSplit54047View(file, projectKefuSplitCartMediaPredecessor(file, source));
+}
+
+/** Explicit verified fixed54047 view. Physical historical readers use the
+ * complete current-image entry point above; production/native stay physical. */
+export function projectKefuOrderMediaFromSplit54047View(file: string, source: string): string {
   const row = proof.sources.find(item => item.file === file);
   if (!row) return source;
   if (typeof source !== 'string' || JSON.stringify(kefuOrderMediaImage(source)) !== JSON.stringify(row.current))

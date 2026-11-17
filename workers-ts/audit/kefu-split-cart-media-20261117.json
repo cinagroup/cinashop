@@ -1,0 +1,496 @@
+{
+  "schema": "php-ts-kefu-split-cart-media-delivery/v1",
+  "generatedAtUtc": "2026-11-17T08:16:04.088758+00:00",
+  "baseCommit": "54047ef6536840536ffb0632153223ba594e41d4",
+  "branch": "codex/kefu-split-cart-media",
+  "scope": {
+    "routes": [
+      "GET /kefuapi/order/split_cart_info/:id"
+    ],
+    "authority": "persisted cart id/type/relation_id, original TS registered assigned-customer/order/supplier/deletion/surplus/refund/paid predicates retained",
+    "knownRawPaths": [
+      "product.image",
+      "product.attrInfo.image",
+      "productInfo.image",
+      "productInfo.attrInfo.image",
+      "sku.image"
+    ],
+    "topImage": "unchanged original String(product.image ?? productInfo.image ?? empty) projection, independently authorized",
+    "excluded": [
+      "fulfillment writes",
+      "finance or promotion recalculation",
+      "other media routes",
+      "provider calls",
+      "production deployment",
+      "realtime acceptance",
+      "instant revocation of issued asset tickets"
+    ]
+  },
+  "policy": {
+    "platform": "type0/relation0",
+    "store": "type1/positive int32 relation maps to platform",
+    "supplier": "type2/positive active supplier; unchanged shared policy and platform fallback",
+    "unknownFieldsAndNonstringRawSlots": "preserved; no recursive traversal",
+    "normalization": "reject unsafe raw and once-decoded characters before canonical suffix stripping; decode entities once; safe root/HTTPS legacy preserved without fetching",
+    "completeRowBudget": 10000,
+    "completeSnapshotBudget": {
+      "value": 16777216,
+      "unit": "UTF16 code units summed over all complete raw JSON; astral character counts two",
+      "newExplicitBound": true,
+      "notExistingOrder256KiRule": true
+    },
+    "overBudget": "whole response rejected before parse and attachment SQL; no partial rows or silently discarded snapshot",
+    "metadataBatchSize": 10000,
+    "maximumUniqueCanonicalOwnerReferences": 50000,
+    "worstCaseSupplierAndAttachmentBatchesEach": 5,
+    "signingBatchSize": 256,
+    "queryEvidence": "actual PostgreSQL 1 and100 complete carts each issue1supplier+1attachment;50000unique/5chunk boundary is pure real-shared-helper SELECT-transport test, not full PG/HTTP50000 rendering"
+  },
+  "transactions": {
+    "owned": "READ ONLY REPEATABLE READ; statement and idle-in-transaction timeout each at most5s; no overall5s preview deadline; first snapshot-bearing timeout setup SELECT; signatures after own commit",
+    "snapshotBoundary": "transfers committed before acquisition deny new reads; authorized in-flight snapshot may complete",
+    "caller": "existing PgTransaction unchanged original isolation; no nested BEGIN/SET/commit/rollback takeover; old established RR may complete and signing may precede caller completion",
+    "sqlStatementTimeoutMs": 5000,
+    "nativeTestFileTimeoutMs": 30000,
+    "ticketTtlSeconds": 900,
+    "issuedTicketLimitation": "previously issued signed bearer capabilities remain valid to expiry"
+  },
+  "preservation": {
+    "sourceCount": 13,
+    "modifiedOriginals": 4,
+    "newSources": 9,
+    "dependencyCount": 9386,
+    "sources": [
+      {
+        "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+        "sha256": "b431d2bbd2f231a3b7029e46dd647b17efd1aad8071e8388ac0e3a4e6eee85be"
+      },
+      {
+        "path": "workers-ts/src/services/kefu/KefuFulfillmentService.ts",
+        "sha256": "e837576ba10b6331b771c3a8d1e814a402d5f8be20a7de0e8d0721866675a0ad"
+      },
+      {
+        "path": "workers-ts/src/services/kefu/KefuSplitCartMediaPolicy.ts",
+        "sha256": "3c26d875b36f697c1eb5d39ebd88a536157f39433d85509f3f0635f5854aa6ad"
+      },
+      {
+        "path": "workers-ts/test/browser/kefu-split-cart-media.acceptance.ts",
+        "sha256": "c58ab9b55076d4acc9e4dd2b20c4497ffa7e6091cac80f650567b1f791720f6c"
+      },
+      {
+        "path": "workers-ts/test/fixtures/kefu-split-cart-media-source-continuity-20261117.json",
+        "sha256": "9125ce13639d1bd18f5e02a349007a138212ce6646d3e197372ca867fa17dd2b"
+      },
+      {
+        "path": "workers-ts/test/helpers/kefuOrderMediaSourceContinuity.ts",
+        "sha256": "44346b05cf7b32b426728a62163efb5ccf6e76495609b18b54c0b5608a40ecdd"
+      },
+      {
+        "path": "workers-ts/test/helpers/kefuSplitCartMediaFixture.ts",
+        "sha256": "f134e470a43640124fa3844f4775ee788e24ce15622b84fc222b0acd10184b22"
+      },
+      {
+        "path": "workers-ts/test/helpers/kefuSplitCartMediaSourceContinuity.ts",
+        "sha256": "073c31377627db3c8c38a7ff01ae3ed26fe61fa593bec0a7b8f8ad1e4874c4f9"
+      },
+      {
+        "path": "workers-ts/test/kefu-order-media-source-continuity.test.ts",
+        "sha256": "a5ec36ab1423c489cb2fdb31d9430fd43582a3290c847695850ce40e0c965cf1"
+      },
+      {
+        "path": "workers-ts/test/kefu-split-cart-media-policy.test.ts",
+        "sha256": "388bcb5da1f97e2e2d8ce460b9a2e6a1b60339dc185a31767cf69859bfaecd3e"
+      },
+      {
+        "path": "workers-ts/test/kefu-split-cart-media-postgres.test.ts",
+        "sha256": "5d6c89085abe40370cad7597094817a179393b8f5d0c9486f79b4914e83613d5"
+      },
+      {
+        "path": "workers-ts/test/kefu-split-cart-media-source-continuity.test.ts",
+        "sha256": "a21dc41f77ea3c60107a9e53f602e90f89c0af8587f73d37bab0c56fdc83eb4b"
+      },
+      {
+        "path": "workers-ts/vitest.kefu-split-cart-media-browser.config.ts",
+        "sha256": "c1ae9db861fc1de1b9b09c38b1465531582fab1013f41b1980a0a502d19a8e6f"
+      }
+    ],
+    "sourceManifestSha256": "df764f20e4a4d83aa759aae642144be8edd0ee15f2336a4cf20fe82fc79bc4a4",
+    "dependencyManifestSha256": "1c29d6af03d54fea2c7e2014d22e054ee47b5b01eb8ae624969728e3abd047e8",
+    "original24OtherServiceMembersByteIdentical": true,
+    "moneyNameSkuUnknownJsonProjectionUnchanged": true,
+    "prior31ImmutableImagesAnd16Order28ProductContinuityCasesPreserved": true,
+    "newContinuityCases": 12,
+    "fixedBase": "54047ef6536840536ffb0632153223ba594e41d4",
+    "configUnchanged": true,
+    "fiveUserLinksAnd150ResourcesPreserved": true,
+    "realPhpReadOnlyHead": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5"
+  },
+  "localValidation": {
+    "actualOuter": {
+      "sessionId": 20612,
+      "chunkId": "eed205",
+      "exitCode": 0,
+      "terminalStatus": "completed",
+      "actualToolTerminalObserved": true,
+      "observedVia": "tools.write_stdin",
+      "initialChunk": "da8459",
+      "commands": 14,
+      "allTestsPassed": true,
+      "allFresh": true,
+      "reusedCommands": 0,
+      "driverSha256": "f3f2b236a6c34b8b6c5e4692d02567b51af623d32210db3e6c057be05994bd30",
+      "commonSha256": "f0bedde7ad530a52290684d873f1d3f2531206fdb925ce7733364eac6fe4a1ee",
+      "resultsSha256": "00f49905ce756e596fe8f13a628c211c7e772cae106a4bcb64728a3bb857a125",
+      "manifestSha256": "324d464f4fdbc89aba5b6b3b6a30f4cb6a7071191bdecf7837200005a350af2b",
+      "sourceManifestSha256": "df764f20e4a4d83aa759aae642144be8edd0ee15f2336a4cf20fe82fc79bc4a4",
+      "dependencyManifestSha256": "1c29d6af03d54fea2c7e2014d22e054ee47b5b01eb8ae624969728e3abd047e8",
+      "outerLogSha256": "513ca3dd406e7d0f9c0d4cdab21cb3ff555c4bc444fb2d0e943f55a1981ffa60",
+      "unitFiles": 30,
+      "unitTests": 1226,
+      "nativeFiles": 6,
+      "nativeTests": 116,
+      "workerdFiles": 30,
+      "workerdTests": 410,
+      "ownedPgClustersStopped": 7,
+      "productionAuditVulnerabilities": 0
+    },
+    "freshCommands": 14,
+    "reusedCommands": 0,
+    "unit": {
+      "files": 30,
+      "tests": 1226,
+      "failed": 0,
+      "skipped": 0,
+      "rawJsonSha256": "97b006f2234756274c13c4e7683475f8cdd8f2e347f7bff65803de983ee3f1a3"
+    },
+    "native": [
+      {
+        "file": "test/kefu-split-cart-media-postgres.test.ts",
+        "tests": 25,
+        "logSha256": "f24ef77a92197ab7dd349d067b3062eefbba88c769e48b73c75d42aaf98a6f21",
+        "cleanup": {
+          "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-CcDv8I",
+          "port": 43001,
+          "fixturesRemaining": 0,
+          "pgCtlExitCode": 3,
+          "portClosed": true
+        }
+      },
+      {
+        "file": "test/kefu-order-media-postgres.test.ts",
+        "tests": 26,
+        "logSha256": "075e90b400d1588c1ffab162d06323524b9ad702a790e1b7a5229c17301a9ded",
+        "cleanup": {
+          "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-f9tixi",
+          "port": 46637,
+          "fixturesRemaining": 0,
+          "pgCtlExitCode": 3,
+          "portClosed": true
+        }
+      },
+      {
+        "file": "test/kefu-product-media-postgres.test.ts",
+        "tests": 19,
+        "logSha256": "d1cabaa2e100759ac0fd05efc7744f6267c1281961d911d85399ace1d75a076a",
+        "cleanup": {
+          "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-sJpiBE",
+          "port": 35807,
+          "fixturesRemaining": 0,
+          "pgCtlExitCode": 3,
+          "portClosed": true
+        }
+      },
+      {
+        "file": "test/kefu-mobile-workbench-postgres.test.ts",
+        "tests": 23,
+        "logSha256": "161a96b1015bb4cd5e89d11d1e48c04b18ce34ee6349d6f28dd40a4203ca3cee",
+        "cleanup": {
+          "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-k0BMXO",
+          "port": 40183,
+          "fixturesRemaining": 0,
+          "pgCtlExitCode": 3,
+          "portClosed": true
+        }
+      },
+      {
+        "file": "test/kefu-mobile-entry-postgres.test.ts",
+        "tests": 6,
+        "logSha256": "351820820c1ec7c85e4a75cfa43ea3ef40be235dc626bc775427bb18346d621d",
+        "cleanup": {
+          "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-QCEnQn",
+          "port": 34029,
+          "fixturesRemaining": 0,
+          "pgCtlExitCode": 3,
+          "portClosed": true
+        }
+      },
+      {
+        "file": "test/public-commerce-product-media-postgres.test.ts",
+        "tests": 17,
+        "logSha256": "cb377524f14dbbffa5f27ba33c252bf45be64cd2d0dac69af1ac06279ea1a5b2",
+        "cleanup": {
+          "taskRoot": "/home/cina/cinagroup/cinashop/.cache/php-ts-local-unit-resources-20261110/worktree/.cache/finance-postgres-WAnDIa",
+          "port": 43075,
+          "fixturesRemaining": 0,
+          "pgCtlExitCode": 3,
+          "portClosed": true
+        }
+      }
+    ],
+    "nativeTests": 116,
+    "newNative": {
+      "rows": 265,
+      "gets": 121,
+      "independentHmacChecks": 134,
+      "tables": 23,
+      "sequences": 21,
+      "completeStates": 104,
+      "executionSha256": "a97f7e68ad68259981db311034f34b714300b06630578edfdf699821fe5cc262"
+    },
+    "types": {
+      "typescriptVersion": "5.9.3",
+      "originalConfigSha256": "8f6d36740c91218ae3856c55d26a91ed4dc8944db602e69aec5f043c67fa50df",
+      "originalRoots": 4500,
+      "commonRoots": 1954,
+      "testRoots": 2546,
+      "shardTestCounts": [
+        1273,
+        1273
+      ],
+      "unionExactlyMatchesOriginal": true,
+      "testShardsDisjoint": true,
+      "optionsExactlyMatchOriginal": true,
+      "explicitTypeLibrariesResolveExactlyAsOriginal": true
+    },
+    "originalRuntimeConfigChecked": true,
+    "workerd": {
+      "files": 30,
+      "tests": 410,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "productionAuditVulnerabilities": 0,
+    "frontend": {
+      "files": 5,
+      "tests": 30,
+      "vueTscAndViteBuildPassed": true,
+      "actualOuter": {
+        "actualOuterSessionId": 82291,
+        "actualOuterChunkId": "2a07da",
+        "actualOuterExitCode": 0,
+        "observedVia": "tools.write_stdin",
+        "frontendFiles": 5,
+        "frontendTests": 30,
+        "skipped": 0,
+        "vueTscAndViteBuildPassed": true,
+        "testAndBuildChildExitCodes": [
+          0,
+          0
+        ],
+        "resultsSha256": "bb9c616c898c7bbb5b3592a9d4aa44b2fca26a0a8c7e31555691b45cfc409788",
+        "testLogSha256": "20c4fd6e715c4243704b480ae2f69ababf995215489442dc0f98f35b4c8a8a66",
+        "buildLogSha256": "0c55edbf55c17d65b0bc8ebaf71771677559e57e8942f6b9e5b3d9ea18b46c12",
+        "scriptSha256": "c43e21937caabf6fcb12fd3380d44ee9f59e0fbea303175587692d077eddc9b1"
+      }
+    }
+  },
+  "browser": {
+    "actualOuter": {
+      "schema": "actual-outer-terminal/v1",
+      "sessionId": 93707,
+      "initialChunk": "3b553e",
+      "terminalChunk": "01b243",
+      "exitCode": 0,
+      "observedVia": "tools.write_stdin",
+      "script": "run-browser-4.py",
+      "scriptSha256": "d9c2cf5309853f61e62aa344edce27cf84fb9d4e769b64f8610899009e77f3a3",
+      "resultSha256": "d57093c38e479260a9fa28c525db2587d0275dc8705293393c5c29ffe9575653",
+      "closedPorts": {
+        "36679": true,
+        "41687": true
+      }
+    },
+    "completeGuiAcceptedByIndependentReview": true,
+    "requiredReads": 5,
+    "protectedGets": 15,
+    "snapshotTables": 27,
+    "snapshotSequences": 25,
+    "allProtectedGetsNoWrites": true,
+    "startupCacheWarmupsSeparate": 2,
+    "splitKnownSlotHmacRecomputed": 40,
+    "actualTransfer201To102": true,
+    "retainedOldPreTransferTokenAfterTransfer": {
+      "httpStatus": 200,
+      "jsonStatus": 404
+    },
+    "splitGuiTextRows": 7,
+    "splitGuiThumbnails": 0,
+    "firstQuantityDesktop": 1,
+    "firstQuantityMobile": 2,
+    "desktopViewport": [
+      1178,
+      870
+    ],
+    "mobileViewport": [
+      390,
+      844
+    ],
+    "noHorizontalOverflow": true,
+    "supplementalImages": "2signed platform/supplier plus1legacy actual70byte1x1 browser decode; signed tickets from supplemental actual split544, separate from GUI split375",
+    "allSuccessfulAssetGets": 5,
+    "realtimeExcludedRequests": 452,
+    "realtimeExcludedBreakdown": {
+      "wsJson500": 385,
+      "messagesSocketJson410000": 67
+    },
+    "nodeFixtureRealtimeAccepted": false,
+    "sourceBinding": "B4 actual inputs precede two test-only fixes;9397 unchanged files plus1pure test with erased type annotations and1native test with a deleted unused helper. Neither test is loaded by the browser acceptance. Original input/review evidence preserved; exact independent continuation review binds current freeze.",
+    "screenshots": [
+      "browser-4/split-selection-desktop.jpg",
+      "browser-4/split-selection-mobile.jpg",
+      "browser-4/split-selection-mobile-bottom.jpg",
+      "browser-4/post-transfer.jpg"
+    ]
+  },
+  "historicalDiagnostic": {
+    "allTestsPassed": false,
+    "currentCounts": {
+      "physicalFiles": 16,
+      "passedFiles": 2,
+      "failedFiles": 14,
+      "collectionErrorFiles": 2,
+      "tests": 1714,
+      "passed": 1404,
+      "failed": 310,
+      "skipped": 0,
+      "todo": 0
+    },
+    "childExitCode": 1,
+    "baselineActualOuter": 88748,
+    "baselineActualCheckout": "4428de3da07bd2818bc07e9ed70c33425d24fcf7",
+    "baselineContentCommit": "54047ef6536840536ffb0632153223ba594e41d4",
+    "completeFixedGitBlobs": 9388,
+    "excludedPostRunReports": [
+      "docs/php-ts-kefu-order-media-20261116.md",
+      "workers-ts/audit/kefu-order-media-20261116.json"
+    ],
+    "additionalInventoryPaths": [
+      "docs/php-ts-kefu-order-media-20261116.md",
+      "workers-ts/audit/kefu-order-media-20261116.json",
+      "workers-ts/src/services/kefu/KefuSplitCartMediaPolicy.ts",
+      "workers-ts/test/browser/kefu-split-cart-media.acceptance.ts",
+      "workers-ts/test/fixtures/kefu-split-cart-media-source-continuity-20261117.json",
+      "workers-ts/test/helpers/kefuSplitCartMediaFixture.ts",
+      "workers-ts/test/helpers/kefuSplitCartMediaSourceContinuity.ts",
+      "workers-ts/test/kefu-split-cart-media-policy.test.ts",
+      "workers-ts/test/kefu-split-cart-media-postgres.test.ts",
+      "workers-ts/test/kefu-split-cart-media-source-continuity.test.ts",
+      "workers-ts/vitest.kefu-split-cart-media-browser.config.ts"
+    ],
+    "noNewFailuresAndExactOutcomeMessages": true,
+    "comparison": "assertion status/first error class/messages and full suite/collection messages, physical root normalization only; full raw stacks preserved; environment equality not claimed"
+  },
+  "retainedFailures": [
+    {
+      "actualOuter": 89920,
+      "exitCode": 1,
+      "cause": "early browser selector allowlist missed new branch; rejected before PG/GUI"
+    },
+    {
+      "actualOuter": 45156,
+      "exitCode": 1,
+      "cause": "17minute operator window expired; partial GUI not accepted"
+    },
+    {
+      "actualOuter": 46857,
+      "exitCode": 1,
+      "cause": "controlled pre-GUI diagnostic after header observer discrepancy; gates correctly failed"
+    },
+    {
+      "actualOuter": 36968,
+      "exitCode": 1,
+      "childExitCode": 2,
+      "cause": "new pure test invalid metadata numeric type inference; only erased fixture type annotations fixed; all14final commands rerun fresh"
+    },
+    {
+      "actualOuter": 78359,
+      "exitCode": 1,
+      "childExitCode": 2,
+      "cause": "native test unused hash helper; only unused definition removed, real createHash snapshot/body checks retained; all14final commands rerun fresh"
+    }
+  ],
+  "ci": {
+    "newPushRun": "pending until this candidate committed/pushed; collect exact13jobs/rawlogs after push",
+    "baselineRunId": 44006898635,
+    "baselineUrl": "https://github.com/cinagroup/cinashop/actions/runs/44006898635",
+    "baselineSuccess": 10,
+    "baselineKnownFailures": 3,
+    "knownFailure": "two Worker shards fixed PHP8ed2 checkout not-our-ref and dependent aggregate; Worker unit/types/coverage skipped, never counted as passing"
+  },
+  "evidence": [
+    {
+      "path": "/tmp/php-ts-kefu-split-cart-media-20261117/final-validation-outer-terminal.json",
+      "sha256": "f7a4e67018b255da6a495f586fc64bf274f9e41917609ac0e3ee2f2133328968"
+    },
+    {
+      "path": "/tmp/php-ts-kefu-split-cart-media-20261117/historical-outer-terminal.json",
+      "sha256": "04363c0fb9913c8015a6993c509da409d821d61f28ac61ae5d03c85907a888d6"
+    },
+    {
+      "path": "/tmp/php-ts-kefu-split-cart-media-20261117/frontend-outer-terminal.json",
+      "sha256": "ba8216edc61f3e65f111b6569faf37ee20513f4588295ddbaf0342be499dc852"
+    },
+    {
+      "path": "/tmp/php-ts-kefu-split-cart-media-20261117/browser-4/outer-terminal.json",
+      "sha256": "18c91a831ea35ef2931c52ccff7d3d0eb0254c183d795e80162de4f3d974a0c3"
+    },
+    {
+      "path": "/tmp/php-ts-kefu-split-cart-media-20261117/independent-browser4-review.json",
+      "sha256": "6c49541c6d0f5fd2c45ea35ef331a7df2bc1df428d9dc55489b89dc288d8b22c"
+    },
+    {
+      "path": "/tmp/php-ts-kefu-split-cart-media-20261117/independent-browser4-current-tests-continuation-review.json",
+      "sha256": "38408dc649c7d08f47361c15884f81c9c36c513f90029302b3de0cc27e88a6ae"
+    },
+    {
+      "path": "/tmp/php-ts-kefu-split-cart-media-20261117/final-native-independent-review.json",
+      "sha256": "90d717820aa398f3f389eaf8065d29acede5343521f74fb00b2cc3f81079c66d"
+    },
+    {
+      "path": "/tmp/php-ts-kefu-split-cart-media-20261117/final-tools-root-review.json",
+      "sha256": "859823628bdc11b1da9883db583bb60ab3d3c882964e940da45cf25713fc7041"
+    },
+    {
+      "path": "/tmp/php-ts-kefu-split-cart-media-20261117/candidate-freeze.json",
+      "sha256": "2fca67b0b6fd4dc13b62e9d7b9557509e79ae7967049c6bdf9f447e2414a027c"
+    },
+    {
+      "path": "/tmp/php-ts-kefu-split-cart-media-20261117/continuity-generation.json",
+      "sha256": "c46618682b0e5715f486ea1387e52c217531da9555e8b049ced5400b884a4b59"
+    },
+    {
+      "path": "/tmp/php-ts-kefu-split-cart-media-20261117/native-current-execution.json",
+      "sha256": "a97f7e68ad68259981db311034f34b714300b06630578edfdf699821fe5cc262"
+    },
+    {
+      "path": "/tmp/php-ts-kefu-split-cart-media-20261117/type-fixture-fix.json",
+      "sha256": "b6dc2f588f4b9d2d899e52e12dfc346cc7bd9f53a718af461d98e666ad8bc1c8"
+    },
+    {
+      "path": "/tmp/php-ts-kefu-split-cart-media-20261117/unused-native-helper-fix.json",
+      "sha256": "66c3600c397577e543b7448fd491f149031578cdd98833baf09ee35d65721d8b"
+    },
+    {
+      "path": "/tmp/php-ts-kefu-split-cart-media-20261117/first-final-type-fixture-failure/outer-terminal.json",
+      "sha256": "29cd6a24acc82e957403d0c4dce56162d29038c3dd20b233a1539263d4b7e73e"
+    },
+    {
+      "path": "/tmp/php-ts-kefu-split-cart-media-20261117/second-final-unused-test-helper-failure/outer-terminal.json",
+      "sha256": "8ae92f79bf114eb2037e1d101fa0d5bc0b77f52b75f39cba185389d71da26940"
+    }
+  ],
+  "wholeMigrationComplete": false,
+  "turnClassification": "progress",
+  "generatedBeforeCommitAndPush": true
+}

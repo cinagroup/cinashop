@@ -1,4 +1,5 @@
 import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { PgTransaction } from "drizzle-orm/pg-core";
 import { createContainerFromDb, withTx, type Container, type DbClient } from "@/lib/di";
 import {
   deliveryService,
@@ -11,6 +12,12 @@ import {
   lockKefuConversationOwnership,
   ownedKefuConversation,
 } from "@/services/kefu/KefuOwnership";
+import {
+  assertKefuSplitCartPreviewBudget,
+  MAX_KEFU_SPLIT_CART_ROWS,
+  readKefuSplitCartMedia,
+  renderKefuSplitCartMedia,
+} from "@/services/kefu/KefuSplitCartMediaPolicy";
 import {
   StoreOrderWriteoffService,
   type WriteoffActor,
@@ -346,7 +353,7 @@ export class KefuFulfillmentService {
 
   async splitCartInfo(kefuUidValue: unknown, orderIdValue: unknown) {
     const kefuUid = positiveInteger(kefuUidValue, "客服身份");
-    return withTx(this.container, async (tx) => {
+    const read = async (tx: DbClient) => {
       const reference = await this.visibleOrderByIdUsing(tx, kefuUid, orderIdValue);
       const rootId = reference.pid > 0 ? reference.pid : reference.id;
       let active = reference;
@@ -366,7 +373,7 @@ export class KefuFulfillmentService {
         .orderBy(asc(storeOrder.id))
         .limit(2);
         if (pending.length !== 1) {
-          if (!pending.length) return [];
+          if (!pending.length) return { value: [], media: [] };
           throw new ValidateException("订单存在多个待发货子单，请先完成数据核对");
         }
         active = pending[0];
@@ -383,9 +390,28 @@ export class KefuFulfillmentService {
           eq(storeOrder.uid, reference.uid),
           ownedKefuConversation(tx, kefuUid, storeOrder.uid),
         ))
-        .orderBy(asc(storeOrderCartInfo.id));
-      return rows.map((row) => cartProjection(row.cart));
-    });
+        .orderBy(asc(storeOrderCartInfo.id))
+        .limit(MAX_KEFU_SPLIT_CART_ROWS + 1);
+      const carts = rows.map((row) => row.cart);
+      assertKefuSplitCartPreviewBudget(carts);
+      const value = carts.map(cartProjection);
+      return { value, media: await readKefuSplitCartMedia(tx, carts, value) };
+    };
+    // The timeout SELECT is the first snapshot-bearing statement. Completed
+    // transfers visible before it deny new reads; authorized in-flight snapshots
+    // can finish coherently. Existing caller transactions retain their owner,
+    // original isolation and eventual commit/rollback timing.
+    const result = this.container.db instanceof PgTransaction
+      ? await read(this.container.db)
+      : await withTx(this.container, async (tx) => {
+        await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+        await tx.execute(sql.raw(`SELECT
+          pg_catalog.set_config('statement_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true),
+          pg_catalog.set_config('idle_in_transaction_session_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000)::text || 'ms',true)`));
+        return read(tx);
+      });
+    await renderKefuSplitCartMedia(this.env.APP_KEY, result.media);
+    return result.value;
   }
 
   async splitDelivery(

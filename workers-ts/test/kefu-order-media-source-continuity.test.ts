@@ -1,12 +1,15 @@
+import { projectKefuSplitCartMediaPredecessor } from './helpers/kefuSplitCartMediaSourceContinuity';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { KEFU_ORDER_MEDIA_PREDECESSOR, KEFU_ORDER_MEDIA_PROOF_FILE, KEFU_ORDER_MEDIA_PROOF_SHA256,
   KEFU_ORDER_MEDIA_SOURCES, kefuOrderMediaImage, kefuOrderMediaProof as proof,
-  isKefuOrderMediaSource, projectKefuOrderMediaPredecessor } from './helpers/kefuOrderMediaSourceContinuity';
+  isKefuOrderMediaSource, projectKefuOrderMediaFromSplit54047View as projectKefuOrderMediaPredecessor } from './helpers/kefuOrderMediaSourceContinuity';
 const root = resolve(import.meta.dirname, '../..');
-const physical = (file: string) => readFileSync(resolve(root, file), 'utf8');
+// Original16 assertions keep the verified fixed54047 historical view.
+// The split suite separately binds complete physical current sources.
+const physical = (file: string) => projectKefuSplitCartMediaPredecessor(file, readFileSync(resolve(root, file), 'utf8'));
 const sha = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
 const sources = [
   "workers-ts/scripts/run-local-finance-postgres.mjs",
@@ -138,7 +141,7 @@ const retained = [
     "sha256": "05bd3e48df227081194a13eee8c3c8737a8ebae048b443aaee56f7a095aa6918"
   }
 ];
-describe('Kefu order media complete physical current sources before fixed4428 historical views', () => {
+describe('Kefu order media verified fixed54047 sources before fixed4428 historical views', () => {
   it('pins the complete immutable six-source inventory and fixed Git origins', () => {
     expect(sha(readFileSync(resolve(root, KEFU_ORDER_MEDIA_PROOF_FILE)))).toBe(KEFU_ORDER_MEDIA_PROOF_SHA256);
     expect(proof.schema).toBe('kefu-order-media-source-continuity/v1');
@@ -149,7 +152,7 @@ describe('Kefu order media complete physical current sources before fixed4428 hi
     expect(sources.every(isKefuOrderMediaSource)).toBe(true);
   });
   for (const row of proof.sources) {
-    it('binds the entire physical source and reconstructs its complete fixed4428 Git blob for ' + row.file, () => {
+    it('binds the entire verified fixed54047 source and reconstructs its complete fixed4428 Git blob for ' + row.file, () => {
       const current = physical(row.file); expect(kefuOrderMediaImage(current)).toEqual(row.current);
       const previous = projectKefuOrderMediaPredecessor(row.file, current);
       expect(previous).not.toBe(current); expect(kefuOrderMediaImage(previous)).toEqual(row.predecessor);
